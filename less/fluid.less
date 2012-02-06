@@ -1,0 +1,60 @@
+@import 'grid.less';
+
+
+//////////
+// GRID //
+//////////
+
+// Specify the number of columns and set column and gutter widths
+@columns: 24;
+@column-width: 45;
+@gutter-width: 20;
+
+// Remove the definition below for a pixel-based layout
+@total-width: 100%;
+
+
+////////////
+// LAYOUT //
+////////////
+
+ /* BASE STYLES
+  ----------------------- */
+ html {
+ }
+ body {
+	background-color: #E5E5E5;
+	color: #000000;
+ }
+
+#wrapper {
+}
+
+#content {
+  
+}
+
+// panels
+.panel {
+	padding: 10px;
+	border: 1px solid #666666;
+}  
+
+#panel1 {
+	.column(6);
+}
+	#searchResultsContainer {
+		overflow: auto;
+		height: 400px;
+	}
+
+
+#panel2 {
+	.column(6);
+}
+#panel3 {
+	.column(6);
+}
+#panel4 {
+	.column(6);
+}
