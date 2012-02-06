@@ -22,8 +22,6 @@
     var itemResultsDisplayGroup = $('#itemResultsDisplayGroup');
     var viewList = $('#viewList');
 
-    // templates
-
 	// timeout
 	var addListAutofillTimeout = null;
 
@@ -37,7 +35,7 @@
 
 		defaults: {
 			items: {},
-            sortedItems: []
+			sortedItems: []
         },
 
         initialize: function() {
@@ -69,13 +67,21 @@
         initialize: function() {
 
             // sortedItems: changed
-            this.model.bind('change:sortedItems', this.render, this);
+            this.model.bind('change:items', this.render, this);
         },
 
 		render: function() {
 
+			var sortedItems = [];
+
+			// generate sorted items array
+			_.each(this.model.get('items'), function(item, key) {
+				sortedItems.push(item);
+			});
+
 			// sort results
-			this.model.get('sortedItems').sort(sortItemsByDate);
+			sortedItems.sort(sortItemsByDate);
+			this.model.set({'sortedItems': sortedItems});
 
 			// output JSON search model to results container
 			// select template based on displayType
@@ -152,13 +158,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.updateListAdditions = function(itemData, itemIDs, listIDs) {
 
-		var i = 0;
 		var length = listIDs.length;
 
 		// clone itemData as new item object
 		var item = jQuery.extend(true, {}, itemData);
 
-		for (i; i < length; i++) {
+		// iterate listIDs
+		for (var i = 0, len = listIDs.length; i < len; i++) {
+
 			if (listIDs[i] == selectedTagID) {
 
 				console.info('update items at: ' + listIDs[i]);
@@ -167,18 +174,15 @@
 				item.id = itemIDs[i];
 
 				// get model data
-				var tempSortedItems = items.get('sortedItems');
 				var tempItems = items.get('items');
 
-				tempSortedItems.push(item);
-				tempItems[item.id] = tempSortedItems.length - 1;
+				tempItems[item.id] = item;
 
 				// set items model data
 				items.set({'items': tempItems});
-				items.set({'sortedItems': tempSortedItems});
 
-				// trigger change manually since updating an existing sortedItems array does not trigger update
-				items.trigger("change:sortedItems");
+				// trigger change manually since updating an existing items array does not trigger update
+				items.trigger("change:items");
 			}
 		}
 	};
@@ -205,11 +209,8 @@
 		console.info('get item:');
 		console.info(id);
 		console.info(items.get('items'));
-		console.info(items.get('sortedItems'));
 
-		var index = items.get('items')[id];
-
-		return items.get('sortedItems')[index];
+		return items.get('items')[id];
 	};
 
 
@@ -245,11 +246,11 @@
 			list_id: listID
 		};
 
+		// clear items - if not cleared some cases result in items not updating
+		items.set({'items': {}});
+
 		// get items
 		items.fetch({data: postData, type: 'POST'});
-
-		// clear items - if not cleared some cases result in items not updating
-		items.set({'sortedItems': []});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,7 +262,6 @@
 		console.info(itemResults);
 
 		// temp item data
-		var tempSortedItems = [];
 		var tempItems = {};
 		var item = {};
 
@@ -289,13 +289,11 @@
 			item.largeImage = itemResults.items[i].itemLargeImage;
 
 			// add to lists objects
-			tempSortedItems.push(item);
-			tempItems[item.id] = tempSortedItems.length - 1;
+			tempItems[item.id] = item;
 		}
 
 		// set list model data
 		items.set({'items': tempItems});
-		items.set({'sortedItems': tempSortedItems});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -365,31 +363,25 @@
 		console.info('delete item');
 
 		// data
-		var tempSortedItems = items.get('sortedItems');
 		var tempItems = items.get('items');
-		var index = tempItems[id];
+		var item = tempItems[id];
 
-		console.info(index);
 		// check if item found
-		if (index !== null) {
+		if (item !== null) {
 
 			console.info('item found to delete');
 
-			var itemID = tempSortedItems[index].itemID;
-
 			// remove tag from detail view
-			DetailView.removeTagForItemID(itemID, selectedTagID);
+			DetailView.removeTagForItemID(item.itemID, selectedTagID);
 
 			// remove item
-			tempSortedItems.splice(index, 1);
 			delete tempItems[id];
 
 			// set new list model data
-			items.set({'sortedItems': tempSortedItems});
 			items.set({'items': tempItems});
 
-			// trigger change manually since updating an existing sortedItems array does not trigger update
-			items.trigger("change:sortedItems");
+			// trigger change manually since updating an existing items array does not trigger update
+			items.trigger("change:items");
 		}
 	};
 
@@ -399,7 +391,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteItemResult = function(data) {
 
-		// delete item from sortedItems
+		// delete item from items
 
 		console.info(data);
 	};
@@ -431,10 +423,8 @@
 			success: deleteListResult
 		});
 
-		// trigger mouse out to remove any popovers
-
 		// clear current list model data
-		items.set({'sortedItems': []});
+		items.set({'items': []});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -479,7 +469,7 @@
 
 
 		// trigger change on sortedResults to re-render template for new dislayType
-		items.trigger("change:sortedItems");
+		items.trigger("change:items");
 	};
 
 })(tmz.module('itemView'));

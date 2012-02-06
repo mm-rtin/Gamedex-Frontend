@@ -3,7 +3,11 @@
 (function(User) {
 
 	// Dependencies
+	var Utilities = tmz.module('utilities');
+	var List = tmz.module('list');
 
+	var amazonDirectory = {};
+	var giantBombDirectory = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: User Model
@@ -44,18 +48,19 @@
 		render: function() {
 
 			// get user lists
-			tmz.module('list').getList();
+			List.getList();
+
+			// get item directory
+			Utilities.getItemDirectory(directoryLoaded);
 
 			return this;
 		}
-
 	});
 
 	// backbone model
 	var user = new User.UserModel();
     // backbone view
     var userView = new User.UserView({model: user});
-
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,6 +162,35 @@
 	// get userData
 	User.getUserData = function() {
 		return user.get('userData');
+	};
+
+	User.getAmazonDirectory = function() {
+		return amazonDirectory;
+	};
+
+	User.getGiantBombDirectory = function() {
+		return giantBombDirectory;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* directoryLoaded
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var directoryLoaded = function(data) {
+
+		itemDirectory = {};
+
+		// restructure directory, set 3rd party IDs as keys
+		_.each(data.directory, function(item, itemID) {
+
+			// for each 3RD party directory sets their ID as keys
+			if (item.itemAsin !== '0') {
+				amazonDirectory[item.itemAsin] = itemID;
+			}
+			if (item.itemGBombID !== '0') {
+				giantBombDirectory[item.itemGBombID] = itemID;
+			}
+
+		});
 	};
 
 })(tmz.module('user'));

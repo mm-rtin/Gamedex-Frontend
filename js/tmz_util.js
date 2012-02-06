@@ -3,11 +3,33 @@
 (function(Utilities) {
 
 	// Dependencies
+	var User = tmz.module('user');
 
 	// properties
 
 	// timeout
 	var autoFillTimeOut = null;
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemDirectory
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Utilities.getItemDirectory = function(onComplete){
+
+		var userData = User.getUserData();
+
+		// request data
+		var postData = {
+			user_id: userData.user_id,
+			secret_key: userData.secret_key
+		};
+
+		var restURL = tmz.api + 'item/directory';
+
+		// post request
+		$.post(restURL, postData, function(data) {
+			onComplete(data);
+		}, "json");
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* selectFieldSubstring

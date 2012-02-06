@@ -22,6 +22,8 @@
     var descriptionModalNode = $('#description-modal');
     var itemDetailsNode = $('#itemDetails');
     var addList = $('#addList');
+    var saveItemContainer = $('#saveItemContainer');
+    var addItemContainer = $('#addItemContainer');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: Model
@@ -80,6 +82,9 @@
 	DetailView.init = function() {
 
 		DetailView.createEventHandlers();
+
+		// hide save button
+		$(saveItemContainer).hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,8 +102,13 @@
 			}
 		});
 
-		// saveItemChanges: click
-		$('#saveItemChanges_btn').click(function() {
+		// saveItem_btn: click
+		$('#saveItem_btn').click(function() {
+			saveItemChanges();
+		});
+
+		// addItem_btn: click
+		$('#addItem_btn').click(function() {
 			saveItemChanges();
 		});
 
@@ -114,12 +124,47 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewSearchDetail = function(searchData) {
 
+		// reset initial tags
+		initialItemTags = {};
+
 		// clone object as currentItem
 		currentItem = jQuery.extend(true, {}, searchData);
 
 		// found in searchResults cache
 		console.info("VIEW SEARCH DETAIL");
 		console.info(currentItem);
+
+		// get itemID from directory
+		var itemID = null;
+
+		// select appropriate 3rd party item directory
+		if (currentItem.gbombID !== 0) {
+			var giantBombDirectory =  User.getGiantBombDirectory();
+			itemID = giantBombDirectory[currentItem.gbombID] || null;
+
+		} else if (currentItem.asin !== 0) {
+			var amazonDirectory =  User.getAmazonDirectory();
+			itemID = amazonDirectory[currentItem.asin] || null;
+		}
+
+		// item found in directory - update itemID and get tags for itemID
+		if (itemID !== null) {
+
+			$(saveItemContainer).show();
+			$(addItemContainer).hide();
+
+			console.info('item found in directory');
+			currentItem.itemID = itemID;
+			getTagsByItemID(itemID);
+
+		} else {
+
+			resetTags();
+			$(saveItemContainer).hide();
+			$(addItemContainer).show();
+
+			$(addList).trigger("liszt:updated");
+		}
 
 		details.set({'itemInformation': currentItem});
 	};
@@ -128,6 +173,12 @@
 	* viewItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewItemDetail = function(itemData) {
+
+		// reset initial tags
+		initialItemTags = {};
+
+		$(saveItemContainer).show();
+		$(addItemContainer).hide();
 
 		// clone object as currentItem
 		currentItem = jQuery.extend(true, {}, itemData);
@@ -216,14 +267,8 @@
 		var option = null;
 		var tag = null;
 
-		// reset initial tags
-		initialItemTags = {};
-
-		// reset tags
-		$(addList).find('option').each(function() {
-			// remove selected attribute
-			$(this).removeAttr('selected');
-		});
+		// clear selected attributes from all options
+		resetTags();
 
 		// iterate tags and add to select list
 		for (var i = 0, len = tagList.length; i < len; i++) {
@@ -244,6 +289,18 @@
 		}
 
 		$(addList).trigger("liszt:updated");
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetTags
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetTags = function() {
+
+		// reset tags
+		$(addList).find('option').each(function() {
+			// remove selected attribute
+			$(this).removeAttr('selected');
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
