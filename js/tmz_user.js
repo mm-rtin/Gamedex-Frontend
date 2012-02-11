@@ -5,9 +5,7 @@
 	// Dependencies
 	var Utilities = tmz.module('utilities');
 	var List = tmz.module('list');
-
-	var amazonDirectory = {};
-	var giantBombDirectory = {};
+	var ItemData = tmz.module('itemData');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: User Model
@@ -46,12 +44,6 @@
         },
 
 		render: function() {
-
-			// get user lists
-			List.getList();
-
-			// get item directory
-			Utilities.getItemDirectory(directoryLoaded);
 
 			return this;
 		}
@@ -137,10 +129,25 @@
 
 		console.info(loginData);
 
-		// fetch user
-		user.fetch({data: loginData, type: 'POST'});
+		// login user
+		user.fetch({data: loginData, type: 'POST', success: login_result});
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* login_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var login_result = function(model, data) {
+
+		if (data.userID) {
+			// get user lists
+			List.getList();
+
+			// get item directory
+			ItemData.getItemDirectory();
+		} else {
+			console.info('incorrect login');
+		}
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseUserResponse
@@ -162,35 +169,6 @@
 	// get userData
 	User.getUserData = function() {
 		return user.get('userData');
-	};
-
-	User.getAmazonDirectory = function() {
-		return amazonDirectory;
-	};
-
-	User.getGiantBombDirectory = function() {
-		return giantBombDirectory;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* directoryLoaded
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var directoryLoaded = function(data) {
-
-		itemDirectory = {};
-
-		// restructure directory, set 3rd party IDs as keys
-		_.each(data.directory, function(item, itemID) {
-
-			// for each 3RD party directory sets their ID as keys
-			if (item.itemAsin !== '0') {
-				amazonDirectory[item.itemAsin] = itemID;
-			}
-			if (item.itemGBombID !== '0') {
-				giantBombDirectory[item.itemGBombID] = itemID;
-			}
-
-		});
 	};
 
 })(tmz.module('user'));

@@ -6,6 +6,8 @@
     var ListModel = tmz.module('list');
     var Utilities = tmz.module('utilities');
     var DetailView = tmz.module('detailView');
+    var ItemData = tmz.module('itemData');
+    var ListData = tmz.module('listData');
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
@@ -21,9 +23,6 @@
     var itemResultsNode = $('#itemResults');
     var itemResultsDisplayGroup = $('#itemResultsDisplayGroup');
     var viewList = $('#viewList');
-
-	// timeout
-	var addListAutofillTimeout = null;
 
 	// jquery objects
 	var currentHoverItem = null;
@@ -144,7 +143,7 @@
 		$(itemResultsNode).on('click', '.delete-item-btn', onDeleteBtn_click);
 
 		// delete-item-btn: click
-		$(viewItemsContainer).on('click', '#delete-list-btn', deleteList);
+		$(viewItemsContainer).on('click', '#delete-list-btn', onDeleteListBtn_click);
 
 		// displayType toggle
 		$(itemResultsDisplayGroup).find('button').click(function(e){
@@ -321,46 +320,17 @@
 		// trigger mouse out to remove any popovers
 		$(e.target).trigger('mouseout');
 
-		// make ajax request
-		deleteItem_request(id);
+		// delete item from server
+		ItemData.deleteSingleItem(id, items.get('items')[id].itemID, deleteItem_result);
 
-		// delete from data model
-		deleteItem(id);
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteItem_request -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteItem_request = function(id) {
-
-		var userData = User.getUserData();
-		var restURL = tmz.api + 'item/delete';
-
-		// delete item
-		var postData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			id: id
-		};
-
-		// ajax request
-		$.ajax({
-			url: restURL,
-			type: 'POST',
-			datatype: 'json',
-			data: postData,
-			success: deleteItemResult
-		});
-
+		// delete from client data model and interface
+		deleteClientItem(id);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteItem -
+	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteItem = function(id) {
-
-		console.info('delete item');
+	var deleteClientItem = function(id) {
 
 		// data
 		var tempItems = items.get('items');
@@ -369,15 +339,13 @@
 		// check if item found
 		if (item !== null) {
 
-			console.info('item found to delete');
-
 			// remove tag from detail view
 			DetailView.removeTagForItemID(item.itemID, selectedTagID);
 
 			// remove item
 			delete tempItems[id];
 
-			// set new list model data
+			// set new model data
 			items.set({'items': tempItems});
 
 			// trigger change manually since updating an existing items array does not trigger update
@@ -387,50 +355,33 @@
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteItemResult -
+	* deleteItem_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteItemResult = function(data) {
+	var deleteItem_result = function(data) {
 
-		// delete item from items
-
+		// delete
 		console.info(data);
 	};
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteList -
+	* onDeleteListBtn_click -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteList = function(e) {
+	var onDeleteListBtn_click = function(e) {
 
 		e.preventDefault();
 
-		var userData = User.getUserData();
-		var restURL = tmz.api + 'list/delete';
-
-		// delete list
-		var postData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			id: selectedTagID
-		};
-
-		// ajax request
-		$.ajax({
-			url: restURL,
-			type: 'POST',
-			datatype: 'json',
-			data: postData,
-			success: deleteListResult
-		});
+		// delete database data
+		ListData.deleteList(selectedTagID, deleteList_result);
 
 		// clear current list model data
 		items.set({'items': []});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteListResult -
+	* deleteList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteListResult = function(data) {
+	var deleteList_result = function(data) {
 
 		console.info(data);
 

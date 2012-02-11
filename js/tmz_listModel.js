@@ -4,6 +4,7 @@
 
 	// dependecies
 	var User = tmz.module('user');
+	var ListData = tmz.module('listData');
 
 	// node cache
 	var selectListNode = $('.list');	// chzn list containers
@@ -96,19 +97,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.addList = function(listName) {
 
-
 		// check if list name exists
 		if (!list.get('list')[listName]) {
 
-			var restURL = tmz.api + 'list/add';
-			var postData = {
-				user_id: User.getUserData().user_id,
-				secret_key: User.getUserData().secret_key,
-				list_name: listName
-			};
-
-			// submit create user list request with id/secretKey
-			$.post(restURL, postData, parseAddListResponse, "json");
+			ListData.addList(listName, parseAddListResponse);
 		}
 	};
 

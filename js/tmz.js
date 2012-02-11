@@ -51,22 +51,27 @@ tmz.initialize = function() {
 	this.api = '/';
 
 	// module references
-	tmz.util = tmz.module('utilities');
+	this.util = this.module('utilities');
 
 	// models
-	tmz.user = tmz.module('user');
-	tmz.listModel = tmz.module('list');
+	this.user = this.module('user');
+	this.listModel = this.module('list');
+
+	// data interfaces
+	this.itemData = this.module('itemData');
+	this.listData = this.module('listData');
+	this.searchData = this.module('searchData');
 
 	// views
-	tmz.searchView = tmz.module('searchView');
-	tmz.detailView = tmz.module('detailView');
-	tmz.itemView = tmz.module('itemView');
+	this.searchView = this.module('searchView');
+	this.detailView = this.module('detailView');
+	this.itemView = this.module('itemView');
 
 	// 3rd party libaries
-	tmz.initializeLibraries();
+	this.initializeLibraries();
 
 	// event handling
-	tmz.initializeModules();
+	this.initializeModules();
 };
 
 

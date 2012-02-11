@@ -7,6 +7,7 @@
     var User = tmz.module('user');
     var SearchView = tmz.module('searchView');
     var ItemView = tmz.module('itemView');
+    var ItemData = tmz.module('itemData');
     var ListModel = tmz.module('list');
     var Utilities = tmz.module('utilities');
 
@@ -16,6 +17,7 @@
     // data
 	var initialItemTags = {};	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
 	var currentItemTags = {};	// current selected tags, key = tagID, value = true
+	var userSetTags = {};		// tags set by user for adding new items to list
 	var currentItem = {};		// selected item data
 
     // node cache
@@ -117,6 +119,9 @@
 			console.info('desc clicked');
 			$('#description-modal').modal('show');
 		});
+
+		// addList: change
+		$(addList).chosen().change(addListChanged);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,34 +139,33 @@
 		console.info("VIEW SEARCH DETAIL");
 		console.info(currentItem);
 
-		// get itemID from directory
-		var itemID = null;
+		// get itemID by searching directory of 3rd party IDs
+		var itemID = getItemIDByThirdPartyID(currentItem.gbombID, currentItem.asin);
+		var tagCount = ItemData.getItemTagCountFromDirectory(itemID);
 
-		// select appropriate 3rd party item directory
-		if (currentItem.gbombID !== 0) {
-			var giantBombDirectory =  User.getGiantBombDirectory();
-			itemID = giantBombDirectory[currentItem.gbombID] || null;
+		console.info(tagCount);
 
-		} else if (currentItem.asin !== 0) {
-			var amazonDirectory =  User.getAmazonDirectory();
-			itemID = amazonDirectory[currentItem.asin] || null;
-		}
+		// exisiting item with tags
+		if (tagCount > 0) {
 
-		// item found in directory - update itemID and get tags for itemID
-		if (itemID !== null) {
+			changeSubmitButtonStyle('save');
 
-			$(saveItemContainer).show();
-			$(addItemContainer).hide();
-
-			console.info('item found in directory');
+			// update itemID
 			currentItem.itemID = itemID;
-			getTagsByItemID(itemID);
 
+			var tagList = ItemData.getItemTagsFromDirectory(itemID);
+
+			// load tags
+			loadTagsFromDirectory(tagList);
+
+		// new item - set user tags
 		} else {
 
+			changeSubmitButtonStyle('add');
+
+			// set user saved tags for new items
 			resetTags();
-			$(saveItemContainer).hide();
-			$(addItemContainer).show();
+			setTags(userSetTags);
 
 			$(addList).trigger("liszt:updated");
 		}
@@ -177,38 +181,21 @@
 		// reset initial tags
 		initialItemTags = {};
 
-		$(saveItemContainer).show();
-		$(addItemContainer).hide();
+		changeSubmitButtonStyle('save');
 
 		// clone object as currentItem
 		currentItem = jQuery.extend(true, {}, itemData);
 
 		// get item tags
-		getTagsByItemID(itemData.itemID);
+		var tagList = ItemData.getItemTagsFromDirectory(currentItem.itemID);
+
+		// load tags
+		loadTagsFromDirectory(tagList);
 
 		console.info("VIEW ITEM DETAIL");
 		console.info(currentItem);
 
 		details.set({'itemInformation': currentItem});
-
-	};
-
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.getAmazonItemDetail = function(itemData) {
-
-		console.info("GET ITEM DETAIL");
-		// method/searchIndex/browseNode/keywords/ResponseGroup/Page
-		var restURL = tmz.api + 'itemlookup_asin/' + encodeURIComponent(asin) + '/Medium';
-
-		// retrieve item details
-		$.ajax({
-			url: restURL,
-			dataType: 'xml',
-			cache: false,
-			success: itemlookupResults
-		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -236,26 +223,66 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getTagsByItemID
+	* changeSubmitButtonStyle
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getTagsByItemID = function(itemID) {
+	var changeSubmitButtonStyle = function(style) {
 
-			var restURL = tmz.api + 'item/tags';
-			var userData = User.getUserData();
+		if (style === 'save') {
+			$(saveItemContainer).show();
+			$(addItemContainer).hide();
 
-			// submit item to list
-			var postData = {
-				user_id: userData.user_id,
-				secret_key: userData.secret_key,
-				item_id: itemID
-			};
+		} else if (style === 'add') {
+			$(saveItemContainer).hide();
+			$(addItemContainer).show();
+		}
 
-			// retrieve item tags
-			$.post(restURL, postData, function(data) {
-				if (data !== false) {
-					loadTags(data.itemTags);
-				}
-			}, "json");
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemIDByThirdPartyID
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getItemIDByThirdPartyID = function(gbombID, asin) {
+
+		// itemID from directory
+		var itemID = null;
+
+		// select appropriate 3rd party item directory
+		if (gbombID !== 0) {
+			var giantBombDirectory =  ItemData.getGiantBombDirectory();
+			itemID = giantBombDirectory[gbombID];
+
+		} else if (asin !== 0) {
+			var amazonDirectory =  ItemData.getAmazonDirectory();
+			itemID = amazonDirectory[asin];
+		}
+
+		return itemID;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loadTagsFromDirectory
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var loadTagsFromDirectory = function(tagList) {
+
+		var option = null;
+
+		// clear selected attributes from all options
+		resetTags();
+
+		_.each(tagList, function(id, tagID) {
+
+			// get option node
+			option = $(addList).find('#' + tagID);
+
+			// select option
+			$(option).attr('selected', '');
+
+			// create associate of tags with item ids
+			initialItemTags[tagID] = id;
+		});
+
+		$(addList).trigger("liszt:updated");
+		console.info(initialItemTags);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -274,8 +301,6 @@
 		for (var i = 0, len = tagList.length; i < len; i++) {
 			tag = tagList[i];
 
-			console.info(tag);
-
 			// get option node
 			option = $(addList).find('#' + tag.tagID);
 
@@ -284,11 +309,27 @@
 
 			// create associate of tags with item ids
 			initialItemTags[tag.tagID] = tag.id;
-
-			console.info(option);
 		}
 
 		$(addList).trigger("liszt:updated");
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* setTags
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var setTags = function(tagList) {
+
+		if (tagList) {
+
+			for (var i = 0, len = tagList.length; i < len; i++) {
+
+				// get option node
+				option = $(addList).find('#' + tagList[i]);
+
+				// select option
+				$(option).attr('selected', '');
+			}
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -350,91 +391,47 @@
 
 		// check for tags to add
 		if (tagsToAdd.length > 0) {
-			addItemToTags(tagsToAdd, currentItem);
+			ItemData.addItemToTags(tagsToAdd, currentItem, addItemToTags_result);
 		}
 
 		// check for tags to delete
 		if (idsToDelete.length > 0) {
 			console.info(idsToDelete);
-			deleteTagsForItem(idsToDelete);
+			ItemData.deleteTagsForItem(idsToDelete, currentItem, deleteTagsForItem_result);
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addItemToTags
+	* deleteTagsForItem_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemToTags = function(listIDs, currentItem) {
+	var deleteTagsForItem_result = function(data) {
 
-		var userData = User.getUserData();
-
-		// clone currentItem as new object
-		var item = jQuery.extend(true, {}, currentItem);
-
-		// submit item to list
-		var postData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			list_ids: listIDs,
-			item_name: item.name,
-			item_releasedate: item.releaseDate,
-			item_asin:  item.asin,
-			item_gbombID: item.gbombID,
-			item_platform: item.platform,
-			item_smallImage: item.smallImage,
-			item_thumbnailImage: item.thumbnailImage,
-			item_largeImage: item.largeImage
-		};
-
-		var restURL = tmz.api + 'item/add';
-
-		// 'itemID': item.pk, 'itemAsin': item.item_asin, 'itemGBombID': item.item_gbombID, 'itemName': item.item_name, 'itemReleaseDate': str(item.item_releasedate), 'itemPlatform': item.item_platform
-		$.post(restURL, postData, function(data) {
-			if (data !== false) {
-
-				// update item object with returned ID
-				item.id = data.id;
-				item.itemID = data.itemID;
-
-				// update currentItem with returned data
-				currentItem.id = data.id;
-				currentItem.itemID = data.itemID;
-
-				// update initial tags with ids
-				for (var i = 0, len = data.idsAdded.length; i < len; i++) {
-					initialItemTags[data.tagIDsAdded[i]] = data.idsAdded[i];
-				}
-
-				// update list view model with new item
-				ItemView.updateListAdditions(item, data.idsAdded, data.tagIDsAdded);
-			}
-		}, "json");
+		// update list view model
+		ItemView.updateListDeletions(data.itemsDeleted);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteTagsForItem
+	* addItemToTags_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteTagsForItem = function(listIDs) {
+	var addItemToTags_result = function(item, data) {
 
-		var userData = User.getUserData();
+		changeSubmitButtonStyle('save');
 
-		// submit item to list
-		var postData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			ids: listIDs
-		};
+		// update item object with returned ID
+		item.id = data.id;
+		item.itemID = data.itemID;
 
-		var restURL = tmz.api + 'item/batch-delete';
+		// update currentItem with returned data
+		currentItem.id = data.id;
+		currentItem.itemID = data.itemID;
 
-		$.post(restURL, postData, function(data) {
-			if (data !== false) {
+		// update initial tags with ids
+		for (var i = 0, len = data.idsAdded.length; i < len; i++) {
+			initialItemTags[data.tagIDsAdded[i]] = data.idsAdded[i];
+		}
 
-				console.info(data.itemsDeleted);
-
-				// update list view model for deleted items
-				ItemView.updateListDeletions(data.itemsDeleted);
-			}
-		}, "json");
+		// update list view model with new item
+		ItemView.updateListAdditions(item, data.idsAdded, data.tagIDsAdded);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -449,8 +446,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addListChanged = function(e) {
 
-
-
+		// save userSetTags
+		userSetTags = $(addList).val();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

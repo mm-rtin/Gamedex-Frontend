@@ -4,15 +4,20 @@
 
 	// module references
 	var DetailView = tmz.module('detailView');
+	var SearchData = tmz.module('searchData');
 
     // constants
     var FILTERED_NAMES = ['japan', 'bundle', 'import', 'pack', 'skin', 'faceplate', 'controller', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes'];
-    var TIME_TO_SUBMIT_QUERY = 1000;	// the number of miliseconds to wait before submiting search query
+    var TIME_TO_SUBMIT_QUERY = 500;	// the number of miliseconds to wait before submiting search query
     var BROWSENODES = {'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
     var SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1};
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
-    // private variables
-    var timeout = null;		// search field timeout
+
+    // search field timeout
+    var timeout = null;
+
+    // data
+    var searchTerms = '';
 
     // properties
     var searchProvider = SEARCH_PROVIDERS.Amazon;
@@ -22,7 +27,7 @@
     var searchProviderNode = $('#searchProvider');
     var searchResultsNode = $('#searchResults');
     var inputFieldNode = $('#search').find('input');
-    var searchResultsDisplayGroup = $('#searchResultsDisplayGroup');
+    var searchResultsDisplayGroupNode = $('#searchResultsDisplayGroup');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: Model
@@ -30,47 +35,13 @@
 	SearchView.Model = Backbone.Model.extend({
 
 		defaults: {
-            searchTerms: '',
             searchResults: {},
             sortedSearchResults: []
         },
 
         initialize: function() {
 
-        },
-
-        // override parse method
-		parse : function(response) {
-
-			// amazon provider
-			if (searchProvider === SEARCH_PROVIDERS.Amazon) {
-				parseAmazonResponse(response);
-
-			// giantbomb provider
-			} else if (searchProvider === SEARCH_PROVIDERS.GiantBomb) {
-				parseGiantBombResponse(response);
-			}
-		},
-
-        // set url based on searchTerms
-		url: function () {
-
-			var searchTerms = encodeURIComponent(this.get('searchTerms'));
-
-			// amazon provider
-			if (searchProvider === SEARCH_PROVIDERS.Amazon) {
-
-				var browseNode = 0;
-				// method / index / browseNode / keywords / Response Groups / page
-				return tmz.api + 'itemsearch/amazon/VideoGames/' + browseNode + '/' + searchTerms + '/Medium/';
-
-			// giantbomb provider
-			} else if (searchProvider === SEARCH_PROVIDERS.GiantBomb) {
-
-				return tmz.api + 'itemsearch/giantbomb/' + searchTerms + '/0';
-			}
-		}
-
+        }
 	});
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,13 +120,13 @@
 	SearchView.createEventHandlers = function() {
 
 		// search field: keypress
-		$(inputFieldNode).keydown(inputFieldKeyDown);
+		$(inputFieldNode).keyup(inputFieldKeyUp);
 
 		// searchProvider: change
 		$(searchProviderNode).chosen().change(searchProviderChanged);
 
 		// search results: click
-		$(searchResultsNode).delegate("tr", "click", function() {
+		$(searchResultsNode).on('click', 'tr', function() {
 
 			// hide popover on clicked item
 			$(this).popover('hide');
@@ -165,7 +136,7 @@
 		});
 
 		// displayType toggle
-		$(searchResultsDisplayGroup).find('button').click(function(e){
+		$(searchResultsDisplayGroupNode).on('click', 'button', function(e) {
 			e.preventDefault();
 			displayTypeChanged(this);
 		});
@@ -177,21 +148,29 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
 
-		// sync backbone model with new search results
-		// amazon provider
-		if (searchProvider === SEARCH_PROVIDERS.Amazon) {
-			search.fetch({dataType: 'xml'});
-		// giantbomb provider
-		} else if (searchProvider === SEARCH_PROVIDERS.GiantBomb) {
-			search.fetch();
+		// don't search empty search terms
+		if (searchTerms !== '') {
+			// search based on search provider
+			switch (searchProvider) {
+
+				// amazon
+				case SEARCH_PROVIDERS.Amazon:
+					SearchData.searchAmazon(keywords, 0, searchAmazon_result);
+					break;
+
+				// giantbomb
+				case SEARCH_PROVIDERS.GiantBomb:
+					SearchData.searchGiantBomb(keywords, searchGiantBomb_result);
+					break;
+			}
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonResponse - results callback from search()
+	* searchAmazon_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonResponse = function(data) {
+	var searchAmazon_result = function(data) {
 
 		// local properties
 		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
@@ -247,19 +226,18 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGiantBombResponse - results callback from search()
+	* searchGiantBomb_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGiantBombResponse = function(data) {
+	var searchGiantBomb_result = function(data) {
 
-		var i = 0;
 		var results = data.results;
-		var length = results.length;
 		var tempSearchResults = {};
 		var tempSortedResults = [];
 		var searchItem = {};
 
-		for (i; i < length; i++) {
+		// iterate results array
+		for (var i = 0, len = results.length; i < len; i++) {
 
 			// collect properties
 			searchItem = {};
@@ -308,6 +286,8 @@
 			tempSearchResults[searchItem.id] = searchItem;
 			// add again to tempSortedResults to sort array by releaseDate
 			tempSortedResults.push(searchItem);
+
+
 
 		}
 
@@ -358,6 +338,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var displayTypeChanged = function(toggleButton) {
 
+		console.info('changed');
 		var currentDisplayType = $(toggleButton).attr('data-content');
 
 		console.info(currentDisplayType);
@@ -386,31 +367,32 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchFieldTimeOut = function() {
 
-		console.info("SEARCH FIELD TIME OUT");
+		console.info("search timeout: search current search terms");
 
 		clearTimeout(timeout);
-		SearchView.search(search.get('searchTerms'));
+		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* EVENT HANDLERS
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var inputFieldKeyDown = function(event) {
+    var inputFieldKeyUp = function(event) {
 
 		// get search value
-		search.set({'searchTerms': $(inputFieldNode).val()});
+		searchTerms = $(inputFieldNode).val();
 
 		if (timeout) {
 			clearTimeout(timeout);
 		}
-		// if space key, start timer to wait
-		if(event.which == 32) {
-			console.info("START TIMER");
-			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 
 		// enter key, run query immediately
-		} else if (event.which == 13) {
-			SearchView.search(search.get('searchTerms'));
+		if(event.which == 13) {
+			SearchView.search(searchTerms);
+
+		// start search timer
+		} else {
+			console.info("start search timer");
+			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
     };
 
