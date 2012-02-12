@@ -56,12 +56,7 @@
         initialize: function() {
 
 			// searchResults: changed
-            this.model.bind('change:searchResults', function() {
-                console.info('results changed');
-            });
-
-            // sortedSearchResults: changed
-            this.model.bind('change:sortedSearchResults', this.render, this);
+            this.model.bind('change:searchResults', this.render, this);
         },
 
 		render: function() {
@@ -69,8 +64,16 @@
 			// hide all popovers
 			$(searchResultsNode).find('tr').trigger('mouseout');
 
-			// sort search results
-			this.model.get('sortedSearchResults').sort(sortSearchItemByDate);
+			var sortedSearchResults = [];
+
+			// generate sorted items array
+			_.each(this.model.get('searchResults'), function(item, key) {
+				sortedSearchResults.push(item);
+			});
+
+			// sort results
+			sortedSearchResults.sort(sortItemsByDate);
+			this.model.set({'sortedSearchResults': sortedSearchResults});
 
 			// output JSON search model to results container
 			// select template based on displayType
@@ -131,6 +134,9 @@
 			e.preventDefault();
 			displayTypeChanged(this);
 		});
+
+		// dropdown menu > li: click
+		$(searchResultsNode).on('click', '.dropdown-menu li', platformMenu_onClick);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,11 +168,10 @@
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchAmazon_result = function(data) {
-
 		// local properties
 		var	filtered = false;
 		var tempSearchResults = {};
-		var tempSortedResults = [];
+		var searchItem = {};
 
 		/* sortedArray and searchResults cache construction
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -174,7 +179,7 @@
 		$('Item', data).each(function() {
 
 			// collect attributes into searchItem object
-			var searchItem = {};
+			searchItem = {};
 
 			// parse amazon result item and get back filtered status, add data to searchItem
 			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
@@ -184,14 +189,11 @@
 
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
-				// add again to tempSortedResults to sort array by releaseDate
-				tempSortedResults.push(searchItem);
 			}
 		});
 
-		// set tempSearchResults, tempSortedResults to search model
+		// set tempSearchResults to search model
 		search.set({'searchResults': tempSearchResults});
-		search.set({'sortedSearchResults': tempSortedResults});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,7 +204,6 @@
 
 		var results = data.results;
 		var tempSearchResults = {};
-		var tempSortedResults = [];
 		var searchItem = {};
 
 		// iterate results array
@@ -214,21 +215,65 @@
 			// parse result item and add to searchItem
 			SearchData.parseGiantBombResultItem(results[i], searchItem);
 
+			// get platform information for each item by gbombID
+			SearchData.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
+
 			// save item in search results cache under ASIN key
 			tempSearchResults[searchItem.id] = searchItem;
-			// add again to tempSortedResults to sort array by releaseDate
-			tempSortedResults.push(searchItem);
 		}
 
-		// set tempSearchResults, tempSortedResults to search model
+		// set tempSearchResults to search model
 		search.set({'searchResults': tempSearchResults});
-		search.set({'sortedSearchResults': tempSortedResults});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* sortSearchItemByDate -
+	* getGiantBombItemPlatform_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var sortSearchItemByDate = function(a, b) {
+	var getGiantBombItemPlatform_result = function(data, gbombID) {
+
+		var platforms = data.results.platforms;
+		var platformList = [];
+
+		for (var i = 0, len = platforms.length; i < len; i++) {
+			platformList.push(platforms[i].name);
+		}
+
+		// add platform drop down to item results
+		addPlatformDropDown(gbombID, platformList);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addPlatformDropDown -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addPlatformDropDown = function(gbombID, platformList) {
+
+		var i = 0;
+		var dropDown = [];
+		dropDown[i++] = '<ul class="nav nav-pills">';
+		dropDown[i++] = '<li class="dropdown">';
+		dropDown[i++] = '<a href="#" data-toggle="dropdown" class="dropdown-toggle">Platforms <b class="caret"></b></a>';
+		dropDown[i++] = '<ul class="dropdown-menu" id="menu1">';
+
+		// iterate platformList
+		for (var j = 0, len = platformList.length; j < len; j++) {
+			dropDown[i++] = '<li data-content="' + gbombID + '"><a href="#">' + platformList[j] + '</a></li>';
+		}
+
+		dropDown[i++] = '</ul>';
+		dropDown[i++] = '</ul>';
+
+		var dropDownHTML = dropDown.join('');
+
+		// attach to existing result row
+		$('#' + gbombID).find('.title').append(dropDownHTML);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sortItemsByDate -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sortItemsByDate = function(a, b) {
 
 		var date1 = Date.parse(a.releaseDate);
 		var date2 = Date.parse(b.releaseDate);
@@ -287,8 +332,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeDisplayType = function() {
 
-		// trigger change on sortedSearchResults to re-render template for new dislayType
-		search.trigger("change:sortedSearchResults");
+		// trigger change on searchResults to re-render template for new dislayType
+		search.trigger("change:searchResults");
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -336,7 +381,20 @@
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
 
 		// show item detail
-		DetailView.viewSearchDetail(searchResult);
+		DetailView.viewFirstSearchItemDetail(searchResult);
+    };
+
+    // platform menu: click
+    var platformMenu_onClick = function() {
+
+		// assign platform to searchItem and relaunch detail view
+		var searchResult = SearchView.getSearchResult($(this).attr('data-content'));
+		searchResult.platform = $(this).find('a').text();
+
+		console.info(searchResult);
+
+		// show item detail
+		DetailView.viewFirstSearchItemDetail(searchResult);
     };
 
 })(tmz.module('searchView'));

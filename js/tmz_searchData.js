@@ -5,8 +5,8 @@
 	var User = tmz.module('user');
 
 	// constants
-	var FILTERED_NAMES = ['japan', 'bundle', 'import', 'pack', 'skin', 'faceplate', 'controller', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes'];
-	var BROWSENODES = {'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
+	var FILTERED_NAMES = ['japan', 'bundle', 'import', 'pack', 'skin', 'headset', 'faceplate', 'face plate', 'controller', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes'];
+	var BROWSE_NODES = {'all': 0, 'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getters
@@ -18,7 +18,7 @@
 	SearchData.searchAmazon = function(keywords, onSuccess, onError) {
 
 		var searchTerms = encodeURIComponent(keywords);
-		var browseNode = 0;
+		var browseNode = BROWSE_NODES.all;
 
 		// browse node, search terms and response group in url
 		var restURL = tmz.api + 'itemsearch/amazon/';
@@ -69,6 +69,35 @@
 			dataType: 'json',
 			cache: true,
 			success: onSuccess,
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemPlatform -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchData.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
+
+		// searchTerms and page number in url
+		var restURL = tmz.api + 'itemdetail/giantbomb/';
+
+		// list of fields to get as query parameter
+		var fieldList = ['platform'];
+
+		var requestData = {
+			'field_list': fieldList.join(','),
+			'id': gbombID
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				onSuccess(data, gbombID);
+			},
 			error: onError
 		});
 	};

@@ -195,7 +195,7 @@
 			if (itemsDeleted[i].tagID == selectedTagID) {
 
 				// delete item from model
-				deleteItem(itemsDeleted[i].id);
+				deleteClientItem(itemsDeleted[i].id);
 			}
 		}
 	};

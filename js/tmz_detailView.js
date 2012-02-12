@@ -16,7 +16,7 @@
 	var SearchData = tmz.module('searchData');
 
     // properties
-    var initialProvider = null;
+    var currentProvider = null;
     var saveInProgress = false;
     var currentTab = '#amazonTab';
 
@@ -24,7 +24,8 @@
 	var initialItemTags = {};	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
 	var currentItemTags = {};	// current selected tags, key = tagID, value = true
 	var userSetTags = {};		// tags set by user for adding new items to list
-	var currentItem = {};		// selected item data
+	var firstItem = {};			// current item data (first)
+	var secondItem = {};		// current item data (second)
 
     // node cache
     var $amazonDescriptionModal = $('#amazonDescription-modal');
@@ -85,12 +86,22 @@
 				itemData = {'itemData': this.model.toJSON().giantBombItem};
 				$(this.giantBombTabElement).html(this.detailsTemplate(itemData));
 				$(this.giantBombModal).html(this.modalTemplate(itemData));
+
+			// clear view
+			} else {
+				itemData = {'itemData': {}};
+				$(this.giantBombTabElement).html(this.detailsTemplate(itemData));
+				$(this.giantBombModal).html(this.modalTemplate(itemData));
 			}
 
 			// render amazon item
 			if (this.model.get('amazonItem').id) {
 
 				itemData = {'itemData': this.model.toJSON().amazonItem};
+				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
+				$(this.amazonModal).html(this.modalTemplate(itemData));
+			} else {
+				itemData = {'itemData': {}};
 				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
 				$(this.amazonModal).html(this.modalTemplate(itemData));
 			}
@@ -158,35 +169,69 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * viewFirstSearchItemDetail -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    DetailView.viewFirstSearchItemDetail = function(searchItem) {
+
+		// clone object as firstItem
+		firstItem = jQuery.extend(true, {}, searchItem);
+
+		// figure out search provider for current item
+		currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
+
+		// clear secondItem model
+		clearSecondItemModel(currentProvider);
+
+		// show detail tab for initial provider
+		showTab(currentProvider);
+
+		// start download of item data from alternate search providers
+		findItemOnAlternateProvider(firstItem, currentProvider);
+
+		// call main view detail method
+		DetailView.viewSearchDetail(firstItem);
+    };
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewSecondSearchItemDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	DetailView.viewSecondSearchItemDetail = function(searchItem) {
+
+		// clone object as secondItem
+		secondItem = jQuery.extend(true, {}, searchItem);
+
+		// figure out search provider for current item
+		currentProvider = getItemProvider(secondItem.asin, secondItem.gbombID);
+
+		// extend firstItem with second provider 3rd party id
+		switch (currentProvider) {
+			case Utilities.getProviders().Amazon:
+				firstItem.asin = secondItem.asin;
+				break;
+
+			case Utilities.getProviders().GiantBomb:
+				firstItem.gbombID = secondItem.gbombID;
+				break;
+		}
+
+		// call main view detail method
+		DetailView.viewSearchDetail(secondItem);
+	};
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewSearchDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.viewSearchDetail = function(searchData, findAlternate) {
-
-		// default value for findAlternate = true
-		findAlternate = typeof findAlternate !== 'undefined' ? findAlternate : true;
+	DetailView.viewSearchDetail = function(item) {
 
 		console.info("VIEW SEARCH DETAIL");
-		console.info(searchData);
-
-		// clone object as currentItem
-		currentItem = jQuery.extend(true, {}, searchData);
+		console.info(item);
 
 		// reset initial tags, set initial provider
 		initialItemTags = {};
 
-		// figure out search provider for current item
-		initialProvider = getItemProvider(currentItem.asin, currentItem.gbombID);
-
-		// show detail tab for initial provider
-		showTab(initialProvider);
-
-		// start download of item data from alternate search providers
-		if (findAlternate) {
-			findItemOnAlternateProvider(currentItem, initialProvider);
-		}
-
 		// get itemID by searching directory of 3rd party IDs
-		var itemID = getItemIDByThirdPartyID(currentItem.gbombID, currentItem.asin);
+		var itemID = getItemIDByThirdPartyID(item.gbombID, item.asin);
 		var tagCount = ItemData.getItemTagCountFromDirectory(itemID);
 
 		// exisiting item with tags
@@ -195,7 +240,7 @@
 			changeSubmitButtonStyle('save');
 
 			// update itemID
-			currentItem.itemID = itemID;
+			item.itemID = itemID;
 
 			var tagList = ItemData.getItemTagsFromDirectory(itemID);
 
@@ -214,8 +259,11 @@
 			$addList.trigger("liszt:updated");
 		}
 
+		console.info('##### CURRENT ITEM #####');
+		console.info(firstItem);
+
 		// update model item for provider
-		updateModelDataForProvider(initialProvider);
+		updateModelDataForProvider(currentProvider, item);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,19 +276,19 @@
 
 		changeSubmitButtonStyle('save');
 
-		// clone object as currentItem
-		currentItem = jQuery.extend(true, {}, itemData);
+		// clone object as firstItem
+		firstItem = jQuery.extend(true, {}, itemData);
 
 		// get item tags
-		var tagList = ItemData.getItemTagsFromDirectory(currentItem.itemID);
+		var tagList = ItemData.getItemTagsFromDirectory(firstItem.itemID);
 
 		// load tags
 		loadTagsFromDirectory(tagList);
 
 		console.info("VIEW ITEM DETAIL");
-		console.info(currentItem);
+		console.info(firstItem);
 
-		details.set({'giantBombItem': currentItem});
+		details.set({'giantBombItem': firstItem});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,10 +298,10 @@
 		console.info('remove tag for item ID');
 
 		console.info(itemID);
-		console.info(currentItem.itemID);
+		console.info(firstItem.itemID);
 
 		// check if tagID applies for currently viewing item
-		if (itemID === currentItem.itemID) {
+		if (itemID === firstItem.itemID) {
 
 			console.info('remove tag');
 			console.info($('#' + tagID));
@@ -300,17 +348,33 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateModelDataForProvider -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateModelDataForProvider = function(provider) {
+	var updateModelDataForProvider = function(provider, item) {
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
 				console.info('update amazon');
-				details.set({'amazonItem': currentItem});
+				details.set({'amazonItem': item});
 				break;
 
 			case Utilities.getProviders().GiantBomb:
 				console.info('update gb');
-				details.set({'giantBombItem': currentItem});
+				details.set({'giantBombItem': item});
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearSecondItemModel -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearSecondItemModel = function(provider) {
+
+		switch (provider) {
+			case Utilities.getProviders().Amazon:
+				details.set({'giantBombItem': {}});
+				break;
+
+			case Utilities.getProviders().GiantBomb:
+				details.set({'amazonItem': {}});
 				break;
 		}
 	};
@@ -361,6 +425,10 @@
 
 		var filtered = false;
 
+		var resultLength = ($('Item', data).length);
+		var count = 0;
+		var found = false;
+
 		// iterate results
 		$('Item', data).each(function() {
 
@@ -368,15 +436,20 @@
 			var searchItem = {};
 
 			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
+			count++;
 
-			if (!filtered) {
-				console.info('FOUND FROM AMAZON:');
-				console.info(searchItem.name);
+			// found exact title match
+			if (!filtered && firstItem.name === searchItem.name) {
 
-				DetailView.viewSearchDetail(searchItem, false);
+				found = true;
+				// exact match found - view second item
+				DetailView.viewSecondSearchItemDetail(searchItem);
+
+			// last item
+			} else if (!found && count === resultLength) {
+				console.info('NO RESULTS MATCHED: DISPLAY LIST OF ALL CHOICES');
 			}
 		});
-
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,10 +468,21 @@
 			// parse result item and add to searchItem
 			SearchData.parseGiantBombResultItem(results[i], searchItem);
 
+			// check if item name is exact match with initial item name
+			if(firstItem.name === searchItem.name) {
+
+				console.info('@@@@@@@@ VIEW SECOND ITEM');
+				// exact match found - view second item
+				DetailView.viewSecondSearchItemDetail(searchItem);
+
+			// last item
+			} else if (i === len - 1) {
+				SearchData.parseGiantBombResultItem(results[0], searchItem);
+				DetailView.viewSecondSearchItemDetail(searchItem);
+			}
+
 			console.info('FOUND FROM GIANT BOMB:');
 			console.info(searchItem.name);
-
-			DetailView.viewSearchDetail(searchItem, false);
 		}
 	};
 
@@ -431,10 +515,13 @@
 		if (gbombID !== 0) {
 			var giantBombDirectory =  ItemData.getGiantBombDirectory();
 			itemID = giantBombDirectory[gbombID];
+			console.info(itemID);
+		}
 
-		} else if (asin !== 0) {
+		if (asin !== 0) {
 			var amazonDirectory =  ItemData.getAmazonDirectory();
 			itemID = amazonDirectory[asin];
+			console.info(itemID);
 		}
 
 		return itemID;
@@ -572,13 +659,13 @@
 
 		// check for tags to add
 		if (tagsToAdd.length > 0) {
-			ItemData.addItemToTags(tagsToAdd, currentItem, addItemToTags_result);
+			ItemData.addItemToTags(tagsToAdd, firstItem, addItemToTags_result);
 		}
 
 		// check for tags to delete
 		if (idsToDelete.length > 0) {
 			console.info(idsToDelete);
-			ItemData.deleteTagsForItem(idsToDelete, currentItem, deleteTagsForItem_result);
+			ItemData.deleteTagsForItem(idsToDelete, firstItem, deleteTagsForItem_result);
 		}
 	};
 
@@ -602,9 +689,9 @@
 		item.id = data.id;
 		item.itemID = data.itemID;
 
-		// update currentItem with returned data
-		currentItem.id = data.id;
-		currentItem.itemID = data.itemID;
+		// update firstItem with returned data
+		firstItem.id = data.id;
+		firstItem.itemID = data.itemID;
 
 		// update initial tags with ids
 		for (var i = 0, len = data.idsAdded.length; i < len; i++) {
