@@ -173,7 +173,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteSingleItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteSingleItem = function(id, itemID, onSuccess) {
+	ItemData.deleteSingleItem = function(id, itemID, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/delete';
 		var userData = User.getUserData();

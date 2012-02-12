@@ -7,7 +7,8 @@
 	var ListData = tmz.module('listData');
 
 	// node cache
-	var selectListNode = $('.list');	// chzn list containers
+	var addListNode = $('#addList');
+	var viewListNode = $('#viewList');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: List Model
@@ -40,7 +41,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.ListView = Backbone.View.extend({
 
-		el: selectListNode,
+		viewListElement: addListNode,
+		addListElement: viewListNode,
+
 		template: _.template($('#list-results-template').html()),
 
         initialize: function() {
@@ -55,10 +58,12 @@
 			this.model.get('orderedList').sort(sortListItemByName);
 
 			// output template to list containers
-			$(this.el).html(this.template(this.model.toJSON()));
+			$(this.viewListElement).html(this.template(this.model.toJSON()));
+			$(this.addListElement).html(this.template(this.model.toJSON()));
 
 			// send event to update chzn dropdown
-			$(this.el).trigger("liszt:updated");
+			$(this.viewListElement).trigger("liszt:updated");
+			$(this.addListElement).trigger("liszt:updated");
 
 			return this;
 		}

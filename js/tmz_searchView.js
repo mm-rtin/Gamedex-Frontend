@@ -5,12 +5,10 @@
 	// module references
 	var DetailView = tmz.module('detailView');
 	var SearchData = tmz.module('searchData');
+	var Utilities = tmz.module('utilities');
 
     // constants
-    var FILTERED_NAMES = ['japan', 'bundle', 'import', 'pack', 'skin', 'faceplate', 'controller', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes'];
     var TIME_TO_SUBMIT_QUERY = 500;	// the number of miliseconds to wait before submiting search query
-    var BROWSENODES = {'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
-    var SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1};
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
 
     // search field timeout
@@ -20,7 +18,7 @@
     var searchTerms = '';
 
     // properties
-    var searchProvider = SEARCH_PROVIDERS.Amazon;
+    var searchProvider = Utilities.getProviders().Amazon;
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
@@ -126,14 +124,7 @@
 		$(searchProviderNode).chosen().change(searchProviderChanged);
 
 		// search results: click
-		$(searchResultsNode).on('click', 'tr', function() {
-
-			// hide popover on clicked item
-			$(this).popover('hide');
-
-			// show item detail
-			DetailView.viewSearchDetail(SearchView.getSearchResult($(this).attr('id')));
-		});
+		$(searchResultsNode).on('click', 'tr', searchResultItem_onClick);
 
 		// displayType toggle
 		$(searchResultsDisplayGroupNode).on('click', 'button', function(e) {
@@ -154,12 +145,12 @@
 			switch (searchProvider) {
 
 				// amazon
-				case SEARCH_PROVIDERS.Amazon:
-					SearchData.searchAmazon(keywords, 0, searchAmazon_result);
+				case Utilities.getProviders().Amazon:
+					SearchData.searchAmazon(keywords, searchAmazon_result);
 					break;
 
 				// giantbomb
-				case SEARCH_PROVIDERS.GiantBomb:
+				case Utilities.getProviders().GiantBomb:
 					SearchData.searchGiantBomb(keywords, searchGiantBomb_result);
 					break;
 			}
@@ -173,10 +164,7 @@
 	var searchAmazon_result = function(data) {
 
 		// local properties
-		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
-		var	re = new RegExp(filter, 'i');
 		var	filtered = false;
-		var	searchItemHTML = '';
 		var tempSearchResults = {};
 		var tempSortedResults = [];
 
@@ -188,36 +176,17 @@
 			// collect attributes into searchItem object
 			var searchItem = {};
 
-			// get attributes from xml
-			searchItem.name = $(this).find('Title').text();
-			searchItem.platform = $(this).find('Platform').text();
-			searchItem.releaseDate = $(this).find('ReleaseDate').text() || 'unknown';
+			// parse amazon result item and get back filtered status, add data to searchItem
+			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
 
-			// filter out non-media item products
-			if (re.test(searchItem.name) || searchItem.platform === '') {
-				console.error(searchItem.name);
-				filtered = true;
-			}
-
-			console.info(searchItem.name);
-
-			// add to search results cache
+			// add temp results object
 			if (!filtered) {
-
-				searchItem.id = $(this).find('ASIN').text();
-				searchItem.asin = $(this).find('ASIN').text();
-				searchItem.gbombID = 0;
-				searchItem.smallImage = $(this).find('ThumbnailImage > URL:first').text() || '';
-				searchItem.thumbnailImage = $(this).find('MediumImage > URL:first').text() || '';
-				searchItem.largeImage = $(this).find('LargeImage > URL:first').text() || '';
-				searchItem.description = $(this).find('EditorialReview > Content:first').text() || '';
 
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
 				// add again to tempSortedResults to sort array by releaseDate
 				tempSortedResults.push(searchItem);
 			}
-			filtered = false;
 		});
 
 		// set tempSearchResults, tempSortedResults to search model
@@ -239,56 +208,16 @@
 		// iterate results array
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// collect properties
+			// collect attributes into searchItem object
 			searchItem = {};
-			searchItem.id = results[i].id;
-			searchItem.asin = 0;
-			searchItem.gbombID = results[i].id;
-			searchItem.name = results[i].name;
-			searchItem.platform = 'n/a';
 
-			// format date
-			if (results[i].original_release_date !== null && results[i].original_release_date !== '') {
-				searchItem.releaseDate = results[i].original_release_date.split(' ')[0];
-			} else {
-				searchItem.releaseDate = '1900-01-01';
-			}
-
-			// set small url
-			if (results[i].image !== null && results[i].image.small_url && results[i].image.small_url !== '') {
-				searchItem.smallImage = results[i].image.small_url;
-			} else {
-				searchItem.smallImage = 'no image.png';
-			}
-
-			// set thumb url
-			if (results[i].image !== null && results[i].image.thumb_url && results[i].image.thumb_url !== '') {
-				searchItem.thumbnailImage = results[i].image.thumb_url;
-			} else {
-				searchItem.thumbnailImage = 'no image.png';
-			}
-
-			// set large url
-			if (results[i].image !== null && results[i].image.super_url && results[i].image.super_url !== '') {
-				searchItem.largeImage = results[i].image.super_url;
-			} else {
-				searchItem.largeImage = 'no image.png';
-			}
-
-			// set description
-			if (results[i].description !== null && results[i].description  !== '') {
-				searchItem.description = results[i].description;
-			} else {
-				searchItem.description = 'No Description';
-			}
+			// parse result item and add to searchItem
+			SearchData.parseGiantBombResultItem(results[i], searchItem);
 
 			// save item in search results cache under ASIN key
 			tempSearchResults[searchItem.id] = searchItem;
 			// add again to tempSortedResults to sort array by releaseDate
 			tempSortedResults.push(searchItem);
-
-
-
 		}
 
 		// set tempSearchResults, tempSortedResults to search model
@@ -325,10 +254,10 @@
 		switch(searchProviderNode.val()) {
 
 			case '0':
-				searchProvider = SEARCH_PROVIDERS.Amazon;
+				searchProvider = Utilities.getProviders().Amazon;
 				break;
 			case '1':
-				searchProvider = SEARCH_PROVIDERS.GiantBomb;
+				searchProvider = Utilities.getProviders().GiantBomb;
 				break;
 		}
 	};
@@ -376,6 +305,8 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* EVENT HANDLERS
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	// search field: keypress (up)
     var inputFieldKeyUp = function(event) {
 
 		// get search value
@@ -394,6 +325,18 @@
 			console.info("start search timer");
 			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
+    };
+
+    // search result: click
+    var searchResultItem_onClick = function() {
+
+		// hide popover on clicked item
+		$(this).popover('hide');
+
+		var searchResult = SearchView.getSearchResult($(this).attr('id'));
+
+		// show item detail
+		DetailView.viewSearchDetail(searchResult);
     };
 
 })(tmz.module('searchView'));

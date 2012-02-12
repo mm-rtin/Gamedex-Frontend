@@ -5,10 +5,21 @@
 	// Dependencies
 	var User = tmz.module('user');
 
+	// constants
+	var SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1};
+
 	// properties
 
 	// timeout
 	var autoFillTimeOut = null;
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getProviders
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Utilities.getProviders = function() {
+
+		return SEARCH_PROVIDERS;
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* selectFieldSubstring
