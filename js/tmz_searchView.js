@@ -15,17 +15,20 @@
     var timeout = null;
 
     // data
-    var searchTerms = '';
+    var searchTerms = 'skyrim';
 
     // properties
     var searchProvider = Utilities.getProviders().Amazon;
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
-    var searchProviderNode = $('#searchProvider');
-    var searchResultsNode = $('#searchResults');
-    var inputFieldNode = $('#search').find('input');
-    var searchResultsDisplayGroupNode = $('#searchResultsDisplayGroup');
+    var $searchProvider = $('#searchProvider');
+    var $searchResults = $('#searchResults');
+    var $inputField = $('#search').find('input');
+    var $searchResultsDisplayGroup = $('#searchResultsDisplayGroup');
+
+    // templates
+    var platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: Model
@@ -47,7 +50,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.View = Backbone.View.extend({
 
-		el: searchResultsNode,
+		el: $searchResults,
 
 		resultsTemplates: [	_.template($('#search-results-list-template').html()),
 							_.template($('#search-results-icon-template').html()),
@@ -62,7 +65,7 @@
 		render: function() {
 
 			// hide all popovers
-			$(searchResultsNode).find('tr').trigger('mouseout');
+			$searchResults.find('tr').trigger('mouseout');
 
 			var sortedSearchResults = [];
 
@@ -80,7 +83,7 @@
 			$(this.el).html(this.resultsTemplates[displayType](this.model.toJSON()));
 
 			// create popover
-			$(searchResultsNode).find('tr').popover({
+			$searchResults.find('tr').popover({
 				trigger: "hover",
 				placement: "right",
 				offset: 10,
@@ -96,7 +99,6 @@
 
 			return this;
 		}
-
 	});
 
     // backbone model
@@ -113,6 +115,7 @@
 		searchProviderChanged();
 
 		SearchView.createEventHandlers();
+
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,22 +124,27 @@
 	SearchView.createEventHandlers = function() {
 
 		// search field: keypress
-		$(inputFieldNode).keyup(inputFieldKeyUp);
+		$inputField.keyup(inputFieldKeyUp);
 
 		// searchProvider: change
-		$(searchProviderNode).chosen().change(searchProviderChanged);
+		$searchProvider.chosen().change(searchProviderChanged);
 
 		// search results: click
-		$(searchResultsNode).on('click', 'tr', searchResultItem_onClick);
+		$searchResults.on('click', 'tr', searchResultItem_onClick);
+
+		// dropdown menu > li: click
+		$searchResults.on('click', '.dropdown-menu li', platformMenu_onClick);
 
 		// displayType toggle
-		$(searchResultsDisplayGroupNode).on('click', 'button', function(e) {
-			e.preventDefault();
+		$searchResultsDisplayGroup.on('click', 'button', function(e) {
 			displayTypeChanged(this);
 		});
 
-		// dropdown menu > li: click
-		$(searchResultsNode).on('click', '.dropdown-menu li', platformMenu_onClick);
+		// search button: click
+		$('#search_btn').click(function() {
+			console.info('click search');
+			SearchView.search(searchTerms);
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,33 +248,24 @@
 
 		// add platform drop down to item results
 		addPlatformDropDown(gbombID, platformList);
-	};
 
+		// get searchItem from model and save platform list to searchItem
+		var searchItem = SearchView.getSearchResult(gbombID);
+		searchItem['platformList'] = platformList;
+
+		// set default platform
+		searchItem.platform = platformList[0];
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addPlatformDropDown -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addPlatformDropDown = function(gbombID, platformList) {
 
-		var i = 0;
-		var dropDown = [];
-		dropDown[i++] = '<ul class="nav nav-pills">';
-		dropDown[i++] = '<li class="dropdown">';
-		dropDown[i++] = '<a href="#" data-toggle="dropdown" class="dropdown-toggle">Platforms <b class="caret"></b></a>';
-		dropDown[i++] = '<ul class="dropdown-menu" id="menu1">';
-
-		// iterate platformList
-		for (var j = 0, len = platformList.length; j < len; j++) {
-			dropDown[i++] = '<li data-content="' + gbombID + '"><a href="#">' + platformList[j] + '</a></li>';
-		}
-
-		dropDown[i++] = '</ul>';
-		dropDown[i++] = '</ul>';
-
-		var dropDownHTML = dropDown.join('');
+		var templateData = {'platformList': platformList, 'gbombID': gbombID};
 
 		// attach to existing result row
-		$('#' + gbombID).find('.title').append(dropDownHTML);
+		$('#' + gbombID).find('.platformDropdown').html(platformDropdownTemplate(templateData));
 	};
 
 
@@ -296,7 +295,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchProviderChanged = function() {
 
-		switch(searchProviderNode.val()) {
+		switch($searchProvider.val()) {
 
 			case '0':
 				searchProvider = Utilities.getProviders().Amazon;
@@ -355,7 +354,7 @@
     var inputFieldKeyUp = function(event) {
 
 		// get search value
-		searchTerms = $(inputFieldNode).val();
+		searchTerms = $inputField.val();
 
 		if (timeout) {
 			clearTimeout(timeout);
@@ -385,16 +384,14 @@
     };
 
     // platform menu: click
-    var platformMenu_onClick = function() {
+    var platformMenu_onClick = function(e) {
 
 		// assign platform to searchItem and relaunch detail view
 		var searchResult = SearchView.getSearchResult($(this).attr('data-content'));
 		searchResult.platform = $(this).find('a').text();
 
-		console.info(searchResult);
-
-		// show item detail
-		DetailView.viewFirstSearchItemDetail(searchResult);
+		// get title element
+		$(this).parent().siblings('.dropdown-toggle').html(searchResult.platform + '<b class="caret"></b>');
     };
 
 })(tmz.module('searchView'));

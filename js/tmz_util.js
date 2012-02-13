@@ -49,7 +49,6 @@
 			clearTimeout(autoFillTimeOut);
 		}
 
-		console.info(event.which);
 		// enter key
 		if (event.which == 13) {
 

@@ -139,11 +139,11 @@
 		// viewList: change
 		$(viewList).chosen().change(viewListChanged);
 
-		// delete-item-btn: click
-		$(itemResultsNode).on('click', '.delete-item-btn', onDeleteBtn_click);
+		// deleteItem_btn: click
+		$(itemResultsNode).on('click', '.deleteItem_btn', onDeleteBtn_click);
 
-		// delete-item-btn: click
-		$(viewItemsContainer).on('click', '#delete-list-btn', onDeleteListBtn_click);
+		// deleteList_btn: click
+		$(viewItemsContainer).on('click', '#deleteList_btn', onDeleteListBtn_click);
 
 		// displayType toggle
 		$(itemResultsDisplayGroup).find('button').click(function(e){

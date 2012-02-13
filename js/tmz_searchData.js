@@ -5,7 +5,7 @@
 	var User = tmz.module('user');
 
 	// constants
-	var FILTERED_NAMES = ['japan', 'bundle', 'import', 'pack', 'skin', 'headset', 'faceplate', 'face plate', 'controller', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes'];
+	var FILTERED_NAMES = ['membership', 'japan', 'import', 'pack', 'skin', 'headset', 'head set', 'faceplate', 'face plate', 'controller', 'stylus', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes', 'shell', 'case'];
 	var BROWSE_NODES = {'all': 0, 'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,7 +82,7 @@
 		var restURL = tmz.api + 'itemdetail/giantbomb/';
 
 		// list of fields to get as query parameter
-		var fieldList = ['platform'];
+		var fieldList = ['platforms'];
 
 		var requestData = {
 			'field_list': fieldList.join(','),
@@ -111,7 +111,7 @@
 		var restURL = tmz.api + 'itemdetail/giantbomb/';
 
 		// list of fields to get as query parameter
-		var fieldList = ['description'];
+		var fieldList = ['description', 'developers'];
 
 		var requestData = {
 			'field_list': fieldList.join(','),
@@ -145,7 +145,7 @@
 
 		// filter out non-media item products
 		if (re.test(itemData.name) || itemData.platform === '') {
-			console.error(itemData.name);
+			//console.error(itemData.name, itemData.platform);
 			isFiltered = true;
 		}
 
@@ -160,6 +160,8 @@
 			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
 		}
 
+		//console.info('------------ AMAZON -------------- ' + itemData.name);
+
 		return isFiltered;
 	};
 
@@ -173,6 +175,8 @@
 		itemData.gbombID = resultItem.id;
 		itemData.name = resultItem.name;
 		itemData.platform = 'n/a';
+
+		//console.info('------------ GIANT BOMB -------------- ' + itemData.name);
 
 		// format date
 		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {

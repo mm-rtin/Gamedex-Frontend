@@ -40,6 +40,10 @@
     var $saveItemContainer = $('#saveItemContainer');
     var $addItemContainer = $('#addItemContainer');
 
+    // templates
+    var modalTemplate = _.template($('#description-modal-template').html());
+    var detailsTemplate = _.template($('#item-details-template').html());
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: Model
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -66,8 +70,8 @@
 		amazonModal: $amazonDescriptionModal,
 		giantBombModal: $giantBombDescriptionModal,
 
-		modalTemplate: _.template($('#description-modal-template').html()),
-		detailsTemplate: _.template($('#item-details-template').html()),
+		modalTemplate: modalTemplate,
+		detailsTemplate: detailsTemplate,
 
         initialize: function() {
 
@@ -78,35 +82,52 @@
 
 		render: function() {
 
-			// output JSON item model to results container
-			var itemData = null;
-			// render giantbomb item
-			if (this.model.get('giantBombItem').id) {
+			var amazonItem = this.model.get('amazonItem');
+			var giantBombItem = this.model.get('giantBombItem');
 
+			var itemData = null;
+
+			// render amazon item
+			if (amazonItem.id && !amazonItem.rendered) {
+
+				console.info('render amazon item');
+				itemData = {'itemData': this.model.toJSON().amazonItem};
+
+				// set status as rendered
+				amazonItem.rendered = true;
+
+				// set detail tab and modal
+				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
+				$(this.amazonModal).html(this.modalTemplate(itemData));
+
+			// clear view
+			} else if (!amazonItem.id) {
+				itemData = {'itemData': {}};
+				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
+				$(this.amazonModal).html(this.modalTemplate(itemData));
+			}
+
+			// render giantbomb item
+			if (giantBombItem.id && !giantBombItem.rendered) {
+
+				console.info('render giant bomb item');
 				itemData = {'itemData': this.model.toJSON().giantBombItem};
+
+				// set status as rendered
+				giantBombItem.rendered = true;
+
+				// set detail tab and modal
 				$(this.giantBombTabElement).html(this.detailsTemplate(itemData));
 				$(this.giantBombModal).html(this.modalTemplate(itemData));
 
 			// clear view
-			} else {
+			} else if (!giantBombItem.id) {
 				itemData = {'itemData': {}};
 				$(this.giantBombTabElement).html(this.detailsTemplate(itemData));
 				$(this.giantBombModal).html(this.modalTemplate(itemData));
 			}
 
-			// render amazon item
-			if (this.model.get('amazonItem').id) {
 
-				itemData = {'itemData': this.model.toJSON().amazonItem};
-				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
-				$(this.amazonModal).html(this.modalTemplate(itemData));
-			} else {
-				itemData = {'itemData': {}};
-				$(this.amazonTabElement).html(this.detailsTemplate(itemData));
-				$(this.amazonModal).html(this.modalTemplate(itemData));
-			}
-
-			//$(pollListNode).append(pollListTemplate(itemData));
 			return this;
 		}
 	});
@@ -189,7 +210,7 @@
 		findItemOnAlternateProvider(firstItem, currentProvider);
 
 		// call main view detail method
-		DetailView.viewSearchDetail(firstItem);
+		viewSearchDetail(firstItem);
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -215,55 +236,7 @@
 		}
 
 		// call main view detail method
-		DetailView.viewSearchDetail(secondItem);
-	};
-
-
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* viewSearchDetail
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.viewSearchDetail = function(item) {
-
-		console.info("VIEW SEARCH DETAIL");
-		console.info(item);
-
-		// reset initial tags, set initial provider
-		initialItemTags = {};
-
-		// get itemID by searching directory of 3rd party IDs
-		var itemID = getItemIDByThirdPartyID(item.gbombID, item.asin);
-		var tagCount = ItemData.getItemTagCountFromDirectory(itemID);
-
-		// exisiting item with tags
-		if (tagCount > 0) {
-
-			changeSubmitButtonStyle('save');
-
-			// update itemID
-			item.itemID = itemID;
-
-			var tagList = ItemData.getItemTagsFromDirectory(itemID);
-
-			// load tags
-			loadTagsFromDirectory(tagList);
-
-		// new item - set user tags
-		} else {
-
-			changeSubmitButtonStyle('add');
-
-			// set user saved tags for new items
-			resetTags();
-			setTags(userSetTags);
-
-			$addList.trigger("liszt:updated");
-		}
-
-		console.info('##### CURRENT ITEM #####');
-		console.info(firstItem);
-
-		// update model item for provider
-		updateModelDataForProvider(currentProvider, item);
+		viewSearchDetail(secondItem);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -316,6 +289,135 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewSearchDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var viewSearchDetail = function(item) {
+
+		console.info("VIEW SEARCH DETAIL");
+		console.info(item);
+
+		// reset initial tags, set initial provider
+		initialItemTags = {};
+
+		// get itemID by searching directory of 3rd party IDs
+		var itemID = getItemIDByThirdPartyID(item.gbombID, item.asin);
+		var tagCount = ItemData.getItemTagCountFromDirectory(itemID);
+
+		// exisiting item with tags
+		if (tagCount > 0) {
+
+			changeSubmitButtonStyle('save');
+
+			// update itemID
+			item.itemID = itemID;
+
+			var tagList = ItemData.getItemTagsFromDirectory(itemID);
+
+			// load tags
+			loadTagsFromDirectory(tagList);
+
+		// new item - set user tags
+		} else {
+
+			changeSubmitButtonStyle('add');
+
+			// set user saved tags for new items
+			resetTags();
+			setTags(userSetTags);
+
+			$addList.trigger("liszt:updated");
+		}
+
+		console.info('##### CURRENT ITEM #####');
+		console.info(firstItem);
+
+		// update model item for provider
+		updateModelDataForProvider(currentProvider, item);
+
+		// start download of item description
+		getDescriptionForTab(currentProvider);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateModelDataForProvider -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateModelDataForProvider = function(provider, item) {
+
+		switch (provider) {
+			case Utilities.getProviders().Amazon:
+				console.info('update amazon');
+				details.set({'amazonItem': item});
+				break;
+
+			case Utilities.getProviders().GiantBomb:
+				console.info('update gb');
+				details.set({'giantBombItem': item});
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getDescriptionForTab -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getDescriptionForTab = function(provider) {
+
+		switch (provider) {
+			case Utilities.getProviders().Amazon:
+				break;
+
+			case Utilities.getProviders().GiantBomb:
+				SearchData.getGiantBombItemDetail(details.get('giantBombItem').gbombID, function(data) {
+					loadDescriptionForProvider(provider, data);
+				});
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loadDescriptionForProvider -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var loadDescriptionForProvider = function(provider, data) {
+
+		var description = data.results.description;
+
+		var itemData = {
+			description: description
+		};
+
+		// set modal html
+		switch (provider) {
+
+			// load amazon description
+			case Utilities.getProviders().Amazon:
+
+				// get amazon item and set description data
+				var amazonItem = details.get('amazonItem');
+				amazonItem.description = description;
+
+				// add item name for description template
+				itemData.name = amazonItem.name;
+
+				$amazonDescriptionModal.html(modalTemplate({'itemData': itemData}));
+
+				break;
+
+			// load giant bomb description
+			case Utilities.getProviders().GiantBomb:
+
+				// get giantbomb item and set description data
+				var giantBombItem = details.get('giantBombItem');
+				giantBombItem.description = description;
+
+				// add item name for description template
+				itemData.name = giantBombItem.name;
+
+				$giantBombDescriptionModal.html(modalTemplate({'itemData': itemData}));
+
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewDescriptionForTab -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewDescriptionForTab = function(currentTab) {
@@ -345,23 +447,6 @@
 		}
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateModelDataForProvider -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateModelDataForProvider = function(provider, item) {
-
-		switch (provider) {
-			case Utilities.getProviders().Amazon:
-				console.info('update amazon');
-				details.set({'amazonItem': item});
-				break;
-
-			case Utilities.getProviders().GiantBomb:
-				console.info('update gb');
-				details.set({'giantBombItem': item});
-				break;
-		}
-	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* clearSecondItemModel -
@@ -407,57 +492,74 @@
 			case Utilities.getProviders().Amazon:
 				console.info('alt search giantbomb');
 				// run search for giantbomb
-				SearchData.searchGiantBomb(item.name, searchGiantBomb_result);
+				SearchData.searchGiantBomb(item.name, searchGiantBombAlternate_result);
 				break;
 
 			case Utilities.getProviders().GiantBomb:
 				console.info('alt search amazon');
 				// run search for amazon
-				SearchData.searchAmazon(item.name, searchAmazon_result);
+				SearchData.searchAmazon(item.name, searchAmazonAlternate_result);
 				break;
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchAmazon_result
+	* searchAmazonAlternate_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchAmazon_result = function(data) {
+	var searchAmazonAlternate_result = function(data) {
 
 		var filtered = false;
 
+		// number of items found
 		var resultLength = ($('Item', data).length);
+		// current number of items parsed
 		var count = 0;
 		var found = false;
+
+		console.info('**************** RESULTS FOUND: ' + resultLength + ' *******************');
 
 		// iterate results
 		$('Item', data).each(function() {
 
 			// collect attributes into searchItem object
 			var searchItem = {};
-
-			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
 			count++;
+
+			// parse item and return if filtered by rules set in searchData
+			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
+
+			console.info(count, resultLength, searchItem.name);
 
 			// found exact title match
 			if (!filtered && firstItem.name === searchItem.name) {
 
+				console.info('################ VIEW SECOND AMAZON ITEM: ' + searchItem.name);
 				found = true;
 				// exact match found - view second item
 				DetailView.viewSecondSearchItemDetail(searchItem);
 
-			// last item
-			} else if (!found && count === resultLength) {
-				console.info('NO RESULTS MATCHED: DISPLAY LIST OF ALL CHOICES');
+			// last item - multiple results returned
+			} else if (!found && count === resultLength && resultLength > 1) {
+				console.info('DISPLAY LIST OF ALL CHOICES');
+
+			// last item - one result returned
+			} else if (!found && count === resultLength && resultLength === 1) {
+
+				console.info('################ DISPLAY LAST AND ONLY ITEM: ' + searchItem.name);
+				// display last item anyway
+				DetailView.viewSecondSearchItemDetail(searchItem);
 			}
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchGiantBomb_result -
+	* searchGiantBombAlternate_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchGiantBomb_result = function(data) {
+	var searchGiantBombAlternate_result = function(data) {
 
 		var results = data.results;
+
+		console.info('**************** RESULTS FOUND: ' + results.length + ' *******************');
 
 		// iterate results
 		for (var i = 0, len = results.length; i < len; i++) {
@@ -471,7 +573,7 @@
 			// check if item name is exact match with initial item name
 			if(firstItem.name === searchItem.name) {
 
-				console.info('@@@@@@@@ VIEW SECOND ITEM');
+				console.info('################ VIEW SECOND GIANT BOMB ITEM: ' + searchItem.name);
 				// exact match found - view second item
 				DetailView.viewSecondSearchItemDetail(searchItem);
 
@@ -480,9 +582,6 @@
 				SearchData.parseGiantBombResultItem(results[0], searchItem);
 				DetailView.viewSecondSearchItemDetail(searchItem);
 			}
-
-			console.info('FOUND FROM GIANT BOMB:');
-			console.info(searchItem.name);
 		}
 	};
 
@@ -493,12 +592,12 @@
 	var changeSubmitButtonStyle = function(style) {
 
 		if (style === 'save') {
-			$($saveItemContainer).show();
-			$($addItemContainer).hide();
+			$saveItemContainer.show();
+			$addItemContainer.hide();
 
 		} else if (style === 'add') {
-			$($saveItemContainer).hide();
-			$($addItemContainer).show();
+			$saveItemContainer.hide();
+			$addItemContainer.show();
 		}
 
 	};
@@ -515,13 +614,13 @@
 		if (gbombID !== 0) {
 			var giantBombDirectory =  ItemData.getGiantBombDirectory();
 			itemID = giantBombDirectory[gbombID];
-			console.info(itemID);
+			console.error(itemID);
 		}
 
 		if (asin !== 0) {
 			var amazonDirectory =  ItemData.getAmazonDirectory();
 			itemID = amazonDirectory[asin];
-			console.info(itemID);
+			console.error(itemID);
 		}
 
 		return itemID;
