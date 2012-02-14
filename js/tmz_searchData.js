@@ -5,7 +5,7 @@
 	var User = tmz.module('user');
 
 	// constants
-	var FILTERED_NAMES = ['membership', 'japan', 'import', 'pack', 'skin', 'headset', 'head set', 'faceplate', 'face plate', 'controller', 'stylus', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes', 'shell', 'case'];
+	var FILTERED_NAMES = ['set', 'accessory', 'covers', 'new', 'software', 'membership', 'japan', 'import', 'pack', 'skin', 'headset', 'head set', 'faceplate', 'face plate', 'controller', 'stylus', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes', 'shell', 'case'];
 	var BROWSE_NODES = {'all': 0, 'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

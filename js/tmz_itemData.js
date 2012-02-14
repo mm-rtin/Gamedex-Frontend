@@ -117,6 +117,7 @@
 			item_releasedate: item.releaseDate,
 			item_asin:  item.asin,
 			item_gbombID: item.gbombID,
+			item_initialProvider: item.initialProvider,
 			item_platform: item.platform,
 			item_smallImage: item.smallImage,
 			item_thumbnailImage: item.thumbnailImage,

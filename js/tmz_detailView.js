@@ -200,6 +200,9 @@
 		// figure out search provider for current item
 		currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
 
+		// add first provider to item data
+		firstItem.initialProvider = currentProvider;
+
 		// clear secondItem model
 		clearSecondItemModel(currentProvider);
 
@@ -242,7 +245,7 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.viewItemDetail = function(itemData) {
+	DetailView.viewItemDetail = function(item) {
 
 		// reset initial tags
 		initialItemTags = {};
@@ -250,7 +253,19 @@
 		changeSubmitButtonStyle('save');
 
 		// clone object as firstItem
-		firstItem = jQuery.extend(true, {}, itemData);
+		firstItem = jQuery.extend(true, {}, item);
+		console.info("VIEW ITEM DETAIL");
+		console.info(firstItem.rendered);
+
+		// get first provider for item
+		// convert to  integer for comparison to provider constants
+		currentProvider = parseInt(firstItem.initialProvider, 10);
+
+		// clear secondItem model
+		clearSecondItemModel(currentProvider);
+
+		// show detail tab for initial provider
+		showTab(currentProvider);
 
 		// get item tags
 		var tagList = ItemData.getItemTagsFromDirectory(firstItem.itemID);
@@ -258,10 +273,11 @@
 		// load tags
 		loadTagsFromDirectory(tagList);
 
-		console.info("VIEW ITEM DETAIL");
-		console.info(firstItem);
+		// update model item for provider
+		updateModelDataForProvider(currentProvider, firstItem);
 
-		details.set({'giantBombItem': firstItem});
+		// start download of item description
+		getDescriptionForTab(currentProvider);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,6 +359,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateModelDataForProvider = function(provider, item) {
 
+		console.info(provider, Utilities.getProviders().Amazon, Utilities.getProviders().GiantBomb);
+
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
 				console.info('update amazon');
@@ -354,6 +372,8 @@
 				details.set({'giantBombItem': item});
 				break;
 		}
+
+		console.info(details.get('giantBombItem'));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,8 +511,15 @@
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
 				console.info('alt search giantbomb');
+
+				// filter unnecessary words from amazon title\
+				var name = item.name;
+				var searchName = name.replace(/\S+ edition$/gi, '');
+
+				console.info('############# ', searchName);
+
 				// run search for giantbomb
-				SearchData.searchGiantBomb(item.name, searchGiantBombAlternate_result);
+				SearchData.searchGiantBomb(searchName, searchGiantBombAlternate_result);
 				break;
 
 			case Utilities.getProviders().GiantBomb:
@@ -512,6 +539,7 @@
 
 		// number of items found
 		var resultLength = ($('Item', data).length);
+		var firstResult = null;
 		// current number of items parsed
 		var count = 0;
 		var found = false;
@@ -528,19 +556,26 @@
 			// parse item and return if filtered by rules set in searchData
 			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
 
+			// save first result
+			if (count === 1) {
+				firstResult = searchItem;
+			}
+
 			console.info(count, resultLength, searchItem.name);
 
 			// found exact title match
 			if (!filtered && firstItem.name === searchItem.name) {
 
-				console.info('################ VIEW SECOND AMAZON ITEM: ' + searchItem.name);
+				console.info('################ FOUND EXACT MATCH: ' + searchItem.name);
 				found = true;
 				// exact match found - view second item
 				DetailView.viewSecondSearchItemDetail(searchItem);
 
 			// last item - multiple results returned
 			} else if (!found && count === resultLength && resultLength > 1) {
-				console.info('DISPLAY LIST OF ALL CHOICES');
+
+				console.info('################ FAILED: VIEW FIRST CHOICE: ' + firstResult.name);
+				DetailView.viewSecondSearchItemDetail(firstResult);
 
 			// last item - one result returned
 			} else if (!found && count === resultLength && resultLength === 1) {
@@ -585,7 +620,6 @@
 		}
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeSubmitButtonStyle
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -599,7 +633,6 @@
 			$saveItemContainer.hide();
 			$addItemContainer.show();
 		}
-
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -649,7 +682,6 @@
 		});
 
 		$addList.trigger("liszt:updated");
-		console.info(initialItemTags);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

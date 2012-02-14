@@ -134,6 +134,8 @@
 
 			// show item detail page
 			DetailView.viewItemDetail(ItemView.getItem($(this).attr('id')));
+
+			console.info(items.get('items'));
 		});
 
 		// viewList: change
@@ -161,6 +163,9 @@
 
 		// clone itemData as new item object
 		var item = jQuery.extend(true, {}, itemData);
+
+		// remove rendered flag
+		delete item.rendered;
 
 		// iterate listIDs
 		for (var i = 0, len = listIDs.length; i < len; i++) {
@@ -279,6 +284,7 @@
 			item.itemID = itemResults.items[i].itemID;
 			item.asin = itemResults.items[i].itemAsin;
 			item.gbombID = itemResults.items[i].itemGBombID;
+			item.initialProvider = itemResults.items[i].item_initialProvider;
 			item.name = itemResults.items[i].itemName;
 			item.description = '';
 			item.platform = itemResults.items[i].itemPlatform;
