@@ -22,26 +22,6 @@
 		return giantBombDirectory;
 	};
 
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getAmazonItemDetail = function(itemData, onSuccess, onError) {
-
-		// method/searchIndex/browseNode/keywords/ResponseGroup/Page
-		var restURL = tmz.api + 'itemlookup_asin/' + encodeURIComponent(asin) + '/Medium';
-
-		$.ajax({
-			url: restURL,
-			type: 'GET',
-			dataType: 'xml',
-			cache: true,
-			success: function(data) {
-				onSuccess(data);
-			},
-			error: onError
-		});
-	};
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItemDirectory
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -280,9 +260,9 @@
 		if (gbombID !== 0) {
 			directory =  ItemData.getGiantBombDirectory();
 			directory[gbombID] = itemID;
-
+		}
 		// amazon
-		} else if (asin !== 0) {
+		if (asin !== 0) {
 			directory =  ItemData.getAmazonDirectory();
 			directory[asin] = itemID;
 		}
@@ -307,6 +287,9 @@
 			}
 
 		});
+
+		console.info(amazonDirectory);
+		console.info(giantBombDirectory);
 
 		// assign itemTags directory
 		itemTagsDirectory = data.directory;

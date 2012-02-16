@@ -74,6 +74,30 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchData.getAmazonItemDetail = function(asin, onSuccess, onError) {
+
+		// browse node, search terms and response group in url
+		var restURL = tmz.api + 'itemdetail/amazon/';
+
+		var requestData = {
+			'asin': asin,
+			'response_group': 'Medium'
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'xml',
+			cache: true,
+			success: onSuccess,
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getGiantBombItemPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchData.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
@@ -84,22 +108,18 @@
 		// list of fields to get as query parameter
 		var fieldList = ['platforms'];
 
-		var requestData = {
-			'field_list': fieldList.join(','),
-			'id': gbombID
-		};
+		getGiantBombItem(gbombID, fieldList, function(data) {
+			onSuccess(data, gbombID);
+		}, onError);
+	};
 
-		$.ajax({
-			url: restURL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-				onSuccess(data, gbombID);
-			},
-			error: onError
-		});
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemDescription -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchData.getGiantBombItemDescription = function(gbombID, onSuccess, onError) {
+
+		var fieldList = ['description', 'developers'];
+		getGiantBombItem(gbombID, fieldList, onSuccess, onError);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,11 +127,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchData.getGiantBombItemDetail = function(gbombID, onSuccess, onError) {
 
+		var fieldList = ['id', 'name', 'original_release_date', 'image', 'description'];
+		getGiantBombItem(gbombID, fieldList, onSuccess, onError);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
+
 		// searchTerms and page number in url
 		var restURL = tmz.api + 'itemdetail/giantbomb/';
-
-		// list of fields to get as query parameter
-		var fieldList = ['description', 'developers'];
 
 		var requestData = {
 			'field_list': fieldList.join(','),
@@ -213,7 +239,6 @@
 			itemData.description = 'No Description';
 		}
 	};
-
 
 })(tmz.module('searchData'));
 

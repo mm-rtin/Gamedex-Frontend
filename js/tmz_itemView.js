@@ -8,6 +8,7 @@
     var DetailView = tmz.module('detailView');
     var ItemData = tmz.module('itemData');
     var ListData = tmz.module('listData');
+    var SearchData = tmz.module('searchData');
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
@@ -132,10 +133,7 @@
 		// item record: click
 		$(viewItemsContainer).on('click', '#itemResults tr', function() {
 
-			// show item detail page
-			DetailView.viewItemDetail(ItemView.getItem($(this).attr('id')));
-
-			console.info(items.get('items'));
+			viewItem($(this).attr('id'));
 		});
 
 		// viewList: change
@@ -216,7 +214,6 @@
 
 		return items.get('items')[id];
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewListChanged -
@@ -310,6 +307,18 @@
 		var date2 = Date.parse(b.releaseDate);
 
 		return date2 - date1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var viewItem = function(id) {
+
+		// get item
+		var item = ItemView.getItem(id);
+
+		// show item detail page
+		DetailView.viewItemDetail(item);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -254,8 +254,6 @@
 
 		// clone object as firstItem
 		firstItem = jQuery.extend(true, {}, item);
-		console.info("VIEW ITEM DETAIL");
-		console.info(firstItem.rendered);
 
 		// get first provider for item
 		// convert to  integer for comparison to provider constants
@@ -266,6 +264,9 @@
 
 		// show detail tab for initial provider
 		showTab(currentProvider);
+
+		// start download of linked item data
+		getLinkedItemData(firstItem, currentProvider);
 
 		// get item tags
 		var tagList = ItemData.getItemTagsFromDirectory(firstItem.itemID);
@@ -278,6 +279,21 @@
 
 		// start download of item description
 		getDescriptionForTab(currentProvider);
+	};
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewSecondItemDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	DetailView.viewSecondItemDetail = function(item) {
+
+		// clone object as secondItem
+		secondItem = jQuery.extend(true, {}, item);
+
+		// figure out provider for current item
+		currentProvider = getItemProvider(secondItem.asin, secondItem.gbombID);
+
+		// update model item for provider
+		updateModelDataForProvider(currentProvider, secondItem);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -386,17 +402,17 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				SearchData.getGiantBombItemDetail(details.get('giantBombItem').gbombID, function(data) {
-					loadDescriptionForProvider(provider, data);
+				SearchData.getGiantBombItemDescription(details.get('giantBombItem').gbombID, function(data) {
+					loadGiantBombDescription(data);
 				});
 				break;
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* loadDescriptionForProvider -
+	* loadGiantBombDescription -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var loadDescriptionForProvider = function(provider, data) {
+	var loadGiantBombDescription = function(data) {
 
 		var description = data.results.description;
 
@@ -404,37 +420,14 @@
 			description: description
 		};
 
-		// set modal html
-		switch (provider) {
+		// get giantbomb item and set description data
+		var giantBombItem = details.get('giantBombItem');
+		giantBombItem.description = description;
 
-			// load amazon description
-			case Utilities.getProviders().Amazon:
+		// add item name for description template
+		itemData.name = giantBombItem.name;
 
-				// get amazon item and set description data
-				var amazonItem = details.get('amazonItem');
-				amazonItem.description = description;
-
-				// add item name for description template
-				itemData.name = amazonItem.name;
-
-				$amazonDescriptionModal.html(modalTemplate({'itemData': itemData}));
-
-				break;
-
-			// load giant bomb description
-			case Utilities.getProviders().GiantBomb:
-
-				// get giantbomb item and set description data
-				var giantBombItem = details.get('giantBombItem');
-				giantBombItem.description = description;
-
-				// add item name for description template
-				itemData.name = giantBombItem.name;
-
-				$giantBombDescriptionModal.html(modalTemplate({'itemData': itemData}));
-
-				break;
-		}
+		$giantBombDescriptionModal.html(modalTemplate({'itemData': itemData}));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -504,6 +497,28 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getLinkedItemData
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getLinkedItemData = function(item, provider) {
+
+		switch (provider) {
+			case Utilities.getProviders().Amazon:
+				console.info('get giantbomb item');
+
+				// get item from giantbomb
+				SearchData.getGiantBombItemDetail(item.gbombID, getGiantBombItemDetail_result);
+				break;
+
+			case Utilities.getProviders().GiantBomb:
+				console.info('get amazon item');
+
+				// get item from amazon
+				SearchData.getAmazonItemDetail(item.asin, getAmazonItemDetail_result);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findItemOnAlternateProvider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var findItemOnAlternateProvider = function(item, provider) {
@@ -512,9 +527,7 @@
 			case Utilities.getProviders().Amazon:
 				console.info('alt search giantbomb');
 
-				// filter unnecessary words from amazon title\
-				var name = item.name;
-				var searchName = name.replace(/\S+ edition$/gi, '');
+				searchName = sanitizeTitle(item.name);
 
 				console.info('############# ', searchName);
 
@@ -540,9 +553,11 @@
 		// number of items found
 		var resultLength = ($('Item', data).length);
 		var firstResult = null;
+		var firstChoice = null;
+		var found = false;
+		var searchItem = {};
 		// current number of items parsed
 		var count = 0;
-		var found = false;
 
 		console.info('**************** RESULTS FOUND: ' + resultLength + ' *******************');
 
@@ -550,41 +565,60 @@
 		$('Item', data).each(function() {
 
 			// collect attributes into searchItem object
-			var searchItem = {};
+			searchItem = {};
 			count++;
 
 			// parse item and return if filtered by rules set in searchData
 			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
 
-			// save first result
-			if (count === 1) {
+			// save first non-filtered result
+			if (!filtered && firstResult === null) {
 				firstResult = searchItem;
 			}
 
-			console.info(count, resultLength, searchItem.name);
-
 			// found exact title match
-			if (!filtered && firstItem.name === searchItem.name) {
+			if (!filtered && firstItem.name.toLowerCase() === searchItem.name.toLowerCase() && searchItem.releaseDate === firstItem.releaseDate) {
 
 				console.info('################ FOUND EXACT MATCH: ' + searchItem.name);
-				found = true;
+
 				// exact match found - view second item
 				DetailView.viewSecondSearchItemDetail(searchItem);
+				found = true;
 
-			// last item - multiple results returned
-			} else if (!found && count === resultLength && resultLength > 1) {
+			// found possible name match, but releaseDates don't match
+			} else if (!filtered && firstItem.name.toLowerCase() === searchItem.name.toLowerCase() && firstChoice === null) {
+				firstChoice = searchItem;
 
-				console.info('################ FAILED: VIEW FIRST CHOICE: ' + firstResult.name);
-				DetailView.viewSecondSearchItemDetail(firstResult);
-
-			// last item - one result returned
-			} else if (!found && count === resultLength && resultLength === 1) {
-
-				console.info('################ DISPLAY LAST AND ONLY ITEM: ' + searchItem.name);
-				// display last item anyway
-				DetailView.viewSecondSearchItemDetail(searchItem);
+			// found exact release date match, but names don't match
+			} else if (!filtered && searchItem.releaseDate === firstItem.releaseDate) {
+				firstChoice = searchItem;
 			}
 		});
+
+
+		// no exact matches - multiple results returned
+		if (!found && resultLength > 1) {
+
+
+			// if firstChoice availble, use it
+			if (firstChoice !== null) {
+				console.info('################ FAILED: VIEW FIRST CHOICE: ', firstChoice);
+				DetailView.viewSecondSearchItemDetail(firstChoice);
+
+			// use first result found
+			} else {
+				console.info('################ FAILED: VIEW FIRST RESULT: ', firstResult);
+				DetailView.viewSecondSearchItemDetail(firstResult);
+			}
+
+
+		// last item - one result returned
+		} else if (!found && resultLength === 1) {
+
+			console.info('################ DISPLAY LAST AND ONLY ITEM: ' + searchItem.name);
+			// display last item anyway
+			DetailView.viewSecondSearchItemDetail(searchItem);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -593,8 +627,13 @@
 	var searchGiantBombAlternate_result = function(data) {
 
 		var results = data.results;
+		var searchItem = {};
+		var sanitizedName = '';
+		var found = false;
 
 		console.info('**************** RESULTS FOUND: ' + results.length + ' *******************');
+
+		console.info(results);
 
 		// iterate results
 		for (var i = 0, len = results.length; i < len; i++) {
@@ -605,20 +644,79 @@
 			// parse result item and add to searchItem
 			SearchData.parseGiantBombResultItem(results[i], searchItem);
 
+			// filter unnecessary words from title
+			sanitizedName = sanitizeTitle(firstItem.name);
+
+			console.info(sanitizedName, searchItem.name);
+
 			// check if item name is exact match with initial item name
-			if(firstItem.name === searchItem.name) {
+			if(sanitizedName.toLowerCase() === searchItem.name.toLowerCase()) {
 
 				console.info('################ VIEW SECOND GIANT BOMB ITEM: ' + searchItem.name);
 				// exact match found - view second item
 				DetailView.viewSecondSearchItemDetail(searchItem);
+				found = true;
 
 			// last item
-			} else if (i === len - 1) {
+			} else if (!found && i === len - 1) {
 				SearchData.parseGiantBombResultItem(results[0], searchItem);
 				DetailView.viewSecondSearchItemDetail(searchItem);
 			}
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getAmazonItemDetail_result = function(data) {
+
+		var detailItem = {};
+		// iterate results
+		$('Item', data).each(function() {
+
+			// collect attributes into detailItem object
+			detailItem = {};
+
+			// parse item and return if filtered by rules set in searchData
+			SearchData.parseAmazonResultItem($(this), detailItem);
+		});
+
+		// display second item
+		DetailView.viewSecondItemDetail(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGiantBombItemDetail_result = function(data) {
+
+		// collect attributes into searchItem object
+		var detailItem = {};
+
+		console.info(data);
+
+		// parse result item and add to searchItem
+		SearchData.parseGiantBombResultItem(data.results, detailItem);
+
+		// display second item
+		DetailView.viewSecondItemDetail(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sanitizeAmazonTitle -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sanitizeTitle = function(title) {
+
+		var sanitizedName = '';
+
+		// filter unnecessary words from amazon title, filter words in parenthesis, brackets, filter everything after '-'
+		sanitizedName = title.replace(/\S+ edition$/gi, '');
+		sanitizedName = sanitizedName.replace(/\s*\(.*\)/gi, '');
+		sanitizedName = sanitizedName.replace(/\s*-.*/gi, '');
+
+		return sanitizedName;
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeSubmitButtonStyle
