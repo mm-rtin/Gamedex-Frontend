@@ -19,10 +19,13 @@
 
     // properties
     var searchProvider = Utilities.getProviders().Amazon;
+    var platform = null;
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
     var $searchProvider = $('#searchProvider');
+    var $platformListContainer = $('#platformContainer');
+    var $platformList = $('#platformList');
     var $searchResults = $('#searchResults');
     var $inputField = $('#search').find('input');
     var $searchResultsDisplayGroup = $('#searchResultsDisplayGroup');
@@ -116,6 +119,9 @@
 
 		SearchView.createEventHandlers();
 
+		// set platform
+		platform = SearchData.getPlatformIndex()[0];
+
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,6 +134,9 @@
 
 		// searchProvider: change
 		$searchProvider.chosen().change(searchProviderChanged);
+
+		// platformList: change
+		$platformList.chosen().change(platformChanged);
 
 		// search results: click
 		$searchResults.on('click', 'tr', searchResultItem_onClick);
@@ -160,7 +169,7 @@
 
 				// amazon
 				case Utilities.getProviders().Amazon:
-					SearchData.searchAmazon(keywords, searchAmazon_result);
+					SearchData.searchAmazon(keywords, platform.amazon, searchAmazon_result);
 					break;
 
 				// giantbomb
@@ -299,12 +308,28 @@
 
 			case '0':
 				searchProvider = Utilities.getProviders().Amazon;
+				// show platform list
+				$platformListContainer.show();
 				break;
 			case '1':
 				searchProvider = Utilities.getProviders().GiantBomb;
+				$platformListContainer.hide();
 				break;
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* platformChanged
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var platformChanged = function() {
+
+		var platformIndex = SearchData.getPlatformIndex();
+		var index = $(this).val();
+
+		// set platform object
+		platform = platformIndex[index];
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* displayTypeChanged
@@ -391,7 +416,7 @@
 		searchResult.platform = $(this).find('a').text();
 
 		// get title element
-		$(this).parent().siblings('.dropdown-toggle').html(searchResult.platform + '<b class="caret"></b>');
+		$(this).parent().siblings('.dropdown-toggle').html(searchResult.platform).append('<b class="caret"></b>');
     };
 
 })(tmz.module('searchView'));

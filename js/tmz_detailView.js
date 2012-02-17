@@ -194,26 +194,29 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     DetailView.viewFirstSearchItemDetail = function(searchItem) {
 
-		// clone object as firstItem
-		firstItem = jQuery.extend(true, {}, searchItem);
+		if (searchItem.id !== firstItem.id || searchItem.platform !== firstItem.platform) {
 
-		// figure out search provider for current item
-		currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
+			// clone object as firstItem
+			firstItem = jQuery.extend(true, {}, searchItem);
 
-		// add first provider to item data
-		firstItem.initialProvider = currentProvider;
+			// figure out search provider for current item
+			currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
 
-		// clear secondItem model
-		clearSecondItemModel(currentProvider);
+			// add first provider to item data
+			firstItem.initialProvider = currentProvider;
 
-		// show detail tab for initial provider
-		showTab(currentProvider);
+			// clear secondItem model
+			clearSecondItemModel(currentProvider);
 
-		// start download of item data from alternate search providers
-		findItemOnAlternateProvider(firstItem, currentProvider);
+			// show detail tab for initial provider
+			showTab(currentProvider);
 
-		// call main view detail method
-		viewSearchDetail(firstItem);
+			// start download of item data from alternate search providers
+			findItemOnAlternateProvider(firstItem, currentProvider);
+
+			// call main view detail method
+			viewSearchDetail(firstItem);
+		}
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -289,11 +292,18 @@
 		// clone object as secondItem
 		secondItem = jQuery.extend(true, {}, item);
 
-		// figure out provider for current item
-		currentProvider = getItemProvider(secondItem.asin, secondItem.gbombID);
+		console.error(firstItem.asin, secondItem.asin);
+		console.error(firstItem.gbombID, secondItem.gbombID);
 
-		// update model item for provider
-		updateModelDataForProvider(currentProvider, secondItem);
+		// make sure that the second item matches the first
+		// fast clicking of view items can cause a desync of item rendering
+		if (firstItem.asin == secondItem.asin || firstItem.gbombID == secondItem.gbombID) {
+			// figure out provider for current item
+			currentProvider = getItemProvider(secondItem.asin, secondItem.gbombID);
+
+			// update model item for provider
+			updateModelDataForProvider(currentProvider, secondItem);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -537,8 +547,19 @@
 
 			case Utilities.getProviders().GiantBomb:
 				console.info('alt search amazon');
+
+				var browseNode = 0;
+
+				// run same platform search
+				if (item.platform !== 'n/a') {
+					console.info('RUN SAME PLATFORM SEARCH');
+					console.info(item.platform);
+
+					browseNode = SearchData.findPlatformIndex(item.platform).amazon;
+				}
+
 				// run search for amazon
-				SearchData.searchAmazon(item.name, searchAmazonAlternate_result);
+				SearchData.searchAmazon(item.name, browseNode, searchAmazonAlternate_result);
 				break;
 		}
 	};
@@ -711,7 +732,7 @@
 
 		// filter unnecessary words from amazon title, filter words in parenthesis, brackets, filter everything after '-'
 		sanitizedName = title.replace(/\S+ edition$/gi, '');
-		sanitizedName = sanitizedName.replace(/\s*\(.*\)/gi, '');
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
 		sanitizedName = sanitizedName.replace(/\s*-.*/gi, '');
 
 		return sanitizedName;

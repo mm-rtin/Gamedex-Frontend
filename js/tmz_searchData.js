@@ -6,7 +6,35 @@
 
 	// constants
 	var FILTERED_NAMES = ['set', 'accessory', 'covers', 'new', 'software', 'membership', 'japan', 'import', 'pack', 'skin', 'headset', 'head set', 'faceplate', 'face plate', 'controller', 'stylus', 'wheel', 'kit', 'wireless', 'combo', 'poster', 'map', 'pre-paid', 'codes', 'shell', 'case'];
-	var BROWSE_NODES = {'all': 0, 'ps3': 14210861, 'xbox': 0, 'xbox360': 14220271, 'pc': 12508701, 'wii': 14219011, 'ds': 11075831, '3ds': 2622270011, 'psp': 12508741, 'vita': 3010557011, 'ps2': 0, 'ps1':0};
+
+	// index matches with platform list values
+	var PLATFORM_INDEX = [
+		{'amazon': 0, alias: 'all'},
+		{'amazon': 12508701, alias: 'pc,windows', name: 'PC'},
+		{'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
+		{'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
+		{'amazon': 14220271, alias: 'xbox 360,microsoft xbox360', name: 'Xbox 360'},
+		{'amazon': 11075831, alias: 'ds,nintendo ds', name: 'Nintendo DS'},
+		{'amazon': 2622270011,alias: '3ds,nintendo 3ds', name: 'Nintendo 3DS'},
+		{'amazon': 14219011, alias: 'wii,nintendo wii', name: 'Nintendo Wii'},
+		{'amazon': 229773, alias: 'ps1,playstation,playstation 1,sony playstation 1,sony playstation', name: 'PlayStation 1'},
+		{'amazon': 301712, alias: 'ps2,playstation 2,sony playstation 2', name: 'PlayStation 2'},
+		{'amazon': 14210861, alias: 'ps3,playstation 3,sony playstation 3', name: 'PlayStation 3'},
+		{'amazon': 3010557011, alias: 'vita,playstation vita,sony vita,sony playstation vita', name: 'PlayStation Vita'},
+		{'amazon': 12508741, alias: 'psp,sony psp', name: 'PSP'},
+		{'amazon': 541022, alias: 'gamecube,nintendo gamecube', name: 'Gamecube'},
+		{'amazon': 229763, alias: 'n64,nintendo 64,nintendo64', name: 'Nintendo 64'},
+		{'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
+		{'amazon': 566458, alias: 'nes,nintendo nes', name: 'NES'},
+		{'amazon': 541020, alias: 'gba,gameboy advance,gbadvance', name: 'Game Boy Advance'},
+		{'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'Game Boy Color'},
+		{'amazon': 1272528011, alias: 'gb,gameboy', name: 'Game Boy'},
+		{'amazon': 229793, alias: 'dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Sega Dreamcast'},
+		{'amazon': 294944, alias: 'saturn,sega saturn', name: 'Sega Saturn'},
+		{'amazon': 294943, alias: 'genesis,sega genesis', name: 'Sega Genesis'},
+		{'amazon': 294942, alias: 'gamegear,game gear,sega gamegear', name: 'Sega Gamegear'},
+		{'amazon': 11000181, alias: 'cd,sega cd', name: 'Sega CD'}
+	];
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getters
@@ -15,10 +43,11 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchAmazon
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchData.searchAmazon = function(keywords, onSuccess, onError) {
+	SearchData.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
+
+		console.info(browseNode);
 
 		var searchTerms = encodeURIComponent(keywords);
-		var browseNode = BROWSE_NODES.all;
 
 		// browse node, search terms and response group in url
 		var restURL = tmz.api + 'itemsearch/amazon/';
@@ -40,6 +69,65 @@
 			success: onSuccess,
 			error: onError
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findPlatformIndex -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchData.findPlatformIndex = function(platformName) {
+
+		var re = new RegExp(platformName, 'gi');
+
+		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
+			if (re.test(PLATFORM_INDEX[i].alias)) {
+				return PLATFORM_INDEX[i];
+			}
+		}
+
+		return PLATFORM_INDEX[0];
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* matchPlatformToIndex -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var matchPlatformToIndex = function(platformName) {
+
+		var re = null;
+		var aliasArray = [];
+		var bestMatch = null;
+		var originalTextLength = platformName.length;
+		var bestMatchLength = 0;
+		var currentMatch = null;
+
+		// reverse lookup - make regex of each platform index alias and match with platformName
+		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
+
+			aliasArray = PLATFORM_INDEX[i].alias.split(',');
+
+			for (var j = 0, aliasLen = aliasArray.length; j < aliasLen; j++) {
+
+				re = new RegExp(aliasArray[j], 'gi');
+				currentMatch = re.exec(platformName);
+
+				if (currentMatch !== null && currentMatch[0].length === originalTextLength) {
+
+					console.info('$$$$$$$$$$$$$$$$$$$$$$ EXACT MATCH WITH: ', PLATFORM_INDEX[i].name);
+					return PLATFORM_INDEX[i];
+
+				} else if (currentMatch !== null && currentMatch[0].length > bestMatchLength) {
+
+					console.info(platformName, '********************* BEST MATCH WITH: ', PLATFORM_INDEX[i].name);
+					bestMatchLength = currentMatch[0].length;
+					bestMatch = PLATFORM_INDEX[i];
+				}
+			}
+		}
+
+		if (bestMatch !== null) {
+			return bestMatch;
+		}
+
+		return PLATFORM_INDEX[0];
 	};
 
 
@@ -184,9 +272,12 @@
 			itemData.thumbnailImage = $resultItem.find('MediumImage > URL:first').text() || '';
 			itemData.largeImage = $resultItem.find('LargeImage > URL:first').text() || '';
 			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
+
+			// standardize platform names
+			itemData.platform = matchPlatformToIndex(itemData.platform).name;
 		}
 
-		//console.info('------------ AMAZON -------------- ' + itemData.name);
+		console.info('------------ AMAZON -------------- ' + itemData.name);
 
 		return isFiltered;
 	};
@@ -202,7 +293,7 @@
 		itemData.name = resultItem.name;
 		itemData.platform = 'n/a';
 
-		//console.info('------------ GIANT BOMB -------------- ' + itemData.name);
+		console.info('------------ GIANT BOMB -------------- ' + itemData.name);
 
 		// format date
 		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {
@@ -238,6 +329,13 @@
 		} else {
 			itemData.description = 'No Description';
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getPlatformIndex -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchData.getPlatformIndex = function() {
+		return PLATFORM_INDEX;
 	};
 
 })(tmz.module('searchData'));
