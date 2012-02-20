@@ -60,6 +60,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.init = function() {
 
+		// debug login
+		User.login('1', '1');
+
 		User.createEventHandlers();
 	};
 

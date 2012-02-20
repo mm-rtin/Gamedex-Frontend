@@ -1,25 +1,75 @@
+@import 'grid.less';
+@import 'giantbomb';
+
+/* SEMANTIC GRID CONFIG
+-----------------------------------------------------------*/
+
+// Specify the number of columns and set column and gutter widths
+@panel-columns: 48;
+@list-columns: 48;
+
+@gutter-width: 40;
+
+// Remove the definition below for a pixel-based layout
+@total-width: 100%;
 
 
-@import "fluid.less";
+/* SEMANTIC GRID STYLES
+-----------------------------------------------------------*/
 
+ /* PANEL STYLES
+  ----------------------- */
+#panel1 {
+  margin-left: 15px;
+  width: 280px;
+}
+#panel2 {
+  .column(12, @panel-columns);
+}
+#panel3 {
+  .column(21, @panel-columns);
+}
+
+
+/* MIXINS
+-----------------------------------------------------------*/
+.boxShadow {
+  -webkit-box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2);
+  -moz-box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2);
+  box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2)
+}
+
+.borderRadius(@radius) {
+  -webkit-border-radius: @radius;
+  -moz-border-radius: @radius;
+  border-radius: @radius;
+}
+
+
+.clear {
+  clear: both;
+}
 
 /* BASE STYLES
 -----------------------------------------------------------*/
 
- html {
+html {
 
- }
+}
 
- body {
-  background-color: #F2F2F2;
+body {
+  background-color: #97a1a6;
   color: #000000;
   padding-bottom: 40px;
   padding-top: 60px;
- }
+}
 
 #wrapper {
-  min-width: 1000px;
+  min-width: 960px;
 }
+
+/* LAYOUT STYLES
+-----------------------------------------------------------*/
 
 #content {
 
@@ -27,24 +77,31 @@
 
 #stickyPanels {
   position: fixed;
-  left: 25%;
+  left: 301px;
   top: 60px;
   width: 100%;
-  min-width: 1000px;
+  min-width: 960px;
+}
+
+.header {
+  position: relative;
+  background-color: #6c777d;
+  height: 17px;
+  color: #ffffff;
+  z-index: 999;
 }
 
 .panel {
+  position: relative;
+  top: -17px;
   background-color: #ffffff;
-  border: 1px solid #C3C3C3;
-  padding: 10px;
-
-  -webkit-box-shadow: 2px 2px 10px 1px rgba(0, 0, 0, .1);
-  -moz-box-shadow: 2px 2px 10px 1px rgba(0, 0, 0, .1);
-  box-shadow: 2px 2px 10px 1px rgba(0, 0, 0, .1);
+  border: 1px solid #777e82;
+  padding: 29px 10px 10px 10px;
+  .boxShadow;
 }
 
 #header {
-  min-width: 1000px;
+  min-width: 960px;
 }
 
 .popover {
@@ -52,11 +109,56 @@
 }
 
 
+
+/* COMPONENT STYLES
+-----------------------------------------------------------*/
+.metascore {
+  background: no-repeat 0 0;
+  display: block;
+  font: bold 15px/32px arial,helvetica,sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  overflow: hidden;
+  height: 32px;
+  width: 32px;
+  color: #ffffff;
+
+  &:link {text-decoration: none;}
+  &:visited {text-decoration: none;}
+  &:hover {text-decoration: none; color: #000000}
+  &:active {text-decoration: none;}
+
+  &.favorable {
+    background-color: #66CC33;
+  }
+  &.neutral {
+    background-color: #FFCC33;
+  }
+  &.unfavorable {
+    background-color: #D70000;
+  }
+  &.unavailable {
+    background-color: #929ca1;
+  }
+}
+
+
+
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
 
 #search {
   margin: 8px 0px 8px 0px;
+}
+
+#searchProviderContainer {
+  color: #000000;
+  margin-bottom: 10px;
+}
+
+#platformContainer {
+
 }
 
 #searchResultsDisplayGroup {
@@ -67,26 +169,72 @@
 
   tr {
     cursor: pointer;
+  }
 
+  .iconView {
+    .image {
+      width: 35%;
+    }
+  }
+  .coverView {
+    .image {
+      width: 50%;
+    }
   }
 }
 
-#searchProviderContainer {
-  color: #000000;
-}
-
-
 /* DETAIL VIEW PANEL
 -----------------------------------------------------------*/
+
+#itemDetails {
+
+
+  table {
+    width: 100%;
+
+    td {
+      padding: 3px;
+    }
+  }
+
+  .itemDetailTitle {
+
+    h3 {
+      display: block;
+      padding: 2px 10px 3px 10px;
+      background-color: #929ca1;
+      color: #ffffff;
+      font-size: 16px;
+      .borderRadius(2px);
+    }
+  }
+
+  .itemDetailMetascore {
+    vertical-align: top;
+    text-align: right;
+
+    .metascore {
+      .borderRadius(2px);
+    }
+  }
+
+  .itemDetailReleaseDate {
+  }
+
+  .itemDetailPlatform {
+
+  }
+
+  .itemDetailThumbnail {
+    padding: 10px;
+  }
+}
 
 #addTolistContainer {
   color: #000000;
   margin: 8px 0px 8px 0px;
 }
 
-#itemDetailThumbnail {
-  padding: 10px;
-}
 
 #giantBombDescription-modal {
   width: 800px;
@@ -101,15 +249,91 @@
 /* ITEM VIEW PANEL
 -----------------------------------------------------------*/
 
-#itemDetailsContainer {
+#viewItemsContainer {
+
+  .optionsGroup {
+    margin: 8px 0px 8px 0px;
+
+    .displayOptions {
+      float: left;
+      margin-right: 14px;
+    }
+    .sortOptions {
+      float: left;
+    }
+  }
 }
+
+
+#itemResultsContainer {
+
+
+}
+
 
 #itemResults {
 
   tr {
     cursor: pointer;
   }
+
+  .display-0 {
+
+    .smallImage, .mediumImage {
+      display: none;
+    }
+    .title {
+
+    }
+    .details {
+      min-width: 150px;
+    }
+    .options {
+      text-align: right;
+    }
+  }
+
+  .display-1 {
+
+    .smallImage {
+      width: 10%;
+      min-width: 60px;
+    }
+    .mediumImage {
+      display: none;
+    }
+    .title {
+
+    }
+    .details {
+      min-width: 150px;
+    }
+    .options {
+      text-align: right;
+    }
+  }
+
+  .display-2 {
+
+    .smallImage {
+      display: none;
+    }
+    .mediumImage {
+      width: 15%;
+      min-width: 100px;
+    }
+    .title {
+
+    }
+    .details {
+      min-width: 150px;
+    }
+    .options {
+      text-align: right;
+    }
+  }
 }
+
 #viewListContainer {
   color: #000000;
 }
@@ -120,93 +344,3 @@
 #deleteList_btn {
   float: right;
 }
-
-#itemResultsDisplayGroup {
-  margin: 8px 0px 8px 0px;
-}
-
-
-/* GIANT BOMB DETAIL
------------------------------------------------------------*/
-.wiki-img {
-    width:150px;
-    padding:8px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-small {
-    width:50px;
-    padding:8px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-thumb {
-    width:150px;
-    padding:3px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-screen {
-    width:192px;
-    padding:3px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-medium {
-    width:150px;
-    padding:8px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-super {
-    padding:8px;
-    background:#FFF;
-    border:solid 1px #CCC;
-    color:#000;
-    font-weight:bold;
-    text-align:center;
-}
-
-.wiki-img-left {
-    background:#FFF;
-    float:left;
-    margin:0px 15px 15px 0px;
-}
-
-.wiki-img-right {
-    background:#FFF;
-    float:right;
-    margin:0px 0px 15px 15px;
-}
-
-.wiki-img-center {
-    background:#FFF;
-    padding:0px 0px 15px 0px;
-}
-
-.plain-list li {
-    list-style-type:square;
-    margin-left:25px;
-    margin-top:6px;
-}
-

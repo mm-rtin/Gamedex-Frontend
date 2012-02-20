@@ -101,7 +101,9 @@
 			item_platform: item.platform,
 			item_smallImage: item.smallImage,
 			item_thumbnailImage: item.thumbnailImage,
-			item_largeImage: item.largeImage
+			item_largeImage: item.largeImage,
+			item_metacriticPage: 'meta page',
+			item_metascore: 100
 		};
 
 		$.ajax({

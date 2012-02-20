@@ -15,18 +15,33 @@
 
     // component references
 
-    // private variables
+    // list
+    var itemList = null;
+	var listOptions = {
+		valueNames: ['item-name'],
+		item: 'list-item'
+	};
+
+	// data
+	var amazonOffers = {};
+
+    // properties
 	var selectedTagID = 0;
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
-    var viewItemsContainer = $('#viewItemsContainer');
-    var itemResultsNode = $('#itemResults');
-    var itemResultsDisplayGroup = $('#itemResultsDisplayGroup');
-    var viewList = $('#viewList');
+    var $viewItemsContainer = $('#viewItemsContainer');
+    var $itemResults = $('#itemResults');
+    var $displayOptions = $('#viewItemsContainer .displayOptions');
+    var $sortOptions = $('#viewItemsContainer .sortOptions');
+    var $viewList = $('#viewList');
 
 	// jquery objects
 	var currentHoverItem = null;
+
+	// templates
+	var priceMenuTemplate = _.template($('#price-menu-template').html());
+	var itemResultsTemplate = _.template($('#item-results-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: Model
@@ -59,10 +74,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.View = Backbone.View.extend({
 
-		el: itemResultsNode,
-		resultsTemplates: [	_.template($('#item-results-list-template').html()),
-							_.template($('#item-results-icon-template').html()),
-							_.template($('#item-results-cover-template').html())],
+		el: $itemResults,
+		resultsTemplate: itemResultsTemplate,
 
         initialize: function() {
 
@@ -83,18 +96,28 @@
 			sortedItems.sort(sortItemsByDate);
 			this.model.set({'sortedItems': sortedItems});
 
-			// output JSON search model to results container
-			// select template based on displayType
-			$(this.el).html(this.resultsTemplates[displayType](this.model.toJSON()));
+			// get model data
+			var templateData = this.model.toJSON();
+
+			console.info(templateData);
+
+			// add displayType to templateData
+			templateData.displayType = displayType;
+
+			// render model data to template
+			$(this.el).html(this.resultsTemplate(templateData));
 
 			// create popover
-			$(itemResultsNode).find('tr').popover({
+			$itemResults.find('li').popover({
 				trigger: "hover",
 				placement: "right",
 				offset: 10,
 				html: true,
 				animate: false
 			});
+
+			// initialize list.js for item list
+			itemList = new List('itemResultsContainer', listOptions);
 		}
 
 	});
@@ -131,24 +154,29 @@
 		});
 
 		// item record: click
-		$(viewItemsContainer).on('click', '#itemResults tr', function() {
-
+		$viewItemsContainer.on('click', '#itemResults tr', function() {
 			viewItem($(this).attr('id'));
 		});
 
 		// viewList: change
-		$(viewList).chosen().change(viewListChanged);
+		$viewList.chosen().change(viewListChanged);
 
 		// deleteItem_btn: click
-		$(itemResultsNode).on('click', '.deleteItem_btn', onDeleteBtn_click);
+		$itemResults.on('click', '.deleteItem_btn', onDeleteBtn_click);
 
 		// deleteList_btn: click
-		$(viewItemsContainer).on('click', '#deleteList_btn', onDeleteListBtn_click);
+		$viewItemsContainer.on('click', '#deleteList_btn', onDeleteListBtn_click);
 
 		// displayType toggle
-		$(itemResultsDisplayGroup).find('button').click(function(e){
+		$displayOptions.find('button').click(function(e) {
 			e.preventDefault();
-			displayTypeChanged(this);
+			changeDisplayType(this);
+		});
+
+		// sortOptions select
+		$sortOptions.find('li a').click(function(e) {
+			e.preventDefault();
+			sortList($(this).attr('data-content'));
 		});
 	};
 
@@ -221,7 +249,7 @@
 	var viewListChanged = function() {
 
 		// save listID
-		selectedTagID = $(viewList).val();
+		selectedTagID = $viewList.val();
 
 		// load items
 		getItems(selectedTagID);
@@ -292,11 +320,82 @@
 
 			// add to lists objects
 			tempItems[item.id] = item;
+
+			// load detailed information
+			getItemDetail(item.id, item.asin, item.gbombID);
 		}
 
 		// set list model data
 		items.set({'items': tempItems});
 	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getItemDetail = function(id, asin, gbombID) {
+
+		// get amazon price
+		SearchData.getAmazonItemOffers(asin, function(data) {
+			parseAmazonOffers(id, asin, data);
+		});
+
+		// get reviews
+
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAmazonOffers -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseAmazonOffers = function(id, asin, data) {
+
+		var offerItem = {};
+		var item = null;
+
+		// iterate xml results, construct offers
+		$('Item', data).each(function() {
+
+			// collect attributes into offerItem object
+			offerItem = {};
+
+			// parse amazon result item, add data to offerItem
+			SearchData.parseAmazonOfferItem($(this), offerItem);
+
+			// add to offers object
+			amazonOffers[asin] = offerItem;
+		});
+
+		// add offerItem to item model
+		item = items.get('items')[id];
+		item.offers = offerItem;
+
+		// add price menu to item results
+		addPriceMenu(id, offerItem);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addPriceMenu -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addPriceMenu = function(id, offerItem) {
+
+		var buyNowPrice = null;
+
+		// iterate offers
+		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
+			if (offerItem.offers[i].avalability === 'now') {
+				buyNowPrice = offerItem.offers[i].price;
+			}
+		}
+
+		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
+
+		var templateData = {'buyNowPrice': buyNowPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
+
+		// attach to existing item result
+		$('#' + id).find('.item-details').html(priceMenuTemplate(templateData));
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortItemsByDate -
@@ -404,38 +503,53 @@
 		ListModel.getList();
 	};
 
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayTypeChanged
+	* sortList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayTypeChanged = function(toggleButton) {
+	var sortList = function(sortType) {
 
-		var currentDisplayType = $(toggleButton).attr('data-content');
+		console.info(sortType);
+		var sortIndex = parseInt(sortType, 10);
 
-		console.info(currentDisplayType);
-		// set new display type if changed
-		if (displayType !== currentDisplayType) {
-			displayType = currentDisplayType;
+		switch (sortIndex) {
 
-			// change display type for current results
-			changeDisplayType();
+			// alphabetical
+			case 0:
+				itemList.sort('item-name', { asc: true });
+				break;
+
+			// review scores
+			case 1:
+
+				break;
+
+			// price
+			case 2:
+
+				break;
 		}
-
-		console.info(displayType);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayType = function() {
+	var changeDisplayType = function(toggleButton) {
 
-		// hide current popover
-		$(currentHoverItem).popover('hide');
-		// reset currentHoverItem
-		currentHoverItem = null;
+		var currentDisplayType = $(toggleButton).attr('data-content');
 
+		// set new display type if changed
+		if (displayType !== currentDisplayType) {
+			displayType = currentDisplayType;
 
-		// trigger change on sortedResults to re-render template for new dislayType
-		items.trigger("change:items");
+			// hide current popover
+			$(currentHoverItem).popover('hide');
+			// reset currentHoverItem
+			currentHoverItem = null;
+
+			// change #itemResults tbody class
+			$itemResults.find('tbody').removeClass().addClass('display-' + displayType);
+		}
 	};
 
 })(tmz.module('itemView'));
