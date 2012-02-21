@@ -118,8 +118,14 @@
 
 			// initialize list.js for item list
 			itemList = new List('itemResultsContainer', listOptions);
-		}
 
+			// set nanoscroll
+			setTimeout(function() {
+				$('#itemResultsContainer.nano').nanoScroller();
+			}, 500);
+
+			return this;
+		}
 	});
 
     // backbone model
@@ -133,9 +139,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.init = function() {
 
+
+
 		ItemView.createEventHandlers();
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
@@ -549,6 +556,9 @@
 
 			// change #itemResults tbody class
 			$itemResults.find('tbody').removeClass().addClass('display-' + displayType);
+
+			// set nanoscroll
+			$('#itemResultsContainer.nano').nanoScroller();
 		}
 	};
 

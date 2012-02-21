@@ -85,20 +85,10 @@
 			// select template based on displayType
 			$(this.el).html(this.resultsTemplates[displayType](this.model.toJSON()));
 
-			// create popover
-			$searchResults.find('tr').popover({
-				trigger: "hover",
-				placement: "right",
-				offset: 10,
-				html: true,
-				animate: false,
-				title: function(){
-					return $(this).attr('data-original-title');
-				},
-				content: function(){
-					return $(this).attr('data-content');
-				}}
-			);
+			// set nanoscroll
+			setTimeout(function() {
+				$('#searchResultsContainer.nano').nanoScroller();
+			}, 500);
 
 			return this;
 		}
@@ -358,6 +348,8 @@
 
 		// trigger change on searchResults to re-render template for new dislayType
 		search.trigger("change:searchResults");
+
+		$('#searchResultsContainer.nano').nanoScroller();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

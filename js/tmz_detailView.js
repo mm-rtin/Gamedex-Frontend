@@ -202,13 +202,15 @@
 
 			// clone object as firstItem
 			firstItem = jQuery.extend(true, {}, searchItem);
-			// add first provider to item data
-			firstItem.initialProvider = currentProvider;
-			// add standard name propery
-			firstItem.standardName = SearchData.standardizeTitle(firstItem.name);
 
 			// figure out search provider for current item
 			currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
+
+			// add first provider to item data
+			firstItem.initialProvider = currentProvider;
+
+			// add standard name propery
+			firstItem.standardName = SearchData.standardizeTitle(firstItem.name);
 
 			// clear secondItem model
 			clearSecondItemModel(currentProvider);
