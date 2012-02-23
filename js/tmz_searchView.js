@@ -10,6 +10,8 @@
     // constants
     var TIME_TO_SUBMIT_QUERY = 500;	// the number of miliseconds to wait before submiting search query
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
+    var PANEL_HEIGHT_OFFSET = 240;
+    var PANEL_HEIGHT_PADDING = 40;
 
     // search field timeout
     var timeout = null;
@@ -26,11 +28,13 @@
     var $searchProvider = $('#searchProvider');
     var $platformListContainer = $('#platformContainer');
     var $platformList = $('#platformList');
+    var $searchResultsContainer = $('#searchResultsContainer');
     var $searchResults = $('#searchResults');
     var $inputField = $('#search').find('input');
     var $searchResultsDisplayGroup = $('#searchResultsDisplayGroup');
 
     // templates
+    var searchResultsTemplate = _.template($('#search-results-template').html());
     var platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,9 +59,7 @@
 
 		el: $searchResults,
 
-		resultsTemplates: [	_.template($('#search-results-list-template').html()),
-							_.template($('#search-results-icon-template').html()),
-							_.template($('#search-results-cover-template').html())],
+		resultsTemplate: searchResultsTemplate,
 
         initialize: function() {
 
@@ -66,9 +68,6 @@
         },
 
 		render: function() {
-
-			// hide all popovers
-			$searchResults.find('tr').trigger('mouseout');
 
 			var sortedSearchResults = [];
 
@@ -81,15 +80,21 @@
 			sortedSearchResults.sort(sortItemsByDate);
 			this.model.set({'sortedSearchResults': sortedSearchResults});
 
+			// get model data
+			var templateData = this.model.toJSON();
+
+			// add displayType to templateData
+			templateData.displayType = displayType;
+
 			// output JSON search model to results container
-			// select template based on displayType
-			$(this.el).html(this.resultsTemplates[displayType](this.model.toJSON()));
+			$(this.el).html(this.resultsTemplate(templateData));
 
 			// set nanoscroll
 			setTimeout(function() {
-				$('#searchResultsContainer.nano').nanoScroller();
+				$searchResultsContainer.nanoScroller();
 			}, 500);
 
+			SearchView.resizePanel();
 			return this;
 		}
 	});
@@ -136,7 +141,8 @@
 
 		// displayType toggle
 		$searchResultsDisplayGroup.on('click', 'button', function(e) {
-			displayTypeChanged(this);
+			e.preventDefault();
+			changeDisplayType(this);
 		});
 
 		// search button: click
@@ -144,6 +150,10 @@
 			console.info('click search');
 			SearchView.search(searchTerms);
 		});
+
+		// window, searchResults: resized
+		$searchResults.resize(SearchView.resizePanel);
+		$(window).resize(SearchView.resizePanel);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,6 +177,23 @@
 					SearchData.searchGiantBomb(keywords, searchGiantBomb_result);
 					break;
 			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resizePanel -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.resizePanel = function() {
+
+		var windowHeight = $(window).height();
+		var resultsHeight = $searchResults.height();
+
+		console.info(resultsHeight);
+
+		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
+			$searchResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
+		} else {
+			$searchResultsContainer.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
 		}
 	};
 
@@ -320,36 +347,23 @@
 		platform = platformIndex[index];
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayTypeChanged
+	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayTypeChanged = function(toggleButton) {
+	var changeDisplayType = function(toggleButton) {
 
-		console.info('changed');
 		var currentDisplayType = $(toggleButton).attr('data-content');
 
-		console.info(currentDisplayType);
 		// set new display type if changed
 		if (displayType !== currentDisplayType) {
 			displayType = currentDisplayType;
 
-			// change display type for current results
-			changeDisplayType();
+			// change #itemResults tbody class
+			$searchResults.find('tbody').removeClass().addClass('display-' + displayType);
+
+			// set nanoscroll
+			$('#itemResultsContainer.nano').nanoScroller();
 		}
-
-		console.info(displayType);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeDisplayType
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayType = function() {
-
-		// trigger change on searchResults to re-render template for new dislayType
-		search.trigger("change:searchResults");
-
-		$('#searchResultsContainer.nano').nanoScroller();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -390,9 +404,6 @@
 
     // search result: click
     var searchResultItem_onClick = function() {
-
-		// hide popover on clicked item
-		$(this).popover('hide');
 
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
 

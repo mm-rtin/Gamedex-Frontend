@@ -125,6 +125,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.deleteTagsForItem = function(listIDs, currentItem, onSuccess, onError) {
 
+		console.info(currentItem);
+
 		var restURL = tmz.api + 'item/batch-delete';
 		var userData = User.getUserData();
 
@@ -211,6 +213,8 @@
 	* deleteTagFromDirectory
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagFromDirectory = function(itemID, tagID) {
+
+		console.info(itemTagsDirectory);
 
 		console.info(itemID);
 		console.info(tagID);

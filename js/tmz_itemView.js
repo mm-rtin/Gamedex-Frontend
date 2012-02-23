@@ -9,11 +9,13 @@
     var ItemData = tmz.module('itemData');
     var ListData = tmz.module('listData');
     var SearchData = tmz.module('searchData');
+    var Metacritic = tmz.module('metacritic');
+    var AmazonPrice = tmz.module('amazonPrice');
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
-
-    // component references
+    var PANEL_HEIGHT_OFFSET = 200;
+    var PANEL_HEIGHT_PADDING = 40;
 
     // list
     var itemList = null;
@@ -23,7 +25,6 @@
 	};
 
 	// data
-	var amazonOffers = {};
 
     // properties
 	var selectedTagID = 0;
@@ -31,6 +32,7 @@
 
     // node cache
     var $viewItemsContainer = $('#viewItemsContainer');
+    var $itemResultsContainer = $('#itemResultsContainer');
     var $itemResults = $('#itemResults');
     var $displayOptions = $('#viewItemsContainer .displayOptions');
     var $sortOptions = $('#viewItemsContainer .sortOptions');
@@ -99,29 +101,18 @@
 			// get model data
 			var templateData = this.model.toJSON();
 
-			console.info(templateData);
-
 			// add displayType to templateData
 			templateData.displayType = displayType;
 
 			// render model data to template
 			$(this.el).html(this.resultsTemplate(templateData));
 
-			// create popover
-			$itemResults.find('li').popover({
-				trigger: "hover",
-				placement: "right",
-				offset: 10,
-				html: true,
-				animate: false
-			});
-
 			// initialize list.js for item list
 			itemList = new List('itemResultsContainer', listOptions);
 
 			// set nanoscroll
 			setTimeout(function() {
-				$('#itemResultsContainer.nano').nanoScroller();
+				$itemResultsContainer.nanoScroller();
 			}, 500);
 
 			return this;
@@ -185,6 +176,10 @@
 			e.preventDefault();
 			sortList($(this).attr('data-content'));
 		});
+
+		// window, itemResults: resized
+		$itemResults.resize(ItemView.resizePanel);
+		$(window).resize(ItemView.resizePanel);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,6 +224,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.updateListDeletions = function(itemsDeleted) {
 
+		console.info(itemsDeleted, selectedTagID);
+
 		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
 			if (itemsDeleted[i].tagID == selectedTagID) {
 
@@ -251,6 +248,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resizePanel -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.resizePanel = function() {
+
+		var windowHeight = $(window).height();
+		var resultsHeight = $itemResults.height();
+
+		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
+			$itemResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
+		} else {
+			$itemResultsContainer.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewListChanged -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewListChanged = function() {
@@ -266,9 +278,6 @@
 	* getItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getItems = function(listID) {
-
-		// hide current popover
-		$(currentHoverItem).popover('hide');
 
 		// clear current item list
 		$('#itemResults').empty();
@@ -329,7 +338,7 @@
 			tempItems[item.id] = item;
 
 			// load detailed information
-			getItemDetail(item.id, item.asin, item.gbombID);
+			getItemDetail(item);
 		}
 
 		// set list model data
@@ -338,71 +347,18 @@
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDetail -
+	* getItemDetail - loads and displays specialized item detail and populates new data into item model
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItemDetail = function(id, asin, gbombID) {
+	var getItemDetail = function(item) {
 
 		// get amazon price
-		SearchData.getAmazonItemOffers(asin, function(data) {
-			parseAmazonOffers(id, asin, data);
-		});
+		var priceSelector = '#' + item.id + ' .priceDetails';
+		AmazonPrice.getAmazonItemOffers(item.asin, item, priceSelector);
 
 		// get reviews
-
+		var metacriticSelector = '#' + item.id + ' .metascore';
+		metacriticData = Metacritic.searchMetacritic(item.name, item, metacriticSelector);
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonOffers -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonOffers = function(id, asin, data) {
-
-		var offerItem = {};
-		var item = null;
-
-		// iterate xml results, construct offers
-		$('Item', data).each(function() {
-
-			// collect attributes into offerItem object
-			offerItem = {};
-
-			// parse amazon result item, add data to offerItem
-			SearchData.parseAmazonOfferItem($(this), offerItem);
-
-			// add to offers object
-			amazonOffers[asin] = offerItem;
-		});
-
-		// add offerItem to item model
-		item = items.get('items')[id];
-		item.offers = offerItem;
-
-		// add price menu to item results
-		addPriceMenu(id, offerItem);
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addPriceMenu -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addPriceMenu = function(id, offerItem) {
-
-		var buyNowPrice = null;
-
-		// iterate offers
-		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
-			if (offerItem.offers[i].avalability === 'now') {
-				buyNowPrice = offerItem.offers[i].price;
-			}
-		}
-
-		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
-
-		var templateData = {'buyNowPrice': buyNowPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
-
-		// attach to existing item result
-		$('#' + id).find('.item-details').html(priceMenuTemplate(templateData));
-	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortItemsByDate -
@@ -438,9 +394,6 @@
 		// get id from delete button attribute
 		var id = $(this).attr('data-content');
 
-		// trigger mouse out to remove any popovers
-		$(e.target).trigger('mouseout');
-
 		// delete item from server
 		ItemData.deleteSingleItem(id, items.get('items')[id].itemID, deleteItem_result);
 
@@ -457,7 +410,7 @@
 		var tempItems = items.get('items');
 		var item = tempItems[id];
 
-		// check if item found
+		// check if item faund
 		if (item !== null) {
 
 			// remove tag from detail view
@@ -516,6 +469,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
+		console.info(items.get('items'));
+
 		console.info(sortType);
 		var sortIndex = parseInt(sortType, 10);
 
@@ -549,16 +504,11 @@
 		if (displayType !== currentDisplayType) {
 			displayType = currentDisplayType;
 
-			// hide current popover
-			$(currentHoverItem).popover('hide');
-			// reset currentHoverItem
-			currentHoverItem = null;
-
 			// change #itemResults tbody class
 			$itemResults.find('tbody').removeClass().addClass('display-' + displayType);
 
 			// set nanoscroll
-			$('#itemResultsContainer.nano').nanoScroller();
+			$itemResultsContainer.nanoScroller();
 		}
 	};
 

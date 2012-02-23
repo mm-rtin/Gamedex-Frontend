@@ -1,22 +1,18 @@
 // DETAIL VIEW
 (function(DetailView) {
 
-    // constants
-
-    // modules references
+    // module references
     var User = tmz.module('user');
     var Utilities = tmz.module('utilities');
-
     var ListModel = tmz.module('list');
-
     var SearchView = tmz.module('searchView');
     var ItemView = tmz.module('itemView');
-
     var ItemData = tmz.module('itemData');
 	var SearchData = tmz.module('searchData');
+	var ItemLinker = tmz.module('itemLinker');
+	var Metacritic = tmz.module('metacritic');
 
     // properties
-    var metacriticDomain = 'http://www.metacritic.com';
     var currentProvider = null;
     var saveInProgress = false;
     var currentTab = '#amazonTab';
@@ -38,8 +34,8 @@
     var $giantBombTabLink = $('#giantBombTabLink');
 
     var $addList = $('#addList');
-    var $saveItemContainer = $('#saveItemContainer');
-    var $addItemContainer = $('#addItemContainer');
+    var $saveItemButton = $('#saveItem_btn');
+    var $addItemButton = $('#addItem_btn');
 
     // templates
     var modalTemplate = _.template($('#description-modal-template').html());
@@ -149,7 +145,7 @@
 		DetailView.createEventHandlers();
 
 		// hide save button
-		$($saveItemContainer).hide();
+		$($saveItemButton).hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,13 +153,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     DetailView.createEventHandlers = function() {
 
-		var addTolistContainer = $('#addTolistContainer');
+		var addListContainer = $('#addListContainer');
 
 		// addToList: keypress
-		$(addTolistContainer).find('input').live({
+		$(addListContainer).find('input').live({
 			// keypress event
 			keydown: function(event){
-				Utilities.handleInputKeyDown(event, addTolistContainer, ListModel);
+				Utilities.handleInputKeyDown(event, addListContainer, ListModel);
 			}
 		});
 
@@ -215,17 +211,17 @@
 			// clear secondItem model
 			clearSecondItemModel(currentProvider);
 
-			// get metacritic page
-			getMetacriticPage(firstItem.standardName);
-
 			// show detail tab for initial provider
 			showTab(currentProvider);
 
-			// start download of item data from alternate search providers
-			findItemOnAlternateProvider(firstItem, currentProvider);
+			// find item on alernate provider and view item as second search item
+			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, DetailView.viewSecondSearchItemDetail);
+
+			// get metacritic page
+			getMetacriticPage(firstItem.standardName);
 
 			// display tags
-			loadAndDisplayTags(searchItem);
+			loadAndDisplayTags(firstItem);
 
 			// call main view detail method
 			viewSearchDetail(firstItem);
@@ -258,6 +254,21 @@
 		viewSearchDetail(secondItem);
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewSearchDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var viewSearchDetail = function(item) {
+
+		console.info("VIEW SEARCH DETAIL");
+		console.info(item);
+
+		// update model item for provider
+		updateModelDataForProvider(currentProvider, item);
+
+		// start download of item description
+		getDescriptionForTab(currentProvider);
+	};
+
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -287,7 +298,7 @@
 		showTab(currentProvider);
 
 		// start download of linked item data
-		getLinkedItemData(firstItem, currentProvider);
+		ItemLinker.getLinkedItemData(firstItem, currentProvider, DetailView.viewSecondItemDetail);
 
 		// get item tags
 		var tagList = ItemData.getItemTagsFromDirectory(firstItem.itemID);
@@ -325,7 +336,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* removeTagForItemID
+	* removeTagForItemID - if tags for item removed outside, call to update currently viewing item
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.removeTagForItemID = function(itemID, tagID) {
 		console.info('remove tag for item ID');
@@ -349,22 +360,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* viewSearchDetail
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewSearchDetail = function(item) {
-
-		console.info("VIEW SEARCH DETAIL");
-		console.info(item);
-
-		// update model item for provider
-		updateModelDataForProvider(currentProvider, item);
-
-		// start download of item description
-		getDescriptionForTab(currentProvider);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateModelDataForProvider -
+	* updateModelDataForProvider - set corresponding model object based on provider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateModelDataForProvider = function(provider, item) {
 
@@ -490,279 +486,12 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getLinkedItemData
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getLinkedItemData = function(item, provider) {
-
-		switch (provider) {
-			case Utilities.getProviders().Amazon:
-				console.info('get giantbomb item');
-
-				// get item from giantbomb
-				SearchData.getGiantBombItemDetail(item.gbombID, getGiantBombItemDetail_result);
-				break;
-
-			case Utilities.getProviders().GiantBomb:
-				console.info('get amazon item');
-
-				// get item from amazon
-				SearchData.getAmazonItemDetail(item.asin, getAmazonItemDetail_result);
-				break;
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* findItemOnAlternateProvider
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findItemOnAlternateProvider = function(item, provider) {
-
-		switch (provider) {
-			case Utilities.getProviders().Amazon:
-				console.info('alt search giantbomb');
-
-				searchName = item.standardName;
-
-				console.info('############# ', searchName);
-
-				// run search for giantbomb
-				SearchData.searchGiantBomb(searchName, parseGiantBombAlternate_result);
-				break;
-
-			case Utilities.getProviders().GiantBomb:
-				console.info('alt search amazon');
-
-				var browseNode = 0;
-
-				// run same platform search
-				if (item.platform !== 'n/a') {
-					console.info('RUN SAME PLATFORM SEARCH');
-					console.info(item.platform);
-
-					browseNode = SearchData.getStandardPlatform(item.platform).amazon;
-				}
-
-				// run search for amazon
-				SearchData.searchAmazon(item.name, browseNode, parseAmazonAlternate_result);
-				break;
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonAlternate_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonAlternate_result = function(data) {
-
-		var filtered = false;
-
-		// number of items found
-		var resultLength = ($('Item', data).length);
-		var firstResult = null;
-		var firstChoice = null;
-		var found = false;
-		var searchItem = {};
-		// current number of items parsed
-		var count = 0;
-
-		console.info('**************** RESULTS FOUND: ' + resultLength + ' *******************');
-
-		// iterate results
-		$('Item', data).each(function() {
-
-			// collect attributes into searchItem object
-			searchItem = {};
-			count++;
-
-			// parse item and return if filtered by rules set in searchData
-			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
-
-			// save first non-filtered result
-			if (!filtered && firstResult === null) {
-				firstResult = searchItem;
-			}
-
-			// found exact title and release date match
-			if (!filtered && firstItem.name.toLowerCase() === searchItem.name.toLowerCase() && searchItem.releaseDate === firstItem.releaseDate) {
-
-				console.info('################ FOUND EXACT MATCH: ' + searchItem.name);
-
-				// exact match found - view second item
-				DetailView.viewSecondSearchItemDetail(searchItem);
-				found = true;
-
-			// found possible name match, but releaseDates don't match - don't match again if firstChoice defined
-			} else if (!filtered && firstItem.name.toLowerCase() === searchItem.name.toLowerCase() && firstChoice === null) {
-				firstChoice = searchItem;
-
-			// found exact release date match, but names don't match - this choice takes precedance over name match
-			} else if (!filtered && searchItem.releaseDate === firstItem.releaseDate) {
-				firstChoice = searchItem;
-			}
-		});
-
-
-		// no exact matches - multiple results returned
-		if (!found && resultLength > 1) {
-
-
-			// if firstChoice availble, use it
-			if (firstChoice !== null) {
-				console.info('################ FAILED: VIEW FIRST CHOICE: ', firstChoice);
-				DetailView.viewSecondSearchItemDetail(firstChoice);
-
-			// use first result found
-			} else {
-				console.info('################ FAILED: VIEW FIRST RESULT: ', firstResult);
-				DetailView.viewSecondSearchItemDetail(firstResult);
-			}
-
-
-		// last item - one result returned
-		} else if (!found && resultLength === 1) {
-
-			console.info('################ DISPLAY LAST AND ONLY ITEM: ' + searchItem.name);
-			// display last item anyway
-			DetailView.viewSecondSearchItemDetail(searchItem);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGiantBombAlternate_result -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGiantBombAlternate_result = function(data) {
-
-		var results = data.results;
-		var searchItem = {};
-		var standardizedName = '';
-		var found = false;
-
-		console.info('**************** RESULTS FOUND: ' + results.length + ' *******************');
-
-		console.info(results);
-
-		// iterate results
-		for (var i = 0, len = results.length; i < len; i++) {
-
-			// collect attributes into searchItem object
-			searchItem = {};
-
-			// parse result item and add to searchItem
-			SearchData.parseGiantBombResultItem(results[i], searchItem);
-
-			// filter unnecessary words from title
-			standardizedName = firstItem.standardName;
-
-			console.info(standardizedName, searchItem.name);
-
-			// check if item name is exact match with initial item name
-			if(standardizedName === searchItem.name.toLowerCase()) {
-
-				console.info('################ VIEW SECOND GIANT BOMB ITEM: ' + searchItem.name);
-				// exact match found - view second item
-				DetailView.viewSecondSearchItemDetail(searchItem);
-				found = true;
-
-			// last item
-			} else if (!found && i === len - 1) {
-				SearchData.parseGiantBombResultItem(results[0], searchItem);
-				DetailView.viewSecondSearchItemDetail(searchItem);
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetacriticPage -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getMetacriticPage = function(title) {
 
-		SearchData.searchMetacritic(title, parseMetacriticSearch_result);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseMetacriticSearch_result -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseMetacriticSearch_result = function(data) {
-
-		var matchedResult = SearchData.parseMetacriticResultItem(data, firstItem);
-
-		// add metacritic data to firstItem
-		if (matchedResult !== null && matchedResult.score !== '') {
-			firstItem.metascore = matchedResult.score;
-			firstItem.metacriticPage = matchedResult.page;
-		} else if (matchedResult !== null) {
-			firstItem.metascore = -1;
-			firstItem.metacriticPage = matchedResult.page;
-		} else {
-			firstItem.metascore = -1;
-			firstItem.metacriticPage = '';
-		}
-
-		// add metacritic info to item detail
-		displayMetacriticData(firstItem.metacriticPage, firstItem.metascore);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayMetacriticData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayMetacriticData = function(page, score) {
-
-		$itemDetailMetascore = $(currentTab).find('.metascore');
-
-		// determine score color
-		var colorClass = 'favorable';
-		if (score < 0) {
-			score = 'n/a';
-			colorClass = 'unavailable';
-		} else if (score < 50) {
-			colorClass = 'unfavorable';
-		} else if (score < 75) {
-			colorClass = 'neutral';
-		}
-
-		$itemDetailMetascore
-			.html(score)
-			.addClass(colorClass)
-			.attr('href', metacriticDomain + page)
-			.attr('data-original-title', 'metacritic.com' + page);
-
-		// activate tooltip
-		$itemDetailMetascore.tooltip();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getAmazonItemDetail_result = function(data) {
-
-		var detailItem = {};
-		// iterate results
-		$('Item', data).each(function() {
-
-			// collect attributes into detailItem object
-			detailItem = {};
-
-			// parse item and return if filtered by rules set in searchData
-			SearchData.parseAmazonResultItem($(this), detailItem);
-		});
-
-		// display second item
-		DetailView.viewSecondItemDetail(detailItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDetail_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItemDetail_result = function(data) {
-
-		// collect attributes into searchItem object
-		var detailItem = {};
-
-		console.info(data);
-
-		// parse result item and add to searchItem
-		SearchData.parseGiantBombResultItem(data.results, detailItem);
-
-		// display second item
-		DetailView.viewSecondItemDetail(detailItem);
+		var metacriticSelector = currentTab + ' .metascore';
+		metacriticData = Metacritic.searchMetacritic(title, firstItem, metacriticSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -771,12 +500,12 @@
 	var changeSubmitButtonStyle = function(style) {
 
 		if (style === 'save') {
-			$saveItemContainer.show();
-			$addItemContainer.hide();
+			$saveItemButton.show();
+			$addItemButton.hide();
 
 		} else if (style === 'add') {
-			$saveItemContainer.hide();
-			$addItemContainer.show();
+			$saveItemButton.hide();
+			$addItemButton.show();
 		}
 	};
 
@@ -805,7 +534,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* loadAndDisplayTags -
+	* loadAndDisplayTags - find and display tags in select list for search items
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadAndDisplayTags = function(item) {
 
@@ -836,14 +565,14 @@
 
 			// set user saved tags for new items
 			resetTags();
-			setTags(userSetTags);
+			setUserTags(userSetTags);
 
 			$addList.trigger("liszt:updated");
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* selectTagsFromDirectory
+	* selectTagsFromDirectory - set tags in tagList as selected in addList
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var selectTagsFromDirectory = function(tagList) {
 
@@ -868,38 +597,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* loadTags
+	* setUserTags - tags user defined for adding new items to tag(s)
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var loadTags = function(tagList) {
-
-		// properties
-		var option = null;
-		var tag = null;
-
-		// clear selected attributes from all options
-		resetTags();
-
-		// iterate tags and add to select list
-		for (var i = 0, len = tagList.length; i < len; i++) {
-			tag = tagList[i];
-
-			// get option node
-			option = $addList.find('#' + tag.tagID);
-
-			// select option
-			$(option).attr('selected', '');
-
-			// create associate of tags with item ids
-			initialItemTags[tag.tagID] = tag.id;
-		}
-
-		$addList.trigger("liszt:updated");
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* setTags
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var setTags = function(tagList) {
+	var setUserTags = function(tagList) {
 
 		if (tagList) {
 
@@ -915,7 +615,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* resetTags
+	* resetTags - clear all selected attributes
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var resetTags = function() {
 
@@ -927,7 +627,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* saveItemChanges
+	* saveItemChanges - change tags for item: delete or add
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var saveItemChanges = function() {
 
@@ -1031,26 +731,5 @@
 		// save userSetTags
 		userSetTags = $addList.val();
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* itemlookupResults
-	* @param {object} data
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var itemlookupResults = function(data) {
-
-		// iterate xml results
-		var itemDetail = {};
-		itemDetail.asin = $(data).find('ASIN').text();
-		itemDetail.name = $(data).find('Title').text();
-		itemDetail.platform = $(data).find('Platform').text();
-		itemDetail.releaseDate = $(data).find('ReleaseDate').text();
-		itemDetail.thumbnailLocation = $(data).find('MediumImage > URL').text();
-
-		// save item in search results cache under ASIN key
-		searchResults[itemDetail.asin] = itemDetail;
-
-		populateItemDetailPanel(itemDetail);
-	};
-
 
 })(tmz.module('detailView'));

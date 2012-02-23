@@ -48,32 +48,34 @@ $(document).ready(function() {
 tmz.initialize = function() {
 
 	// set application properties
-	this.api = '/';
+	tmz.api = '/';
 
 	// module references
-	this.util = this.module('utilities');
+	tmz.util = tmz.module('utilities');
 
 	// models
-	this.user = this.module('user');
-	this.listModel = this.module('list');
+	tmz.user = tmz.module('user');
+	tmz.listModel = tmz.module('list');
 
 	// data interfaces
-	this.itemData = this.module('itemData');
-	this.listData = this.module('listData');
-	this.searchData = this.module('searchData');
+	tmz.itemData = tmz.module('itemData');
+	tmz.listData = tmz.module('listData');
+	tmz.searchData = tmz.module('searchData');
 
 	// views
-	this.searchView = this.module('searchView');
-	this.detailView = this.module('detailView');
-	this.itemView = this.module('itemView');
+	tmz.searchView = tmz.module('searchView');
+	tmz.detailView = tmz.module('detailView');
+	tmz.itemView = tmz.module('itemView');
+
+	// linkers
+	tmz.itemLinker = tmz.module('itemLinker');
 
 	// 3rd party libaries
-	this.initializeLibraries();
+	tmz.initializeLibraries();
 
 	// event handling
-	this.initializeModules();
+	tmz.initializeModules();
 };
-
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initializeLibraries
