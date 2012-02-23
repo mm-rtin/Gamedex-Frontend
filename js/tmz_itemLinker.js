@@ -1,4 +1,4 @@
-// ItemLinker
+// ItemLinker$
 (function(ItemLinker) {
 
 	// Dependencies
