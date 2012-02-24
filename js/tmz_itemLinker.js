@@ -189,12 +189,14 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseGiantBombAlternate_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGiantBombAlternate_result = function(data, originalItem, onSuccess) {
+	var parseGiantBombAlternate_result = function(data, sourceItem, onSuccess) {
 
 		var results = data.results;
-		var searchItem = {};
+		var searchResult = {};
 		var standardizedName = '';
 		var found = false;
+		var currentBestMatch = null;
+		var currentBestPoints = 0;
 
 		console.info('**************** RESULTS FOUND: ' + results.length + ' *******************');
 
@@ -203,34 +205,74 @@
 		// iterate results
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// collect attributes into searchItem object
-			searchItem = {};
+			// collect attributes into searchResult object
+			searchResult = {};
 
-			// parse result item and add to searchItem
-			SearchData.parseGiantBombResultItem(results[i], searchItem);
+			// parse result item and add to searchResult
+			SearchData.parseGiantBombResultItem(results[i], searchResult);
+			console.info(sourceItem, searchResult);
 
-			// filter unnecessary words from title
-			standardizedName = originalItem.standardName;
-
-			console.info(standardizedName, searchItem.name);
-
-			// check if item name is exact match with initial item name
-			if(standardizedName === searchItem.name.toLowerCase()) {
-
-				console.info('################ VIEW SECOND GIANT BOMB ITEM: ' + searchItem.name);
-				// exact match found - view second item
-				onSuccess(searchItem);
-				found = true;
-
-			// last item
-			} else if (!found && i === len - 1) {
-				SearchData.parseGiantBombResultItem(results[0], searchItem);
-				onSuccess(searchItem);
+			// init best match with first item
+			if (i === 0) {
+				currentBestMatch = searchResult;
 			}
+
+			// add data to similarity index
+			var points = 0;
+
+			// use standard name for search result
+			standardResultName = SearchData.standardizeTitle(searchResult.name);
+
+
+			// exact name check
+			if (sourceItem.standardName === searchResult.name.toLowerCase()) {
+				points += 10;
+
+
+			// fuzzy name check
+			} else {
+				// check if searchResult title exists within original title and vice versa
+				reSource = new RegExp(sourceItem.standardName, 'gi');
+				reSearch = new RegExp(standardResultName, 'gi');
+				sourceInTarget = reSource.exec(standardResultName);
+				targetInSource = reSearch.exec(sourceItem.standardName);
+
+				if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
+					points += 5;
+				}
+			}
+
+			// exact release date check
+			if (sourceItem.releaseDate === searchResult.releaseDate) {
+				points += 10;
+
+			// fuzzy release date check
+			} else {
+				var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchResult.releaseDate) ) / 86400000);
+
+				if (diff < 10) {
+					points += 9;
+				} else if (diff < 30) {
+					points += 5;
+				} else if (diff < 60) {
+					points += 2;
+				} else if (diff < 120) {
+					points += 1;
+				}
+			}
+
+			if (points > currentBestPoints) {
+				currentBestMatch = searchResult;
+				currentBestPoints = points;
+			}
+
+			console.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+			console.info(points);
 		}
+
+		// return best match
+		onSuccess(currentBestMatch);
 	};
-
-
 
 
 })(tmz.module('itemLinker'));
