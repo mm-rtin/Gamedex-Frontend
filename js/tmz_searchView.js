@@ -147,7 +147,7 @@
 
 		// search button: click
 		$('#search_btn').click(function() {
-			console.info('click search');
+			// console.info('click search');
 			SearchView.search(searchTerms);
 		});
 
@@ -188,7 +188,7 @@
 		var windowHeight = $(window).height();
 		var resultsHeight = $searchResults.height();
 
-		console.info(resultsHeight);
+		// console.info(resultsHeight);
 
 		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
 			$searchResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
@@ -212,14 +212,11 @@
 		// iterate xml results, filter results and construct search results array
 		$('Item', data).each(function() {
 
-			// collect attributes into searchItem object
-			searchItem = {};
-
 			// parse amazon result item and get back filtered status, add data to searchItem
-			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
+			searchItem = SearchData.parseAmazonResultItem($(this));
 
 			// add temp results object
-			if (!filtered) {
+			if (typeof searchItem.isFiltered === 'undefined') {
 
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
@@ -243,11 +240,8 @@
 		// iterate results array
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// collect attributes into searchItem object
-			searchItem = {};
-
-			// parse result item and add to searchItem
-			SearchData.parseGiantBombResultItem(results[i], searchItem);
+			// parse result item and set searchItem
+			searchItem = SearchData.parseGiantBombResultItem(results[i]);
 
 			// get platform information for each item by gbombID
 			SearchData.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
@@ -267,10 +261,19 @@
 
 		var platforms = data.results.platforms;
 		var platformList = [];
+		var standardPlatform = '';
 
 		for (var i = 0, len = platforms.length; i < len; i++) {
-			platformList.push(platforms[i].name);
+
+			console.info(platforms[i].name);
+			// standardize platform names
+			standardPlatform = SearchData.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
+
+			platformList.push(standardPlatform);
+			// platformList.push(platforms[i].name);
 		}
+
+		console.info('--------------------------------------');
 
 		// add platform drop down to item results
 		addPlatformDropDown(gbombID, platformList);
@@ -371,7 +374,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchFieldTimeOut = function() {
 
-		console.info("search timeout: search current search terms");
+		// console.info("search timeout: search current search terms");
 
 		clearTimeout(timeout);
 		SearchView.search(searchTerms);
@@ -397,7 +400,7 @@
 
 		// start search timer
 		} else {
-			console.info("start search timer");
+			// console.info("start search timer");
 			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
     };

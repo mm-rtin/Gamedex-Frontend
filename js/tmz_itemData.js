@@ -125,7 +125,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.deleteTagsForItem = function(listIDs, currentItem, onSuccess, onError) {
 
-		console.info(currentItem);
+		// console.info(currentItem);
 
 		var restURL = tmz.api + 'item/batch-delete';
 		var userData = User.getUserData();
@@ -214,10 +214,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagFromDirectory = function(itemID, tagID) {
 
-		console.info(itemTagsDirectory);
+		// console.info(itemTagsDirectory);
 
-		console.info(itemID);
-		console.info(tagID);
+		// console.info(itemID);
+		// console.info(tagID);
 		var itemTags = itemTagsDirectory[itemID];
 
 		// remove tag from item
@@ -226,7 +226,7 @@
 		// decrement tagCount
 		itemTags.tagCount += -1;
 
-		console.info(itemTagsDirectory);
+		// console.info(itemTagsDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,7 +252,7 @@
 			itemTagsDirectory[data.itemID].tagCount += 1;
 		}
 
-		console.info(itemTagsDirectory);
+		// console.info(itemTagsDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -273,7 +273,7 @@
 			directory[asin] = itemID;
 		}
 
-		console.info(directory);
+		// console.info(directory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -294,8 +294,8 @@
 
 		});
 
-		console.info(amazonDirectory);
-		console.info(giantBombDirectory);
+		// console.info(amazonDirectory);
+		// console.info(giantBombDirectory);
 
 		// assign itemTags directory
 		itemTagsDirectory = data.directory;

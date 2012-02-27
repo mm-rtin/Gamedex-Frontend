@@ -6,17 +6,170 @@
 	var Utilities = tmz.module('utilities');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* standardizeTitle -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.standardizeTitle = function(title) {
+
+		var sanitizedName = '';
+		var re = null;
+		var reRoman = null;
+
+		var match = null;
+		var match2 = null;
+		var roman = '';
+		var dec = 0;
+		var num = 0;
+		var arr = null;
+
+		// remove word that appears before 'edition'
+		sanitizedName = title.replace(/\S+ edition$/gi, '');
+		// remove brackets and parenthesis
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
+
+		// remove words appearing after '-' unless it is less than 4 chars
+		re = new RegExp('\\s*-.*', 'gi');
+		match = re.exec(sanitizedName);
+		if (match && match[0].length > 3) {
+			sanitizedName = sanitizedName.replace(re, '');
+		}
+
+		// remove words appearing after 'with'
+		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
+
+		// remove 'the ' if at the start of title
+		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
+
+		return sanitizedName.toLowerCase();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getSimilarityScore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
+
+		// matching properties
+		var score = 0;
+
+		// use standard name for search result
+		var standardResultName = ItemLinker.standardizeTitle(searchItem.name);
+		// get standard platform name from platform
+		var standardPlatform = SearchData.getStandardPlatform(searchItem.platform);
+
+		// exact name check
+		if (sourceItem.standardName === searchItem.name.toLowerCase()) {
+			console.info('exact name: 50 score');
+			score += 50;
+
+		// fuzzy name check
+		} else {
+			// check if searchItem title exists within original title and vice versa
+			reSource = new RegExp(sourceItem.standardName, 'gi');
+			reSearch = new RegExp(standardResultName, 'gi');
+			sourceInTarget = reSource.exec(standardResultName);
+			targetInSource = reSearch.exec(sourceItem.standardName);
+
+			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
+				console.info('fuzzy name: 5 score');
+				score += 5;
+			}
+		}
+
+		// exact release date check
+		if (sourceItem.releaseDate === searchItem.releaseDate) {
+			score += 10;
+			console.info('release date: 10 score');
+
+		// fuzzy release date check
+		} else {
+			var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+
+			// don't subtract score if search result date is unknown/unreleased
+			if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
+				score -= Math.abs(diff / 365);
+			}
+		}
+
+		// platform match
+
+
+
+
+		console.info('------------------------------');
+		console.info(sourceItem.standardName, ' - ', standardResultName);
+		console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
+		console.info(sourceItem.platform, ' - ', searchItem.platform);
+		console.info(score);
+		console.info('------------------------------');
+
+		return score;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* convertRomanNumerals -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.convertRomanNumerals = function(name) {
+
+		reRoman = new RegExp('\\s[XVI]+', 'gi');
+		match = reRoman.exec(name);
+
+		// roman numeral found
+		if (match && match[0].length > 0) {
+
+			roman = match[0];
+			// remove III first and set dec to start at 3
+			// the simplified converter below does add 'III' of anything correctly
+			re = new RegExp('III', 'gi');
+			match2 = re.exec(roman);
+
+			if (match2 && match2[0].length > 0) {
+				dec = 3;
+				roman = roman.replace(re, '');
+			}
+
+			arr = roman.split('');
+
+			// iterate each roman character except last blank character
+			for (var i = arr.length - 1; i >= 1; i--) {
+				switch(arr[i]) {
+					case 'I':
+				num = 1;
+				break;
+					case 'V':
+				num = 5;
+				break;
+					case 'X':
+				num = 10;
+				break;
+			}
+
+			if (num < dec) {
+				dec = dec - num;
+			} else {
+				dec = dec + num;
+			}
+
+			}
+
+			// replace roman with decimal
+			name = name.replace(reRoman, ' ' + dec);
+		}
+
+		return name;
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findItemOnAlternateProvider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemLinker.findItemOnAlternateProvider = function(item, provider, onSuccess) {
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				console.info('alt search giantbomb');
+				// console.info('alt search giantbomb');
 
 				searchName = item.standardName;
 
-				console.info('############# ', searchName);
+				console.info('findItemOnAlternateProvider: searchName: ', searchName);
 
 				// run search for giantbomb
 				SearchData.searchGiantBomb(searchName, function(data) {
@@ -25,14 +178,14 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				console.info('alt search amazon');
+				// console.info('alt search amazon');
 
 				var browseNode = 0;
 
 				// run same platform search
 				if (item.platform !== 'n/a') {
-					console.info('RUN SAME PLATFORM SEARCH');
-					console.info(item.platform);
+					// console.info('RUN SAME PLATFORM SEARCH');
+					// console.info(item.platform);
 
 					browseNode = SearchData.getStandardPlatform(item.platform).amazon;
 				}
@@ -52,7 +205,7 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				console.info('get giantbomb item');
+				// console.info('get giantbomb item');
 
 				// get item from giantbomb
 				SearchData.getGiantBombItemDetail(item.gbombID, function(data) {
@@ -61,7 +214,7 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				console.info('get amazon item');
+				// console.info('get amazon item');
 
 				// get item from amazon
 				SearchData.getAmazonItemDetail(item.asin, function(data) {
@@ -80,11 +233,8 @@
 		// iterate results
 		$('Item', data).each(function() {
 
-			// collect attributes into detailItem object
-			detailItem = {};
-
-			// parse item and return if filtered by rules set in searchData
-			SearchData.parseAmazonResultItem($(this), detailItem);
+			// parse item and set detailItem
+			detailItem = SearchData.parseAmazonResultItem($(this));
 		});
 
 		// display second item
@@ -96,13 +246,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getGiantBombItemDetail_result = function(data, onSuccess) {
 
-		// collect attributes into searchItem object
-		var detailItem = {};
-
-		console.info(data);
-
-		// parse result item and add to searchItem
-		SearchData.parseGiantBombResultItem(data.results, detailItem);
+		// parse result item and set detailItem
+		var detailItem = SearchData.parseGiantBombResultItem(data.results);
 
 		// display second item
 		onSuccess(detailItem);
@@ -111,78 +256,49 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonAlternate_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonAlternate_result = function(data, originalItem, onSuccess) {
+	var parseAmazonAlternate_result = function(data, sourceItem, onSuccess) {
 
-		var filtered = false;
-
-		// number of items found
 		var resultLength = ($('Item', data).length);
-		var firstResult = null;
-		var firstChoice = null;
-		var found = false;
 		var searchItem = {};
-		// current number of items parsed
 		var count = 0;
 
-		console.info('**************** RESULTS FOUND: ' + resultLength + ' *******************');
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		console.info('**************** parseAmazonAlternate_result found: ' + resultLength + ' *******************');
 
 		// iterate results
 		$('Item', data).each(function() {
 
-			// collect attributes into searchItem object
-			searchItem = {};
-			count++;
+			// parse item and return searchItem
+			searchItem = SearchData.parseAmazonResultItem($(this));
 
-			// parse item and return if filtered by rules set in searchData
-			filtered = SearchData.parseAmazonResultItem($(this), searchItem);
+			// searchItem not filtered
+			if (typeof searchItem.isFiltered === 'undefined') {
 
-			// save first non-filtered result
-			if (!filtered && firstResult === null) {
-				firstResult = searchItem;
-			}
+				// save first non-filtered result
+				if (count === 0) {
+					firstResult = searchItem;
+				}
 
-			// found exact title and release date match
-			if (!filtered && originalItem.name.toLowerCase() === searchItem.name.toLowerCase() && searchItem.releaseDate === originalItem.releaseDate) {
+				count++;
+				// get similarity score
+				score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
 
-				console.info('################ FOUND EXACT MATCH: ' + searchItem.name);
-
-				// exact match found - view second item
-				onSuccess(searchItem);
-				found = true;
-
-			// found possible name match, but releaseDates don't match - don't match again if firstChoice defined
-			} else if (!filtered && originalItem.name.toLowerCase() === searchItem.name.toLowerCase() && firstChoice === null) {
-				firstChoice = searchItem;
-
-			// found exact release date match, but names don't match - this choice takes precedance over name match
-			} else if (!filtered && searchItem.releaseDate === originalItem.releaseDate) {
-				firstChoice = searchItem;
+				// check if score is new best
+				if (score > bestScore) {
+					bestMatch = searchItem;
+					bestScore = score;
+				}
 			}
 		});
 
-
-		// no exact matches - multiple results returned
-		if (!found && resultLength > 1) {
-
-
-			// if firstChoice availble, use it
-			if (firstChoice !== null) {
-				console.info('################ FAILED: VIEW FIRST CHOICE: ', firstChoice);
-				onSuccess(firstChoice);
-
-			// use first result found
-			} else {
-				console.info('################ FAILED: VIEW FIRST RESULT: ', firstResult);
-				onSuccess(firstResult);
-			}
-
-
-		// last item - one result returned
-		} else if (!found && resultLength === 1) {
-
-			console.info('################ DISPLAY LAST AND ONLY ITEM: ' + searchItem.name);
-			// display last item anyway
-			onSuccess(searchItem);
+		// return best match to onSuccess method
+		if (resultLength !== 0) {
+			// return best match
+			onSuccess(bestMatch);
 		}
 	};
 
@@ -193,85 +309,42 @@
 
 		var results = data.results;
 		var searchResult = {};
-		var standardizedName = '';
-		var found = false;
-		var currentBestMatch = null;
-		var currentBestPoints = 0;
 
-		console.info('**************** RESULTS FOUND: ' + results.length + ' *******************');
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
 
-		console.info(results);
+		console.info('**************** parseGiantBombAlternate_result found: ' + results.length + ' *******************');
 
-		// iterate results
+		// console.info(results);
+
+		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// collect attributes into searchResult object
-			searchResult = {};
-
-			// parse result item and add to searchResult
-			SearchData.parseGiantBombResultItem(results[i], searchResult);
-			console.info(sourceItem, searchResult);
+			// parse result into searchResult object
+			searchResult = SearchData.parseGiantBombResultItem(results[i]);
 
 			// init best match with first item
 			if (i === 0) {
-				currentBestMatch = searchResult;
+				bestMatch = searchResult;
 			}
 
-			// add data to similarity index
-			var points = 0;
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchResult);
 
-			// use standard name for search result
-			standardResultName = SearchData.standardizeTitle(searchResult.name);
-
-
-			// exact name check
-			if (sourceItem.standardName === searchResult.name.toLowerCase()) {
-				points += 10;
-
-
-			// fuzzy name check
-			} else {
-				// check if searchResult title exists within original title and vice versa
-				reSource = new RegExp(sourceItem.standardName, 'gi');
-				reSearch = new RegExp(standardResultName, 'gi');
-				sourceInTarget = reSource.exec(standardResultName);
-				targetInSource = reSearch.exec(sourceItem.standardName);
-
-				if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
-					points += 5;
-				}
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchResult;
+				bestScore = score;
 			}
-
-			// exact release date check
-			if (sourceItem.releaseDate === searchResult.releaseDate) {
-				points += 10;
-
-			// fuzzy release date check
-			} else {
-				var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchResult.releaseDate) ) / 86400000);
-
-				if (diff < 10) {
-					points += 9;
-				} else if (diff < 30) {
-					points += 5;
-				} else if (diff < 60) {
-					points += 2;
-				} else if (diff < 120) {
-					points += 1;
-				}
-			}
-
-			if (points > currentBestPoints) {
-				currentBestMatch = searchResult;
-				currentBestPoints = points;
-			}
-
-			console.info('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-			console.info(points);
 		}
 
-		// return best match
-		onSuccess(currentBestMatch);
+		// return best match to onSuccess method
+		if (results.length !== 0) {
+			// return best match
+			onSuccess(bestMatch);
+		}
 	};
 
 

@@ -61,7 +61,7 @@ html {
 
 body {
   background-color: #97a1a6;
-  color: #000000;
+  color: #3C3C3C;
   padding-top: 60px;
 }
 
@@ -69,6 +69,12 @@ body {
   min-width: 960px;
   text-align: center;
   margin: 0 15px;
+
+  /* BOOTSTRAP OVERRIDES
+  -----------------------------------------------------------*/
+  .btn {
+    font-size: 12px;
+  }
 }
 
 #content {
@@ -100,7 +106,6 @@ body {
 }
 
 .popover {
-  color: #000000;
 }
 
 
@@ -121,7 +126,7 @@ body {
 
   &:link {text-decoration: none;}
   &:visited {text-decoration: none;}
-  &:hover {text-decoration: none; color: #000000}
+  &:hover {text-decoration: none;}
   &:active {text-decoration: none;}
 
   &.favorable {
@@ -143,6 +148,15 @@ body {
 .nano .pane .slider { background: #111; }
 
 
+/* MODALS
+-----------------------------------------------------------*/
+#filters-modal {
+
+  .modal-body {
+    height: 300px;
+  }
+
+}
 
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
@@ -152,7 +166,6 @@ body {
 }
 
 #searchProviderContainer {
-  color: #000000;
   margin: 0px 10px 10px 0px;
   float: left;
 }
@@ -255,6 +268,10 @@ body {
 
   .itemDetailThumbnail {
     padding: 10px;
+
+    img {
+      max-width: 100%;
+    }
   }
 }
 
@@ -272,13 +289,13 @@ body {
 
 
 #giantBombDescription-modal {
-  width: 800px;
-  margin: -250px 0 0 -400px;
+  width: 960px;
+  margin: -250px 0 0 -480px;
 }
 
 #amazonDescription-modal {
-  width: 800px;
-  margin: -250px 0 0 -400px;
+  width: 960px;
+  margin: -250px 0 0 -480px;
 }
 
 /* ITEM VIEW PANEL
@@ -293,8 +310,10 @@ body {
       float: left;
       margin-right: 14px;
     }
-    .sortOptions {
+
+    .dateFilter {
       float: left;
+      margin-right: 14px;
     }
   }
 }
@@ -315,8 +334,11 @@ body {
     .smallImage, .mediumImage {
       display: none;
     }
-    .title {
+    .itemName {
 
+    }
+    .calendarDate {
+      display: none;
     }
     .priceDetails {
       min-width: 150px;
@@ -335,8 +357,12 @@ body {
     .mediumImage {
       display: none;
     }
-    .title {
+    .itemName {
 
+    }
+    .calendarDate {
+      font-size: 12px;
+      color: #7D7D7D;
     }
     .priceDetails {
       min-width: 150px;
@@ -355,8 +381,12 @@ body {
       width: 15%;
       min-width: 100px;
     }
-    .title {
+    .itemName {
 
+    }
+    .calendarDate {
+      font-size: 12px;
+      color: #7D7D7D;
     }
     .priceDetails {
       min-width: 150px;
@@ -368,11 +398,15 @@ body {
 }
 
 #viewListContainer {
-  color: #000000;
+  float: left;
+  margin-right: 15px;
 }
-
 #viewList {
 }
+.sortOptions {
+  float: left;
+}
+
 
 #deleteList_btn {
   float: right;

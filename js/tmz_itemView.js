@@ -9,8 +9,9 @@
     var ItemData = tmz.module('itemData');
     var ListData = tmz.module('listData');
     var SearchData = tmz.module('searchData');
-    var Metacritic = tmz.module('metacritic');
+    var Metascore = tmz.module('metascore');
     var AmazonPrice = tmz.module('amazonPrice');
+    var ItemLinker = tmz.module('itemLinker');
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
@@ -20,22 +21,25 @@
     // list
     var itemList = null;
 	var listOptions = {
-		valueNames: ['item-name'],
+		valueNames: ['itemName', 'metascore', 'calendarDate'],
 		item: 'list-item'
 	};
 
-	// data
+	// data cache
+	amazonOffersCache = {};
+	metascoreCache = {};
 
     // properties
 	var selectedTagID = 0;
     var displayType = DISPLAY_TYPE.Icons;
+    var currentSortIndex = 0;
 
     // node cache
     var $viewItemsContainer = $('#viewItemsContainer');
     var $itemResultsContainer = $('#itemResultsContainer');
     var $itemResults = $('#itemResults');
-    var $displayOptions = $('#viewItemsContainer .displayOptions');
-    var $sortOptions = $('#viewItemsContainer .sortOptions');
+    var $displayOptions = $viewItemsContainer.find('.displayOptions');
+    var $sortOptions = $viewItemsContainer.find('.sortOptions');
     var $viewList = $('#viewList');
 
 	// jquery objects
@@ -51,8 +55,7 @@
 	ItemView.Model = Backbone.Model.extend({
 
 		defaults: {
-			items: {},
-			sortedItems: []
+			items: {}
         },
 
         initialize: function() {
@@ -81,22 +84,11 @@
 
         initialize: function() {
 
-            // sortedItems: changed
+            // items: changed
             this.model.bind('change:items', this.render, this);
         },
 
 		render: function() {
-
-			var sortedItems = [];
-
-			// generate sorted items array
-			_.each(this.model.get('items'), function(item, key) {
-				sortedItems.push(item);
-			});
-
-			// sort results
-			sortedItems.sort(sortItemsByDate);
-			this.model.set({'sortedItems': sortedItems});
 
 			// get model data
 			var templateData = this.model.toJSON();
@@ -107,8 +99,16 @@
 			// render model data to template
 			$(this.el).html(this.resultsTemplate(templateData));
 
+			// load extra information for each item
+			_.each(this.model.get('items'), function(item, key) {
+				getExtraItemInfo(item);
+			});
+
 			// initialize list.js for item list
 			itemList = new List('itemResultsContainer', listOptions);
+
+			// sort using current sort method
+			sortList(currentSortIndex);
 
 			// set nanoscroll
 			setTimeout(function() {
@@ -130,8 +130,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.init = function() {
 
-
-
 		ItemView.createEventHandlers();
 	};
 
@@ -142,11 +140,31 @@
 
 		var viewlistContainer = $('#viewListContainer');
 
+		// filter buttons
+        $('#filters-modal').on('click', '.btn-group button', function(e) {
+            e.preventDefault();
+        });
+
+		// listFilters_btn: click
+		$('#listFilters_btn').click(function(e) {
+			e.preventDefault();
+
+			$('#filters-modal').modal('show');
+		});
+
+		// applyFilters_btn: click
+		$('#applyFilters_btn').click(function(e) {
+			e.preventDefault();
+			console.info('apply filters');
+
+			applyFilters();
+		});
+
 		// viewList: keypress
 		$(viewlistContainer).find('input').live({
 			// keypress event
 			keydown: function(e){
-				console.info('viewlist');
+				// console.info('viewlist');
 				Utilities.handleInputKeyDown(e, viewlistContainer, ListModel);
 			}
 		});
@@ -200,10 +218,13 @@
 
 			if (listIDs[i] == selectedTagID) {
 
-				console.info('update items at: ' + listIDs[i]);
+				// console.info('update items at: ' + listIDs[i]);
 
 				// update item with related id for listID needing update
 				item.id = itemIDs[i];
+
+				// add custom formated properties
+				addCustomProperties(item);
 
 				// get model data
 				var tempItems = items.get('items');
@@ -224,7 +245,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.updateListDeletions = function(itemsDeleted) {
 
-		console.info(itemsDeleted, selectedTagID);
+		// console.info(itemsDeleted, selectedTagID);
 
 		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
 			if (itemsDeleted[i].tagID == selectedTagID) {
@@ -240,9 +261,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.getItem = function(id) {
 
-		console.info('get item:');
-		console.info(id);
-		console.info(items.get('items'));
+		// console.info('get item:');
+		// console.info(id);
+		// console.info(items.get('items'));
 
 		return items.get('items')[id];
 	};
@@ -303,14 +324,15 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseItemResults = function(itemResults) {
 
-		console.info('parseItemResults');
-		console.info(itemResults);
+		// console.info('parseItemResults');
+		// console.info(itemResults);
 
 		// temp item data
 		var tempItems = {};
 		var item = {};
 
 		var itemLength = 0;
+		var calendarDate = null;
 		var i = 0;
 
 		listLength = itemResults.items.length;
@@ -334,41 +356,94 @@
 			item.thumbnailImage = itemResults.items[i].itemThumbnailImage;
 			item.largeImage = itemResults.items[i].itemLargeImage;
 
+			// add custom formated properties
+			addCustomProperties(item);
+
 			// add to lists objects
 			tempItems[item.id] = item;
-
-			// load detailed information
-			getItemDetail(item);
 		}
 
 		// set list model data
 		items.set({'items': tempItems});
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDetail - loads and displays specialized item detail and populates new data into item model
+	* addCustomProperties -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItemDetail = function(item) {
+	var addCustomProperties = function(item) {
 
-		// get amazon price
-		var priceSelector = '#' + item.id + ' .priceDetails';
-		AmazonPrice.getAmazonItemOffers(item.asin, item, priceSelector);
+		// add formatted calendarDate
+		item.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
 
-		// get reviews
-		var metacriticSelector = '#' + item.id + ' .metascore';
-		metacriticData = Metacritic.searchMetacritic(item.name, item, metacriticSelector);
+		// add standard name propery
+		item.standardName = ItemLinker.standardizeTitle(item.name);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* sortItemsByDate -
+	* getExtraItemInfo - loads and displays specialized item detail and populates new data into item model
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var sortItemsByDate = function(a, b) {
+	var getExtraItemInfo = function(item) {
 
-		var date1 = Date.parse(a.releaseDate);
-		var date2 = Date.parse(b.releaseDate);
+		// get amazon price
+		// find in cache first
+		if (typeof amazonOffersCache[item.id] !== 'undefined') {
+			console.info(amazonOffersCache[item.id]);
+			displayAmazonOffer(item.id, amazonOffersCache[item.id]);
+		} else {
+			AmazonPrice.getAmazonItemOffers(item.asin, item, amazonPrice_result);
+		}
 
-		return date2 - date1;
+		// get reviews
+		// find in cache first
+		if (typeof metascoreCache[item.id] !== 'undefined') {
+			console.info(metascoreCache[item.id]);
+			displayMetascore(item.id, metascoreCache[item.id].metascore, metascoreCache[item.id].metascorePage);
+		} else {
+			metascoreData = Metascore.getMetascore(item.standardName, item, metascore_result);
+		}
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* amazonPrice_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var amazonPrice_result = function(item) {
+
+		displayAmazonOffer(item.id, item.offers);
+
+		// add to amazonOffersCache
+		amazonOffersCache[item.id] = item.offers;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* metascore_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var metascore_result = function(item) {
+
+		displayMetascore(item.id, item.metascore, item.metascorePage);
+
+		// add to metascoreCache
+		metascoreCache[item.id] = {metascorePage: item.metascorePage, metascore: item.metascore};
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* displayAmazonOffer -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var displayAmazonOffer = function(id, offer) {
+
+		var priceSelector = '#' + id + ' .priceDetails';
+		AmazonPrice.addPriceMenu(offer, priceSelector);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* displayMetascore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var displayMetascore = function(id, metascore, metascorePage) {
+
+		var metascoreSelector = '#' + id + ' .metascore';
+
+		// add metascore info to item detail
+		Metascore.displayMetascoreData(metascorePage, metascore, metascoreSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -422,8 +497,11 @@
 			// set new model data
 			items.set({'items': tempItems});
 
-			// trigger change manually since updating an existing items array does not trigger update
-			items.trigger("change:items");
+			// remove element from html
+			$('#' + id).remove();
+
+			// re-initialize list.js for item list
+			itemList = new List('itemResultsContainer', listOptions);
 		}
 	};
 
@@ -434,7 +512,7 @@
 	var deleteItem_result = function(data) {
 
 		// delete
-		console.info(data);
+		// console.info(data);
 	};
 
 
@@ -457,10 +535,53 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteList_result = function(data) {
 
-		console.info(data);
+		// console.info(data);
 
 		// update listModel
 		ListModel.getList();
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* applyFilters -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var applyFilters = function() {
+
+		var releaseDateFilters = [];
+		var metascoreFilters = [];
+
+		// iterate all release date filter options
+		$('#releaseDate_filter').find('button').each(function() {
+
+			if ($(this).hasClass('active')) {
+				releaseDateFilters.push(false);
+			} else {
+				releaseDateFilters.push(true);
+			}
+		});
+
+		// iterate all metascore filter options
+		$('#metascore_filter').find('button').each(function() {
+
+			if ($(this).hasClass('active')) {
+				metascoreFilters.push(false);
+			} else {
+				metascoreFilters.push(true);
+			}
+		});
+
+		// apply  filters
+		itemList.filter(function(itemValues) {
+
+			var releaseDateFiltered = releaseDateFilter(itemValues, releaseDateFilters);
+			var metascoreFiltered = metascoreFilter(itemValues, metascoreFilters);
+
+			if (!releaseDateFiltered || !metascoreFiltered) {
+				return false;
+			}
+
+			return true;
+		});
 	};
 
 
@@ -469,29 +590,175 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
-		console.info(items.get('items'));
+		// console.info(items.get('items'));
 
-		console.info(sortType);
-		var sortIndex = parseInt(sortType, 10);
+		// console.info(sortType);
+		currentSortIndex = parseInt(sortType, 10);
 
-		switch (sortIndex) {
+		switch (currentSortIndex) {
 
 			// alphabetical
 			case 0:
-				itemList.sort('item-name', { asc: true });
+				// set sort status
+				$sortOptions.find('.currentSort').text('Alphabetical');
+				// sort new list
+				itemList.sort('itemName', { asc: true });
+
+				// sorting breaks tooltip
+				$itemResults.find('.scoreDetails a').tooltip();
+
 				break;
 
 			// review scores
 			case 1:
+				$sortOptions.find('.currentSort').text('Review Score');
+				itemList.sort('scoreDetails', {sortFunction: metascoreSort});
+
+				$itemResults.find('.scoreDetails a').tooltip();
 
 				break;
 
-			// price
+			// release date
 			case 2:
+				$sortOptions.find('.currentSort').text('Release Date');
+				itemList.sort('calendarDate', {sortFunction: releaseDateSort});
+
+				$itemResults.find('.scoreDetails a').tooltip();
+				break;
+
+			// price
+			case 3:
+				$sortOptions.find('.currentSort').text('Price');
+				itemList.sort('priceDetails', {sortFunction: priceSort});
+
+				$itemResults.find('.scoreDetails a').tooltip();
 
 				break;
 		}
 	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* metascoreSort -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var metascoreSort = function(firstItem, secondItem) {
+
+		$element1 = $(firstItem.elm).find('.scoreDetails a');
+		$element2 = $(secondItem.elm).find('.scoreDetails a');
+
+		score1 = parseInt($element1.attr('data-score'), 10);
+		score2 = parseInt($element2.attr('data-score'), 10);
+
+		if (score1 < score2) {
+			return 1;
+		}
+		return -1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* priceSort -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var priceSort = function(firstItem, secondItem) {
+
+		$element1 = $(firstItem.elm).find('.priceDetails .lowestNew');
+		$element2 = $(secondItem.elm).find('.priceDetails .lowestNew');
+
+		price1 = parseInt($element1.attr('data-price'), 10);
+		price2 = parseInt($element2.attr('data-price'), 10);
+
+		if (price1 < price2) {
+			return -1;
+		}
+		return 1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* releaseDateSort -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var releaseDateSort = function(firstItem, secondItem) {
+
+		$element1 = $(firstItem.elm).find('.calendarDate');
+		$element2 = $(secondItem.elm).find('.calendarDate');
+
+		var date1 = Date.parse($element1.attr('data-original-title'));
+		var date2 = Date.parse($element2.attr('data-original-title'));
+
+		return date2 - date1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* releaseDateFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var releaseDateFilter = function(itemValues, filterList) {
+
+		// filter config (1: unreleased, 2: released)
+		var unreleasedFilter = filterList[0];
+		var releasedFilter = filterList[1];
+
+		var releaseDate = moment(itemValues.calendarDate, "MMMM DD, YYYY");
+		var currentDate = moment();
+
+		var diff = releaseDate.diff(currentDate, 'days');
+
+		// NOT filtered conditions
+		if (unreleasedFilter && releasedFilter) {
+			return true;
+		} else if (unreleasedFilter && diff > 0) {
+			return true;
+		} else if (releasedFilter && diff < 0) {
+			return true;
+		}
+
+		return false;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* metascoreFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var metascoreFilter = function(itemValues, filterList) {
+
+		console.info(itemValues);
+		console.info(filterList);
+
+		// filter config (1: unreleased, 2: released)
+		var _90sFilter = filterList[0];
+		var _80sFilter = filterList[1];
+		var _70sFilter = filterList[2];
+		var _60sFilter = filterList[3];
+		var _50sFilter = filterList[4];
+		var _25to49Filter = filterList[5];
+		var _0to24Filter = filterList[6];
+
+		var releaseDate = moment(itemValues.calendarDate, "MMMM DD, YYYY");
+		var currentDate = moment();
+
+		var score = parseInt(itemValues.metascore, 10);
+		if (isNaN(score)) {
+			return true;
+		}
+
+		// NOT filtered conditions
+		if (_90sFilter && _80sFilter && _70sFilter && _60sFilter && _50sFilter && _25to49Filter && _0to24Filter) {
+			return true;
+		} else if (_90sFilter && score >= 90) {
+			return true;
+		} else if (_80sFilter && score >= 80 && score < 90) {
+			return true;
+		} else if (_70sFilter && score >= 70 && score < 80) {
+			return true;
+		} else if (_60sFilter && score >= 60 && score < 70) {
+			return true;
+		} else if (_50sFilter && score >= 50 && score < 60) {
+			return true;
+		} else if (_25to49Filter && score >= 25 && score < 50) {
+			return true;
+		} else if (_0to24Filter && score >= 0 && score < 25) {
+			return true;
+		}
+
+		return false;
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType

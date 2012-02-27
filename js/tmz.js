@@ -84,6 +84,24 @@ tmz.initializeLibraries = function() {
 
 	// chosen list: add to list
 	$(".chzn-select").chosen({no_results_text: "<strong>Press ENTER key to add:<br/><br/></strong>"});
+
+	// moment.js calendar config
+	moment.calendar = {
+		lastDay : '[Yesterday]',
+		sameDay : '[Today]',
+		nextDay : '[Tomorrow]',
+		lastWeek : '[last] dddd',
+		nextWeek : 'dddd',
+		sameElse : 'LL'
+	};
+
+	// moment.js long date format
+    moment.longDateFormat = {
+		L: 'MM/DD/YYYY',
+		LL: 'MMMM D, YYYY',
+		LLL: 'MMMM D YYYY h:mm A',
+		LLLL: 'dddd, MMMM D YYYY h:mm A'
+    };
 };
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

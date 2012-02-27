@@ -10,7 +10,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getAmazonItemOffers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	AmazonPrice.getAmazonItemOffers = function(asin, sourceItem, priceSelector) {
+	AmazonPrice.getAmazonItemOffers = function(asin, sourceItem, onSuccess) {
 
 		// OfferSummary, OfferListings, Offers, OfferFull
 
@@ -19,7 +19,7 @@
 
 		var requestData = {
 			'asin': asin,
-			'response_group': 'Offers'
+			'response_group': 'OfferFull'
 		};
 
 		$.ajax({
@@ -29,15 +29,48 @@
 			dataType: 'xml',
 			cache: true,
 			success: function(data) {
-				parseAmazonOffers(data, sourceItem, priceSelector);
+				parseAmazonOffers(data, sourceItem, onSuccess);
 			}
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addPriceMenu -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	AmazonPrice.addPriceMenu = function(offerItem, priceSelector) {
+
+		var buyNowPrice = null;
+		var buyNowRawPrice = null;
+
+		// iterate offers
+		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
+			if (offerItem.offers[i].availability === 'now') {
+				buyNowPrice = offerItem.offers[i].price;
+				buyNowRawPrice = offerItem.offers[i].rawPrice;
+			}
+		}
+
+		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
+
+		// check for 'too low to display'
+		if (buyNowPrice === 'Too low to display') {
+			buyNowPrice = 'n/a';
+			buyNowRawPrice = 0;
+		}
+		if (offerItem.lowestNewPrice === 'Too low to display') {
+			offerItem.lowestNewPrice = 'n/a';
+		}
+
+		var templateData = {'productURL': offerItem.productURL, 'offersURLNew': offerItem.offersURLNew, 'offersURLUsed': offerItem.offersURLUsed, 'buyNowPrice': buyNowPrice, 'buyNowRawPrice': buyNowRawPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
+
+		// attach to existing item result
+		$(priceSelector).html(priceMenuTemplate(templateData));
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonOffers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonOffers = function(data, sourceItem, priceSelector) {
+	var parseAmazonOffers = function(data, sourceItem, onSuccess) {
 
 		var offerItem = {};
 
@@ -51,8 +84,7 @@
 		// add offerItem to item model
 		sourceItem.offers = offerItem;
 
-		// add price menu to item results
-		addPriceMenu(offerItem, priceSelector);
+		onSuccess(sourceItem);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,6 +92,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
 
+		console.info($resultItem);
 		var offerItem = {};
 		var offer = {};
 
@@ -69,43 +102,32 @@
 		offerItem.totalNew = $resultItem.find('TotalNew').text();
 		offerItem.totalUsed = $resultItem.find('TotalUsed').text();
 		offerItem.totalOffers = $resultItem.find('TotalOffers').text();
+		offerItem.offersURL = $resultItem.find('MoreOffersUrl').text();
+		offerItem.offersURLNew = $resultItem.find('MoreOffersUrl').text() + '&condition=new';
+		offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
+
+		// convert offer url to a product url
+		var re = /offer-listing/gi;
+		offerItem.productURL = offerItem.offersURL.replace(re, 'product');
 
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
+			console.info($(this));
 			offer = {};
 			offerItem.offers = [];
 
-			offer.price = $(this).find('FormattedPrice').text();
+			offer.price = $(this).find('Price FormattedPrice').text();
+			offer.rawPrice = $(this).find('Price Amount').text();
 			offer.availability = $(this).find('AvailabilityType').text();
 			offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
 
 			offerItem.offers.push(offer);
+
 		});
 
+		console.info(offerItem);
 		return offerItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addPriceMenu -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addPriceMenu = function(offerItem, priceSelector) {
-
-		var buyNowPrice = null;
-
-		// iterate offers
-		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
-			if (offerItem.offers[i].avalability === 'now') {
-				buyNowPrice = offerItem.offers[i].price;
-			}
-		}
-
-		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
-
-		var templateData = {'buyNowPrice': buyNowPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
-
-		// attach to existing item result
-		$(priceSelector).html(priceMenuTemplate(templateData));
 	};
 
 })(tmz.module('amazonPrice'));

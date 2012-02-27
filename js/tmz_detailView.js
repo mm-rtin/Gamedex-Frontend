@@ -10,7 +10,7 @@
     var ItemData = tmz.module('itemData');
 	var SearchData = tmz.module('searchData');
 	var ItemLinker = tmz.module('itemLinker');
-	var Metacritic = tmz.module('metacritic');
+	var Metascore = tmz.module('metascore');
 
     // properties
     var currentProvider = null;
@@ -28,6 +28,7 @@
     var $amazonDescriptionModal = $('#amazonDescription-modal');
     var $giantBombDescriptionModal = $('#giantBombDescription-modal');
 
+    var $detailTabContent = $('#detailTabContent');
     var $amazonTab = $('#amazonTab');
     var $giantBombTab = $('#giantBombTab');
     var $amazonTabLink = $('#amazonTabLink');
@@ -88,7 +89,7 @@
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			if (amazonItem.id && !amazonItem.rendered) {
 
-				console.info('render amazon item');
+				// console.info('render amazon item');
 				itemData = {'itemData': this.model.toJSON().amazonItem};
 
 				// set status as rendered
@@ -109,7 +110,7 @@
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			if (giantBombItem.id && !giantBombItem.rendered) {
 
-				console.info('render giant bomb item');
+				// console.info('render giant bomb item');
 				itemData = {'itemData': this.model.toJSON().giantBombItem};
 
 				// set status as rendered
@@ -174,14 +175,13 @@
 		});
 
 		// viewDescription: click
-		$('#viewDescription_btn').click(function() {
+		$detailTabContent.on('click', '.viewDescription_btn', function() {
 			viewDescriptionForTab(currentTab);
 		});
 
 		// tabs: shown
 		$('#detailTab a[data-toggle="tab"]').on('shown', function (e) {
 			currentTab = $(e.target).attr('href');
-			console.info(currentTab);
 		});
 
 		// addList: change
@@ -206,7 +206,7 @@
 			firstItem.initialProvider = currentProvider;
 
 			// add standard name propery
-			firstItem.standardName = SearchData.standardizeTitle(firstItem.name);
+			firstItem.standardName = ItemLinker.standardizeTitle(firstItem.name);
 
 			// clear secondItem model
 			clearSecondItemModel(currentProvider);
@@ -217,8 +217,8 @@
 			// find item on alernate provider and view item as second search item
 			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, DetailView.viewSecondSearchItemDetail);
 
-			// get metacritic page
-			getMetacriticPage(firstItem.standardName);
+			// get metascore page
+			getMetascore(firstItem.standardName);
 
 			// display tags
 			loadAndDisplayTags(firstItem);
@@ -259,8 +259,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewSearchDetail = function(item) {
 
-		console.info("VIEW SEARCH DETAIL");
-		console.info(item);
+		// console.info("VIEW SEARCH DETAIL");
+		// console.info(item);
 
 		// update model item for provider
 		updateModelDataForProvider(currentProvider, item);
@@ -282,7 +282,7 @@
 		// clone object as firstItem
 		firstItem = jQuery.extend(true, {}, item);
 		// add standard name propery
-		firstItem.standardName = SearchData.standardizeTitle(firstItem.name);
+		firstItem.standardName = ItemLinker.standardizeTitle(firstItem.name);
 
 		// get first provider for item
 		// convert to  integer for comparison to provider constants
@@ -291,8 +291,8 @@
 		// clear secondItem model
 		clearSecondItemModel(currentProvider);
 
-		// get metacritic page
-		getMetacriticPage(firstItem.standardName);
+		// get metascore page
+		getMetascore(firstItem.standardName);
 
 		// show detail tab for initial provider
 		showTab(currentProvider);
@@ -321,8 +321,8 @@
 		// clone object as secondItem
 		secondItem = jQuery.extend(true, {}, item);
 
-		console.error(firstItem.asin, secondItem.asin);
-		console.error(firstItem.gbombID, secondItem.gbombID);
+		// console.error(firstItem.asin, secondItem.asin);
+		// console.error(firstItem.gbombID, secondItem.gbombID);
 
 		// make sure that the second item matches the first
 		// fast clicking of view items can cause a desync of item rendering
@@ -339,16 +339,16 @@
 	* removeTagForItemID - if tags for item removed outside, call to update currently viewing item
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.removeTagForItemID = function(itemID, tagID) {
-		console.info('remove tag for item ID');
+		// console.info('remove tag for item ID');
 
-		console.info(itemID);
-		console.info(firstItem.itemID);
+		// console.info(itemID);
+		// console.info(firstItem.itemID);
 
 		// check if tagID applies for currently viewing item
 		if (itemID === firstItem.itemID) {
 
-			console.info('remove tag');
-			console.info($('#' + tagID));
+			// console.info('remove tag');
+			// console.info($('#' + tagID));
 
 			delete initialItemTags[tagID];
 
@@ -364,21 +364,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateModelDataForProvider = function(provider, item) {
 
-		console.info(provider, Utilities.getProviders().Amazon, Utilities.getProviders().GiantBomb);
+		// console.info(provider, Utilities.getProviders().Amazon, Utilities.getProviders().GiantBomb);
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				console.info('update amazon');
+				// console.info('update amazon');
 				details.set({'amazonItem': item});
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				console.info('update gb');
+				// console.info('update gb');
 				details.set({'giantBombItem': item});
 				break;
 		}
 
-		console.info(details.get('giantBombItem'));
+		// console.info(details.get('giantBombItem'));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -486,12 +486,22 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMetacriticPage -
+	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMetacriticPage = function(title) {
+	var getMetascore = function(title) {
 
-		var metacriticSelector = currentTab + ' .metascore';
-		metacriticData = Metacritic.searchMetacritic(title, firstItem, metacriticSelector);
+		Metascore.getMetascore(title, firstItem, metascore_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* metascore_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var metascore_result = function(item) {
+
+		var metascoreSelector = currentTab + ' .metascore';
+
+		// add metascore info to item detail
+		Metascore.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -521,13 +531,13 @@
 		if (gbombID !== 0) {
 			var giantBombDirectory =  ItemData.getGiantBombDirectory();
 			itemID = giantBombDirectory[gbombID];
-			console.error(itemID);
+			// console.error(itemID);
 		}
 
 		if (asin !== 0) {
 			var amazonDirectory =  ItemData.getAmazonDirectory();
 			itemID = amazonDirectory[asin];
-			console.error(itemID);
+			// console.error(itemID);
 		}
 
 		return itemID;
@@ -678,7 +688,7 @@
 
 		// check for tags to delete
 		if (idsToDelete.length > 0) {
-			console.info(idsToDelete);
+			// console.info(idsToDelete);
 			ItemData.deleteTagsForItem(idsToDelete, firstItem, deleteTagsForItem_result);
 		}
 	};
