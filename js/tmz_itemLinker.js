@@ -277,10 +277,11 @@
 
 			// searchItem not filtered
 			if (typeof searchItem.isFiltered === 'undefined') {
+				console.info('not filtered');
 
 				// save first non-filtered result
 				if (count === 0) {
-					firstResult = searchItem;
+					bestMatch = searchItem;
 				}
 
 				count++;
@@ -291,14 +292,21 @@
 				if (score > bestScore) {
 					bestMatch = searchItem;
 					bestScore = score;
+					console.info(bestMatch);
 				}
 			}
 		});
 
 		// return best match to onSuccess method
-		if (resultLength !== 0) {
+		if (bestMatch !== null) {
 			// return best match
 			onSuccess(bestMatch);
+
+		// re-run search without platform filter
+		} else {
+			SearchData.searchAmazon(sourceItem.name, 0, function(data) {
+				parseAmazonAlternate_result(data, sourceItem, onSuccess);
+			});
 		}
 	};
 
@@ -308,7 +316,7 @@
 	var parseGiantBombAlternate_result = function(data, sourceItem, onSuccess) {
 
 		var results = data.results;
-		var searchResult = {};
+		var searchItem = {};
 
 		// matching properties
 		var bestMatch = null;
@@ -322,20 +330,20 @@
 		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// parse result into searchResult object
-			searchResult = SearchData.parseGiantBombResultItem(results[i]);
+			// parse result into searchItem object
+			searchItem = SearchData.parseGiantBombResultItem(results[i]);
 
 			// init best match with first item
 			if (i === 0) {
-				bestMatch = searchResult;
+				bestMatch = searchItem;
 			}
 
 			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, searchResult);
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
 
 			// check if score is new best
 			if (score > bestScore) {
-				bestMatch = searchResult;
+				bestMatch = searchItem;
 				bestScore = score;
 			}
 		}

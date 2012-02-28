@@ -21,7 +21,7 @@
     // list
     var itemList = null;
 	var listOptions = {
-		valueNames: ['itemName', 'metascore', 'calendarDate'],
+		valueNames: ['itemName', 'metascore', 'calendarDate', 'platform'],
 		item: 'list-item'
 	};
 
@@ -33,6 +33,7 @@
 	var selectedTagID = 0;
     var displayType = DISPLAY_TYPE.Icons;
     var currentSortIndex = 0;
+    var filterHasBeenApplied = false;
 
     // node cache
     var $viewItemsContainer = $('#viewItemsContainer');
@@ -106,6 +107,9 @@
 
 			// initialize list.js for item list
 			itemList = new List('itemResultsContainer', listOptions);
+
+			// reset filters
+			filterHasBeenApplied = false;
 
 			// sort using current sort method
 			sortList(currentSortIndex);
@@ -499,9 +503,6 @@
 
 			// remove element from html
 			$('#' + id).remove();
-
-			// re-initialize list.js for item list
-			itemList = new List('itemResultsContainer', listOptions);
 		}
 	};
 
@@ -547,16 +548,23 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
 
+		// re-initialize list if first run of filter
+		if (filterHasBeenApplied === false) {
+			itemList = new List('itemResultsContainer', listOptions);
+			filterHasBeenApplied = true;
+		}
+
 		var releaseDateFilters = [];
 		var metascoreFilters = [];
+		var platformFilters = [];
 
 		// iterate all release date filter options
 		$('#releaseDate_filter').find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
-				releaseDateFilters.push(false);
-			} else {
 				releaseDateFilters.push(true);
+			} else {
+				releaseDateFilters.push(false);
 			}
 		});
 
@@ -564,23 +572,33 @@
 		$('#metascore_filter').find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
-				metascoreFilters.push(false);
-			} else {
 				metascoreFilters.push(true);
+			} else {
+				metascoreFilters.push(false);
 			}
 		});
+
+		// iterate platform filter options
+		platformFilters = $('#platformFilterList').val() || [];
+
+		for (var i = 0, len = platformFilters.length; i < len; i++) {
+			platformFilters[i] = SearchData.getStandardPlatform(platformFilters[i]);
+		}
 
 		// apply  filters
 		itemList.filter(function(itemValues) {
 
-			var releaseDateFiltered = releaseDateFilter(itemValues, releaseDateFilters);
-			var metascoreFiltered = metascoreFilter(itemValues, metascoreFilters);
+			var releaseDateStatus = releaseDateFilter(itemValues, releaseDateFilters);
+			var metascoreStatus = metascoreFilter(itemValues, metascoreFilters);
+			var platformStatus = platformFilter(itemValues, platformFilters);
 
-			if (!releaseDateFiltered || !metascoreFiltered) {
-				return false;
+			// not filtered
+			if (releaseDateStatus && metascoreStatus && platformStatus) {
+				return true;
 			}
 
-			return true;
+			// filtered out
+			return false;
 		});
 	};
 
@@ -605,8 +623,7 @@
 				itemList.sort('itemName', { asc: true });
 
 				// sorting breaks tooltip
-				$itemResults.find('.scoreDetails a').tooltip();
-
+				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// review scores
@@ -614,8 +631,7 @@
 				$sortOptions.find('.currentSort').text('Review Score');
 				itemList.sort('scoreDetails', {sortFunction: metascoreSort});
 
-				$itemResults.find('.scoreDetails a').tooltip();
-
+				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// release date
@@ -623,28 +639,34 @@
 				$sortOptions.find('.currentSort').text('Release Date');
 				itemList.sort('calendarDate', {sortFunction: releaseDateSort});
 
-				$itemResults.find('.scoreDetails a').tooltip();
+				$itemResults.find('.metascore').tooltip();
+				break;
+
+			// platform
+			case 3:
+				$sortOptions.find('.currentSort').text('Platform');
+				itemList.sort('platform', { asc: true });
+
+				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// price
-			case 3:
+			case 4:
 				$sortOptions.find('.currentSort').text('Price');
 				itemList.sort('priceDetails', {sortFunction: priceSort});
 
-				$itemResults.find('.scoreDetails a').tooltip();
-
+				$itemResults.find('.metascore').tooltip();
 				break;
 		}
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* metascoreSort -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascoreSort = function(firstItem, secondItem) {
 
-		$element1 = $(firstItem.elm).find('.scoreDetails a');
-		$element2 = $(secondItem.elm).find('.scoreDetails a');
+		$element1 = $(firstItem.elm).find('.metascore');
+		$element2 = $(secondItem.elm).find('.metascore');
 
 		score1 = parseInt($element1.attr('data-score'), 10);
 		score2 = parseInt($element2.attr('data-score'), 10);
@@ -680,8 +702,8 @@
 		$element1 = $(firstItem.elm).find('.calendarDate');
 		$element2 = $(secondItem.elm).find('.calendarDate');
 
-		var date1 = Date.parse($element1.attr('data-original-title'));
-		var date2 = Date.parse($element2.attr('data-original-title'));
+		var date1 = Date.parse($element1.attr('data-content'));
+		var date2 = Date.parse($element2.attr('data-content'));
 
 		return date2 - date1;
 	};
@@ -700,15 +722,22 @@
 
 		var diff = releaseDate.diff(currentDate, 'days');
 
-		// NOT filtered conditions
+		// all filters active - ignore filter
 		if (unreleasedFilter && releasedFilter) {
 			return true;
+		// no filters selected - ignore filter
+		} else if (!unreleasedFilter && !releasedFilter) {
+			console.info('ignore filter');
+			return true;
+
+		// specific filter
 		} else if (unreleasedFilter && diff > 0) {
 			return true;
 		} else if (releasedFilter && diff < 0) {
 			return true;
 		}
 
+		// filtered
 		return false;
 	};
 
@@ -716,9 +745,6 @@
 	* metascoreFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascoreFilter = function(itemValues, filterList) {
-
-		console.info(itemValues);
-		console.info(filterList);
 
 		// filter config (1: unreleased, 2: released)
 		var _90sFilter = filterList[0];
@@ -729,17 +755,14 @@
 		var _25to49Filter = filterList[5];
 		var _0to24Filter = filterList[6];
 
-		var releaseDate = moment(itemValues.calendarDate, "MMMM DD, YYYY");
-		var currentDate = moment();
-
 		var score = parseInt(itemValues.metascore, 10);
-		if (isNaN(score)) {
-			return true;
-		}
 
-		// NOT filtered conditions
-		if (_90sFilter && _80sFilter && _70sFilter && _60sFilter && _50sFilter && _25to49Filter && _0to24Filter) {
+		// no filters selected - ignore filter
+		if (!_90sFilter && !_80sFilter && !_70sFilter && !_60sFilter && !_50sFilter && !_25to49Filter && !_0to24Filter) {
+			console.info('ignore filter');
 			return true;
+
+		// specifc filter
 		} else if (_90sFilter && score >= 90) {
 			return true;
 		} else if (_80sFilter && score >= 80 && score < 90) {
@@ -759,7 +782,27 @@
 		return false;
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* platformFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var platformFilter = function(itemValues, filterList) {
 
+		// platform filter list empty - no filter
+		if (filterList.length === 0) {
+			return true;
+		}
+
+		// iterate platform list
+		var platform = itemValues.platform;
+		for (var i = 0, len = filterList.length; i < len; i++) {
+
+			if (filterList[i].name === platform) {
+				return true;
+			}
+		}
+
+		return false;
+	};
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

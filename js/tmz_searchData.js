@@ -40,7 +40,7 @@
 		{'amazon': 12508701, alias: 'pc,windows', name: 'PC'},
 		{'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
 		{'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-		{'amazon': 14220271, alias: 'xbox 360,microsoft xbox360,x360', name: 'X360'},
+		{'amazon': 14220271, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
 		{'amazon': 14220271, alias: 'xbl,xbox live', name: 'XBL'},
 		{'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
 		{'amazon': 2622270011,alias: '3ds,nintendo 3ds', name: '3DS'},
@@ -53,12 +53,12 @@
 		{'amazon': 12508741, alias: 'psp,sony psp', name: 'PSP'},
 		{'amazon': 541022, alias: 'gamecube,gc,nintendo gamecube', name: 'Gamecube'},
 		{'amazon': 229763, alias: 'n64,nintendo 64,nintendo64', name: 'N64'},
-		{'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
 		{'amazon': 566458, alias: 'nes,nintendo nes', name: 'NES'},
-		{'amazon': 541020, alias: 'gba,gameboy advance,game boy, advance,gbadvance', name: 'GBA'},
-		{'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'GBC'},
+		{'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
 		{'amazon': 1272528011, alias: 'gb,gameboy', name: 'Game Boy'},
-		{'amazon': 229793, alias: 'dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Dreamcast'},
+		{'amazon': 541020, alias: 'gba,gameboy advance,game boy,advance,gbadvance', name: 'GBA'},
+		{'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'GBC'},
+		{'amazon': 229793, alias: 'dc,dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Dreamcast'},
 		{'amazon': 294944, alias: 'saturn,sega saturn', name: 'Saturn'},
 		{'amazon': 294943, alias: 'genesis,sega genesis', name: 'Genesis'},
 		{'amazon': 294942, alias: 'gamegear,game gear,sega gamegear', name: 'Gamegear'},
@@ -288,10 +288,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchData.getStandardPlatform = function(platformName) {
 
+		console.info(platformName);
 		var re = new RegExp(platformName, 'gi');
 
 		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
 			if (re.test(PLATFORM_INDEX[i].alias)) {
+				console.info(PLATFORM_INDEX[i].name);
 				return PLATFORM_INDEX[i];
 			}
 		}

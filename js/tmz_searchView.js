@@ -218,6 +218,9 @@
 			// add temp results object
 			if (typeof searchItem.isFiltered === 'undefined') {
 
+				// add custom properties
+				searchItem.calendarDate = moment(searchItem.releaseDate || '1900-01-01', "YYYY-MM-DD").calendar();
+
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
 			}
@@ -343,11 +346,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var platformChanged = function() {
 
-		var platformIndex = SearchData.getPlatformIndex();
-		var index = $(this).val();
-
 		// set platform object
-		platform = platformIndex[index];
+		platform = SearchData.getStandardPlatform($(this).val());
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

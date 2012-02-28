@@ -233,6 +233,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewSecondSearchItemDetail = function(searchItem) {
 
+		console.info('viewSecondSearchItemDetail', searchItem);
+
 		// clone object as secondItem
 		secondItem = jQuery.extend(true, {}, searchItem);
 
