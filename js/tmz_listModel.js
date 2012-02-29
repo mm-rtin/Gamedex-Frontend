@@ -41,8 +41,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.ListView = Backbone.View.extend({
 
-		viewListElement: addListNode,
-		addListElement: viewListNode,
+		viewListElement: viewListNode,
+		addListElement: addListNode,
 
 		template: _.template($('#list-results-template').html()),
 
@@ -57,9 +57,15 @@
 			// sort list
 			this.model.get('orderedList').sort(sortListItemByName);
 
+			var viewListModel = this.model.toJSON();
+			viewListModel.showDynamic = true;
+
+			var addListModel = this.model.toJSON();
+			addListModel.showDynamic = false;
+
 			// output template to list containers
-			$(this.viewListElement).html(this.template(this.model.toJSON()));
-			$(this.addListElement).html(this.template(this.model.toJSON()));
+			$(this.viewListElement).html(this.template(viewListModel));
+			$(this.addListElement).html(this.template(addListModel));
 
 			// send event to update chzn dropdown
 			$(this.viewListElement).trigger("liszt:updated");

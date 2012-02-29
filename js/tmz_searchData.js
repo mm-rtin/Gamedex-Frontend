@@ -288,16 +288,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchData.getStandardPlatform = function(platformName) {
 
-		console.info(platformName);
 		var re = new RegExp(platformName, 'gi');
 
 		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
 			if (re.test(PLATFORM_INDEX[i].alias)) {
-				console.info(PLATFORM_INDEX[i].name);
 				return PLATFORM_INDEX[i];
 			}
 		}
-
 		return PLATFORM_INDEX[0];
 	};
 

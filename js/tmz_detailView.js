@@ -12,10 +12,13 @@
 	var ItemLinker = tmz.module('itemLinker');
 	var Metascore = tmz.module('metascore');
 
+	// constants
+	TAB_IDS = ['#amazonTab', '#giantBombTab'];
+
     // properties
     var currentProvider = null;
     var saveInProgress = false;
-    var currentTab = '#amazonTab';
+    var currentTab = TAB_IDS[0];
 
     // data
 	var initialItemTags = {};	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
@@ -196,6 +199,8 @@
 		// only view item detail if new item or platform for item has changed
 		if (searchItem.id !== firstItem.id || searchItem.platform !== firstItem.platform) {
 
+			console.info('viewFirstSearchItemDetail', searchItem);
+
 			// clone object as firstItem
 			firstItem = jQuery.extend(true, {}, searchItem);
 
@@ -215,10 +220,7 @@
 			showTab(currentProvider);
 
 			// find item on alernate provider and view item as second search item
-			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, DetailView.viewSecondSearchItemDetail);
-
-			// get metascore page
-			getMetascore(firstItem.standardName);
+			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, viewSecondSearchItemDetail);
 
 			// display tags
 			loadAndDisplayTags(firstItem);
@@ -231,7 +233,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewSecondSearchItemDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.viewSecondSearchItemDetail = function(searchItem) {
+	var viewSecondSearchItemDetail = function(searchItem) {
 
 		console.info('viewSecondSearchItemDetail', searchItem);
 
@@ -251,6 +253,7 @@
 				firstItem.gbombID = secondItem.gbombID;
 				break;
 		}
+		console.info(firstItem);
 
 		// call main view detail method
 		viewSearchDetail(secondItem);
@@ -269,6 +272,9 @@
 
 		// start download of item description
 		getDescriptionForTab(currentProvider);
+
+		// get metascore page
+		getMetascore(firstItem.standardName, firstItem);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -293,9 +299,6 @@
 		// clear secondItem model
 		clearSecondItemModel(currentProvider);
 
-		// get metascore page
-		getMetascore(firstItem.standardName);
-
 		// show detail tab for initial provider
 		showTab(currentProvider);
 
@@ -310,6 +313,9 @@
 
 		// update model item for provider
 		updateModelDataForProvider(currentProvider, firstItem);
+
+		// get metascore page
+		getMetascore(firstItem.standardName, firstItem);
 
 		// start download of item description
 		getDescriptionForTab(currentProvider);
@@ -334,6 +340,9 @@
 
 			// update model item for provider
 			updateModelDataForProvider(currentProvider, secondItem);
+
+			// get metascore
+			getMetascore(firstItem.standardName, firstItem);
 		}
 	};
 
@@ -341,21 +350,14 @@
 	* removeTagForItemID - if tags for item removed outside, call to update currently viewing item
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.removeTagForItemID = function(itemID, tagID) {
-		// console.info('remove tag for item ID');
-
-		// console.info(itemID);
-		// console.info(firstItem.itemID);
 
 		// check if tagID applies for currently viewing item
 		if (itemID === firstItem.itemID) {
 
-			// console.info('remove tag');
-			// console.info($('#' + tagID));
-
 			delete initialItemTags[tagID];
 
 			// remove selected attribute from option
-			$('#' + tagID).removeAttr('selected');
+			$addList.find('option[value="' + tagID + '"]').removeAttr('selected');
 
 			$addList.trigger("liszt:updated");
 		}
@@ -490,9 +492,9 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMetascore = function(title) {
+	var getMetascore = function(title, sourceItem) {
 
-		Metascore.getMetascore(title, firstItem, metascore_result);
+		Metascore.getMetascore(title, sourceItem, metascore_result);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -500,10 +502,16 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascore_result = function(item) {
 
-		var metascoreSelector = currentTab + ' .metascore';
+		var metascoreSelector = '';
 
-		// add metascore info to item detail
-		Metascore.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
+		// show metascore on each tab
+		for (var i = 0, len = TAB_IDS.length; i < len; i++) {
+
+			metascoreSelector = TAB_IDS[i] + ' .metascore';
+
+			// add metascore info to item detail
+			Metascore.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -588,6 +596,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var selectTagsFromDirectory = function(tagList) {
 
+
+		console.info(tagList);
 		var option = null;
 
 		// clear selected attributes from all options
@@ -596,7 +606,9 @@
 		_.each(tagList, function(id, tagID) {
 
 			// get option node
-			option = $addList.find('#' + tagID);
+			option = $addList.find('option[value="' + tagID + '"]');
+
+			console.info(option);
 
 			// select option
 			$(option).attr('selected', '');
@@ -618,7 +630,7 @@
 			for (var i = 0, len = tagList.length; i < len; i++) {
 
 				// get option node
-				option = $addList.find('#' + tagList[i]);
+				option = $addList.find('option[value="' + tagList[i] + '"]');
 
 				// select option
 				$(option).attr('selected', '');

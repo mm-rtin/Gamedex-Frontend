@@ -4,6 +4,9 @@
     // module references
 	var SearchData = tmz.module('searchData');
 
+	// data
+	amazonOffersCache = {};
+
 	// templates
 	var priceMenuTemplate = _.template($('#price-menu-template').html());
 
@@ -12,26 +15,39 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	AmazonPrice.getAmazonItemOffers = function(asin, sourceItem, onSuccess) {
 
-		// OfferSummary, OfferListings, Offers, OfferFull
+		// find in amazon offer cache first
+		var cachedOffer = getCachedOffers(sourceItem.id);
+		// load cached amazon offer
+		if (cachedOffer) {
+			// add score data to source item
+			sourceItem.offers = cachedOffer;
 
-		// browse node, search terms and response group in url
-		var restURL = tmz.api + 'itemdetail/amazon/';
+			// return updated source item
+			onSuccess(sourceItem);
 
-		var requestData = {
-			'asin': asin,
-			'response_group': 'OfferFull'
-		};
+		// get new offer data
+		} else {
 
-		$.ajax({
-			url: restURL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'xml',
-			cache: true,
-			success: function(data) {
-				parseAmazonOffers(data, sourceItem, onSuccess);
-			}
-		});
+			// browse node, search terms and response group in url
+			var restURL = tmz.api + 'itemdetail/amazon/';
+
+			// OfferSummary, OfferListings, Offers, OfferFull
+			var requestData = {
+				'asin': asin,
+				'response_group': 'OfferFull'
+			};
+
+			$.ajax({
+				url: restURL,
+				type: 'GET',
+				data: requestData,
+				dataType: 'xml',
+				cache: true,
+				success: function(data) {
+					parseAmazonOffers(data, sourceItem, onSuccess);
+				}
+			});
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +84,20 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedOffers -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedOffers = function(id) {
+
+		var amazonOfferItem = null;
+
+		if (typeof amazonOffersCache[id] !== 'undefined') {
+			amazonOfferItem = amazonOffersCache[id];
+		}
+
+		return amazonOfferItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonOffers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOffers = function(data, sourceItem, onSuccess) {
@@ -83,6 +113,9 @@
 
 		// add offerItem to item model
 		sourceItem.offers = offerItem;
+
+		// add to amazonOffersCache
+		amazonOffersCache[sourceItem.id] = offerItem;
 
 		onSuccess(sourceItem);
 	};
@@ -109,13 +142,13 @@
 		// convert offer url to a product url
 		var re = /offer-listing/gi;
 		offerItem.productURL = offerItem.offersURL.replace(re, 'product');
+		offerItem.offers = [];
 
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
 			console.info($(this));
 			offer = {};
-			offerItem.offers = [];
 
 			offer.price = $(this).find('Price FormattedPrice').text();
 			offer.rawPrice = $(this).find('Price Amount').text();
@@ -123,7 +156,6 @@
 			offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
 
 			offerItem.offers.push(offer);
-
 		});
 
 		console.info(offerItem);

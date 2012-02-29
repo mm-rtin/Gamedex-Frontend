@@ -6,36 +6,58 @@
 	var ItemLinker = tmz.module('itemLinker');
 
 	// properties
-	var metascoreDomain = 'http://www.metascore.com';
+	var metacriticDomain = 'http://www.metacritic.com';
+
+	// data
+	var metascoreCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metascore.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
-		var url = 'itemsearch/metacritic/';
+		console.info(metascoreCache);
+		// find in cache first
+		var cachedScore = getCachedScore(sourceItem.asin, sourceItem.gbombID);
 
-		// convert spaces to '+'
-		var re = /\s/g;
-		var modifiedSearchTerms = searchTerms.replace(re, '+');
+		if (cachedScore) {
+			// add score data to source item
+			sourceItem.metascore = cachedScore.metascore;
+			sourceItem.metascorePage = cachedScore.metascorePage;
 
-		// remove ':'
-		re = /:/g;
-		modifiedSearchTerms = modifiedSearchTerms.replace(re, '');
+			// return updated source item
+			onSuccess(sourceItem);
 
-		var requestData = {
-			'keywords': encodeURI(modifiedSearchTerms)
-		};
+		// fetch score data
+		} else {
+			var url = 'itemsearch/metacritic/';
 
-		$.ajax({
-			url: url,
-			type: 'GET',
-			data: requestData,
-			cache: true,
-			success: function(data) {
-				parseMetascoreResults(data, sourceItem, onSuccess);
-			}
-		});
+			// convert spaces to '+'
+			var re = /\s/g;
+			var modifiedSearchTerms = searchTerms.replace(re, '+');
+
+			// remove ':'
+			re = /:/g;
+			modifiedSearchTerms = modifiedSearchTerms.replace(re, '');
+
+			var requestData = {
+				'keywords': encodeURI(modifiedSearchTerms)
+			};
+
+			$.ajax({
+				url: url,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+					parseMetascoreResults(data, sourceItem, function(data) {
+
+						addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, data);
+						onSuccess(data);
+					});
+				}
+			});
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,12 +84,46 @@
 		$metascoreContainer
 			.html(textScore)
 			.addClass(colorClass)
-			.attr('href', metascoreDomain + page)
+			.attr('href', metacriticDomain + page)
 			.attr('data-score', score)
-			.attr('data-original-title', 'metascore.com' + page);
+			.attr('data-original-title', metacriticDomain + page);
 
 		// activate tooltip
 		$metascoreContainer.tooltip();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedScore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedScore = function(asin, gbombID) {
+
+		var metascoreItem = null;
+
+		// amazon id
+		if (typeof metascoreCache[asin] !== 'undefined') {
+			metascoreItem = metascoreCache[asin];
+
+		// giant bomb id
+		} else if (typeof metascoreCache[gbombID] !== 'undefined') {
+			metascoreItem = metascoreCache[gbombID];
+		}
+
+		return metascoreItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToMetascoreCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToMetascoreCache = function(asin, gbombID, metacriticItem) {
+
+		// add to metascoreCache linked by asin
+		if (asin !== '0') {
+			metascoreCache[asin] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
+		}
+		// add to metascoreCache linked by gbombID
+		if (gbombID !== '0') {
+			metascoreCache[gbombID] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

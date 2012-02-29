@@ -93,13 +93,12 @@
 
 
 
-
-		console.info('------------------------------');
-		console.info(sourceItem.standardName, ' - ', standardResultName);
-		console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
-		console.info(sourceItem.platform, ' - ', searchItem.platform);
-		console.info(score);
-		console.info('------------------------------');
+		// console.info('------------------------------');
+		// console.info(sourceItem.standardName, ' - ', standardResultName);
+		// console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
+		// console.info(sourceItem.platform, ' - ', searchItem.platform);
+		// console.info(score);
+		// console.info('------------------------------');
 
 		return score;
 	};

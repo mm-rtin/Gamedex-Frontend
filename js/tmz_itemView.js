@@ -27,7 +27,6 @@
 
 	// data cache
 	amazonOffersCache = {};
-	metascoreCache = {};
 
     // properties
 	var selectedTagID = 0;
@@ -388,35 +387,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getExtraItemInfo = function(item) {
 
-		// get amazon price
-		// find in cache first
-		if (typeof amazonOffersCache[item.id] !== 'undefined') {
-			console.info(amazonOffersCache[item.id]);
-			displayAmazonOffer(item.id, amazonOffersCache[item.id]);
-		} else {
-			AmazonPrice.getAmazonItemOffers(item.asin, item, amazonPrice_result);
-		}
+		// get amazon price data
+		AmazonPrice.getAmazonItemOffers(item.asin, item, amazonPrice_result);
 
-		// get reviews
-		// find in cache first
-		if (typeof metascoreCache[item.id] !== 'undefined') {
-			console.info(metascoreCache[item.id]);
-			displayMetascore(item.id, metascoreCache[item.id].metascore, metascoreCache[item.id].metascorePage);
-		} else {
-			metascoreData = Metascore.getMetascore(item.standardName, item, metascore_result);
-		}
+		// get metascore
+		Metascore.getMetascore(item.standardName, item, metascore_result);
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* amazonPrice_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var amazonPrice_result = function(item) {
 
-		displayAmazonOffer(item.id, item.offers);
-
-		// add to amazonOffersCache
-		amazonOffersCache[item.id] = item.offers;
+		// display price
+		var priceSelector = '#' + item.id + ' .priceDetails';
+		AmazonPrice.addPriceMenu(item.offers, priceSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -424,30 +409,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascore_result = function(item) {
 
-		displayMetascore(item.id, item.metascore, item.metascorePage);
-
-		// add to metascoreCache
-		metascoreCache[item.id] = {metascorePage: item.metascorePage, metascore: item.metascore};
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayAmazonOffer -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayAmazonOffer = function(id, offer) {
-
-		var priceSelector = '#' + id + ' .priceDetails';
-		AmazonPrice.addPriceMenu(offer, priceSelector);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayMetascore -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayMetascore = function(id, metascore, metascorePage) {
-
-		var metascoreSelector = '#' + id + ' .metascore';
-
-		// add metascore info to item detail
-		Metascore.displayMetascoreData(metascorePage, metascore, metascoreSelector);
+		// display score
+		var metascoreSelector = '#' + item.id + ' .metascore';
+		Metascore.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
