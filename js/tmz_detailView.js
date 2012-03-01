@@ -11,6 +11,7 @@
 	var SearchData = tmz.module('searchData');
 	var ItemLinker = tmz.module('itemLinker');
 	var Metascore = tmz.module('metascore');
+	var AmazonPrice = tmz.module('amazonPrice');
 
 	// constants
 	TAB_IDS = ['#amazonTab', '#giantBombTab'];
@@ -40,6 +41,14 @@
     var $addList = $('#addList');
     var $saveItemButton = $('#saveItem_btn');
     var $addItemButton = $('#addItem_btn');
+
+    // node cache: data fields
+    var $platform = $('#platform');
+    var $releaseDate = $('#releaseDate');
+    var $wikipediaPage = $('#wikipediaPage');
+    var $giantBombPage = $('#giantBombPage');
+    var $amazonPriceNew = $('#amazonPriceNew');
+    var $amazonPriceUsed = $('#amazonPriceUsed');
 
     // templates
     var modalTemplate = _.template($('#description-modal-template').html());
@@ -92,7 +101,7 @@
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			if (amazonItem.id && !amazonItem.rendered) {
 
-				// console.info('render amazon item');
+				// // console.info('render amazon item');
 				itemData = {'itemData': this.model.toJSON().amazonItem};
 
 				// set status as rendered
@@ -113,7 +122,7 @@
 			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			if (giantBombItem.id && !giantBombItem.rendered) {
 
-				// console.info('render giant bomb item');
+				// // console.info('render giant bomb item');
 				itemData = {'itemData': this.model.toJSON().giantBombItem};
 
 				// set status as rendered
@@ -199,7 +208,11 @@
 		// only view item detail if new item or platform for item has changed
 		if (searchItem.id !== firstItem.id || searchItem.platform !== firstItem.platform) {
 
-			console.info('viewFirstSearchItemDetail', searchItem);
+			// hide information until update query returns
+			$amazonPriceNew.hide();
+			$amazonPriceNew.hide();
+			$amazonPriceUsed.hide();
+			$giantBombPage.hide();
 
 			// clone object as firstItem
 			firstItem = jQuery.extend(true, {}, searchItem);
@@ -235,8 +248,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewSecondSearchItemDetail = function(searchItem) {
 
-		console.info('viewSecondSearchItemDetail', searchItem);
-
 		// clone object as secondItem
 		secondItem = jQuery.extend(true, {}, searchItem);
 
@@ -253,7 +264,6 @@
 				firstItem.gbombID = secondItem.gbombID;
 				break;
 		}
-		console.info(firstItem);
 
 		// call main view detail method
 		viewSearchDetail(secondItem);
@@ -264,17 +274,20 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewSearchDetail = function(item) {
 
-		// console.info("VIEW SEARCH DETAIL");
-		// console.info(item);
+		// // console.info("VIEW SEARCH DETAIL");
+		// // console.info(item);
 
 		// update model item for provider
 		updateModelDataForProvider(currentProvider, item);
 
-		// start download of item description
-		getDescriptionForTab(currentProvider);
+		// update data panel
+		updateDataPanel(item);
+
+		// get item details
+		getProviderSpecificItemDetails(currentProvider, firstItem);
 
 		// get metascore page
-		getMetascore(firstItem.standardName, firstItem);
+		getMetascore(item.standardName, firstItem);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -282,13 +295,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewItemDetail = function(item) {
 
+		// hide information until update query returns
+		$amazonPriceNew.hide();
+		$amazonPriceNew.hide();
+		$amazonPriceUsed.hide();
+		$giantBombPage.hide();
+
 		// reset initial tags
 		initialItemTags = {};
 
+		// existing item - list add button renamed to 'save'
 		changeSubmitButtonStyle('save');
 
 		// clone object as firstItem
 		firstItem = jQuery.extend(true, {}, item);
+
 		// add standard name propery
 		firstItem.standardName = ItemLinker.standardizeTitle(firstItem.name);
 
@@ -311,14 +332,8 @@
 		// load tags
 		selectTagsFromDirectory(tagList);
 
-		// update model item for provider
-		updateModelDataForProvider(currentProvider, firstItem);
-
-		// get metascore page
-		getMetascore(firstItem.standardName, firstItem);
-
-		// start download of item description
-		getDescriptionForTab(currentProvider);
+		// finish tasks for viewing items
+		completeViewItemDetail(firstItem);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,13 +353,29 @@
 			// figure out provider for current item
 			currentProvider = getItemProvider(secondItem.asin, secondItem.gbombID);
 
-			// update model item for provider
-			updateModelDataForProvider(currentProvider, secondItem);
-
-			// get metascore
-			getMetascore(firstItem.standardName, firstItem);
+			// finish tasks for viewing items
+			completeViewItemDetail(secondItem);
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* completeViewItemDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var completeViewItemDetail = function(item) {
+
+		// update model item for provider
+		updateModelDataForProvider(currentProvider, item);
+
+		// update data panel
+		updateDataPanel(firstItem);
+
+		// get item details
+		getProviderSpecificItemDetails(currentProvider, firstItem);
+
+		// get metascore
+		getMetascore(item.standardName, firstItem);
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* removeTagForItemID - if tags for item removed outside, call to update currently viewing item
@@ -364,62 +395,104 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateDataPanel -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateDataPanel = function(item) {
+
+		console.info(item);
+
+		// update platform and release date
+		if (item.platform !== 'n/a') {
+			$platform.find('.data').text(item.platform);
+		}
+		$releaseDate.find('.data').text(item.calendarDate);
+
+		// $wikipediaPage.find('a').attr('href', 'www.wikipedia.com');
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateModelDataForProvider - set corresponding model object based on provider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateModelDataForProvider = function(provider, item) {
 
-		// console.info(provider, Utilities.getProviders().Amazon, Utilities.getProviders().GiantBomb);
+		// // console.info(provider, Utilities.getProviders().Amazon, Utilities.getProviders().GiantBomb);
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				// console.info('update amazon');
+				// // console.info('update amazon');
 				details.set({'amazonItem': item});
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				// console.info('update gb');
+				// // console.info('update gb');
 				details.set({'giantBombItem': item});
 				break;
 		}
 
-		// console.info(details.get('giantBombItem'));
+		// // console.info(details.get('giantBombItem'));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getDescriptionForTab -
+	* getProviderSpecificItemDetails -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getDescriptionForTab = function(provider) {
+	var getProviderSpecificItemDetails = function(provider, item) {
 
 		switch (provider) {
+			// amazon price details
 			case Utilities.getProviders().Amazon:
+				AmazonPrice.getAmazonItemOffers(item.asin, item, amazonItemOffers_result);
 				break;
 
+			// giantbomb detail
 			case Utilities.getProviders().GiantBomb:
-				SearchData.getGiantBombItemDescription(details.get('giantBombItem').gbombID, function(data) {
-					loadGiantBombDescription(data);
-				});
+				SearchData.getGiantBombItemData(item.gbombID, giantBombItemData_result);
 				break;
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* loadGiantBombDescription -
+	* amazonItemOffers_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var loadGiantBombDescription = function(data) {
+	var amazonItemOffers_result = function(item) {
 
-		var description = data.results.description;
+		// get formatted offer data
+		var formattedOfferData = AmazonPrice.formatOfferData(item.offers);
+
+		// update data panel information
+		$amazonPriceNew.fadeIn();
+		$amazonPriceNew.fadeIn();
+		$amazonPriceUsed.fadeIn();
+
+		$amazonPriceNew.find('a').attr('href', formattedOfferData.productURL);
+		$amazonPriceNew.find('.data').text(formattedOfferData.buyNowPrice);
+		$amazonPriceUsed.find('a').attr('href', formattedOfferData.offersURLUsed);
+		$amazonPriceUsed.find('.data').text(formattedOfferData.lowestUsedPrice);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* giantBombItemData_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var giantBombItemData_result = function(data) {
+
+		// console.info(data);
+
+		var itemDetail = data.results;
+
+		// get giantbomb item and update detail data
+		var giantBombItem = details.get('giantBombItem');
+		giantBombItem.description = itemDetail.description;
 
 		var itemData = {
-			description: description
+			description: itemDetail.description,
+			name: giantBombItem.name
 		};
 
-		// get giantbomb item and set description data
-		var giantBombItem = details.get('giantBombItem');
-		giantBombItem.description = description;
+		// update giantbomb page url
+		$giantBombPage.fadeIn();
+		$giantBombPage.find('a').attr('href', itemDetail.site_detail_url);
 
-		// add item name for description template
-		itemData.name = giantBombItem.name;
-
+		// update description modal
 		$giantBombDescriptionModal.html(modalTemplate({'itemData': itemData}));
 	};
 
@@ -597,7 +670,7 @@
 	var selectTagsFromDirectory = function(tagList) {
 
 
-		console.info(tagList);
+		// console.info(tagList);
 		var option = null;
 
 		// clear selected attributes from all options
@@ -608,7 +681,7 @@
 			// get option node
 			option = $addList.find('option[value="' + tagID + '"]');
 
-			console.info(option);
+			// console.info(option);
 
 			// select option
 			$(option).attr('selected', '');
@@ -702,7 +775,7 @@
 
 		// check for tags to delete
 		if (idsToDelete.length > 0) {
-			// console.info(idsToDelete);
+			// // console.info(idsToDelete);
 			ItemData.deleteTagsForItem(idsToDelete, firstItem, deleteTagsForItem_result);
 		}
 	};

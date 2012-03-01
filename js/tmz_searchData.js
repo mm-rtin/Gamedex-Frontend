@@ -74,7 +74,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchData.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
 
-		// console.info(browseNode);
+		// // console.info(browseNode);
 
 		var searchTerms = encodeURIComponent(keywords);
 
@@ -148,7 +148,7 @@
 		// result has been filtered
 		if (re.test(itemData.name) || itemData.platform === '') {
 
-			console.error('amazon item filtered: ', itemData.name, itemData.platform);
+			// console.error('amazon item filtered: ', itemData.name, itemData.platform);
 			itemData.isFiltered = true;
 
 		// not filtered > add more properties to itemData
@@ -163,11 +163,14 @@
 			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
 			itemData.releaseDate = $resultItem.find('ReleaseDate').text() || '1900-01-01';
 
-			// standardize platform names
+			// add custom formatted properties
+			// standard platform name
 			itemData.platform = SearchData.matchPlatformToIndex(itemData.platform).name;
+			// relative/calendar date
+			itemData.calendarDate = moment(itemData.releaseDate || '1900-01-01', "YYYY-MM-DD").calendar();
 		}
 
-		// console.info('------------ AMAZON -------------- ' + itemData.name);
+		// // console.info('------------ AMAZON -------------- ' + itemData.name);
 
 		return itemData;
 	};
@@ -185,7 +188,7 @@
 			platform: 'n/a'
 		};
 
-		// console.info('------------ GIANT BOMB -------------- ' + itemData.name);
+		// // console.info('------------ GIANT BOMB -------------- ' + itemData.name);
 
 		// format date
 		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {
@@ -266,11 +269,11 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDescription -
+	* getGiantBombItemData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchData.getGiantBombItemDescription = function(gbombID, onSuccess, onError) {
+	SearchData.getGiantBombItemData = function(gbombID, onSuccess, onError) {
 
-		var fieldList = ['description', 'developers'];
+		var fieldList = ['description', 'developers', 'site_detail_url'];
 		getGiantBombItem(gbombID, fieldList, onSuccess, onError);
 	};
 
@@ -322,20 +325,20 @@
 
 				if (currentMatch !== null && currentMatch[0].length === originalTextLength) {
 
-					// console.info('$$$$$$$$$$$$$$$$$$$$$$ EXACT MATCH WITH: ', PLATFORM_INDEX[i].name);
+					// // console.info('$$$$$$$$$$$$$$$$$$$$$$ EXACT MATCH WITH: ', PLATFORM_INDEX[i].name);
 					return PLATFORM_INDEX[i];
 
 				} else if (currentMatch !== null && currentMatch[0].length > bestMatchLength) {
 
-					// console.info(platformName, '********************* BEST MATCH WITH: ', PLATFORM_INDEX[i].name);
+					// // console.info(platformName, '********************* BEST MATCH WITH: ', PLATFORM_INDEX[i].name);
 					bestMatchLength = currentMatch[0].length;
 					bestMatch = PLATFORM_INDEX[i];
 				}
 			}
 		}
 
-		// console.info('!!!!!!!!!!!!!!!!!!!! DONE !!!!!!!!!!!!!!!!!!!!!!!!!!');
-		// console.info(bestMatch);
+		// // console.info('!!!!!!!!!!!!!!!!!!!! DONE !!!!!!!!!!!!!!!!!!!!!!!!!!');
+		// // console.info(bestMatch);
 
 		if (bestMatch !== null) {
 			return bestMatch;

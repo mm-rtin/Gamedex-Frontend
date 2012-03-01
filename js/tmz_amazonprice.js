@@ -51,9 +51,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addPriceMenu -
+	* formatOfferData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	AmazonPrice.addPriceMenu = function(offerItem, priceSelector) {
+	AmazonPrice.formatOfferData = function(offerItem) {
 
 		var buyNowPrice = null;
 		var buyNowRawPrice = null;
@@ -77,10 +77,9 @@
 			offerItem.lowestNewPrice = 'n/a';
 		}
 
-		var templateData = {'productURL': offerItem.productURL, 'offersURLNew': offerItem.offersURLNew, 'offersURLUsed': offerItem.offersURLUsed, 'buyNowPrice': buyNowPrice, 'buyNowRawPrice': buyNowRawPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
+		var formattedOfferData = {'productURL': offerItem.productURL, 'offersURLNew': offerItem.offersURLNew, 'offersURLUsed': offerItem.offersURLUsed, 'buyNowPrice': buyNowPrice, 'buyNowRawPrice': buyNowRawPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
 
-		// attach to existing item result
-		$(priceSelector).html(priceMenuTemplate(templateData));
+		return formattedOfferData;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,7 +124,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
 
-		console.info($resultItem);
+		// console.info($resultItem);
 		var offerItem = {};
 		var offer = {};
 
@@ -147,7 +146,7 @@
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
-			console.info($(this));
+			// console.info($(this));
 			offer = {};
 
 			offer.price = $(this).find('Price FormattedPrice').text();
@@ -158,7 +157,7 @@
 			offerItem.offers.push(offer);
 		});
 
-		console.info(offerItem);
+		// console.info(offerItem);
 		return offerItem;
 	};
 

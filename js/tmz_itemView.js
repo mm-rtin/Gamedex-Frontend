@@ -158,7 +158,7 @@
 		// applyFilters_btn: click
 		$('#applyFilters_btn').click(function(e) {
 			e.preventDefault();
-			console.info('apply filters');
+			// console.info('apply filters');
 
 			applyFilters();
 		});
@@ -167,7 +167,7 @@
 		$(viewlistContainer).find('input').live({
 			// keypress event
 			keydown: function(e){
-				// console.info('viewlist');
+				// // console.info('viewlist');
 				Utilities.handleInputKeyDown(e, viewlistContainer, ListModel);
 			}
 		});
@@ -221,7 +221,7 @@
 
 			if (listIDs[i] == selectedTagID) {
 
-				// console.info('update items at: ' + listIDs[i]);
+				// // console.info('update items at: ' + listIDs[i]);
 
 				// update item with related id for listID needing update
 				item.id = itemIDs[i];
@@ -248,7 +248,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.updateListDeletions = function(itemsDeleted) {
 
-		// console.info(itemsDeleted, selectedTagID);
+		// // console.info(itemsDeleted, selectedTagID);
 
 		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
 			if (itemsDeleted[i].tagID == selectedTagID) {
@@ -264,9 +264,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.getItem = function(id) {
 
-		// console.info('get item:');
-		// console.info(id);
-		// console.info(items.get('items'));
+		// // console.info('get item:');
+		// // console.info(id);
+		// // console.info(items.get('items'));
 
 		return items.get('items')[id];
 	};
@@ -327,8 +327,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseItemResults = function(itemResults) {
 
-		// console.info('parseItemResults');
-		// console.info(itemResults);
+		// // console.info('parseItemResults');
+		// // console.info(itemResults);
 
 		// temp item data
 		var tempItems = {};
@@ -401,7 +401,10 @@
 
 		// display price
 		var priceSelector = '#' + item.id + ' .priceDetails';
-		AmazonPrice.addPriceMenu(item.offers, priceSelector);
+		var formattedOfferData = AmazonPrice.formatOfferData(item.offers);
+
+		// attach to existing item result
+		$(priceSelector).html(priceMenuTemplate(formattedOfferData));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -477,7 +480,7 @@
 	var deleteItem_result = function(data) {
 
 		// delete
-		// console.info(data);
+		// // console.info(data);
 	};
 
 
@@ -500,7 +503,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteList_result = function(data) {
 
-		// console.info(data);
+		// // console.info(data);
 
 		// update listModel
 		ListModel.getList();
@@ -572,9 +575,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
-		// console.info(items.get('items'));
+		// // console.info(items.get('items'));
 
-		// console.info(sortType);
+		// // console.info(sortType);
 		currentSortIndex = parseInt(sortType, 10);
 
 		switch (currentSortIndex) {
@@ -691,7 +694,7 @@
 			return true;
 		// no filters selected - ignore filter
 		} else if (!unreleasedFilter && !releasedFilter) {
-			console.info('ignore filter');
+			// console.info('ignore filter');
 			return true;
 
 		// specific filter
@@ -723,7 +726,7 @@
 
 		// no filters selected - ignore filter
 		if (!_90sFilter && !_80sFilter && !_70sFilter && !_60sFilter && !_50sFilter && !_25to49Filter && !_0to24Filter) {
-			console.info('ignore filter');
+			// console.info('ignore filter');
 			return true;
 
 		// specifc filter

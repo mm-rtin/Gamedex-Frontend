@@ -16,7 +16,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metascore.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
-		console.info(metascoreCache);
+		// console.info(metascoreCache);
 		// find in cache first
 		var cachedScore = getCachedScore(sourceItem.asin, sourceItem.gbombID);
 
@@ -68,7 +68,7 @@
 		var $metascoreContainer = $(metascoreSelector);
 		var textScore = score;
 
-		console.info(page, score, metascoreSelector);
+		// console.info(page, score, metascoreSelector);
 
 		// determine score color
 		var colorClass = 'favorable';
