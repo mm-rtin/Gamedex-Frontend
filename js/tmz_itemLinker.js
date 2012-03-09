@@ -2,7 +2,8 @@
 (function(ItemLinker) {
 
 	// Dependencies
-	var SearchData = tmz.module('searchData');
+	var Amazon = tmz.module('amazon');
+	var GiantBomb = tmz.module('giantbomb');
 	var Utilities = tmz.module('utilities');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,12 +53,10 @@
 
 		// use standard name for search result
 		var standardResultName = ItemLinker.standardizeTitle(searchItem.name);
-		// get standard platform name from platform
-		var standardPlatform = SearchData.getStandardPlatform(searchItem.platform);
 
 		// exact name check
 		if (sourceItem.standardName === searchItem.name.toLowerCase()) {
-			// console.info('exact name: 50 score');
+			// // console.info('exact name: 50 score');
 			score += 50;
 
 		// fuzzy name check
@@ -69,36 +68,40 @@
 			targetInSource = reSearch.exec(sourceItem.standardName);
 
 			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
-				// console.info('fuzzy name: 5 score');
+				// // console.info('fuzzy name: 5 score');
 				score += 5;
 			}
 		}
 
 		// exact release date check
-		if (sourceItem.releaseDate === searchItem.releaseDate) {
-			score += 10;
-			// console.info('release date: 10 score');
+		if (typeof searchItem.releaseDate !== 'undefined') {
+			if (sourceItem.releaseDate === searchItem.releaseDate) {
+				score += 10;
+				// // console.info('release date: 10 score');
 
-		// fuzzy release date check
-		} else {
-			var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+			// fuzzy release date check
+			} else {
+				var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
 
-			// don't subtract score if search result date is unknown/unreleased
-			if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
-				score -= Math.abs(diff / 365);
+				// don't subtract score if search result date is unknown/unreleased
+				if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
+					score -= Math.abs(diff / 365);
+				}
 			}
 		}
 
 		// platform match
+		if (typeof searchItem.platform !== 'undefined') {
+			// get standard platform name from platform
+			var standardPlatform = Utilities.getStandardPlatform(searchItem.platform);
+		}
 
-
-
-		// // console.info('------------------------------');
-		// // console.info(sourceItem.standardName, ' - ', standardResultName);
-		// // console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
-		// // console.info(sourceItem.platform, ' - ', searchItem.platform);
-		// // console.info(score);
-		// // console.info('------------------------------');
+		// // // console.info('------------------------------');
+		// // // console.info(sourceItem.standardName, ' - ', standardResultName);
+		// // // console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
+		// // // console.info(sourceItem.platform, ' - ', searchItem.platform);
+		// // // console.info(score);
+		// // // console.info('------------------------------');
 
 		return score;
 	};
@@ -164,34 +167,34 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				// // console.info('alt search giantbomb');
+				// // // console.info('alt search giantbomb');
 
 				searchName = item.standardName;
 
-				// console.info('findItemOnAlternateProvider: searchName: ', searchName);
+				// // console.info('findItemOnAlternateProvider: searchName: ', searchName);
 
 				// run search for giantbomb
-				SearchData.searchGiantBomb(searchName, function(data) {
-					parseGiantBombAlternate_result(data, item, onSuccess);
+				GiantBomb.searchGiantBomb(searchName, function(data) {
+					findGiantbombMatch(data, item, onSuccess);
 				});
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				// // console.info('alt search amazon');
+				// // // console.info('alt search amazon');
 
 				var browseNode = 0;
 
 				// run same platform search
 				if (item.platform !== 'n/a') {
-					// // console.info('RUN SAME PLATFORM SEARCH');
-					// // console.info(item.platform);
+					// // // console.info('RUN SAME PLATFORM SEARCH');
+					// // // console.info(item.platform);
 
-					browseNode = SearchData.getStandardPlatform(item.platform).amazon;
+					browseNode = Utilities.getStandardPlatform(item.platform).amazon;
 				}
 
 				// run search for amazon
-				SearchData.searchAmazon(item.name, browseNode, function(data) {
-					parseAmazonAlternate_result(data, item, onSuccess);
+				Amazon.searchAmazon(item.name, browseNode, function(data) {
+					findAmazonMatch(data, item, onSuccess);
 				});
 				break;
 		}
@@ -204,19 +207,19 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				// // console.info('get giantbomb item');
+				// // // console.info('get giantbomb item');
 
 				// get item from giantbomb
-				SearchData.getGiantBombItemDetail(item.gbombID, function(data) {
+				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
 					getGiantBombItemDetail_result(data, onSuccess);
 				});
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				// // console.info('get amazon item');
+				// // // console.info('get amazon item');
 
 				// get item from amazon
-				SearchData.getAmazonItemDetail(item.asin, function(data) {
+				Amazon.getAmazonItemDetail(item.asin, function(data) {
 					getAmazonItemDetail_result(data, onSuccess);
 				});
 				break;
@@ -224,97 +227,13 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail_result
+	* findWikipediaMatch -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getAmazonItemDetail_result = function(data, onSuccess) {
+	ItemLinker.findWikipediaMatch = function(data, sourceItem, onSuccess) {
 
-		var detailItem = {};
-		// iterate results
-		$('Item', data).each(function() {
+		// console.info('findWikipedia Match');
 
-			// parse item and set detailItem
-			detailItem = SearchData.parseAmazonResultItem($(this));
-		});
-
-		// display second item
-		onSuccess(detailItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDetail_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItemDetail_result = function(data, onSuccess) {
-
-		// parse result item and set detailItem
-		var detailItem = SearchData.parseGiantBombResultItem(data.results);
-
-		// display second item
-		onSuccess(detailItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonAlternate_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonAlternate_result = function(data, sourceItem, onSuccess) {
-
-		var resultLength = ($('Item', data).length);
-		var searchItem = {};
-		var count = 0;
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// console.info('**************** parseAmazonAlternate_result found: ' + resultLength + ' *******************');
-
-		// iterate results
-		$('Item', data).each(function() {
-
-			// parse item and return searchItem
-			searchItem = SearchData.parseAmazonResultItem($(this));
-
-			// searchItem not filtered
-			if (typeof searchItem.isFiltered === 'undefined') {
-				// console.info('not filtered');
-
-				// save first non-filtered result
-				if (count === 0) {
-					bestMatch = searchItem;
-				}
-
-				count++;
-				// get similarity score
-				score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-				// check if score is new best
-				if (score > bestScore) {
-					bestMatch = searchItem;
-					bestScore = score;
-					// console.info(bestMatch);
-				}
-			}
-		});
-
-		// return best match to onSuccess method
-		if (bestMatch !== null) {
-			// return best match
-			onSuccess(bestMatch);
-
-		// re-run search without platform filter
-		} else {
-			SearchData.searchAmazon(sourceItem.name, 0, function(data) {
-				parseAmazonAlternate_result(data, sourceItem, onSuccess);
-			});
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGiantBombAlternate_result -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGiantBombAlternate_result = function(data, sourceItem, onSuccess) {
-
-		var results = data.results;
+		var results = data;
 		var searchItem = {};
 
 		// matching properties
@@ -322,15 +241,16 @@
 		var bestScore = -99999;
 		var score = 0;
 
-		// console.info('**************** parseGiantBombAlternate_result found: ' + results.length + ' *******************');
+		// console.info(results);
 
-		// // console.info(results);
 
 		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {
 
-			// parse result into searchItem object
-			searchItem = SearchData.parseGiantBombResultItem(results[i]);
+			// create searchItem object
+			searchItem = {
+				'name': results[i]
+			};
 
 			// init best match with first item
 			if (i === 0) {
@@ -354,6 +274,136 @@
 		}
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getAmazonItemDetail_result = function(data, onSuccess) {
+
+		var detailItem = {};
+		// iterate results
+		$('Item', data).each(function() {
+
+			// parse item and set detailItem
+			detailItem = Amazon.parseAmazonResultItem($(this));
+		});
+
+		// display second item
+		onSuccess(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGiantBombItemDetail_result = function(data, onSuccess) {
+
+		// parse result item and set detailItem
+		var detailItem = GiantBomb.parseGiantBombResultItem(data);
+
+		// display second item
+		onSuccess(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findAmazonMatch
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findAmazonMatch = function(data, sourceItem, onSuccess) {
+
+		var resultLength = ($('Item', data).length);
+		var searchItem = {};
+		var count = 0;
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// // console.info('**************** findAmazonMatch found: ' + resultLength + ' *******************');
+
+		// iterate results
+		$('Item', data).each(function() {
+
+			// parse item and return searchItem
+			searchItem = Amazon.parseAmazonResultItem($(this));
+
+			// searchItem not filtered
+			if (typeof searchItem.isFiltered === 'undefined') {
+				// // console.info('not filtered');
+
+				// save first non-filtered result
+				if (count === 0) {
+					bestMatch = searchItem;
+				}
+
+				count++;
+				// get similarity score
+				score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+				// check if score is new best
+				if (score > bestScore) {
+					bestMatch = searchItem;
+					bestScore = score;
+					// // console.info(bestMatch);
+				}
+			}
+		});
+
+		// return best match to onSuccess method
+		if (bestMatch !== null) {
+			// return best match
+			onSuccess(bestMatch);
+
+		// re-run search without platform filter
+		} else {
+			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
+				findAmazonMatch(data, sourceItem, onSuccess);
+			});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findGiantbombMatch -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findGiantbombMatch = function(data, sourceItem, onSuccess) {
+
+		var results = data.results;
+		var searchItem = {};
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// // console.info('**************** findGiantbombMatch found: ' + results.length + ' *******************');
+
+		// // // console.info(results);
+
+		// iterate search results
+		for (var i = 0, len = results.length; i < len; i++) {
+
+			// parse result into searchItem object
+			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+
+			// init best match with first item
+			if (i === 0) {
+				bestMatch = searchItem;
+			}
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchItem;
+				bestScore = score;
+			}
+		}
+
+		// return best match to onSuccess method
+		if (results.length !== 0) {
+			// return best match
+			onSuccess(bestMatch);
+		}
+	};
 
 })(tmz.module('itemLinker'));
 

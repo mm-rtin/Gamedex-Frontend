@@ -3,23 +3,86 @@
 
 	// Dependencies
 	var User = tmz.module('user');
+	var ItemLinker = tmz.module('itemLinker');
 
-	// get items by 3RD party ID
+	// full item detail results
+	var items = {};
+
+	// items cached by tagID
+	itemsCacheByTag = {};
+
+	// basic item framework
+	// all directories share item data
+
+	// items by 3RD party ID
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
-	// get items by itemID
-	var itemTagsDirectory = {};
+	// items by itemID
+	var itemDataDirectory = {};
 
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getters
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getAmazonDirectory = function() {
-		return amazonDirectory;
+	ItemData.getItems = function(tagID, onSuccess, onError) {
+
+
+		// find in itemsCacheByTag first
+		var cachedItems = getCachedItemsByTag(tagID);
+
+		// load cached items offer
+		if (cachedItems) {
+
+			// assign as new current items data
+			items = cachedItems;
+
+			console.info(items);
+
+			// return updated source item
+			onSuccess(cachedItems);
+
+		// get new items data
+		} else {
+
+			var restURL = tmz.api + 'item/';
+			var userData = User.getUserData();
+
+			var requestData = {
+				user_id: userData.user_id,
+				uk: userData.secret_key,
+				list_id: tagID
+			};
+
+			$.ajax({
+				url: restURL,
+				type: 'POST',
+				data: requestData,
+				dataType: 'json',
+				cache: true,
+				success: function(data) {
+
+					// parse results and assign as new items data
+					items = parseItemResults(data);
+
+					// save reference to itemsCacheByTag
+					itemsCacheByTag[tagID] = items;
+
+					// return data to callee
+					onSuccess(items);
+				},
+				error: onError
+			});
+		}
 	};
 
-	ItemData.getGiantBombDirectory = function() {
-		return giantBombDirectory;
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItems
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getItem = function(id) {
+
+		console.info(items);
+
+		return items[id];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,7 +95,7 @@
 
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key
+			uk: userData.secret_key
 		};
 
 		$.ajax({
@@ -61,7 +124,7 @@
 
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key,
+			uk: userData.secret_key,
 			item_id: itemID
 		};
 
@@ -90,20 +153,26 @@
 		var item = jQuery.extend(true, {}, currentItem);
 
 		var requestData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			list_ids: listIDs,
-			item_name: item.name,
-			item_releasedate: item.releaseDate,
-			item_asin:  item.asin,
-			item_gbombID: item.gbombID,
-			item_initialProvider: item.initialProvider,
-			item_platform: item.platform,
-			item_smallImage: item.smallImage,
-			item_thumbnailImage: item.thumbnailImage,
-			item_largeImage: item.largeImage,
-			item_metacriticPage: 'meta page',
-			item_metascore: 100
+			'uid': userData.user_id,
+			'uk': userData.secret_key,
+			'lids': listIDs,
+
+			'n': item.name,
+			'rd': item.releaseDate,
+			'aid': item.asin,
+			'gid': item.gbombID,
+			'ip': item.initialProvider,
+			'p': item.platform,
+			'si': item.smallImage,
+			'ti': item.thumbnailImage,
+			'li': item.largeImage,
+
+			'mp': item.metascorePage,
+			'ms': item.metascore,
+
+			'gs': item.gameStatus,
+			'ps': item.playStatus,
+			'ur': item.userRating
 		};
 
 		$.ajax({
@@ -113,7 +182,55 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				addTagsToDirectory(item, data);
+				addItemDataToDirectory(item, data);
+				onSuccess(item, data);
+			},
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateItem
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.updateItem = function(currentItem, onSuccess, onError) {
+
+		var restURL = tmz.api + 'item/update';
+		var userData = User.getUserData();
+
+		// clone currentItem as new object
+		var item = jQuery.extend(true, {}, currentItem);
+
+		var requestData = {
+			'uid': userData.user_id,
+			'uk': userData.secret_key,
+
+			'id': item.itemID,
+			'n': item.name,
+			'rd': item.releaseDate,
+			'aid': item.asin,
+			'gid': item.gbombID,
+			'ip': item.initialProvider,
+			'p': item.platform,
+			'si': item.smallImage,
+			'ti': item.thumbnailImage,
+			'li': item.largeImage,
+
+			'mp': item.metascorePage,
+			'ms': item.metascore,
+
+			'gs': item.gameStatus,
+			'ps': item.playStatus,
+			'ur': item.userRating
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				updateDirectoryItem(item);
 				onSuccess(item, data);
 			},
 			error: onError
@@ -125,14 +242,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.deleteTagsForItem = function(listIDs, currentItem, onSuccess, onError) {
 
-		// // console.info(currentItem);
+		// // // console.info(currentItem);
 
 		var restURL = tmz.api + 'item/batch-delete';
 		var userData = User.getUserData();
 
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key,
+			uk: userData.secret_key,
 			ids: listIDs
 		};
 
@@ -156,16 +273,18 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteSingleItem -
+	* deleteServerItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteSingleItem = function(id, itemID, onSuccess, onError) {
+	ItemData.deleteServerItem = function(id, onSuccess, onError) {
+
+		var itemID = items[id].itemID;
 
 		var restURL = tmz.api + 'item/delete';
 		var userData = User.getUserData();
 
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key,
+			uk: userData.secret_key,
 			id: id
 		};
 
@@ -184,96 +303,213 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemTagsFromDirectory
+	* getItemByItemID
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemTagsFromDirectory = function(itemID) {
+	ItemData.getItemByItemID = function(itemID) {
 
-		var tags = {};
-		if (itemTagsDirectory[itemID]) {
-			tags = itemTagsDirectory[itemID].tags;
-		}
-
-		return tags;
+		// return item or empty object
+		return itemDataDirectory[itemID] || null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemTagCountFromDirectory
+	* getItemByThirdPartyID
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemTagCountFromDirectory = function(itemID) {
+	ItemData.getItemByThirdPartyID = function(gbombID, asin) {
 
-		var tagCount = 0;
-		if (itemTagsDirectory[itemID]) {
-			tagCount = itemTagsDirectory[itemID].tagCount;
+		// itemID from directory
+		var item = null;
+
+		// select appropriate 3rd party item directory
+		if (gbombID !== 0) {
+			item = giantBombDirectory[gbombID];
+
+		} else if (asin !== 0) {
+			item = amazonDirectory[asin];
 		}
 
-		return tagCount;
+		return item;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteTagFromDirectory
+	* deleteClientItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.deleteClientItem = function(id) {
+
+		var item = items[id];
+		var deleteditem = jQuery.extend(true, {}, item);
+
+		// check if item faund
+		if (item !== null) {
+
+			// remove item
+			delete items[id];
+
+			return deleteditem;
+		}
+
+		return null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addClientItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.addClientItem = function(item) {
+
+		// add custom formated properties
+		addCustomProperties(item);
+
+		// add to items data
+		items[item.id] = item;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedItemsByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedItemsByTag = function(id) {
+
+		var cachedItems = null;
+
+		if (typeof itemsCacheByTag[id] !== 'undefined') {
+			cachedItems = itemsCacheByTag[id];
+		}
+		return cachedItems;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseItemResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseItemResults = function(itemResults) {
+
+		// temp item data
+		var tempItems = {};
+		var item = {};
+
+		var itemLength = 0;
+		var calendarDate = null;
+		var i = 0;
+
+		listLength = itemResults.items.length;
+
+		// iterate itemResults
+		for (i; i < listLength; i++) {
+
+			item = {};
+
+			// get attributes
+			item.id = itemResults.items[i].id;
+			item.initialProvider = itemResults.items[i].ip;
+			item.itemID = itemResults.items[i].iid;
+			item.asin = itemResults.items[i].aid;
+			item.gbombID = itemResults.items[i].gid;
+
+			item.name = itemResults.items[i].n;
+			item.releaseDate = itemResults.items[i].rd;
+			item.platform = itemResults.items[i].p;
+			item.smallImage = itemResults.items[i].si;
+			item.thumbnailImage = itemResults.items[i].ti;
+			item.largeImage = itemResults.items[i].li;
+
+			item.description = '';
+
+			// add custom formated properties
+			addCustomProperties(item);
+
+			// add to lists objects
+			tempItems[item.id] = item;
+		}
+
+		return tempItems;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addCustomProperties -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addCustomProperties = function(item) {
+
+		// add formatted calendarDate
+		item.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
+
+		// add standard name propery
+		item.standardName = ItemLinker.standardizeTitle(item.name);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteTagFromDirectory - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagFromDirectory = function(itemID, tagID) {
 
-		// // console.info(itemTagsDirectory);
+		var itemTags = itemDataDirectory[itemID];
 
-		// // console.info(itemID);
-		// // console.info(tagID);
-		var itemTags = itemTagsDirectory[itemID];
-
-		// remove tag from item
+		// remove tag from item - will also remove from 3rd party directories
 		delete itemTags.tags[tagID];
 
 		// decrement tagCount
 		itemTags.tagCount += -1;
-
-		// // console.info(itemTagsDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addTagsToDirectory
+	* updateDirectoryItem - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addTagsToDirectory = function(item, data) {
+	var updateDirectoryItem = function(item) {
+
+		var directoryItem = itemDataDirectory[item.itemID];
+
+		// update properties
+		directoryItem.gameStatus = item.gameStatus;
+		directoryItem.playStatus = item.playStatus;
+		directoryItem.userRating = item.userRating;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addItemDataToDirectory - also updates 3rd party directories
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addItemDataToDirectory = function(item, data) {
 
 		// if itemID doesn't exist in directory
-		if (!itemTagsDirectory[data.itemID]) {
+		if (!itemDataDirectory[data.itemID]) {
 
 			// add to tag directory
-			itemTagsDirectory[data.itemID] = {'itemAsin': item.asin, 'itemGBombID': item.gbombID, 'tags': {}, 'tagCount': 0};
+			directoryItem = {
+				itemID: data.itemID,
+				asin: item.asin,
+				gbombID: item.gbombID,
+				gameStatus: item.gameStatus,
+				playStatus: item.playStatus,
+				tags: {},
+				tagCount: 0,
+				userRating: item.userRating
+			};
 
 			// add to 3rd party directory
-			addItemTo3rdPartyDirectory(item.asin, item.gbombID, data.itemID);
+			addItemToDirectories(directoryItem);
 		}
 
-		// iterate added tags
+		// update tag information in directories
 		for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
-			// add tag
-			itemTagsDirectory[data.itemID].tags[data.tagIDsAdded[i]] = data.idsAdded[i];
-			// increment tagCount
-			itemTagsDirectory[data.itemID].tagCount += 1;
-		}
 
-		// // console.info(itemTagsDirectory);
+			// add tag
+			itemDataDirectory[data.itemID].tags[data.tagIDsAdded[i]] = data.idsAdded[i];
+			// increment tagCount
+			itemDataDirectory[data.itemID].tagCount += 1;
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addItemTo3rdPartyDirectory
+	* addItemToDirectories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemTo3rdPartyDirectory = function(asin, gbombID, itemID) {
+	var addItemToDirectories = function(item) {
 
-		var directory = null;
+		// itemID directory
+		itemDataDirectory[item.itemID] = item;
 
-		// giant bomb
-		if (gbombID !== 0) {
-			directory =  ItemData.getGiantBombDirectory();
-			directory[gbombID] = itemID;
-		}
 		// amazon
-		if (asin !== 0) {
-			directory =  ItemData.getAmazonDirectory();
-			directory[asin] = itemID;
+		if (parseInt(item.asin, 10) !== 0) {
+			amazonDirectory[item.asin] = item;
 		}
-
-		// // console.info(directory);
+		// giant bomb
+		if (parseInt(item.gbombID, 10) !== 0) {
+			giantBombDirectory[item.gbombID] = item;
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -281,24 +517,26 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getItemDirectory_result = function(data) {
 
+		var directoryItem = {};
+
 		// create new directory, set 3rd party IDs as keys
 		_.each(data.directory, function(item, itemID) {
 
+			directoryItem = {
+				// add itemID to directoryItem
+				itemID: itemID,
+				asin: item.aid,
+				gbombID: item.gid,
+				gameStatus: item.gs,
+				playStatus: item.ps,
+				tags: item.t,
+				tagCount: item.tc,
+				userRating: item.ur
+			};
+
 			// for each 3RD party directory sets their ID as keys
-			if (item.itemAsin !== '0') {
-				amazonDirectory[item.itemAsin] = itemID;
-			}
-			if (item.itemGBombID !== '0') {
-				giantBombDirectory[item.itemGBombID] = itemID;
-			}
-
+			addItemToDirectories(directoryItem);
 		});
-
-		// // console.info(amazonDirectory);
-		// // console.info(giantBombDirectory);
-
-		// assign itemTags directory
-		itemTagsDirectory = data.directory;
 	};
 
 })(tmz.module('itemData'));

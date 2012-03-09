@@ -4,7 +4,8 @@
 
 	// module references
 	var DetailView = tmz.module('detailView');
-	var SearchData = tmz.module('searchData');
+	var Amazon = tmz.module('amazon');
+	var GiantBomb = tmz.module('giantbomb');
 	var Utilities = tmz.module('utilities');
 
     // constants
@@ -25,13 +26,14 @@
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
+    var $searchContainer = $('#searchContainer');
     var $searchProvider = $('#searchProvider');
     var $platformListContainer = $('#platformContainer');
     var $platformList = $('#platformList');
     var $searchResultsContainer = $('#searchResultsContainer');
     var $searchResults = $('#searchResults');
     var $inputField = $('#search').find('input');
-    var $searchResultsDisplayGroup = $('#searchResultsDisplayGroup');
+    var $displayOptions = $searchContainer.find('.displayOptions');
 
     // templates
     var searchResultsTemplate = _.template($('#search-results-template').html());
@@ -115,7 +117,7 @@
 		SearchView.createEventHandlers();
 
 		// set platform
-		platform = SearchData.getPlatformIndex()[0];
+		platform = Utilities.getPlatformIndex()[0];
 
 	};
 
@@ -140,14 +142,14 @@
 		$searchResults.on('click', '.dropdown-menu li', platformMenu_onClick);
 
 		// displayType toggle
-		$searchResultsDisplayGroup.on('click', 'button', function(e) {
+		$displayOptions.on('click', 'button', function(e) {
 			e.preventDefault();
 			changeDisplayType(this);
 		});
 
 		// search button: click
 		$('#search_btn').click(function() {
-			// // console.info('click search');
+			// // // console.info('click search');
 			SearchView.search(searchTerms);
 		});
 
@@ -169,12 +171,12 @@
 
 				// amazon
 				case Utilities.getProviders().Amazon:
-					SearchData.searchAmazon(keywords, platform.amazon, searchAmazon_result);
+					Amazon.searchAmazon(keywords, platform.amazon, searchAmazon_result);
 					break;
 
 				// giantbomb
 				case Utilities.getProviders().GiantBomb:
-					SearchData.searchGiantBomb(keywords, searchGiantBomb_result);
+					GiantBomb.searchGiantBomb(keywords, searchGiantBomb_result);
 					break;
 			}
 		}
@@ -188,7 +190,7 @@
 		var windowHeight = $(window).height();
 		var resultsHeight = $searchResults.height();
 
-		// // console.info(resultsHeight);
+		// // // console.info(resultsHeight);
 
 		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
 			$searchResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
@@ -213,7 +215,7 @@
 		$('Item', data).each(function() {
 
 			// parse amazon result item and get back filtered status, add data to searchItem
-			searchItem = SearchData.parseAmazonResultItem($(this));
+			searchItem = Amazon.parseAmazonResultItem($(this));
 
 			// add temp results object
 			if (typeof searchItem.isFiltered === 'undefined') {
@@ -241,10 +243,10 @@
 		for (var i = 0, len = results.length; i < len; i++) {
 
 			// parse result item and set searchItem
-			searchItem = SearchData.parseGiantBombResultItem(results[i]);
+			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
 
 			// get platform information for each item by gbombID
-			SearchData.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
+			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
 
 			// save item in search results cache under ASIN key
 			tempSearchResults[searchItem.id] = searchItem;
@@ -265,15 +267,15 @@
 
 		for (var i = 0, len = platforms.length; i < len; i++) {
 
-			// console.info(platforms[i].name);
+			// // console.info(platforms[i].name);
 			// standardize platform names
-			standardPlatform = SearchData.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
+			standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
 
 			platformList.push(standardPlatform);
 			// platformList.push(platforms[i].name);
 		}
 
-		// console.info('--------------------------------------');
+		// // console.info('--------------------------------------');
 
 		// add platform drop down to item results
 		addPlatformDropDown(gbombID, platformList);
@@ -344,7 +346,7 @@
 	var platformChanged = function() {
 
 		// set platform object
-		platform = SearchData.getStandardPlatform($(this).val());
+		platform = Utilities.getStandardPlatform($(this).val());
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -371,7 +373,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchFieldTimeOut = function() {
 
-		// // console.info("search timeout: search current search terms");
+		// // // console.info("search timeout: search current search terms");
 
 		clearTimeout(timeout);
 		SearchView.search(searchTerms);
@@ -397,7 +399,7 @@
 
 		// start search timer
 		} else {
-			// // console.info("start search timer");
+			// // // console.info("start search timer");
 			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
     };
@@ -406,6 +408,8 @@
     var searchResultItem_onClick = function() {
 
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
+
+		// console.info(searchResult);
 
 		// show item detail
 		DetailView.viewFirstSearchItemDetail(searchResult);

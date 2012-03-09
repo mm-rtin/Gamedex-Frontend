@@ -1,12 +1,12 @@
-// Metascore
-(function(Metascore) {
+// Metacritic
+(function(Metacritic) {
 
     // module references
-	var SearchData = tmz.module('searchData');
+	var Amazon = tmz.module('amazon');
 	var ItemLinker = tmz.module('itemLinker');
 
 	// properties
-	var metacriticDomain = 'http://www.metacritic.com';
+	var metacriticDomain = 'metacritic.com';
 
 	// data
 	var metascoreCache = {};
@@ -14,11 +14,12 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Metascore.getMetascore = function(searchTerms, sourceItem, onSuccess) {
+	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
-		// console.info(metascoreCache);
+		// console.info(searchTerms);
+		// // console.info(metascoreCache);
 		// find in cache first
-		var cachedScore = getCachedScore(sourceItem.asin, sourceItem.gbombID);
+		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
 
 		if (cachedScore) {
 			// add score data to source item
@@ -63,12 +64,12 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* displayMetascoreData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Metascore.displayMetascoreData = function(page, score, metascoreSelector) {
+	Metacritic.displayMetascoreData = function(page, score, metascoreSelector) {
 
 		var $metascoreContainer = $(metascoreSelector);
 		var textScore = score;
 
-		// console.info(page, score, metascoreSelector);
+		// // console.info(page, score, metascoreSelector);
 
 		// determine score color
 		var colorClass = 'favorable';
@@ -84,18 +85,18 @@
 		$metascoreContainer
 			.html(textScore)
 			.addClass(colorClass)
-			.attr('href', metacriticDomain + page)
+			.attr('href', 'http://www.' + metacriticDomain + page)
 			.attr('data-score', score)
-			.attr('data-original-title', metacriticDomain + page);
+			.attr('data-original-title', metacriticDomain + ' ' + page);
 
 		// activate tooltip
 		$metascoreContainer.tooltip();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedScore -
+	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedScore = function(asin, gbombID) {
+	var getCachedData = function(asin, gbombID) {
 
 		var metascoreItem = null;
 
@@ -199,5 +200,5 @@
 
 
 
-})(tmz.module('metascore'));
+})(tmz.module('metacritic'));
 

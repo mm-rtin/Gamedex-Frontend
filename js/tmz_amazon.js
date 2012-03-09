@@ -1,8 +1,38 @@
-// AmazonPrice
-(function(AmazonPrice) {
+// Amazon
+(function(Amazon) {
 
     // module references
-	var SearchData = tmz.module('searchData');
+    var Utilities = tmz.module('utilities');
+
+	// constants
+	var FILTERED_NAMES = [
+		'accessory',
+		'case',
+		'codes',
+		'combo',
+		'console',
+		'controller',
+		'covers',
+		'face plate',
+		'faceplate',
+		'head set',
+		'headset',
+		'import',
+		'japan',
+		'kit',
+		'map',
+		'membership',
+		'new',
+		'pack',
+		'poster',
+		'pre-paid',
+		'set',
+		'shell',
+		'skin',
+		'software',
+		'stylus',
+		'wireless'
+	];
 
 	// data
 	amazonOffersCache = {};
@@ -11,12 +41,110 @@
 	var priceMenuTemplate = _.template($('#price-menu-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchAmazon
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
+
+		var searchTerms = encodeURIComponent(keywords);
+
+		// browse node, search terms and response group in url
+		var restURL = tmz.api + 'itemsearch/amazon/';
+
+		var requestData = {
+			'keywords': keywords,
+			'browse_node': browseNode,
+			'search_index': 'VideoGames',
+			'response_group': 'ItemAttributes,Images',
+			'page': 1
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'xml',
+			cache: true,
+			success: onSuccess,
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAmazonResultItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.parseAmazonResultItem = function($resultItem) {
+
+		var isFiltered = false;
+		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
+		var	re = new RegExp(filter, 'i');
+
+		// get attributes from xml for filter check
+		var itemData = {
+			name: $resultItem.find('Title').text(),
+			platform: $resultItem.find('Platform').text()
+		};
+
+		// result has been filtered
+		if (re.test(itemData.name) || itemData.platform === '') {
+
+			// console.error('amazon item filtered: ', itemData.name, itemData.platform);
+			itemData.isFiltered = true;
+
+		// not filtered > add more properties to itemData
+		} else {
+
+			itemData.id = $resultItem.find('ASIN').text();
+			itemData.asin = $resultItem.find('ASIN').text();
+			itemData.gbombID = 0;
+			itemData.smallImage = $resultItem.find('ThumbnailImage > URL:first').text() || '';
+			itemData.thumbnailImage = $resultItem.find('MediumImage > URL:first').text() || '';
+			itemData.largeImage = $resultItem.find('LargeImage > URL:first').text() || '';
+			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
+			itemData.releaseDate = $resultItem.find('ReleaseDate').text() || '1900-01-01';
+
+			// add custom formatted properties
+			// standard platform name
+			itemData.platform = Utilities.matchPlatformToIndex(itemData.platform).name;
+			// relative/calendar date
+			itemData.calendarDate = moment(itemData.releaseDate || '1900-01-01', "YYYY-MM-DD").calendar();
+		}
+
+		// // // console.info('------------ AMAZON -------------- ' + itemData.name);
+
+		return itemData;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.getAmazonItemDetail = function(asin, onSuccess, onError) {
+
+		// browse node, search terms and response group in url
+		var restURL = tmz.api + 'itemdetail/amazon/';
+
+		var requestData = {
+			'asin': asin,
+			'response_group': 'Medium'
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'xml',
+			cache: true,
+			success: onSuccess,
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getAmazonItemOffers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	AmazonPrice.getAmazonItemOffers = function(asin, sourceItem, onSuccess) {
+	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess) {
 
 		// find in amazon offer cache first
-		var cachedOffer = getCachedOffers(sourceItem.id);
+		var cachedOffer = getCachedData(sourceItem.id);
 		// load cached amazon offer
 		if (cachedOffer) {
 			// add score data to source item
@@ -53,15 +181,18 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* formatOfferData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	AmazonPrice.formatOfferData = function(offerItem) {
+	Amazon.formatOfferData = function(offerItem) {
 
 		var buyNowPrice = null;
 		var buyNowRawPrice = null;
 
+		// remove $ sign
+		var re = /\$/;
+
 		// iterate offers
 		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
 			if (offerItem.offers[i].availability === 'now') {
-				buyNowPrice = offerItem.offers[i].price;
+				buyNowPrice = offerItem.offers[i].price.replace(re, '');
 				buyNowRawPrice = offerItem.offers[i].rawPrice;
 			}
 		}
@@ -83,9 +214,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedOffers -
+	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedOffers = function(id) {
+	var getCachedData = function(id) {
 
 		var amazonOfferItem = null;
 
@@ -124,7 +255,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
 
-		// console.info($resultItem);
+		// // console.info($resultItem);
 		var offerItem = {};
 		var offer = {};
 
@@ -146,7 +277,7 @@
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
-			// console.info($(this));
+			// // console.info($(this));
 			offer = {};
 
 			offer.price = $(this).find('Price FormattedPrice').text();
@@ -157,9 +288,9 @@
 			offerItem.offers.push(offer);
 		});
 
-		// console.info(offerItem);
+		// // console.info(offerItem);
 		return offerItem;
 	};
 
-})(tmz.module('amazonPrice'));
+})(tmz.module('amazon'));
 

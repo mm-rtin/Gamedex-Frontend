@@ -17,92 +17,170 @@
 
 /* MIXINS
 -----------------------------------------------------------*/
-.boxShadow {
-  -webkit-box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2);
-  -moz-box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2);
-  box-shadow:2px 2px 10px 1px rgba(57,65,70,0.2)
+.boxShadow(@opacity) {
+	-moz-box-shadow:5px 5px 20px 2px rgba(57,65,70,@opacity);
+	-webkit-box-shadow:5px 5px 20px 2px rgba(57,65,70,@opacity);
+	box-shadow: 5px 5px 20px 2px rgba(57,65,70,@opacity);
 }
 
 .borderRadius(@radius) {
-  -webkit-border-radius: @radius;
-  -moz-border-radius: @radius;
-  border-radius: @radius;
+	-moz-border-radius: @radius;
+	-webkit-border-radius: @radius;
+	border-radius: @radius;
+}
+
+.transition(@duration) {
+	-webkit-transition: all @duration ease-out;
+	-moz-transition: all @duration ease-out;
+	-o-transition: all @duration ease-out;
+	-ms-transition: all @duration ease-out;
+	transition: all @duration ease-out;
 }
 
 
 .clear {
-  clear: both;
+	clear: both;
 }
 
-
-/* SEMANTIC GRID STYLES
------------------------------------------------------------*/
-
- /* PANEL STYLES
-  ----------------------- */
-#panel1 {
-  .column(13, @panel-columns);
-  max-width: 375px;
-}
-#panel2 {
-  .column(12, @panel-columns);
-  max-width: 320px;
-}
-#panel3 {
-  .column(23, @panel-columns);
-  max-width: 600px;
-}
 
 /* LAYOUT STYLES
 -----------------------------------------------------------*/
 html {
-  overflow-y: hidden;
+
 }
 
 body {
-  background-color: #97a1a6;
-  color: #3C3C3C;
-  padding-top: 60px;
+	background-color: #97a1a6;
+	color: #3C3C3C;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 0.8em;
+	font-weight: 600;
+	padding-top: 60px;
+}
+
+input, select, textarea {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 600;
 }
 
 #wrapper {
-  min-width: 960px;
-  text-align: center;
-  margin: 0 15px;
+	margin: 0 15px;
+	min-width: 960px;
+	text-align: center;
 
-  /* BOOTSTRAP OVERRIDES
-  -----------------------------------------------------------*/
-  .btn {
-    font-size: 12px;
-  }
+/* BOOTSTRAP OVERRIDES
+-----------------------------------------------------------*/
+.btn-dark {
+	font-size: 12px;
+	color: #ffffff;
+	text-shadow: none;
+
+	background-color: #97A0A6;
+	background-image: -moz-linear-gradient(top,#738086,#97A0A6);
+	background-image: -ms-linear-gradient(top,#738086,#97A0A6);
+	background-image: -webkit-gradient(linear,0 0,0 100%,from(#738086),to(#97A0A6));
+	background-image: -webkit-linear-gradient(top,#738086,#97A0A6);
+	background-image: -o-linear-gradient(top,#738086,#97A0A6);
+	background-image: linear-gradient(top,#738086,#97A0A6);
+	border-color: #97A0A6 #97A0A6 #97A0A6;
+	border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+}
+.btn-dark:hover{
+	background-color:#97A0A6
+}
+
+.tab-content {
+	display: block;
+}
+
 }
 
 #content {
-  margin: 0 auto;
-  text-align: left;
-  width: 100%;
-  max-width: 1375px;
+
+	&.standardView {
+		margin: 0 auto;
+		max-width: 1375px;
+		text-align: left;
+		width: 100%;
+
+		/* PANEL STYLES
+		----------------------- */
+		#panel1 {
+			.column(13, @panel-columns);
+			max-width: 375px;
+		}
+		#panel2 {
+			.column(12, @panel-columns);
+			max-width: 320px;
+		}
+		#panel3 {
+			.column(23, @panel-columns);
+			max-width: 600px;
+		}
+		#panel4 {
+			display: none;
+		}
+		#panel5 {
+			display: none;
+		}
+	}
+
+	&.gridView {
+		margin: 0 auto;
+		text-align: left;
+		width: 100%;
+
+		/* PANEL STYLES
+		----------------------- */
+		#panel1 {
+			display: none;
+		}
+		#panel2 {
+			width: 280px;
+			position: fixed;
+		}
+		#panel3 {
+			display: none;
+		}
+		#panel4 {
+			margin: 0 300px;
+			width: 74%;
+		}
+		#panel5 {
+			margin: 0 300px;
+			position: fixed;
+			top: 21px;
+			width: 800px;
+			z-index: 999;
+
+			.panel {
+				.boxShadow(.8);
+				padding: 18px 10px 10px 10px;
+				background-color: rgba(255, 255, 255, 0.90);
+			}
+		}
+	}
 }
 
 .header {
-  position: relative;
-  background-color: #6c777d;
-  height: 17px;
-  color: #ffffff;
-  z-index: 999;
+	background-color: #6c777d;
+	color: #ffffff;
+	height: 17px;
+	position: relative;
+	z-index: 999;
 }
 
 .panel {
-  position: relative;
-  top: -17px;
-  background-color: #ffffff;
-  border: 1px solid #777e82;
-  padding: 29px 10px 10px 10px;
-  .boxShadow;
+	.boxShadow(.2);
+	background-color: #ffffff;
+	border: 1px solid #777e82;
+	padding: 29px 10px 10px 10px;
+	position: relative;
+	top: -17px;
 }
 
 #header {
-  min-width: 960px;
+	min-width: 960px;
 }
 
 .popover {
@@ -112,342 +190,509 @@ body {
 
 /* COMPONENT STYLES
 -----------------------------------------------------------*/
+
+#createuser-modal {
+	.modal-footer {
+		padding-left: 175px;
+		text-align: left;
+	}
+
+	#newAccount_btn {
+		width: 100px;
+	}
+}
+
 .metascore {
-  background: no-repeat 0 0;
-  display: block;
-  font: bold 15px/32px arial,helvetica,sans-serif;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-  height: 32px;
-  width: 32px;
-  color: #ffffff;
-  .borderRadius(2px);
+	.borderRadius(2px);
+	background: no-repeat 0 0;
+	color: #ffffff;
+	display: block;
+	font: bold 15px/32px arial,helvetica,sans-serif;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	width: 32px;
 
-  &:link {text-decoration: none;}
-  &:visited {text-decoration: none;}
-  &:hover {text-decoration: none;}
-  &:active {text-decoration: none;}
+	&:link {text-decoration: none;}
+	&:visited {text-decoration: none;}
+	&:hover {text-decoration: none;}
+	&:active {text-decoration: none;}
 
-  &.favorable {
-    background-color: #66CC33;
-  }
-  &.neutral {
-    background-color: #FFCC33;
-  }
-  &.unfavorable {
-    background-color: #D70000;
-  }
-  &.unavailable {
-    background-color: #929ca1;
-  }
+	&.favorable {
+		background-color: #66CC33;
+	}
+	&.neutral {
+		background-color: #FFCC33;
+	}
+	&.unfavorable {
+		background-color: #D70000;
+	}
+	&.unavailable {
+		background-color: #929ca1;
+	}
 }
 
 .nano .content      { padding: 10px; }
 .nano .pane         { background: #444; }
 .nano .pane .slider { background: #111; }
 
+/* OPTIONS
+-----------------------------------------------------------*/
+.optionsGroup {
+	margin: 0px 0px 8px 0px;
+}
+
+.filterOptions {
+	float: left;
+}
+
+.displayOptions {
+	float: left;
+	margin-right: 14px;
+}
+
+.sortOptions {
+	float: left;
+}
 
 /* MODALS
 -----------------------------------------------------------*/
 #filters-modal {
 
-  .modal-body {
-    height: 300px;
-  }
+.modal-body {
+	height: 260px;
+}
 
 }
 
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
-
 #search {
-  margin: 8px 0px 8px 0px;
+	margin: 8px 0px 8px 0px;
 }
 
 #searchProviderContainer {
-  margin: 0px 10px 10px 0px;
-  float: left;
+	float: left;
+	margin: 0px 10px 10px 0px;
 }
 
 #platformContainer {
-  float: left;
+	float: left;
 }
 
 #searchResultsDisplayGroup {
-  margin: 8px 0px 8px 0px;
+	margin: 8px 0px 8px 0px;
 }
 
 #searchResultsContainer {
-  height: 500px;
+	.transition(.4s);
+	height: 500px;
 }
 
 #searchResults {
 
-  tr {
-    cursor: pointer;
-  }
+	tr {
+		cursor: pointer;
+	}
 
-  .display-0 {
+	.display-0 {
 
-    .smallImage, .mediumImage {
-      display: none;
-    }
-    .title {
+		.smallImage, .mediumImage {
+			display: none;
+		}
+		.title {
 
-    }
-    .calendarDate {
-      display: none;
-    }
-    .platform {
-      display: none;
-    }
-  }
+		}
+		.calendarDate {
+			display: none;
+		}
+		.platform {
+			display: none;
+		}
+	}
 
-  .display-1 {
+	.display-1 {
 
-    .smallImage {
-      width: 10%;
-      min-width: 60px;
-    }
-    .mediumImage {
-      display: none;
-    }
-    .title {
+		.smallImage {
+			min-width: 60px;
+			width: 10%;
+		}
+		.mediumImage {
+			display: none;
+		}
+		.title {
 
-    }
-    .calendarDate {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-    .platform {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-  }
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+		.platform {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+	}
 
-    .display-2 {
+	.display-2 {
 
-      .smallImage {
-        display: none;
-      }
-      .mediumImage {
-        width: 15%;
-        min-width: 100px;
-      }
-      .title {
+		.smallImage {
+			display: none;
+		}
+		.mediumImage {
+			min-width: 100px;
+			width: 15%;
+		}
+		.title {
 
-      }
-      .calendarDate {
-        font-size: 12px;
-        color: #7D7D7D;
-      }
-      .platform {
-        font-size: 12px;
-        color: #7D7D7D;
-      }
-    }
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+		.platform {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+	}
 }
 
 /* DETAIL VIEW PANEL
 -----------------------------------------------------------*/
-
 #itemDetailsContainer {
-
-
 
 }
 
 #itemDetails {
 
+	#detailTab {
+		margin-bottom: 5px;
+	}
 
-  table {
-    width: 100%;
+	table {
+		width: 100%;
 
-    td {
-      padding: 3px;
-    }
-  }
+	td {
+		padding: 3px;
+	}
+	}
 
-  .itemDetailTitle {
+	.itemDetailTitle {
 
-    h3 {
-      display: block;
-      padding: 2px 10px 3px 10px;
-      background-color: #929ca1;
-      color: #ffffff;
-      font-size: 16px;
-      .borderRadius(2px);
-    }
-  }
+		h3 {
+			.borderRadius(2px);
+			background-color: #929ca1;
+			color: #ffffff;
+			display: block;
+			font-size: 16px;
+			padding: 2px 10px 3px 10px;
+		}
+	}
 
-  .itemDetailMetascore {
-    vertical-align: top;
-    text-align: right;
-  }
+	.itemDetailMetascore {
+		text-align: right;
+		vertical-align: top;
+	}
 
-  .itemDetailReleaseDate {
-  }
+	.itemDetailReleaseDate {
+	}
 
-  .itemDetailInfo a {
-    margin: 0px 2px 5px 0px;
-  }
+	.itemDetailInfo a {
+		margin: 0px 2px 5px 0px;
+	}
 
-  .itemDetailThumbnail {
-    padding: 10px;
+	.itemDetailThumbnail {
+		margin: 10px;
 
-    img {
-      max-width: 100%;
-    }
-  }
+		img {
+			max-width: 100%;
+		}
+	}
+}
+
+#dataTab {
+	margin-bottom: 10px;
+}
+
+#customTab {
+
+	.form-actions {
+		.borderRadius(2px);
+		border: 1px solid #DDD;
+		padding: 10px 20px 10px;
+		position: relative;
+		top: 22px;
+	}
+}
+
+#itemAttributes {
+	display: none;
+	padding: 0px 0;
 }
 
 #addListContainer {
-  margin: 0px 10px 10px 0px;
-  float: left;
+	float: left;
+	margin: 0px 10px 10px 0px;
 }
 
 #addList {
-  width: 170px;
+	width: 170px;
 }
 
 #addListButtons {
-  float: left;
+	float: left;
+}
+#saveItem_btn {
+	display: none;
+}
+#saveAttributesContainer {
+	display: none;
 }
 
-
-
 #giantBombDescription-modal {
-  width: 960px;
-  margin: -250px 0 0 -480px;
+	margin: -250px 0 0 -480px;
+	width: 960px;
 }
 
 #amazonDescription-modal {
-  width: 960px;
-  margin: -250px 0 0 -480px;
+	margin: -250px 0 0 -480px;
+	width: 960px;
+}
+
+#customTab {
+
+	.form-horizontal .control-label {
+		width: 85px;
+	}
+	.form-horizontal .controls {
+		margin-left: 100px;
+	}
+	.form-horizontal .form-actions {
+		padding-left: 100px;
+	}
+
+	#userRating {
+		float: left;
+		margin-right: 10px;
+		margin-top: 6px;
+	}
+	#ratingCaption {
+		float: left;
+		margin-top: 6px;
+	}
 }
 
 /* ITEM VIEW PANEL
 -----------------------------------------------------------*/
-
 #viewItemsContainer {
 
-  .optionsGroup {
-    margin: 8px 0px 8px 0px;
-
-    .displayOptions {
-      float: left;
-      margin-right: 14px;
-    }
-
-    .dateFilter {
-      float: left;
-      margin-right: 14px;
-    }
-  }
+	.sortOptions {
+		margin-left: 65px;
+	}
 }
 
-
 #itemResultsContainer {
-  height: 500px;
+	.transition(.4s);
+	height: 500px;
 }
 
 #itemResults {
 
-  tr {
-    cursor: pointer;
-  }
+	tr {
+		cursor: pointer;
+	}
 
-  .display-0 {
+	/* data fields */
+	.releaseDate {
+	display: none;
+	}
+	.gameStatus {
+	display: none;
+	}
+	.playStatus {
+	display: none;
+	}
+	.userRating {
+	display: none;
+	}
 
-    .smallImage, .mediumImage {
-      display: none;
-    }
-    .itemName {
+	/* LIST VIEW */
+	.display-0 {
 
-    }
-    .calendarDate {
-      display: none;
-    }
-    .platform {
-      display: none;
-    }
-    .priceDetails {
-      min-width: 150px;
-    }
-    .options {
-      text-align: right;
-    }
-  }
+		.smallImage, .mediumImage {
+			display: none;
+		}
+		.itemName {
 
-  .display-1 {
+		}
+		.calendarDate {
+			display: none;
+		}
+		.platform {
+			display: none;
+		}
+		.priceDetails {
+			min-width: 150px;
+		}
+		.options {
+			text-align: right;
+		}
+	}
 
-    .smallImage {
-      width: 10%;
-      min-width: 60px;
-    }
-    .mediumImage {
-      display: none;
-    }
-    .itemName {
+	/* ICON VIEW */
+	.display-1 {
 
-    }
-    .calendarDate {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-    .platform {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-    .priceDetails {
-      min-width: 150px;
-    }
-    .options {
-      text-align: right;
-    }
-  }
+		.smallImage {
+			width: 10%;
+			min-width: 60px;
+		}
+		.mediumImage {
+			display: none;
+		}
+		.itemName {
+			padding-bottom: 5px;
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+		.platform {
+			font-size: 12px;
+			color: #7D7D7D;
+		}
+		.priceDetails {
+			min-width: 150px;
+		}
+		.options {
+			text-align: right;
+		}
+	}
 
-  .display-2 {
+	/* COVER VIEW */
+	.display-2 {
 
-    .smallImage {
-      display: none;
-    }
-    .mediumImage {
-      width: 15%;
-      min-width: 100px;
-    }
-    .itemName {
-
-    }
-    .calendarDate {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-    .platform {
-      font-size: 12px;
-      color: #7D7D7D;
-    }
-    .priceDetails {
-      min-width: 150px;
-    }
-    .options {
-      text-align: right;
-    }
-  }
+		.smallImage {
+			display: none;
+		}
+		.mediumImage {
+			min-width: 100px;
+			width: 31%;
+		}
+		.itemName {
+			font-weight: 600;
+			font-size: 1.25em;
+			padding-bottom: 10px;
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 1.1em;
+		}
+		.platform {
+			color: #7D7D7D;
+			font-size: 1.1em;
+		}
+		.priceDetails {
+			display: none;
+		}
+		.options {
+			text-align: right;
+		}
+	}
 }
 
 #viewListContainer {
-  float: left;
-  margin-right: 15px;
-}
-#viewList {
-}
-.sortOptions {
-  float: left;
+	float: left;
+	margin-right: 15px;
 }
 
+#viewList {
+
+}
 
 #deleteList_btn {
-  float: right;
+	float: right;
+}
+
+#gridView_btn {
+	float: right;
+}
+
+
+
+/* GRID VIEW PANEL
+-----------------------------------------------------------*/
+#gridViewContainer {
+
+	display: none;
+
+	&.display-0 {
+		.gridItem {
+			margin: 2px;
+			width: 100px;
+		}
+	}
+	&.display-1 {
+		.gridItem {
+			margin: 3px;
+			width: 175px;
+		}
+	}
+	&.display-2 {
+		.gridItem {
+			margin: 5px;
+			width: 320px;
+		}
+	}
+
+	.itemName {
+		display: none;
+	}
+	.releaseDate {
+		display: none;
+	}
+	.platform {
+		display: none;
+	}
+	.gameStatus {
+		display: none;
+	}
+	.playStatus {
+		display: none;
+	}
+	.userRating {
+		display: none;
+	}
+	.metascore {
+		display: none;
+	}
+	.price {
+		display: none;
+	}
+
+}
+
+.gridItem {
+	float: left;
+	margin: 3px;
+	width: 175px;
+
+	img {
+		display: block;
+		width: 100%;
+	}
+}
+
+#gridViewOptions {
+	.optionsGroup {
+		margin-top: 8px;
+	}
+}
+
+#gridListContainer {
+	float: left;
+	margin-right: 15px;
+}
+
+#exitGridView_btn {
+	float: right;
 }

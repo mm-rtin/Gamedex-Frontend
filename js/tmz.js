@@ -60,12 +60,13 @@ tmz.initialize = function() {
 	// data interfaces
 	tmz.itemData = tmz.module('itemData');
 	tmz.listData = tmz.module('listData');
-	tmz.searchData = tmz.module('searchData');
+	tmz.Amazon = tmz.module('amazon');
 
 	// views
 	tmz.searchView = tmz.module('searchView');
 	tmz.detailView = tmz.module('detailView');
 	tmz.itemView = tmz.module('itemView');
+	tmz.gridView = tmz.module('gridView');
 
 	// linkers
 	tmz.itemLinker = tmz.module('itemLinker');
@@ -120,4 +121,7 @@ tmz.initializeModules = function() {
 
 	// USER
 	tmz.user.init();
+
+	// GRID VIEW
+	tmz.gridView.init();
 };

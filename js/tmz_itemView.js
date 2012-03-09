@@ -6,11 +6,11 @@
     var ListModel = tmz.module('list');
     var Utilities = tmz.module('utilities');
     var DetailView = tmz.module('detailView');
+    var GridView = tmz.module('gridView');
     var ItemData = tmz.module('itemData');
     var ListData = tmz.module('listData');
-    var SearchData = tmz.module('searchData');
-    var Metascore = tmz.module('metascore');
-    var AmazonPrice = tmz.module('amazonPrice');
+    var Amazon = tmz.module('amazon');
+    var Metacritic = tmz.module('metacritic');
     var ItemLinker = tmz.module('itemLinker');
 
     // constants
@@ -21,25 +21,23 @@
     // list
     var itemList = null;
 	var listOptions = {
-		valueNames: ['itemName', 'metascore', 'calendarDate', 'platform'],
+		valueNames: ['itemName', 'metascore', 'releaseDate', 'platform', 'gameStatus', 'playStatus', 'userRating'],
 		item: 'list-item'
 	};
 
-	// data cache
-	amazonOffersCache = {};
-
     // properties
-	var selectedTagID = 0;
+	var currentViewTagID = 0;
     var displayType = DISPLAY_TYPE.Icons;
     var currentSortIndex = 0;
     var filterHasBeenApplied = false;
 
     // node cache
+    var $itemResults = $('#itemResults');
     var $viewItemsContainer = $('#viewItemsContainer');
     var $itemResultsContainer = $('#itemResultsContainer');
-    var $itemResults = $('#itemResults');
     var $displayOptions = $viewItemsContainer.find('.displayOptions');
     var $sortOptions = $viewItemsContainer.find('.sortOptions');
+    var $filterOptions = $viewItemsContainer.find('.filterOptions');
     var $viewList = $('#viewList');
 
 	// jquery objects
@@ -48,85 +46,6 @@
 	// templates
 	var priceMenuTemplate = _.template($('#price-menu-template').html());
 	var itemResultsTemplate = _.template($('#item-results-template').html());
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: Model
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.Model = Backbone.Model.extend({
-
-		defaults: {
-			items: {}
-        },
-
-        initialize: function() {
-
-        },
-
-        // override parse method
-		parse : function(response) {
-			parseItemResults(response);
-		},
-
-        // get items
-		url: function () {
-			return tmz.api + 'item/';
-		}
-
-	});
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: View
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.View = Backbone.View.extend({
-
-		el: $itemResults,
-		resultsTemplate: itemResultsTemplate,
-
-        initialize: function() {
-
-            // items: changed
-            this.model.bind('change:items', this.render, this);
-        },
-
-		render: function() {
-
-			// get model data
-			var templateData = this.model.toJSON();
-
-			// add displayType to templateData
-			templateData.displayType = displayType;
-
-			// render model data to template
-			$(this.el).html(this.resultsTemplate(templateData));
-
-			// load extra information for each item
-			_.each(this.model.get('items'), function(item, key) {
-				getExtraItemInfo(item);
-			});
-
-			// initialize list.js for item list
-			itemList = new List('itemResultsContainer', listOptions);
-
-			// reset filters
-			filterHasBeenApplied = false;
-
-			// sort using current sort method
-			sortList(currentSortIndex);
-
-			// set nanoscroll
-			setTimeout(function() {
-				$itemResultsContainer.nanoScroller();
-			}, 500);
-
-			return this;
-		}
-	});
-
-    // backbone model
-	var items = new ItemView.Model();
-    // backbone view
-    var itemPanel = new ItemView.View({model: items});
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -149,7 +68,7 @@
         });
 
 		// listFilters_btn: click
-		$('#listFilters_btn').click(function(e) {
+		$('.listFilters_btn').click(function(e) {
 			e.preventDefault();
 
 			$('#filters-modal').modal('show');
@@ -158,8 +77,6 @@
 		// applyFilters_btn: click
 		$('#applyFilters_btn').click(function(e) {
 			e.preventDefault();
-			// console.info('apply filters');
-
 			applyFilters();
 		});
 
@@ -167,7 +84,6 @@
 		$(viewlistContainer).find('input').live({
 			// keypress event
 			keydown: function(e){
-				// // console.info('viewlist');
 				Utilities.handleInputKeyDown(e, viewlistContainer, ListModel);
 			}
 		});
@@ -198,65 +114,60 @@
 			sortList($(this).attr('data-content'));
 		});
 
+		// filterOptions select
+		$filterOptions.find('li a').click(function(e) {
+			e.preventDefault();
+			quickFilter($(this).attr('data-content'));
+		});
+
+		// show grid view button: click
+		$('#gridView_btn').click(function(e) {
+			e.preventDefault();
+			showGridView();
+		});
+
 		// window, itemResults: resized
 		$itemResults.resize(ItemView.resizePanel);
 		$(window).resize(ItemView.resizePanel);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateListAdditions
+	* render -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListAdditions = function(itemData, itemIDs, listIDs) {
+	var render = function(items) {
 
-		var length = listIDs.length;
+		// add user attributes to model
+		_.each(items, function(item, key) {
+			addUserAttributes(item);
+		});
 
-		// clone itemData as new item object
-		var item = jQuery.extend(true, {}, itemData);
+		// get model data
+		var templateData = {'items': items};
 
-		// remove rendered flag
-		delete item.rendered;
+		// add displayType to templateData
+		templateData.displayType = displayType;
 
-		// iterate listIDs
-		for (var i = 0, len = listIDs.length; i < len; i++) {
+		// render model data to template
+		$itemResults.html(itemResultsTemplate(templateData));
 
-			if (listIDs[i] == selectedTagID) {
+		// load extra information for each item
+		_.each(items, function(item, key) {
+			loadThirdPartyData(item);
+		});
 
-				// // console.info('update items at: ' + listIDs[i]);
+		// initialize list.js for item list
+		itemList = new List('itemResultsContainer', listOptions);
 
-				// update item with related id for listID needing update
-				item.id = itemIDs[i];
+		// reset filters
+		filterHasBeenApplied = false;
 
-				// add custom formated properties
-				addCustomProperties(item);
+		// sort using current sort method
+		sortList(currentSortIndex);
 
-				// get model data
-				var tempItems = items.get('items');
-
-				tempItems[item.id] = item;
-
-				// set items model data
-				items.set({'items': tempItems});
-
-				// trigger change manually since updating an existing items array does not trigger update
-				items.trigger("change:items");
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateListDeletions -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListDeletions = function(itemsDeleted) {
-
-		// // console.info(itemsDeleted, selectedTagID);
-
-		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
-			if (itemsDeleted[i].tagID == selectedTagID) {
-
-				// delete item from model
-				deleteClientItem(itemsDeleted[i].id);
-			}
-		}
+		// set nanoscroll
+		setTimeout(function() {
+			$itemResultsContainer.nanoScroller();
+		}, 500);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -264,11 +175,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.getItem = function(id) {
 
-		// // console.info('get item:');
-		// // console.info(id);
-		// // console.info(items.get('items'));
-
-		return items.get('items')[id];
+		return ItemData.getItem(id);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -287,111 +194,120 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* userLoggedIn -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.userLoggedIn = function(item) {
+
+		// start with all items viewing
+		getItems('0', render);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateListDeletions -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.updateListDeletions = function(itemsDeleted) {
+
+		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
+			if (itemsDeleted[i].tagID == currentViewTagID) {
+
+				// delete item from model
+				ItemData.deleteClientItem(itemsDeleted[i].id);
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateListAdditions
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.updateListAdditions = function(itemData, itemIDs, listIDs) {
+
+		var length = listIDs.length;
+
+		// clone itemData as new item object
+		var item = jQuery.extend(true, {}, itemData);
+
+		// remove rendered flag
+		delete item.rendered;
+
+		// iterate listIDs
+		for (var i = 0, len = listIDs.length; i < len; i++) {
+
+			// item added to currently viewing tag - update list view display
+			if (listIDs[i] == currentViewTagID) {
+
+				// update item with related id for listID needing update
+				item.id = itemIDs[i];
+
+				// add item to model
+				ItemData.addClientItem(item);
+			}
+		}
+
+		// get items and render
+		ItemData.getItems(currentViewTagID, function(items) {
+
+			// render items
+			render(items);
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showGridView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showGridView = function() {
+
+		// show grid for current tag
+		GridView.showGridView(currentViewTagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewListChanged -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewListChanged = function() {
 
-		// save listID
-		selectedTagID = $viewList.val();
-
 		// load items
-		getItems(selectedTagID);
+		getItems($viewList.val(), render);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItems = function(listID) {
+	var getItems = function(tagID, onSuccess) {
 
-		// clear current item list
-		$('#itemResults').empty();
+		// save tagID
+		currentViewTagID = tagID;
 
-		var userData = User.getUserData();
+		// load item data for tagID
+		ItemData.getItems(tagID, function(items) {
 
-		// submit item
-		var postData = {
-			user_id: userData.user_id,
-			secret_key: userData.secret_key,
-			list_id: listID
-		};
-
-		// clear items - if not cleared some cases result in items not updating
-		items.set({'items': {}});
-
-		// get items
-		items.fetch({data: postData, type: 'POST'});
+			onSuccess(items);
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseItemResults -
+	* loadThirdPartyData - loads and displays specialized item detail and populates new data into item model
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseItemResults = function(itemResults) {
-
-		// // console.info('parseItemResults');
-		// // console.info(itemResults);
-
-		// temp item data
-		var tempItems = {};
-		var item = {};
-
-		var itemLength = 0;
-		var calendarDate = null;
-		var i = 0;
-
-		listLength = itemResults.items.length;
-
-		// iterate itemResults
-		for (i; i < listLength; i++) {
-
-			item = {};
-
-			// get attributes
-			item.id = itemResults.items[i].id;
-			item.itemID = itemResults.items[i].itemID;
-			item.asin = itemResults.items[i].itemAsin;
-			item.gbombID = itemResults.items[i].itemGBombID;
-			item.initialProvider = itemResults.items[i].item_initialProvider;
-			item.name = itemResults.items[i].itemName;
-			item.description = '';
-			item.platform = itemResults.items[i].itemPlatform;
-			item.releaseDate = itemResults.items[i].itemReleaseDate;
-			item.smallImage = itemResults.items[i].itemSmallImage;
-			item.thumbnailImage = itemResults.items[i].itemThumbnailImage;
-			item.largeImage = itemResults.items[i].itemLargeImage;
-
-			// add custom formated properties
-			addCustomProperties(item);
-
-			// add to lists objects
-			tempItems[item.id] = item;
-		}
-
-		// set list model data
-		items.set({'items': tempItems});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addCustomProperties -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addCustomProperties = function(item) {
-
-		// add formatted calendarDate
-		item.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
-
-		// add standard name propery
-		item.standardName = ItemLinker.standardizeTitle(item.name);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getExtraItemInfo - loads and displays specialized item detail and populates new data into item model
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getExtraItemInfo = function(item) {
+	var loadThirdPartyData = function(item) {
 
 		// get amazon price data
-		AmazonPrice.getAmazonItemOffers(item.asin, item, amazonPrice_result);
+		Amazon.getAmazonItemOffers(item.asin, item, amazonPrice_result);
 
 		// get metascore
-		Metascore.getMetascore(item.standardName, item, metascore_result);
+		Metacritic.getMetascore(item.standardName, item, metascore_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addUserAttributes -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addUserAttributes = function(item) {
+
+		// find item by itemID in directory
+		itemData = ItemData.getItemByItemID(item.itemID);
+
+		// add attributes to model item
+		item.gameStatus = itemData.gameStatus;
+		item.playStatus = itemData.playStatus;
+		item.userRating = itemData.userRating;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -401,7 +317,7 @@
 
 		// display price
 		var priceSelector = '#' + item.id + ' .priceDetails';
-		var formattedOfferData = AmazonPrice.formatOfferData(item.offers);
+		var formattedOfferData = Amazon.formatOfferData(item.offers);
 
 		// attach to existing item result
 		$(priceSelector).html(priceMenuTemplate(formattedOfferData));
@@ -414,7 +330,7 @@
 
 		// display score
 		var metascoreSelector = '#' + item.id + ' .metascore';
-		Metascore.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
+		Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -441,36 +357,17 @@
 		var id = $(this).attr('data-content');
 
 		// delete item from server
-		ItemData.deleteSingleItem(id, items.get('items')[id].itemID, deleteItem_result);
+		ItemData.deleteServerItem(id, deleteItem_result);
 
-		// delete from client data model and interface
-		deleteClientItem(id);
-	};
+		// delete from client data model
+		var deletedItem = ItemData.deleteClientItem(id);
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteClientItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteClientItem = function(id) {
+		console.info(deletedItem);
+		// remove tag from detail view
+		DetailView.removeTagForItemID(deletedItem.itemID, currentViewTagID);
 
-		// data
-		var tempItems = items.get('items');
-		var item = tempItems[id];
-
-		// check if item faund
-		if (item !== null) {
-
-			// remove tag from detail view
-			DetailView.removeTagForItemID(item.itemID, selectedTagID);
-
-			// remove item
-			delete tempItems[id];
-
-			// set new model data
-			items.set({'items': tempItems});
-
-			// remove element from html
-			$('#' + id).remove();
-		}
+		// remove element from html
+		$('#' + deletedItem.id).remove();
 	};
 
 
@@ -479,10 +376,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteItem_result = function(data) {
 
-		// delete
-		// // console.info(data);
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* onDeleteListBtn_click -
@@ -492,7 +386,7 @@
 		e.preventDefault();
 
 		// delete database data
-		ListData.deleteList(selectedTagID, deleteList_result);
+		ListData.deleteList(currentViewTagID, deleteList_result);
 
 		// clear current list model data
 		items.set({'items': []});
@@ -502,8 +396,6 @@
 	* deleteList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteList_result = function(data) {
-
-		// // console.info(data);
 
 		// update listModel
 		ListModel.getList();
@@ -524,6 +416,8 @@
 		var releaseDateFilters = [];
 		var metascoreFilters = [];
 		var platformFilters = [];
+		var gameStatusFilters = [];
+		var playStatusFilters = [];
 
 		// iterate all release date filter options
 		$('#releaseDate_filter').find('button').each(function() {
@@ -545,11 +439,31 @@
 			}
 		});
 
+		// iterate all gamestauts filter options
+		$('#gameStatus_filter').find('button').each(function() {
+
+			if ($(this).hasClass('active')) {
+				gameStatusFilters.push(true);
+			} else {
+				gameStatusFilters.push(false);
+			}
+		});
+
+		// iterate all playstatus filter options
+		$('#playStatus_filter').find('button').each(function() {
+
+			if ($(this).hasClass('active')) {
+				playStatusFilters.push(true);
+			} else {
+				playStatusFilters.push(false);
+			}
+		});
+
 		// iterate platform filter options
 		platformFilters = $('#platformFilterList').val() || [];
 
 		for (var i = 0, len = platformFilters.length; i < len; i++) {
-			platformFilters[i] = SearchData.getStandardPlatform(platformFilters[i]);
+			platformFilters[i] = Utilities.getStandardPlatform(platformFilters[i]);
 		}
 
 		// apply  filters
@@ -558,9 +472,11 @@
 			var releaseDateStatus = releaseDateFilter(itemValues, releaseDateFilters);
 			var metascoreStatus = metascoreFilter(itemValues, metascoreFilters);
 			var platformStatus = platformFilter(itemValues, platformFilters);
+			var gameStatus = gameStatusFilter(itemValues, gameStatusFilters);
+			var playStatus = playStatusFilter(itemValues, playStatusFilters);
 
 			// not filtered
-			if (releaseDateStatus && metascoreStatus && platformStatus) {
+			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
 				return true;
 			}
 
@@ -569,15 +485,114 @@
 		});
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* quickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var quickFilter = function(filterType) {
+
+		var quickFilter = parseInt(filterType, 10);
+
+		switch (quickFilter) {
+
+			// upcoming
+			case 0:
+				// unreleased, released
+				releaseDatesQuickFilter([true, false]);
+				break;
+
+			// new releases
+			case 1:
+				// unreleased, released
+				releaseDatesQuickFilter([false, true]);
+				break;
+
+			// best unplayed
+			case 2:
+				// not started, playing, finished
+				bestPendingGamesQuickFilter([true, false, false]);
+				break;
+
+			// best unfinished
+			case 3:
+				// not started, playing, finished
+				bestPendingGamesQuickFilter([false, true, false]);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* releaseDatesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var releaseDatesQuickFilter = function(filterList) {
+
+		var applyFilterAndSort = function() {
+
+			// filter
+			itemList.filter(function(itemValues) {
+				if (releaseDateFilter(itemValues, filterList)) {
+					return true;
+				}
+				return false;
+			});
+
+			// sort
+			$sortOptions.find('.currentSort').text('Release Date');
+			itemList.sort('releaseDate', {sortFunction: releaseDateSort});
+		};
+
+		// already viewing all items: apply filter
+		if (currentViewTagID === '0') {
+			applyFilterAndSort();
+
+		// view all: then apply filter
+		} else {
+			getItems('0', function(items) {
+
+				render(items);
+				applyFilterAndSort();
+			});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* bestPendingGamesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var bestPendingGamesQuickFilter = function(filterList) {
+
+		var applyFilterAndSort = function() {
+
+			// filter
+			itemList.filter(function(itemValues) {
+				if (playStatusFilter(itemValues, filterList)) {
+					return true;
+				}
+				return false;
+			});
+
+			// sort
+			$sortOptions.find('.currentSort').text('Review Score');
+			itemList.sort('scoreDetails', {sortFunction: metascoreSort});
+		};
+
+		// already viewing all items: apply filter
+		if (currentViewTagID === '0') {
+			applyFilterAndSort();
+
+		// view all: then apply filter
+		} else {
+			ItemData.getItems('0', function(items) {
+
+				render(items);
+				applyFilterAndSort();
+			});
+		}
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
-		// // console.info(items.get('items'));
-
-		// // console.info(sortType);
 		currentSortIndex = parseInt(sortType, 10);
 
 		switch (currentSortIndex) {
@@ -589,8 +604,6 @@
 				// sort new list
 				itemList.sort('itemName', { asc: true });
 
-				// sorting breaks tooltip
-				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// review scores
@@ -598,15 +611,13 @@
 				$sortOptions.find('.currentSort').text('Review Score');
 				itemList.sort('scoreDetails', {sortFunction: metascoreSort});
 
-				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// release date
 			case 2:
 				$sortOptions.find('.currentSort').text('Release Date');
-				itemList.sort('calendarDate', {sortFunction: releaseDateSort});
+				itemList.sort('releaseDate', {sortFunction: releaseDateSort});
 
-				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// platform
@@ -614,7 +625,6 @@
 				$sortOptions.find('.currentSort').text('Platform');
 				itemList.sort('platform', { asc: true });
 
-				$itemResults.find('.metascore').tooltip();
 				break;
 
 			// price
@@ -622,7 +632,6 @@
 				$sortOptions.find('.currentSort').text('Price');
 				itemList.sort('priceDetails', {sortFunction: priceSort});
 
-				$itemResults.find('.metascore').tooltip();
 				break;
 		}
 	};
@@ -666,11 +675,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var releaseDateSort = function(firstItem, secondItem) {
 
-		$element1 = $(firstItem.elm).find('.calendarDate');
-		$element2 = $(secondItem.elm).find('.calendarDate');
+		$element1 = $(firstItem.elm).find('.releaseDate');
+		$element2 = $(secondItem.elm).find('.releaseDate');
 
-		var date1 = Date.parse($element1.attr('data-content'));
-		var date2 = Date.parse($element2.attr('data-content'));
+		var date1 = Date.parse($element1.text());
+		var date2 = Date.parse($element2.text());
 
 		return date2 - date1;
 	};
@@ -684,17 +693,17 @@
 		var unreleasedFilter = filterList[0];
 		var releasedFilter = filterList[1];
 
-		var releaseDate = moment(itemValues.calendarDate, "MMMM DD, YYYY");
+		var releaseDate = moment(itemValues.releaseDate, 'YYYY-MM-DD');
 		var currentDate = moment();
 
-		var diff = releaseDate.diff(currentDate, 'days');
+		var diff = releaseDate.diff(currentDate, 'seconds');
 
 		// all filters active - ignore filter
 		if (unreleasedFilter && releasedFilter) {
 			return true;
+
 		// no filters selected - ignore filter
 		} else if (!unreleasedFilter && !releasedFilter) {
-			// console.info('ignore filter');
 			return true;
 
 		// specific filter
@@ -709,11 +718,77 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* gameStatusFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var gameStatusFilter = function(itemValues, filterList) {
+
+		var noneFilter = filterList[0];
+		var ownFilter = filterList[1];
+		var soldFilter = filterList[2];
+		var wantedFilter = filterList[3];
+
+		var gameStatus = itemValues.gameStatus;
+
+		// all filters active - ignore filter
+		if (noneFilter && ownFilter && soldFilter && wantedFilter) {
+			return true;
+
+		// no filters selected - ignore filter
+		} else if (!noneFilter && !ownFilter && !soldFilter && !wantedFilter) {
+			return true;
+
+		// specific filters
+		} else if (noneFilter && gameStatus === '0') {
+			return true;
+		} else if (ownFilter && gameStatus === '1') {
+			return true;
+		} else if (soldFilter && gameStatus === '2') {
+			return true;
+		} else if (wantedFilter && gameStatus === '3') {
+			return true;
+		}
+
+		// filtered
+		return false;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* playStatusFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var playStatusFilter = function(itemValues, filterList) {
+
+		var notPlayingFilter = filterList[0];
+		var playingFilter = filterList[1];
+		var finishedFilter = filterList[2];
+
+		var playStatus = itemValues.playStatus;
+
+		// all filters active - ignore filter
+		if (notPlayingFilter && playingFilter && finishedFilter) {
+			return true;
+
+		// no filters selected - ignore filter
+		} else if (!notPlayingFilter && !playingFilter && !finishedFilter) {
+			return true;
+
+		// specific filters
+		} else if (notPlayingFilter && playStatus === '0') {
+			return true;
+		} else if (playingFilter && playStatus === '1') {
+			return true;
+		} else if (finishedFilter && playStatus === '2') {
+			return true;
+		}
+
+		// filtered
+		return false;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* metascoreFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascoreFilter = function(itemValues, filterList) {
 
-		// filter config (1: unreleased, 2: released)
 		var _90sFilter = filterList[0];
 		var _80sFilter = filterList[1];
 		var _70sFilter = filterList[2];
@@ -724,9 +799,12 @@
 
 		var score = parseInt(itemValues.metascore, 10);
 
+		// all filters selected - ignore filter
+		if (_90sFilter && _80sFilter && _70sFilter && _60sFilter && _50sFilter && _25to49Filter && _0to24Filter) {
+			return true;
+
 		// no filters selected - ignore filter
-		if (!_90sFilter && !_80sFilter && !_70sFilter && !_60sFilter && !_50sFilter && !_25to49Filter && !_0to24Filter) {
-			// console.info('ignore filter');
+		} else if (!_90sFilter && !_80sFilter && !_70sFilter && !_60sFilter && !_50sFilter && !_25to49Filter && !_0to24Filter) {
 			return true;
 
 		// specifc filter

@@ -7,8 +7,9 @@
 	var ListData = tmz.module('listData');
 
 	// node cache
-	var addListNode = $('#addList');
-	var viewListNode = $('#viewList');
+	var $addList = $('#addList');
+	var $viewList = $('#viewList');
+	var $gridList = $('#gridList');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: List Model
@@ -41,8 +42,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.ListView = Backbone.View.extend({
 
-		viewListElement: viewListNode,
-		addListElement: addListNode,
+		viewListElement: $viewList,
+		addListElement: $addList,
+		gridListElement: $gridList,
 
 		template: _.template($('#list-results-template').html()),
 
@@ -65,10 +67,12 @@
 
 			// output template to list containers
 			$(this.viewListElement).html(this.template(viewListModel));
+			$(this.gridListElement).html(this.template(viewListModel));
 			$(this.addListElement).html(this.template(addListModel));
 
 			// send event to update chzn dropdown
 			$(this.viewListElement).trigger("liszt:updated");
+			$(this.gridListElement).trigger("liszt:updated");
 			$(this.addListElement).trigger("liszt:updated");
 
 			return this;
@@ -80,7 +84,6 @@
 	var list = new List.ListModel();
     // backbone view
     var listView = new List.ListView({model: list});
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
@@ -95,8 +98,15 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.getList = function() {
 
+		var userData = User.getUserData();
+
+		var requestData = {
+			user_id: userData.user_id,
+			uk: userData.secret_key
+		};
+
 		// fetch list - submit user key data via POST
-		list.fetch({data: User.getUserData(), type: 'POST'});
+		list.fetch({data: requestData, type: 'POST'});
 
 		// clear items - if not cleared some cases result in items not updating
 		list.set({'list': {}});

@@ -6,6 +6,7 @@
 	var Utilities = tmz.module('utilities');
 	var List = tmz.module('list');
 	var ItemData = tmz.module('itemData');
+	var ItemView = tmz.module('itemView');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* BACKBONE: User Model
@@ -77,7 +78,7 @@
 		$('#login_btn').click(function(e) {
 
 			e.preventDefault();
-			// // console.info('login');
+			// // // console.info('login');
 
 			// send post request
 			User.login($('#userLogin_field').val(), $('#password_field').val());
@@ -106,7 +107,7 @@
 			};
 
 			$.post(restURL, postData, function(data) {
-				// // console.info(data);
+				// // // console.info(data);
 				$('#createuser-modal').modal('hide');
 			}, "html");
 
@@ -130,7 +131,7 @@
 			user_password: password
 		};
 
-		// // console.info(loginData);
+		// // // console.info(loginData);
 
 		// login user
 		user.fetch({data: loginData, type: 'POST', success: login_result});
@@ -146,9 +147,15 @@
 			List.getList();
 
 			// get item directory
-			ItemData.getItemDirectory();
+			ItemData.getItemDirectory(function() {
+
+				// init ItemView for logged in user after item directory loaded
+				ItemView.userLoggedIn();
+			});
+
+
 		} else {
-			// // console.info('incorrect login');
+			// // // console.info('incorrect login');
 		}
 	};
 

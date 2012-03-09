@@ -18,7 +18,7 @@
 
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key,
+			uk: userData.secret_key,
 			list_name: listName
 		};
 
@@ -44,7 +44,7 @@
 		// delete list
 		var requestData = {
 			user_id: userData.user_id,
-			secret_key: userData.secret_key,
+			uk: userData.secret_key,
 			id: listID
 		};
 
