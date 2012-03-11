@@ -36,6 +36,10 @@
 	-ms-transition: all @duration ease-out;
 	transition: all @duration ease-out;
 }
+.opacity(@opacity) {
+	-moz-opacity: @opacity;
+	opacity: @opacity;
+}
 
 
 .clear {
@@ -68,31 +72,34 @@ input, select, textarea {
 	min-width: 960px;
 	text-align: center;
 
-/* BOOTSTRAP OVERRIDES
------------------------------------------------------------*/
-.btn-dark {
-	font-size: 12px;
-	color: #ffffff;
-	text-shadow: none;
+	/* BOOTSTRAP OVERRIDES
+	-----------------------------------------------------------*/
+	.btn-dark {
+		font-size: 12px;
+		color: #ffffff;
+		text-shadow: none;
 
-	background-color: #97A0A6;
-	background-image: -moz-linear-gradient(top,#738086,#97A0A6);
-	background-image: -ms-linear-gradient(top,#738086,#97A0A6);
-	background-image: -webkit-gradient(linear,0 0,0 100%,from(#738086),to(#97A0A6));
-	background-image: -webkit-linear-gradient(top,#738086,#97A0A6);
-	background-image: -o-linear-gradient(top,#738086,#97A0A6);
-	background-image: linear-gradient(top,#738086,#97A0A6);
-	border-color: #97A0A6 #97A0A6 #97A0A6;
-	border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
-}
-.btn-dark:hover{
-	background-color:#97A0A6
-}
+		background-color: #97A0A6;
+		background-image: -moz-linear-gradient(top,#738086,#97A0A6);
+		background-image: -ms-linear-gradient(top,#738086,#97A0A6);
+		background-image: -webkit-gradient(linear,0 0,0 100%,from(#738086),to(#97A0A6));
+		background-image: -webkit-linear-gradient(top,#738086,#97A0A6);
+		background-image: -o-linear-gradient(top,#738086,#97A0A6);
+		background-image: linear-gradient(top,#738086,#97A0A6);
+		border-color: #97A0A6 #97A0A6 #97A0A6;
+		border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+	}
+	.btn-dark:hover{
+		background-color:#97A0A6
+	}
 
-.tab-content {
-	display: block;
-}
+	.nav-list [class^="icon-"] {
+		margin-top: 3px;
+	}
 
+	.tab-content {
+		display: block;
+	}
 }
 
 #content {
@@ -630,6 +637,7 @@ input, select, textarea {
 			margin: 2px;
 			width: 100px;
 		}
+
 	}
 	&.display-1 {
 		.gridItem {
@@ -643,14 +651,26 @@ input, select, textarea {
 			width: 320px;
 		}
 	}
+	&.display-3 {
+		.gridItem {
+			margin: 3px;
+			width: 175px;
+		}
+		.itemAttributes {
+			display: block;
+		}
+	}
 
+	.itemAttributes {
+		display: none;
+	}
 	.itemName {
 		display: none;
 	}
-	.releaseDate {
+	.metacriticScore {
 		display: none;
 	}
-	.platform {
+	.rawPrice {
 		display: none;
 	}
 	.gameStatus {
@@ -662,23 +682,32 @@ input, select, textarea {
 	.userRating {
 		display: none;
 	}
-	.metascore {
-		display: none;
-	}
-	.price {
-		display: none;
-	}
 
 }
 
 .gridItem {
+	.boxShadow(.3);
 	float: left;
 	margin: 3px;
 	width: 175px;
 
+	.thumbnail {
+		background-color: rgba(255, 255, 255, 0.50);
+	}
+
 	img {
 		display: block;
 		width: 100%;
+		cursor: pointer;
+	}
+}
+
+.itemAttributes {
+
+	.nav-list {
+		padding-left: 0px;
+		padding-right: 0px;
+		margin-bottom: 0;
 	}
 }
 

@@ -16,8 +16,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
-		// console.info(searchTerms);
-		// // console.info(metascoreCache);
+		// // console.info(searchTerms);
+		// // // console.info(metascoreCache);
 		// find in cache first
 		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
 
@@ -68,8 +68,6 @@
 
 		var $metascoreContainer = $(metascoreSelector);
 		var textScore = score;
-
-		// // console.info(page, score, metascoreSelector);
 
 		// determine score color
 		var colorClass = 'favorable';
@@ -139,12 +137,15 @@
 		// add metascore data to sourceItem
 		if (matchedResult !== null && matchedResult.score !== '') {
 			sourceItem.metascore = matchedResult.score;
+			sourceItem.displayMetascore = matchedResult.score;
 			sourceItem.metascorePage = matchedResult.page;
 		} else if (matchedResult !== null) {
 			sourceItem.metascore = -1;
+			sourceItem.displayMetascore = 'n/a';
 			sourceItem.metascorePage = matchedResult.page;
 		} else {
 			sourceItem.metascore = -1;
+			sourceItem.displayMetascore = 'n/a';
 			sourceItem.metascorePage = '';
 		}
 

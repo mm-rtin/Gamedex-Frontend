@@ -147,7 +147,7 @@
 		// enter key
 		if (event.which == 13) {
 
-			// // // console.info("LIST SEARCH");
+			// // // // console.info("LIST SEARCH");
 
 			// get input value
 			var listName = $(container).find('input').val().toLowerCase();
@@ -172,7 +172,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Utilities.autofillHighlightedElements = function(container) {
 
-		// // // console.info(autoFillTimeOut);
+		// // // // console.info(autoFillTimeOut);
 		clearTimeout(autoFillTimeOut);
 
 

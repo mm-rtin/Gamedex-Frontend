@@ -5,27 +5,45 @@
 	var User = tmz.module('user');
 	var ItemLinker = tmz.module('itemLinker');
 
-	// full item detail results
+	// constants
+	var VIEW_ALL_TAG_ID = '0';
+
+	// full item detail results for last viewed tag:
+	// alias of itemsCacheByTag[tagID]
 	var items = {};
 
 	// items cached by tagID
 	itemsCacheByTag = {};
 
-	// basic item framework
+	// basic item framework - loaded before item details
 	// all directories share item data
+
+	// items by itemID = contains tags for each itemID
+	var itemDataDirectory = {};
 
 	// items by 3RD party ID
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
-	// items by itemID
-	var itemDataDirectory = {};
+	// active tags - tags currently used by items
+	var activeTags = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItems = function(tagID, onSuccess, onError) {
 
+		// DEBUG
+		$(document).keypress(function(e) {
+			if (e.which == 96) {
+				console.info('itemsCacheByTag: --------------');
+				console.info(itemsCacheByTag);
+				console.info('itemDataDirectory: --------------');
+				console.info(itemDataDirectory);
+				console.info('items: --------------');
+				console.info(items);
+			}
+		});
 
 		// find in itemsCacheByTag first
 		var cachedItems = getCachedItemsByTag(tagID);
@@ -36,7 +54,7 @@
 			// assign as new current items data
 			items = cachedItems;
 
-			console.info(items);
+			// console.info(items);
 
 			// return updated source item
 			onSuccess(cachedItems);
@@ -73,22 +91,35 @@
 				error: onError
 			});
 		}
+
+		console.info(items);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItem = function(id) {
-
-		console.info(items);
-
 		return items[id];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDirectory
+	* getActiveTags -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemDirectory = function(onSuccess, onError) {
+	ItemData.getActiveTags = function() {
+		return activeTags;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemDirectory -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getItemDirectory = function() {
+		return itemDataDirectory;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* downloadItemDirectory
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.downloadItemDirectory = function(onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/directory';
 		var userData = User.getUserData();
@@ -107,6 +138,7 @@
 			success: function(data) {
 				getItemDirectory_result(data);
 				if (onSuccess) {
+					populateActiveTags();
 					onSuccess(data);
 				}
 			},
@@ -115,7 +147,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getTagsByItemID
+	* getTagsByItemID - currently not used
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getTagsByItemID = function(itemID, onSuccess, onError) {
 
@@ -182,8 +214,9 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				addItemDataToDirectory(item, data);
-				onSuccess(item, data);
+
+				var addedItems = addClientItem(item, data);
+				onSuccess(addedItems, data);
 			},
 			error: onError
 		});
@@ -242,8 +275,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.deleteTagsForItem = function(listIDs, currentItem, onSuccess, onError) {
 
-		// // // console.info(currentItem);
-
 		var restURL = tmz.api + 'item/batch-delete';
 		var userData = User.getUserData();
 
@@ -261,21 +292,18 @@
 			cache: true,
 			success: function(data) {
 
-				// iterate delete tagIDs
-				for (var i = 0, len = data.itemsDeleted.length; i < len; i++) {
-					// delete tag from directory
-					deleteTagFromDirectory(currentItem.itemID, data.itemsDeleted[i].tagID);
-				}
-				onSuccess(data);
+				// delete 1 or more tags from item
+				batchTagDelete(currentItem.itemID, data.itemsDeleted);
+				onSuccess(currentItem.itemID, data);
 			},
 			error: onError
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteServerItem -
+	* deleteSingleTagForItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteServerItem = function(id, onSuccess, onError) {
+	ItemData.deleteSingleTagForItem = function(id, tagID, onSuccess, onError) {
 
 		var itemID = items[id].itemID;
 
@@ -295,17 +323,24 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				deleteTagFromDirectory(itemID, data.tagID);
 				onSuccess(data);
 			},
 			error: onError
 		});
+
+		// delete tag from directory
+		deleteTagFromDirectory(itemID, tagID);
+
+		// delete client item
+		deleteClientItem(id, tagID, itemID);
+
+		return itemID;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemByItemID
+	* getDirectoryItemByItemID
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemByItemID = function(itemID) {
+	ItemData.getDirectoryItemByItemID = function(itemID) {
 
 		// return item or empty object
 		return itemDataDirectory[itemID] || null;
@@ -331,48 +366,161 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* populateActiveTags -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var populateActiveTags = function() {
+
+		// reset activeTags
+		activeTags = {};
+
+		// iterate items in itemDirectory
+		_.each(itemDataDirectory, function(item, key) {
+			console.info(item);
+			// iterate tags
+			_.each(item.tags, function(id, tag) {
+				console.info(tag);
+				// if tag not in activeTags: add it
+				if (typeof activeTags[tag] === 'undefined') {
+					activeTags[tag] = true;
+				}
+			});
+		});
+
+		console.info(activeTags);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteClientItem = function(id) {
+	var deleteClientItem = function(id, tagID, itemID) {
 
-		var item = items[id];
-		var deleteditem = jQuery.extend(true, {}, item);
+		console.info(id, tagID, itemID);
 
-		// check if item faund
-		if (item !== null) {
+		var cachedItems = getCachedItemsByTag(tagID);
+		var cachedItem = null;
 
-			// remove item
-			delete items[id];
 
-			return deleteditem;
+		// delete item by id from cache by tagID
+		if (cachedItems) {
+			delete cachedItems[id];
 		}
 
-		return null;
+		// delete from view all list if cached
+		// but only if last tag for itemID is deleted
+		// find 'view all' cache item by itemID
+		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
+		cachedItem = getCacheItemByItemID(itemID, VIEW_ALL_TAG_ID);
+
+		console.info(cachedItem);
+		// 'view all' cache available and item is in cache
+		if (cachedItem) {
+
+			console.info(itemDataDirectory[itemID].tagCount);
+
+			// last tag for item, remove from 'view all' list
+			if (itemDataDirectory[itemID].tagCount === 0) {
+				console.info('delete:', cachedItems[cachedItem.id]);
+				delete cachedItems[cachedItem.id];
+			}
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.addClientItem = function(item) {
+	var addClientItem = function(item, data) {
 
-		// add custom formated properties
-		addCustomProperties(item);
+		// cached items
+		var cachedItems = null;
+		var newItem = null;
+		var addedItems = [];
 
-		// add to items data
-		items[item.id] = item;
+		// update item with itemID
+		item.itemID = data.itemID;
+
+		// update ids -  idsAdded[], tagIDsAdded[]
+		// each idsAdded index matches with its tagIDAddeds index
+		for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
+
+			// check if item cache for tagID exists
+			cachedItems = getCachedItemsByTag(data.tagIDsAdded[i]);
+
+			// clone item
+			newItem = jQuery.extend(true, {}, item);
+
+			// update item with new id
+			newItem.id = data.idsAdded[i];
+
+			// add custom formated properties
+			addCustomProperties(newItem);
+
+			// if cache found - add item to cache
+			if (cachedItems) {
+
+				// add to existing cache and push to addedItems
+				cachedItems[newItem.id] = newItem;
+				addedItems.push(newItem);
+			}
+		}
+
+		// add to directory
+		addItemDataToDirectory(newItem, data);
+
+		// add last item to 'view all' list (id: 0) cache if exists and itemID does not exist in all items cache
+		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
+		var itemIDExists = false;
+		_.each(cachedItems, function(item, key) {
+			if (item.itemID === newItem.itemID) {
+				itemIDExists = true;
+			}
+		});
+		// is unique: add item to 'view all' list
+		if (cachedItems && !itemIDExists) {
+			cachedItems[newItem.id] = newItem;
+		}
+
+		console.info('added', addedItems);
+		console.info('by cache tag', itemsCacheByTag);
+		console.info('current items', items);
+
+		return addedItems;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedItemsByTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItemsByTag = function(id) {
+	var getCachedItemsByTag = function(tagID) {
 
 		var cachedItems = null;
 
-		if (typeof itemsCacheByTag[id] !== 'undefined') {
-			cachedItems = itemsCacheByTag[id];
+		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
+			cachedItems = itemsCacheByTag[tagID];
 		}
 		return cachedItems;
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCacheItemByItemID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCacheItemByItemID = function(itemID, tagID) {
+
+		var cachedItems = getCachedItemsByTag(tagID);
+		var foundItem = null;
+
+		if (cachedItems) {
+
+			// iterate cachedItems: search for item with itemID
+			_.each(cachedItems, function(item, key) {
+
+				if (item.itemID === itemID) {
+					foundItem = item;
+				}
+			});
+		}
+
+		return foundItem;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -408,6 +556,7 @@
 			item.smallImage = itemResults.items[i].si;
 			item.thumbnailImage = itemResults.items[i].ti;
 			item.largeImage = itemResults.items[i].li;
+			item.offers = {};
 
 			item.description = '';
 
@@ -422,15 +571,19 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addCustomProperties -
+	* batchTagDelete -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addCustomProperties = function(item) {
+	var batchTagDelete = function(itemID, deletedItems) {
 
-		// add formatted calendarDate
-		item.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
+		// iterate delete tagIDs
+		for (var i = 0, len = deletedItems.length; i < len; i++) {
 
-		// add standard name propery
-		item.standardName = ItemLinker.standardizeTitle(item.name);
+			// delete tag from directory
+			deleteTagFromDirectory(itemID, deletedItems[i].tagID);
+
+			// delete item for tag
+			deleteClientItem(deletedItems[i].id, deletedItems[i].tagID, itemID);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -438,13 +591,28 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagFromDirectory = function(itemID, tagID) {
 
-		var itemTags = itemDataDirectory[itemID];
+		var item = itemDataDirectory[itemID];
 
 		// remove tag from item - will also remove from 3rd party directories
-		delete itemTags.tags[tagID];
+		delete item.tags[tagID];
 
 		// decrement tagCount
-		itemTags.tagCount += -1;
+		item.tagCount += -1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addCustomProperties -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addCustomProperties = function(item) {
+
+		// add formatted calendarDate
+		if (item.releaseDate !== '1900-01-01') {
+			item.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
+		} else {
+			item.calendarDate = 'Unknown';
+		}
+		// add standard name propery
+		item.standardName = ItemLinker.standardizeTitle(item.name);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -465,12 +633,15 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemDataToDirectory = function(item, data) {
 
+		console.info(item);
+		console.info(data);
+
 		// if itemID doesn't exist in directory
 		if (!itemDataDirectory[data.itemID]) {
 
 			// add to tag directory
 			directoryItem = {
-				itemID: data.itemID,
+				itemID: item.itemID,
 				asin: item.asin,
 				gbombID: item.gbombID,
 				gameStatus: item.gameStatus,
@@ -492,6 +663,8 @@
 			// increment tagCount
 			itemDataDirectory[data.itemID].tagCount += 1;
 		}
+
+		return itemDataDirectory[data.itemID];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

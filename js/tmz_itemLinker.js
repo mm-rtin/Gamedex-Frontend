@@ -56,7 +56,7 @@
 
 		// exact name check
 		if (sourceItem.standardName === searchItem.name.toLowerCase()) {
-			// // console.info('exact name: 50 score');
+			// // // console.info('exact name: 50 score');
 			score += 50;
 
 		// fuzzy name check
@@ -68,7 +68,7 @@
 			targetInSource = reSearch.exec(sourceItem.standardName);
 
 			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
-				// // console.info('fuzzy name: 5 score');
+				// // // console.info('fuzzy name: 5 score');
 				score += 5;
 			}
 		}
@@ -77,7 +77,7 @@
 		if (typeof searchItem.releaseDate !== 'undefined') {
 			if (sourceItem.releaseDate === searchItem.releaseDate) {
 				score += 10;
-				// // console.info('release date: 10 score');
+				// // // console.info('release date: 10 score');
 
 			// fuzzy release date check
 			} else {
@@ -96,12 +96,12 @@
 			var standardPlatform = Utilities.getStandardPlatform(searchItem.platform);
 		}
 
-		// // // console.info('------------------------------');
-		// // // console.info(sourceItem.standardName, ' - ', standardResultName);
-		// // // console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
-		// // // console.info(sourceItem.platform, ' - ', searchItem.platform);
-		// // // console.info(score);
-		// // // console.info('------------------------------');
+		// // // // console.info('------------------------------');
+		// // // // console.info(sourceItem.standardName, ' - ', standardResultName);
+		// // // // console.info(sourceItem.releaseDate, ' - ', searchItem.releaseDate);
+		// // // // console.info(sourceItem.platform, ' - ', searchItem.platform);
+		// // // // console.info(score);
+		// // // // console.info('------------------------------');
 
 		return score;
 	};
@@ -167,11 +167,11 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				// // // console.info('alt search giantbomb');
+				// // // // console.info('alt search giantbomb');
 
 				searchName = item.standardName;
 
-				// // console.info('findItemOnAlternateProvider: searchName: ', searchName);
+				// // // console.info('findItemOnAlternateProvider: searchName: ', searchName);
 
 				// run search for giantbomb
 				GiantBomb.searchGiantBomb(searchName, function(data) {
@@ -180,14 +180,14 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				// // // console.info('alt search amazon');
+				// // // // console.info('alt search amazon');
 
 				var browseNode = 0;
 
 				// run same platform search
 				if (item.platform !== 'n/a') {
-					// // // console.info('RUN SAME PLATFORM SEARCH');
-					// // // console.info(item.platform);
+					// // // // console.info('RUN SAME PLATFORM SEARCH');
+					// // // // console.info(item.platform);
 
 					browseNode = Utilities.getStandardPlatform(item.platform).amazon;
 				}
@@ -207,7 +207,7 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
-				// // // console.info('get giantbomb item');
+				// // // // console.info('get giantbomb item');
 
 				// get item from giantbomb
 				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
@@ -216,7 +216,7 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-				// // // console.info('get amazon item');
+				// // // // console.info('get amazon item');
 
 				// get item from amazon
 				Amazon.getAmazonItemDetail(item.asin, function(data) {
@@ -231,7 +231,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemLinker.findWikipediaMatch = function(data, sourceItem, onSuccess) {
 
-		// console.info('findWikipedia Match');
+		// // console.info('findWikipedia Match');
 
 		var results = data;
 		var searchItem = {};
@@ -241,7 +241,7 @@
 		var bestScore = -99999;
 		var score = 0;
 
-		// console.info(results);
+		// // console.info(results);
 
 
 		// iterate search results
@@ -317,7 +317,7 @@
 		var bestScore = -99999;
 		var score = 0;
 
-		// // console.info('**************** findAmazonMatch found: ' + resultLength + ' *******************');
+		// // // console.info('**************** findAmazonMatch found: ' + resultLength + ' *******************');
 
 		// iterate results
 		$('Item', data).each(function() {
@@ -327,7 +327,7 @@
 
 			// searchItem not filtered
 			if (typeof searchItem.isFiltered === 'undefined') {
-				// // console.info('not filtered');
+				// // // console.info('not filtered');
 
 				// save first non-filtered result
 				if (count === 0) {
@@ -342,7 +342,7 @@
 				if (score > bestScore) {
 					bestMatch = searchItem;
 					bestScore = score;
-					// // console.info(bestMatch);
+					// // // console.info(bestMatch);
 				}
 			}
 		});
@@ -373,9 +373,9 @@
 		var bestScore = -99999;
 		var score = 0;
 
-		// // console.info('**************** findGiantbombMatch found: ' + results.length + ' *******************');
+		// // // console.info('**************** findGiantbombMatch found: ' + results.length + ' *******************');
 
-		// // // console.info(results);
+		// // // // console.info(results);
 
 		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {

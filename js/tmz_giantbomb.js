@@ -44,7 +44,6 @@
 	* parseGiantBombResultItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	GiantBomb.parseGiantBombResultItem = function(resultItem) {
-
 		itemData = {
 			id: resultItem.id,
 			asin: 0,
@@ -53,13 +52,20 @@
 			platform: 'n/a'
 		};
 
-		// // // console.info('------------ GIANT BOMB -------------- ' + itemData.name);
+		// // // // console.info('------------ GIANT BOMB -------------- ' + itemData.name);
 
 		// format date
 		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {
 			itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
 		} else {
 			itemData.releaseDate = '1900-01-01';
+		}
+
+		// calendar date
+		if (itemData.releaseDate !== '1900-01-01') {
+			itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
+		} else {
+			itemData.calendarDate = 'Unknown';
 		}
 
 		// set small url
@@ -133,7 +139,7 @@
 
 				// cache result
 				giantBombDataCache[gbombID] = data.results;
-				// console.info(giantBombDataCache);
+				// // console.info(giantBombDataCache);
 				onSuccess(data.results);
 
 			}, onError);
@@ -153,7 +159,7 @@
 
 			// return updated source item
 			onSuccess(cachedItem);
-			// console.info(cachedItem);
+			// // console.info(cachedItem);
 
 		// download gb item
 		} else {
@@ -165,7 +171,7 @@
 				// cache result
 				giantBombItemCache[gbombID] = data.results;
 				onSuccess(data.results);
-				// console.info(data.results);
+				// // console.info(data.results);
 			}, onError);
 		}
 	};

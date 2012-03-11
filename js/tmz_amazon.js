@@ -106,10 +106,14 @@
 			// standard platform name
 			itemData.platform = Utilities.matchPlatformToIndex(itemData.platform).name;
 			// relative/calendar date
-			itemData.calendarDate = moment(itemData.releaseDate || '1900-01-01', "YYYY-MM-DD").calendar();
+			if (itemData.releaseDate !== '1900-01-01') {
+				itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
+			} else {
+				itemData.calendarDate = 'Unknown';
+			}
 		}
 
-		// // // console.info('------------ AMAZON -------------- ' + itemData.name);
+		// // // // console.info('------------ AMAZON -------------- ' + itemData.name);
 
 		return itemData;
 	};
@@ -151,7 +155,7 @@
 			sourceItem.offers = cachedOffer;
 
 			// return updated source item
-			onSuccess(sourceItem);
+			onSuccess(cachedOffer);
 
 		// get new offer data
 		} else {
@@ -181,7 +185,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* formatOfferData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.formatOfferData = function(offerItem) {
+	var formatOfferData = function(offerItem) {
 
 		var buyNowPrice = null;
 		var buyNowRawPrice = null;
@@ -208,9 +212,8 @@
 			offerItem.lowestNewPrice = 'n/a';
 		}
 
-		var formattedOfferData = {'productURL': offerItem.productURL, 'offersURLNew': offerItem.offersURLNew, 'offersURLUsed': offerItem.offersURLUsed, 'buyNowPrice': buyNowPrice, 'buyNowRawPrice': buyNowRawPrice, 'lowestNewPrice': offerItem.lowestNewPrice, 'lowestUsedPrice': offerItem.lowestUsedPrice, 'totalNew': offerItem.totalNew, 'totalUsed': offerItem.totalUsed};
-
-		return formattedOfferData;
+		offerItem.buyNowPrice = buyNowPrice;
+		offerItem.buyNowRawPrice = buyNowRawPrice;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -247,7 +250,8 @@
 		// add to amazonOffersCache
 		amazonOffersCache[sourceItem.id] = offerItem;
 
-		onSuccess(sourceItem);
+		// console.info(offerItem);
+		onSuccess(offerItem);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -255,7 +259,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
 
-		// // console.info($resultItem);
+		// // // console.info($resultItem);
 		var offerItem = {};
 		var offer = {};
 
@@ -277,7 +281,7 @@
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
-			// // console.info($(this));
+			// // // console.info($(this));
 			offer = {};
 
 			offer.price = $(this).find('Price FormattedPrice').text();
@@ -288,7 +292,9 @@
 			offerItem.offers.push(offer);
 		});
 
-		// // console.info(offerItem);
+		// format offer data
+		formatOfferData(offerItem);
+
 		return offerItem;
 	};
 

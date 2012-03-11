@@ -17,6 +17,7 @@
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
     var PANEL_HEIGHT_OFFSET = 200;
     var PANEL_HEIGHT_PADDING = 40;
+    var VIEW_ALL_TAG_ID = '0';
 
     // list
     var itemList = null;
@@ -26,7 +27,7 @@
 	};
 
     // properties
-	var currentViewTagID = 0;
+	var currentViewTagID = VIEW_ALL_TAG_ID;
     var displayType = DISPLAY_TYPE.Icons;
     var currentSortIndex = 0;
     var filterHasBeenApplied = false;
@@ -97,10 +98,19 @@
 		$viewList.chosen().change(viewListChanged);
 
 		// deleteItem_btn: click
-		$itemResults.on('click', '.deleteItem_btn', onDeleteBtn_click);
+		$itemResults.on('click', '.deleteItem_btn', function(e) {
+
+			// get id from delete button attribute
+			var id = $(this).attr('data-content');
+			deleteItem(id);
+		});
 
 		// deleteList_btn: click
-		$viewItemsContainer.on('click', '#deleteList_btn', onDeleteListBtn_click);
+		$viewItemsContainer.on('click', '#deleteList_btn', function() {
+
+			// delete currently viewing list
+			deleteList(currentViewTagID);
+		});
 
 		// displayType toggle
 		$displayOptions.find('button').click(function(e) {
@@ -144,8 +154,9 @@
 		// get model data
 		var templateData = {'items': items};
 
-		// add displayType to templateData
+		// add displayType/currentViewTagID to templateData
 		templateData.displayType = displayType;
+		templateData.currentViewTagID = currentViewTagID;
 
 		// render model data to template
 		$itemResults.html(itemResultsTemplate(templateData));
@@ -167,7 +178,7 @@
 		// set nanoscroll
 		setTimeout(function() {
 			$itemResultsContainer.nanoScroller();
-		}, 500);
+		}, 1500);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,19 +210,38 @@
 	ItemView.userLoggedIn = function(item) {
 
 		// start with all items viewing
-		getItems('0', render);
+		getItems(VIEW_ALL_TAG_ID, render);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateListDeletions -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListDeletions = function(itemsDeleted) {
+	ItemView.updateListDeletions = function(itemID, itemsDeleted) {
 
+		var tagCount = null;
+		console.info($itemResults.find('tr[data-content="' + itemID + '"]'));
+		console.info(itemsDeleted);
+		// remove items deleted from view
 		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
-			if (itemsDeleted[i].tagID == currentViewTagID) {
 
-				// delete item from model
-				ItemData.deleteClientItem(itemsDeleted[i].id);
+			// remove element from html
+			// except when in 'view all' list (id: 0) and itemDeleted is the last tag for itemID
+			if (currentViewTagID === VIEW_ALL_TAG_ID) {
+
+				// get item by id
+				tagCount = ItemData.getDirectoryItemByItemID(itemID).tagCount;
+
+				console.info(tagCount);
+
+				if (tagCount === 0) {
+
+					// remove item by itemID
+					$itemResults.find('tr[data-content="' + itemID + '"]').remove();
+				}
+
+			// not viewing 'all items' remove item
+			} else {
+				$('#' + itemsDeleted[i].id).remove();
 			}
 		}
 	};
@@ -219,29 +249,20 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateListAdditions
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListAdditions = function(itemData, itemIDs, listIDs) {
+	ItemView.updateListAdditions = function(addedItems) {
 
-		var length = listIDs.length;
+		// get items and render
+		ItemData.getItems(currentViewTagID, function(items) {
 
-		// clone itemData as new item object
-		var item = jQuery.extend(true, {}, itemData);
+			// render items
+			render(items);
+		});
+	};
 
-		// remove rendered flag
-		delete item.rendered;
-
-		// iterate listIDs
-		for (var i = 0, len = listIDs.length; i < len; i++) {
-
-			// item added to currently viewing tag - update list view display
-			if (listIDs[i] == currentViewTagID) {
-
-				// update item with related id for listID needing update
-				item.id = itemIDs[i];
-
-				// add item to model
-				ItemData.addClientItem(item);
-			}
-		}
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateListAttributesChanged
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.updateListAttributesChanged = function() {
 
 		// get items and render
 		ItemData.getItems(currentViewTagID, function(items) {
@@ -290,7 +311,9 @@
 	var loadThirdPartyData = function(item) {
 
 		// get amazon price data
-		Amazon.getAmazonItemOffers(item.asin, item, amazonPrice_result);
+		Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
+			amazonPrice_result(item.id, offers);
+		});
 
 		// get metascore
 		Metacritic.getMetascore(item.standardName, item, metascore_result);
@@ -301,8 +324,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addUserAttributes = function(item) {
 
-		// find item by itemID in directory
-		itemData = ItemData.getItemByItemID(item.itemID);
+		// find directory item by itemID
+		itemData = ItemData.getDirectoryItemByItemID(item.itemID);
 
 		// add attributes to model item
 		item.gameStatus = itemData.gameStatus;
@@ -313,14 +336,13 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* amazonPrice_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var amazonPrice_result = function(item) {
+	var amazonPrice_result = function(id, offers) {
 
 		// display price
-		var priceSelector = '#' + item.id + ' .priceDetails';
-		var formattedOfferData = Amazon.formatOfferData(item.offers);
+		var priceSelector = '#' + id + ' .priceDetails';
 
 		// attach to existing item result
-		$(priceSelector).html(priceMenuTemplate(formattedOfferData));
+		$(priceSelector).html(priceMenuTemplate(offers));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,30 +368,19 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* onDeleteBtn_click -
+	* deleteItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var onDeleteBtn_click = function(e) {
-
-		e.preventDefault();
-		e.stopPropagation();
-
-		// get id from delete button attribute
-		var id = $(this).attr('data-content');
+	var deleteItem = function(id) {
 
 		// delete item from server
-		ItemData.deleteServerItem(id, deleteItem_result);
+		var itemID = ItemData.deleteSingleTagForItem(id, currentViewTagID, deleteItem_result);
 
-		// delete from client data model
-		var deletedItem = ItemData.deleteClientItem(id);
-
-		console.info(deletedItem);
 		// remove tag from detail view
-		DetailView.removeTagForItemID(deletedItem.itemID, currentViewTagID);
+		DetailView.removeTagForItemID(itemID, currentViewTagID);
 
 		// remove element from html
-		$('#' + deletedItem.id).remove();
+		$('#' + id).remove();
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteItem_result -
@@ -379,17 +390,12 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* onDeleteListBtn_click -
+	* deleteList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var onDeleteListBtn_click = function(e) {
-
-		e.preventDefault();
+	var deleteList = function(tagID) {
 
 		// delete database data
-		ListData.deleteList(currentViewTagID, deleteList_result);
-
-		// clear current list model data
-		items.set({'items': []});
+		ListData.deleteList(tagID, deleteList_result);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -541,12 +547,12 @@
 		};
 
 		// already viewing all items: apply filter
-		if (currentViewTagID === '0') {
+		if (currentViewTagID === VIEW_ALL_TAG_ID) {
 			applyFilterAndSort();
 
 		// view all: then apply filter
 		} else {
-			getItems('0', function(items) {
+			getItems(VIEW_ALL_TAG_ID, function(items) {
 
 				render(items);
 				applyFilterAndSort();
@@ -575,12 +581,12 @@
 		};
 
 		// already viewing all items: apply filter
-		if (currentViewTagID === '0') {
+		if (currentViewTagID === VIEW_ALL_TAG_ID) {
 			applyFilterAndSort();
 
 		// view all: then apply filter
 		} else {
-			ItemData.getItems('0', function(items) {
+			ItemData.getItems(VIEW_ALL_TAG_ID, function(items) {
 
 				render(items);
 				applyFilterAndSort();

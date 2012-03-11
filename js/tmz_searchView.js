@@ -149,7 +149,7 @@
 
 		// search button: click
 		$('#search_btn').click(function() {
-			// // // console.info('click search');
+			// // // // console.info('click search');
 			SearchView.search(searchTerms);
 		});
 
@@ -190,7 +190,7 @@
 		var windowHeight = $(window).height();
 		var resultsHeight = $searchResults.height();
 
-		// // // console.info(resultsHeight);
+		// // // // console.info(resultsHeight);
 
 		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
 			$searchResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
@@ -267,7 +267,7 @@
 
 		for (var i = 0, len = platforms.length; i < len; i++) {
 
-			// // console.info(platforms[i].name);
+			// // // console.info(platforms[i].name);
 			// standardize platform names
 			standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
 
@@ -275,7 +275,7 @@
 			// platformList.push(platforms[i].name);
 		}
 
-		// // console.info('--------------------------------------');
+		// // // console.info('--------------------------------------');
 
 		// add platform drop down to item results
 		addPlatformDropDown(gbombID, platformList);
@@ -373,7 +373,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchFieldTimeOut = function() {
 
-		// // // console.info("search timeout: search current search terms");
+		// // // // console.info("search timeout: search current search terms");
 
 		clearTimeout(timeout);
 		SearchView.search(searchTerms);
@@ -399,7 +399,7 @@
 
 		// start search timer
 		} else {
-			// // // console.info("start search timer");
+			// // // // console.info("start search timer");
 			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
     };
@@ -409,7 +409,7 @@
 
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
 
-		// console.info(searchResult);
+		// // console.info(searchResult);
 
 		// show item detail
 		DetailView.viewFirstSearchItemDetail(searchResult);

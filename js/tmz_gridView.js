@@ -22,7 +22,11 @@
     // templates
     var gridResultsTemplate = _.template($('#grid-results-template').html());
 
+    // data
+    var widthCache = {};
+
     // properties
+    var isotopeInitialized = false;
     var displayType = null;
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,8 +53,49 @@
 		$gridList.chosen().change(gridListChanged);
 
 		// gridItem: click
-		$gridViewContainer.on('click', '.gridItem', function(e) {
-			gridItemSelected($(this).attr('data-content'));
+		$gridViewContainer.on('click', '.gridItem img', function(e) {
+			gridItemSelected($(this).parent().parent().attr('data-content'));
+			e.preventDefault();
+		});
+
+		// gridItem: mouseover
+		$gridViewContainer.on('mouseover', '.gridItem', function(e) {
+
+			var $gridItem = $(this);
+			var id = $gridItem.attr('data-content');
+			var width = widthCache[id];
+			if (!width) {
+				width = $gridItem.width();
+				widthCache[id] = width;
+			}
+
+			var offset = Math.round((width * 1.2 - width) / 2);
+
+			$gridItem.css({'z-index': '999',
+						'top': -offset + 'px',
+						'left': -offset + 'px',
+						'width': width * 1.2 + 'px',
+						'-webkit-transition-timing-function': 'cubic-bezier(0.01,0.53,0.00,1.00)',
+						'-webkit-transition-property': 'top,left,width',
+						'-webkit-transition-duration': '1s'
+						}
+			);
+			e.preventDefault();
+		});
+		// gridItem: mouseout
+		$gridViewContainer.on('mouseout', '.gridItem', function(e) {
+
+			var $gridItem = $(this);
+
+			$gridItem.css({'z-index': '',
+						'top': '',
+						'left': '',
+						'width': '',
+						'-webkit-transition-timing-function': 'cubic-bezier(0.01,0.53,0.00,1.00)',
+						'-webkit-transition-property': 'top,left,width',
+						'-webkit-transition-duration': '1s'
+						}
+			);
 			e.preventDefault();
 		});
 
@@ -114,7 +159,9 @@
 	var loadGridData = function(tagID) {
 
 		// reset isotop
-		$gridViewContainer.isotope('destroy');
+		if (isotopeInitialized) {
+			$gridViewContainer.isotope('destroy');
+		}
 
 		ItemData.getItems(tagID, getItems_result);
 	};
@@ -133,18 +180,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initializeGrid = function(items) {
 
+		console.info(items);
+
 		var templateData = {'items': items};
-		var formattedOfferData = null;
-
-		// get formatted price/offer data
-		// add rawprice to template data
-		_.each(items, function(item) {
-
-			if (typeof item.offers !== 'undefined') {
-				formattedOfferData = Amazon.formatOfferData(item.offers);
-				item.buyNowRawPrice = formattedOfferData.buyNowRawPrice;
-			}
-		});
 
 		// set html from items data
 		$gridViewContainer.html(gridResultsTemplate(templateData));
@@ -227,6 +265,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initializeIsotope = function() {
 
+		isotopeInitialized = true;
+
 		$gridViewContainer.isotope({
 			itemSelector : '.gridItem',
 
@@ -236,8 +276,8 @@
 				releaseDate: releaseDateSort,
 				platform: platformSort,
 				userRating: userRatingSort,
-				metascore: metascoreSort,
-				price: priceSort
+				metacriticScore: metacriticScoreSort,
+				rawPrice: priceSort
 			},
 
 			// starting sort
@@ -263,6 +303,9 @@
 	* quickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var quickFilter = function(filterType) {
+
+		// clear transition so isotope can animate
+		clearTransitionProperties();
 
 		var quickFilter = parseInt(filterType, 10);
 
@@ -299,6 +342,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
+		// clear transition so isotope can animate
+		clearTransitionProperties();
+
 		currentSortIndex = parseInt(sortType, 10);
 
 		switch (currentSortIndex) {
@@ -319,7 +365,7 @@
 			case 1:
 				$sortOptions.find('.currentSort').text('Review Score');
 				$gridViewContainer.isotope({
-					sortBy : 'metascore',
+					sortBy : 'metacriticScore',
 					sortAscending : false
 				});
 
@@ -349,7 +395,7 @@
 			case 4:
 				$sortOptions.find('.currentSort').text('Price');
 				$gridViewContainer.isotope({
-					sortBy : 'price',
+					sortBy : 'rawPrice',
 					sortAscending : true
 				});
 
@@ -393,7 +439,7 @@
 		// apply isotope filter and sort
 		$gridViewContainer.isotope({
 			filter: filterString,
-			sortBy : 'metascore',
+			sortBy : 'metacriticScore',
 			sortAscending : false
 		});
 	};
@@ -551,22 +597,28 @@
 		return parseInt($elem.find('.userRating').text(), 10);
 	};
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* metascoreSort -
+	* metacriticScoreSort -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var metascoreSort = function($elem) {
-		return parseInt($elem.find('.metascore').text(), 10);
+	var metacriticScoreSort = function($elem) {
+		return parseInt($elem.find('.metacriticScore').text(), 10);
 	};
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* priceSort -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var priceSort = function($elem) {
-		return parseInt($elem.find('.price').text(), 10);
+		return parseInt($elem.find('.rawPrice').text(), 10);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeDisplayType = function(currentDisplayType) {
+
+		// clear transition so isotope can animate
+		clearTransitionProperties();
+
+		// reset cache
+		widthCache = {};
 
 		// set new display type if changed
 		if (displayType !== currentDisplayType) {
@@ -582,5 +634,18 @@
 			});
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearTransitionProperties -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearTransitionProperties = function(item) {
+
+		$('.gridItem').each(function(key, item) {
+			$(item).css({'z-index': '',
+				'-webkit-transition-property': ''
+			});
+		});
+	};
+
 
 })(tmz.module('gridView'));

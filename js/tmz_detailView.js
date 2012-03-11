@@ -236,7 +236,7 @@
 			Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
 
 			// call main view detail method
-			viewSearchDetail(firstItem, currentProvider);
+			viewSearchDetail(firstItem, currentProvider, 0);
 		}
     };
 
@@ -265,7 +265,7 @@
 		currentProvider = parseInt(firstItem.initialProvider, 10);
 
 		// get item attributes data
-		itemAttributes = ItemData.getItemByItemID(firstItem.itemID);
+		itemAttributes = ItemData.getDirectoryItemByItemID(firstItem.itemID);
 
 		// clear secondItem model
 		clearSecondItemModel(currentProvider);
@@ -286,7 +286,7 @@
 		Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
 
 		// finish tasks for viewing items
-		completeViewItemDetail(firstItem, currentProvider);
+		completeViewItemDetail(firstItem, currentProvider, 0);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -305,7 +305,7 @@
 			provider = getItemProvider(secondItem.asin, secondItem.gbombID);
 
 			// finish tasks for viewing items
-			completeViewItemDetail(secondItem, provider);
+			completeViewItemDetail(secondItem, provider, 1);
 		}
 	};
 
@@ -351,17 +351,17 @@
 					break;
 			}
 
-			// console.info(firstItem, secondItem);
+			console.info(firstItem, secondItem);
 
 			// call main view detail method
-			viewSearchDetail(secondItem, provider);
+			viewSearchDetail(secondItem, provider, 1);
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewSearchDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewSearchDetail = function(item, provider) {
+	var viewSearchDetail = function(item, provider, detailPhase) {
 
 		// console.info("VIEW SEARCH DETAIL");
 		// console.info(item);
@@ -373,7 +373,7 @@
 		getMetascore(firstItem.standardName, firstItem);
 
 		// update data panel
-		updateDataPanel(item);
+		updateDataPanel(item, detailPhase);
 
 		// get item details
 		getProviderSpecificItemDetails(provider, firstItem);
@@ -396,23 +396,28 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateDataPanel -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateDataPanel = function(item) {
+	var updateDataPanel = function(item, detailPhase) {
 
 		if (!$itemAttributes.is(':visible')) {
 			$itemAttributes.fadeIn();
 		}
 
-		// update platform
-		if (item.platform !== 'n/a') {
+		// update platform for first phase only
+		if (item.platform !== 'n/a' || detailPhase === 0) {
 			$platform.find('.data').text(item.platform);
 		}
 
 		// use best releaseDate
 		if (item.releaseDate !== '1900-01-01') {
-			// update release dates for primary item
-			firstItem.releaseDate = item.releaseDate;
-			firstItem.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
-			$releaseDate.find('.data').text(firstItem.calendarDate);
+
+			// always render first phase, after that, only update if first release date is not available
+			if (detailPhase === 0 || firstItem.releaseDate === '1900-01-01') {
+
+				// update release dates for primary item
+				firstItem.releaseDate = item.releaseDate;
+				firstItem.calendarDate = moment(item.releaseDate, "YYYY-MM-DD").calendar();
+				$releaseDate.find('.data').text(firstItem.calendarDate);
+			}
 
 		// set date display as unknown
 		} else if (firstItem.releaseDate === '1900-01-01') {
@@ -451,13 +456,13 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* completeViewItemDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var completeViewItemDetail = function(item, provider) {
+	var completeViewItemDetail = function(item, provider, detailPhase) {
 
 		// update model item for provider
 		renderDetail(provider, item);
 
 		// update data panel
-		updateDataPanel(firstItem);
+		updateDataPanel(firstItem, detailPhase);
 
 		// get item details
 		getProviderSpecificItemDetails(provider, firstItem);
@@ -521,20 +526,19 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* amazonItemOffers_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var amazonItemOffers_result = function(item) {
-
-		// get formatted offer data
-		var formattedOfferData = Amazon.formatOfferData(item.offers);
+	var amazonItemOffers_result = function(offers) {
 
 		// update data panel information
 		$amazonPriceHeader.fadeIn();
 		$amazonPriceNew.fadeIn();
 		$amazonPriceUsed.fadeIn();
 
-		$amazonPriceNew.find('a').attr('href', formattedOfferData.productURL);
-		$amazonPriceNew.find('.data').text(formattedOfferData.buyNowPrice);
-		$amazonPriceUsed.find('a').attr('href', formattedOfferData.offersURLUsed);
-		$amazonPriceUsed.find('.data').text(formattedOfferData.lowestUsedPrice);
+		console.info(offers);
+
+		$amazonPriceNew.find('a').attr('href', offers.productURL);
+		$amazonPriceNew.find('.data').text(offers.buyNowPrice);
+		$amazonPriceUsed.find('a').attr('href', offers.offersURLUsed);
+		$amazonPriceUsed.find('.data').text(offers.lowestUsedPrice);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -622,7 +626,7 @@
 			provider = Utilities.getProviders().Amazon;
 
 		// giantbomb data found
-		} else if(gbombID !== 0) {
+		} else if (gbombID !== 0) {
 			provider = Utilities.getProviders().GiantBomb;
 		}
 
@@ -696,8 +700,6 @@
 
 			// get option node
 			option = $addList.find('option[value="' + tagID + '"]');
-
-			// // console.info(option);
 
 			// select option
 			$(option).attr('selected', '');
@@ -787,9 +789,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var saveItemChanges = function(item) {
 
-		// console.info('save item changes -----------------');
-		// console.info(item);
-
 		// reset current item tags
 		currentItemTags = {};
 
@@ -837,7 +836,6 @@
 
 		// check for tags to delete
 		if (idsToDelete.length > 0) {
-			// // // console.info(idsToDelete);
 			ItemData.deleteTagsForItem(idsToDelete, item, deleteTagsForItem_result);
 		}
 
@@ -863,16 +861,19 @@
 
 			// hide save button
 			$saveAttributesContainer.fadeOut();
+
+			// update list view
+			ItemView.updateListAttributesChanged();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteTagsForItem_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteTagsForItem_result = function(data) {
+	var deleteTagsForItem_result = function(itemID, data) {
 
 		// update list view model
-		ItemView.updateListDeletions(data.itemsDeleted);
+		ItemView.updateListDeletions(itemID, data.itemsDeleted);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -882,12 +883,10 @@
 
 		setItemType(ITEM_TYPES['existing']);
 
-		// update item object with returned ID
-		item.id = data.id;
-		item.itemID = data.itemID;
+		console.info(data);
+		console.info(item);
 
 		// update firstItem with returned data
-		firstItem.id = data.id;
 		firstItem.itemID = data.itemID;
 
 		// update initial tags with ids
