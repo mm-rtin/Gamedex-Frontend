@@ -25,7 +25,7 @@
 		// search wikipedia
 		} else {
 
-			// // console.info('seearch pedia');
+
 			searchWikipedia(title, function(data) {
 
 				// get page array

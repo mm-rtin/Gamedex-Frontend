@@ -97,6 +97,14 @@ input, select, textarea {
 		margin-top: 3px;
 	}
 
+	.icon-remove {
+		background-position: -312px 2px;
+	}
+
+	.icon-adjust {
+		background-position: -48px -71px;
+	}
+
 	.tab-content {
 		display: block;
 	}
@@ -253,6 +261,9 @@ input, select, textarea {
 .filterOptions {
 	float: left;
 }
+.filterStatus {
+	display: none;
+}
 
 .displayOptions {
 	float: left;
@@ -283,6 +294,11 @@ input, select, textarea {
 	float: left;
 	margin: 0px 10px 10px 0px;
 }
+#listProviderContainer {
+	float: left;
+	margin: 0px 10px 10px 0px;
+	display: none;
+}
 
 #platformContainer {
 	float: left;
@@ -294,7 +310,15 @@ input, select, textarea {
 
 #searchResultsContainer {
 	.transition(.4s);
-	height: 500px;
+}
+#listResultsContainer {
+	.transition(.4s);
+}
+
+#listResults {
+	tr {
+		cursor: pointer;
+	}
 }
 
 #searchResults {

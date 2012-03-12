@@ -113,7 +113,7 @@
 			}
 		}
 
-		// // // // console.info('------------ AMAZON -------------- ' + itemData.name);
+
 
 		return itemData;
 	};
@@ -250,7 +250,7 @@
 		// add to amazonOffersCache
 		amazonOffersCache[sourceItem.id] = offerItem;
 
-		// console.info(offerItem);
+
 		onSuccess(offerItem);
 	};
 
@@ -259,7 +259,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
 
-		// // // console.info($resultItem);
+
 		var offerItem = {};
 		var offer = {};
 
@@ -281,7 +281,7 @@
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
 
-			// // // console.info($(this));
+
 			offer = {};
 
 			offer.price = $(this).find('Price FormattedPrice').text();

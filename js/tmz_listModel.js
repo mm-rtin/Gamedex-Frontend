@@ -51,7 +51,7 @@
 		addListElement: $addList,
 		gridListElement: $gridList,
 
-		template: _.template($('#list-results-template').html()),
+		template: _.template($('#tag-results-template').html()),
 
         initialize: function() {
 
@@ -78,7 +78,7 @@
 			sortedViewList.sort(sortListItemByName);
 			sortedAddList.sort(sortListItemByName);
 
-			console.info(sortedViewList, sortedAddList);
+
 
 			// create template data structure
 			var addListTemplateData = {'orderedList': sortedAddList};

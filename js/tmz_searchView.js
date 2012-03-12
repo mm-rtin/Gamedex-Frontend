@@ -7,11 +7,15 @@
 	var Amazon = tmz.module('amazon');
 	var GiantBomb = tmz.module('giantbomb');
 	var Utilities = tmz.module('utilities');
+	var GameStats = tmz.module('gameStats');
+	var ItemLinker = tmz.module('itemLinker');
 
     // constants
+	var LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1};
+    var TAB_IDS = {'#searchTab': 0, '#listTab': 1};
     var TIME_TO_SUBMIT_QUERY = 500;	// the number of miliseconds to wait before submiting search query
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
-    var PANEL_HEIGHT_OFFSET = 240;
+    var PANEL_HEIGHT_OFFSET = 275;
     var PANEL_HEIGHT_PADDING = 40;
 
     // search field timeout
@@ -19,92 +23,48 @@
 
     // data
     var searchTerms = 'skyrim';
+    var searchResults = {};
 
     // properties
     var searchProvider = Utilities.getProviders().Amazon;
+    var listProvider = LIST_PROVIDERS.Gamestats;
+    var currentTab = TAB_IDS['#searchTab'];
     var platform = null;
     var displayType = DISPLAY_TYPE.Icons;
 
     // node cache
+    var $searchProviderContainer = $('#searchProviderContainer');
     var $searchContainer = $('#searchContainer');
     var $searchProvider = $('#searchProvider');
+
+    var $listProviderContainer = $('#listProviderContainer');
+    var $listProvider = $('#listProvider');
+
     var $platformListContainer = $('#platformContainer');
     var $platformList = $('#platformList');
+
+    var $finderTabLinks = $('#finderTabLinks');
+    var $finderTabContent = $('#finderTabContent');
+    var $searchTab = $('#searchTab');
+    var $listTab = $('#listTab');
+    var $searchTabLink = $('#searchTabLink');
+    var $listTabLink = $('#listTabLink');
+
+    var $search = $('#search');
+    var $searchButton = $('#search_btn');
     var $searchResultsContainer = $('#searchResultsContainer');
     var $searchResults = $('#searchResults');
-    var $inputField = $('#search').find('input');
+    var $inputField = $search.find('input');
+
+    var $listResultsContainer = $('#listResultsContainer');
+    var $listResults = $('#listResults');
+
     var $displayOptions = $searchContainer.find('.displayOptions');
 
     // templates
     var searchResultsTemplate = _.template($('#search-results-template').html());
+    var listResultsTemplate = _.template($('#list-results-template').html());
     var platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: Model
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.Model = Backbone.Model.extend({
-
-		defaults: {
-            searchResults: {},
-            sortedSearchResults: []
-        },
-
-        initialize: function() {
-
-        }
-	});
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: View
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.View = Backbone.View.extend({
-
-		el: $searchResults,
-
-		resultsTemplate: searchResultsTemplate,
-
-        initialize: function() {
-
-			// searchResults: changed
-            this.model.bind('change:searchResults', this.render, this);
-        },
-
-		render: function() {
-
-			var sortedSearchResults = [];
-
-			// generate sorted items array
-			_.each(this.model.get('searchResults'), function(item, key) {
-				sortedSearchResults.push(item);
-			});
-
-			// sort results
-			sortedSearchResults.sort(sortItemsByDate);
-			this.model.set({'sortedSearchResults': sortedSearchResults});
-
-			// get model data
-			var templateData = this.model.toJSON();
-
-			// add displayType to templateData
-			templateData.displayType = displayType;
-
-			// output JSON search model to results container
-			$(this.el).html(this.resultsTemplate(templateData));
-
-			// set nanoscroll
-			setTimeout(function() {
-				$searchResultsContainer.nanoScroller();
-			}, 500);
-
-			SearchView.resizePanel();
-			return this;
-		}
-	});
-
-    // backbone model
-	var search = new SearchView.Model();
-    // backbone view
-    var searchPanel = new SearchView.View({model: search});
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -119,6 +79,11 @@
 		// set platform
 		platform = Utilities.getPlatformIndex()[0];
 
+		// set nanoscroll
+		setInterval(function() {
+			$searchResultsContainer.nanoScroller();
+			$listResultsContainer.nanoScroller();
+		}, 1500);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -126,17 +91,31 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.createEventHandlers = function() {
 
+		// finder tabs: shown
+		$finderTabLinks.find('a[data-toggle="tab"]').on('shown', function(e) {
+
+			// get current tab and switch options content
+			currentTab = TAB_IDS[$(e.target).attr('href')];
+			finderTabChanged(currentTab);
+		});
+
 		// search field: keypress
 		$inputField.keyup(inputFieldKeyUp);
 
 		// searchProvider: change
 		$searchProvider.chosen().change(searchProviderChanged);
 
+		// listProvider: change
+		$listProvider.chosen().change(listProviderChanged);
+
 		// platformList: change
 		$platformList.chosen().change(platformChanged);
 
 		// search results: click
 		$searchResults.on('click', 'tr', searchResultItem_onClick);
+
+		// list results: click
+		$listResults.on('click', 'tr', listResultItem_onClick);
 
 		// dropdown menu > li: click
 		$searchResults.on('click', '.dropdown-menu li', platformMenu_onClick);
@@ -148,14 +127,55 @@
 		});
 
 		// search button: click
-		$('#search_btn').click(function() {
-			// // // // console.info('click search');
-			SearchView.search(searchTerms);
+		$searchButton.click(function() {
+
+			SearchView.search($inputField.val());
 		});
 
 		// window, searchResults: resized
 		$searchResults.resize(SearchView.resizePanel);
+		$listResults.resize(SearchView.resizePanel);
 		$(window).resize(SearchView.resizePanel);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* renderSearchResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.renderSearchResults = function(items) {
+
+		var sortedSearchResults = [];
+
+		// generate sorted items array
+		_.each(items, function(item, key) {
+			sortedSearchResults.push(item);
+		});
+
+		// sort results
+		sortedSearchResults.sort(sortItemsByDate);
+
+		// get model data
+		var templateData = {'sortedSearchResults': sortedSearchResults};
+
+		// add displayType to templateData
+		templateData.displayType = displayType;
+
+		// output data to template
+		$searchResults.html(searchResultsTemplate(templateData));
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* renderListResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.renderListResults = function(items) {
+
+		// get model data
+		var templateData = {'listResults': items};
+
+		// add displayType to templateData
+		templateData.displayType = displayType;
+
+		// output data to template
+		$listResults.html(listResultsTemplate(templateData));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -183,21 +203,63 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGamestatsPopularityListByPlatform -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
+
+		console.info(platform);
+		GameStats.getPopularGamesListByPlatform(platform.gamestats, getGamestatsPopularityList_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getIGNUpcomingListByPlatform -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.getIGNUpcomingListByPlatform = function(platform) {
+
+		console.info(platform);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* resizePanel -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.resizePanel = function() {
 
-		var windowHeight = $(window).height();
-		var resultsHeight = $searchResults.height();
+		var resultsHeight = null;
+		var $container = null;
 
-		// // // // console.info(resultsHeight);
+		switch(currentTab) {
+			case 0:
+				resultsHeight = $searchResults.height();
+				$container = $searchResultsContainer;
+				break;
+			case 1:
+				resultsHeight = $listResults.height();
+				$container = $listResultsContainer;
+				break;
+		}
+
+
+		console.info(resultsHeight, $container);
+
+		var windowHeight = $(window).height();
 
 		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
-			$searchResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
+			$container.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
 		} else {
-			$searchResultsContainer.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
+			$container.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGamestatsPopularityList_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGamestatsPopularityList_result = function(data) {
+
+		// renderSearchResults list
+		SearchView.renderListResults(data);
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchAmazon_result - results callback from search()
@@ -225,8 +287,13 @@
 			}
 		});
 
-		// set tempSearchResults to search model
-		search.set({'searchResults': tempSearchResults});
+		// set tempSearchResults to searchResults data
+		searchResults = tempSearchResults;
+
+		console.info(searchResults);
+
+		// renderSearchResults results
+		SearchView.renderSearchResults(searchResults);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,8 +319,11 @@
 			tempSearchResults[searchItem.id] = searchItem;
 		}
 
-		// set tempSearchResults to search model
-		search.set({'searchResults': tempSearchResults});
+		// set tempSearchResults to searchResults data
+		searchResults = tempSearchResults;
+
+		// renderSearchResults results
+		SearchView.renderSearchResults(searchResults);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,15 +337,11 @@
 
 		for (var i = 0, len = platforms.length; i < len; i++) {
 
-			// // // console.info(platforms[i].name);
 			// standardize platform names
 			standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
 
 			platformList.push(standardPlatform);
-			// platformList.push(platforms[i].name);
 		}
-
-		// // // console.info('--------------------------------------');
 
 		// add platform drop down to item results
 		addPlatformDropDown(gbombID, platformList);
@@ -299,7 +365,6 @@
 		$('#' + gbombID).find('.platformDropdown').html(platformDropdownTemplate(templateData));
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortItemsByDate -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -317,9 +382,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getSearchResult = function(id) {
 
-		return search.get('searchResults')[id];
+		return searchResults[id];
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchProviderChanged
@@ -327,7 +391,6 @@
 	var searchProviderChanged = function() {
 
 		switch($searchProvider.val()) {
-
 			case '0':
 				searchProvider = Utilities.getProviders().Amazon;
 				// show platform list
@@ -347,6 +410,106 @@
 
 		// set platform object
 		platform = Utilities.getStandardPlatform($(this).val());
+
+		// get game lists
+		getList(listProvider);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* listProviderChanged
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var listProviderChanged = function() {
+
+		switch($listProvider.val()) {
+			case '0':
+				listProvider = LIST_PROVIDERS.Gamestats;
+				break;
+			case '1':
+				listProvider = LIST_PROVIDERS.IGN;
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* finderTabChanged -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var finderTabChanged = function(tab) {
+
+		switch(tab) {
+			case 0:
+				showSearchOptions(true);
+				showListOptions(false);
+				break;
+			case 1:
+				showListOptions(true);
+				showSearchOptions(false);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showTab -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showTab = function(tab) {
+
+		switch (tab) {
+			case 0:
+				$searchTabLink.tab('show');
+				break;
+
+			case 1:
+				$listTabLink.tab('show');
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getList = function(listProvider) {
+
+		switch (listProvider) {
+			case LIST_PROVIDERS.Gamestats:
+				SearchView.getGamestatsPopularityListByPlatform(platform);
+				break;
+
+			case LIST_PROVIDERS.IGN:
+				SearchView.getIGNUpcomingListByPlatform(platform);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showSearchOptions -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showSearchOptions = function(show) {
+
+		if (show) {
+			$searchProviderContainer.fadeIn();
+			$search.fadeIn();
+
+			// hide platform list if going back to search where provider is giantbomb
+			if (searchProvider === Utilities.getProviders().GiantBomb) {
+				$platformListContainer.hide();
+			}
+
+		} else {
+			$searchProviderContainer.hide();
+			$search.hide();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showListOptions -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showListOptions = function(show) {
+
+		if (show) {
+			$platformListContainer.fadeIn();
+			$listProviderContainer.fadeIn();
+		} else {
+			$listProviderContainer.hide();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -373,17 +536,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchFieldTimeOut = function() {
 
-		// // // // console.info("search timeout: search current search terms");
-
 		clearTimeout(timeout);
 		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* EVENT HANDLERS
+	* inputFieldKeyUp
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-	// search field: keypress (up)
     var inputFieldKeyUp = function(event) {
 
 		// get search value
@@ -399,23 +558,43 @@
 
 		// start search timer
 		} else {
-			// // // // console.info("start search timer");
+
 			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
 		}
     };
 
-    // search result: click
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchResultItem_onClick
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var searchResultItem_onClick = function() {
 
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
-
-		// // console.info(searchResult);
 
 		// show item detail
 		DetailView.viewFirstSearchItemDetail(searchResult);
     };
 
-    // platform menu: click
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* listResultItem_onClick
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var listResultItem_onClick = function() {
+
+		// get search text and standardize
+		searchTerms = ItemLinker.standardizeTitle($(this).find('.itemName').text());
+
+		// show search tab
+		showTab(TAB_IDS['#searchTab']);
+
+		// set search input field
+		$inputField.val(searchTerms);
+
+		// start search for clicked item text
+		SearchView.search(searchTerms);
+    };
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* platformMenu_onClick
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var platformMenu_onClick = function(e) {
 
 		// assign platform to searchItem and relaunch detail view

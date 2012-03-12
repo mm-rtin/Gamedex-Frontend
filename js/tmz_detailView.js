@@ -220,7 +220,6 @@
 
 			// find item on alernate provider and view item as second search item
 			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, function(id) {
-
 				return function(item) {
 					viewSecondSearchItemDetail(item, id);
 				};
@@ -232,8 +231,9 @@
 			// load user attributes
 			loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
-			// get wikipedia page
+			// get wikipedia / metacritic data
 			Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
+			getMetascore(firstItem.standardName, firstItem);
 
 			// call main view detail method
 			viewSearchDetail(firstItem, currentProvider, 0);
@@ -282,11 +282,12 @@
 		// display attributes
 		loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
-		// get wikipedia page
+		// get wikipedia / metacritic data
 		Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
+		getMetascore(firstItem.standardName, firstItem, item);
 
 		// finish tasks for viewing items
-		completeViewItemDetail(firstItem, currentProvider, 0);
+		completeViewItemDetail(firstItem, currentProvider, 0, item);
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -333,7 +334,7 @@
 
 		// clone object as secondItem
 		secondItem = jQuery.extend(true, {}, searchItem);
-		// console.info(currentID, linkedID);
+
 
 		if (currentID === linkedID) {
 
@@ -351,8 +352,6 @@
 					break;
 			}
 
-			console.info(firstItem, secondItem);
-
 			// call main view detail method
 			viewSearchDetail(secondItem, provider, 1);
 		}
@@ -363,17 +362,26 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewSearchDetail = function(item, provider, detailPhase) {
 
-		// console.info("VIEW SEARCH DETAIL");
-		// console.info(item);
+		// update model item for provider
+		renderDetail(provider, item);
+
+		// update data panel
+		updateDataPanel(item, detailPhase);
+
+		// get item details
+		getProviderSpecificItemDetails(provider, firstItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* completeViewItemDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var completeViewItemDetail = function(item, provider, detailPhase, sourceItem) {
 
 		// update model item for provider
 		renderDetail(provider, item);
 
-		// get metascore page
-		getMetascore(firstItem.standardName, firstItem);
-
 		// update data panel
-		updateDataPanel(item, detailPhase);
+		updateDataPanel(firstItem, detailPhase);
 
 		// get item details
 		getProviderSpecificItemDetails(provider, firstItem);
@@ -387,9 +395,6 @@
 		// render detail
 		$tab.find('.itemDetailTitle h3').text(itemData.name);
 		$tab.find('.itemDetailThumbnail img').attr('src', itemData.largeImage);
-
-		// clear metascore class
-		$tab.find('.metascore').removeClass().addClass('metascore');
     };
 
 
@@ -454,32 +459,28 @@
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* completeViewItemDetail -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var completeViewItemDetail = function(item, provider, detailPhase) {
-
-		// update model item for provider
-		renderDetail(provider, item);
-
-		// update data panel
-		updateDataPanel(firstItem, detailPhase);
-
-		// get item details
-		getProviderSpecificItemDetails(provider, firstItem);
-
-		// get metascore
-		getMetascore(item.standardName, firstItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMetascore = function(title, sourceItem) {
+	var getMetascore = function(title, item, sourceItem) {
 
+		console.info(title, item);
 		var metascoreSelector = '';
 
+		// hide old metascore on each tab
+		for (var i = 0, len = TAB_IDS.length; i < len; i++) {
+
+			metascoreSelector = TAB_IDS[i] + ' .metascore';
+			$(metascoreSelector).hide();
+		}
+
 		// fetch metascore
-		Metacritic.getMetascore(title, sourceItem, function(item) {
+		Metacritic.getMetascore(title, item, function(item) {
+
+			// update source item metascore
+			if (sourceItem) {
+				sourceItem.metascorePage = item.metascorePage;
+				sourceItem.metascore = item.metascore;
+			}
 
 			// show metascore on each tab
 			for (var i = 0, len = TAB_IDS.length; i < len; i++) {
@@ -533,7 +534,7 @@
 		$amazonPriceNew.fadeIn();
 		$amazonPriceUsed.fadeIn();
 
-		console.info(offers);
+
 
 		$amazonPriceNew.find('a').attr('href', offers.productURL);
 		$amazonPriceNew.find('.data').text(offers.buyNowPrice);
@@ -748,14 +749,14 @@
 
 		// set item attributes into firstItem
 		if (itemData) {
-			// console.info('load existing attributes');
+
 			sourceItem.gameStatus = itemData.gameStatus;
 			sourceItem.playStatus = itemData.playStatus;
 			sourceItem.userRating = itemData.userRating;
 
 		// set default attributes
 		} else {
-			// console.info('default attributes');
+
 			sourceItem.gameStatus = '0';
 			sourceItem.playStatus = '0';
 			sourceItem.userRating = '0';
@@ -841,8 +842,9 @@
 
 		// 1 or more attributes changed - only change for existing items
 		// for new items, attributes are added through add item method
-		if (isAttributesDirty && itemType === ITEM_TYPES['existing']) {
-
+		console.info(isAttributesDirty(), itemType);
+		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
+			console.info('update');
 			// update item
 			ItemData.updateItem(item, updateItem_result);
 		}
@@ -863,7 +865,7 @@
 			$saveAttributesContainer.fadeOut();
 
 			// update list view
-			ItemView.updateListAttributesChanged();
+			ItemView.updateListAttributesChanged(item);
 		}
 	};
 
@@ -879,12 +881,9 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemToTags_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemToTags_result = function(item, data) {
+	var addItemToTags_result = function(data, addedItems) {
 
 		setItemType(ITEM_TYPES['existing']);
-
-		console.info(data);
-		console.info(item);
 
 		// update firstItem with returned data
 		firstItem.itemID = data.itemID;
@@ -895,7 +894,7 @@
 		}
 
 		// update list view model with new item
-		ItemView.updateListAdditions(item, data.idsAdded, data.tagIDsAdded);
+		ItemView.updateListAdditions(data, addedItems);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -906,9 +905,6 @@
 		var initialGameStatus = $gameStatus.find('.currentSelection').attr('data-initial');
 		var initialPlayStatus = $playStatus.find('.currentSelection').attr('data-initial');
 		var initialRating = $userRating.attr('data-initial');
-
-		// console.info(firstItem);
-		// console.info(initialGameStatus, initialPlayStatus, initialRating);
 
 		// 1 or more attributes changed
 		if (initialGameStatus !== firstItem.gameStatus ||

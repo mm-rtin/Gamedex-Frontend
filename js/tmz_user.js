@@ -78,7 +78,7 @@
 		$('#login_btn').click(function(e) {
 
 			e.preventDefault();
-			// // // // console.info('login');
+
 
 			// send post request
 			User.login($('#userLogin_field').val(), $('#password_field').val());
@@ -107,7 +107,7 @@
 			};
 
 			$.post(restURL, postData, function(data) {
-				// // // // console.info(data);
+
 				$('#createuser-modal').modal('hide');
 			}, "html");
 
@@ -131,7 +131,7 @@
 			user_password: password
 		};
 
-		// // // // console.info(loginData);
+
 
 		// login user
 		user.fetch({data: loginData, type: 'POST', success: login_result});
@@ -156,7 +156,7 @@
 
 
 		} else {
-			// // // // console.info('incorrect login');
+
 		}
 	};
 

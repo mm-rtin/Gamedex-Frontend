@@ -29,21 +29,63 @@
 	var activeTags = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemDirectory -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getItemDirectory = function() {
+		return itemDataDirectory;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getDirectoryItemByItemID
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getDirectoryItemByItemID = function(itemID) {
+
+		// return item or empty object
+		return itemDataDirectory[itemID] || null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemByThirdPartyID
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getItemByThirdPartyID = function(gbombID, asin) {
+
+		// itemID from directory
+		var item = null;
+
+		// select appropriate 3rd party item directory
+		if (gbombID !== 0) {
+			item = giantBombDirectory[gbombID];
+
+		} else if (asin !== 0) {
+			item = amazonDirectory[asin];
+		}
+
+		return item;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getActiveTags -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getActiveTags = function() {
+		return activeTags;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItems = function(tagID, onSuccess, onError) {
 
 		// DEBUG
-		$(document).keypress(function(e) {
-			if (e.which == 96) {
-				console.info('itemsCacheByTag: --------------');
-				console.info(itemsCacheByTag);
-				console.info('itemDataDirectory: --------------');
-				console.info(itemDataDirectory);
-				console.info('items: --------------');
-				console.info(items);
-			}
-		});
+		if (typeof $(document).data('events').keypress === 'undefined') {
+			console.info($(document).data('events'));
+			$(document).keypress(function(e) {
+				if (e.which == 96) {
+					console.warn('------------ itemsCacheByTag: ---------', itemsCacheByTag);
+					console.warn('------------ itemDataDirectory: -------', itemDataDirectory);
+					console.warn('------------ items: -------------------', items);
+				}
+			});
+		}
 
 		// find in itemsCacheByTag first
 		var cachedItems = getCachedItemsByTag(tagID);
@@ -54,7 +96,7 @@
 			// assign as new current items data
 			items = cachedItems;
 
-			// console.info(items);
+
 
 			// return updated source item
 			onSuccess(cachedItems);
@@ -92,7 +134,7 @@
 			});
 		}
 
-		console.info(items);
+
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,20 +142,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItem = function(id) {
 		return items[id];
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getActiveTags -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getActiveTags = function() {
-		return activeTags;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDirectory -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemDirectory = function() {
-		return itemDataDirectory;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,7 +244,7 @@
 			success: function(data) {
 
 				var addedItems = addClientItem(item, data);
-				onSuccess(addedItems, data);
+				onSuccess(data, addedItems);
 			},
 			error: onError
 		});
@@ -338,34 +366,6 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getDirectoryItemByItemID
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getDirectoryItemByItemID = function(itemID) {
-
-		// return item or empty object
-		return itemDataDirectory[itemID] || null;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemByThirdPartyID
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemByThirdPartyID = function(gbombID, asin) {
-
-		// itemID from directory
-		var item = null;
-
-		// select appropriate 3rd party item directory
-		if (gbombID !== 0) {
-			item = giantBombDirectory[gbombID];
-
-		} else if (asin !== 0) {
-			item = amazonDirectory[asin];
-		}
-
-		return item;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* populateActiveTags -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var populateActiveTags = function() {
@@ -375,10 +375,10 @@
 
 		// iterate items in itemDirectory
 		_.each(itemDataDirectory, function(item, key) {
-			console.info(item);
+
 			// iterate tags
 			_.each(item.tags, function(id, tag) {
-				console.info(tag);
+
 				// if tag not in activeTags: add it
 				if (typeof activeTags[tag] === 'undefined') {
 					activeTags[tag] = true;
@@ -386,7 +386,7 @@
 			});
 		});
 
-		console.info(activeTags);
+
 	};
 
 
@@ -395,7 +395,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteClientItem = function(id, tagID, itemID) {
 
-		console.info(id, tagID, itemID);
+
 
 		var cachedItems = getCachedItemsByTag(tagID);
 		var cachedItem = null;
@@ -412,15 +412,15 @@
 		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
 		cachedItem = getCacheItemByItemID(itemID, VIEW_ALL_TAG_ID);
 
-		console.info(cachedItem);
+
 		// 'view all' cache available and item is in cache
 		if (cachedItem) {
 
-			console.info(itemDataDirectory[itemID].tagCount);
+
 
 			// last tag for item, remove from 'view all' list
 			if (itemDataDirectory[itemID].tagCount === 0) {
-				console.info('delete:', cachedItems[cachedItem.id]);
+
 				delete cachedItems[cachedItem.id];
 			}
 		}
@@ -443,9 +443,6 @@
 		// each idsAdded index matches with its tagIDAddeds index
 		for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
 
-			// check if item cache for tagID exists
-			cachedItems = getCachedItemsByTag(data.tagIDsAdded[i]);
-
 			// clone item
 			newItem = jQuery.extend(true, {}, item);
 
@@ -455,13 +452,17 @@
 			// add custom formated properties
 			addCustomProperties(newItem);
 
+			// check if item cache for tagID exists
+			cachedItems = getCachedItemsByTag(data.tagIDsAdded[i]);
 			// if cache found - add item to cache
 			if (cachedItems) {
 
-				// add to existing cache and push to addedItems
+				// add to existing cache
 				cachedItems[newItem.id] = newItem;
-				addedItems.push(newItem);
 			}
+
+			// item added
+			addedItems.push(newItem);
 		}
 
 		// add to directory
@@ -479,10 +480,6 @@
 		if (cachedItems && !itemIDExists) {
 			cachedItems[newItem.id] = newItem;
 		}
-
-		console.info('added', addedItems);
-		console.info('by cache tag', itemsCacheByTag);
-		console.info('current items', items);
 
 		return addedItems;
 	};
@@ -556,6 +553,7 @@
 			item.smallImage = itemResults.items[i].si;
 			item.thumbnailImage = itemResults.items[i].ti;
 			item.largeImage = itemResults.items[i].li;
+			item.metascore = itemResults.items[i].ms;
 			item.offers = {};
 
 			item.description = '';
@@ -633,8 +631,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemDataToDirectory = function(item, data) {
 
-		console.info(item);
-		console.info(data);
+
+
 
 		// if itemID doesn't exist in directory
 		if (!itemDataDirectory[data.itemID]) {

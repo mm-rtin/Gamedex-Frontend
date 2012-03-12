@@ -180,7 +180,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initializeGrid = function(items) {
 
-		console.info(items);
+
 
 		var templateData = {'items': items};
 
@@ -294,7 +294,7 @@
 		// show item detail page
 		var item = ItemData.getItem(id);
 
-		console.info(item);
+
 
 		DetailView.viewItemDetail(item);
 	};
@@ -409,12 +409,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var releaseDatesQuickFilter = function(filterList) {
 
-		console.info(filterList);
+
 
 		// get filter selection string
 		var filterString = releaseDateFilter(filterList);
 
-		console.info(filterString);
+
 
 		// apply isotope filter and sort
 		$gridViewContainer.isotope({
@@ -429,12 +429,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var bestPendingGamesQuickFilter = function(filterList) {
 
-		console.info(filterList);
-
 		// get filter selection string
 		var filterString = playStatusFilter(filterList);
-
-		console.info(filterString);
 
 		// apply isotope filter and sort
 		$gridViewContainer.isotope({
@@ -630,7 +626,7 @@
 
 			// re-layout isotope
 			$gridViewContainer.isotope( 'reLayout', function() {
-				console.info('done');
+
 			});
 		}
 	};

@@ -7,33 +7,33 @@
 
 	// amazon nodes, possible platform names and standard name link table
 	var PLATFORM_INDEX = [
-		{'amazon': 0, alias: 'all'},
-		{'amazon': 12508701, alias: 'pc,windows', name: 'PC'},
-		{'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
-		{'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-		{'amazon': 14220271, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
-		{'amazon': 14220271, alias: 'xbl,xbox live', name: 'XBL'},
-		{'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
-		{'amazon': 2622270011,alias: '3ds,nintendo 3ds', name: '3DS'},
-		{'amazon': 14219011, alias: 'wii,nintendo wii', name: 'Wii'},
-		{'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
-		{'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
-		{'amazon': 14210861, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
-		{'amazon': 14210861, alias: 'psn,playstation network', name: 'PSN'},
-		{'amazon': 3010557011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},
-		{'amazon': 12508741, alias: 'psp,sony psp', name: 'PSP'},
-		{'amazon': 541022, alias: 'gamecube,gc,nintendo gamecube', name: 'Gamecube'},
-		{'amazon': 229763, alias: 'n64,nintendo 64,nintendo64', name: 'N64'},
-		{'amazon': 566458, alias: 'nes,nintendo nes', name: 'NES'},
-		{'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
-		{'amazon': 1272528011, alias: 'gb,gameboy', name: 'Game Boy'},
-		{'amazon': 541020, alias: 'gba,gameboy advance,game boy,advance,gbadvance', name: 'GBA'},
-		{'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'GBC'},
-		{'amazon': 229793, alias: 'dc,dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Dreamcast'},
-		{'amazon': 294944, alias: 'saturn,sega saturn', name: 'Saturn'},
-		{'amazon': 294943, alias: 'genesis,sega genesis', name: 'Genesis'},
-		{'amazon': 294942, alias: 'gamegear,game gear,sega gamegear', name: 'Gamegear'},
-		{'amazon': 11000181, alias: 'cd,sega cd', name: 'Sega CD'}
+		{'gamestats': 'something', 'amazon': 0, alias: 'all'},
+		{'gamestats': 'pc', 'amazon': 12508701, alias: 'pc,windows', name: 'PC'},
+		{'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
+		{'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
+		{'gamestats': 'xbox-360', 'amazon': 14220271, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
+		{'gamestats': 'xbox-360', 'amazon': 14220271, alias: 'xbl,xbox live', name: 'XBL'},
+		{'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
+		{'gamestats': 'nintendo-ds', 'amazon': 2622270011,alias: '3ds,nintendo 3ds', name: '3DS'},
+		{'gamestats': 'wii', 'amazon': 14219011, alias: 'wii,nintendo wii', name: 'Wii'},
+		{'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
+		{'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
+		{'gamestats': 'playstation-3', 'amazon': 14210861, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
+		{'gamestats': 'playstation-3', 'amazon': 14210861, alias: 'psn,playstation network', name: 'PSN'},
+		{'gamestats': 'playstation-3', 'amazon': 3010557011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},
+		{'gamestats': 'playstation-portable', 'amazon': 12508741, alias: 'psp,sony psp', name: 'PSP'},
+		{'gamestats': 'gamecube', 'amazon': 541022, alias: 'gamecube,gc,nintendo gamecube', name: 'Gamecube'},
+		{'gamestats': 'nintendo-64', 'amazon': 229763, alias: 'n64,nintendo 64,nintendo64', name: 'N64'},
+		{'gamestats': 'nes', 'amazon': 566458, alias: 'nes,nintendo nes', name: 'NES'},
+		{'gamestats': 'super-nes', 'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
+		{'gamestats': 'gameboy-advance', 'amazon': 1272528011, alias: 'gb,gameboy', name: 'Game Boy'},
+		{'gamestats': 'game-boy', 'amazon': 541020, alias: 'gba,gameboy advance,game boy,advance,gbadvance', name: 'GBA'},
+		{'gamestats': 'game-boy-color', 'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'GBC'},
+		{'gamestats': 'dreamcast', 'amazon': 229793, alias: 'dc,dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Dreamcast'},
+		{'gamestats': 'saturn', 'amazon': 294944, alias: 'saturn,sega saturn', name: 'Saturn'},
+		{'gamestats': 'genesis', 'amazon': 294943, alias: 'genesis,sega genesis', name: 'Genesis'},
+		{'gamestats': 'game-gear', 'amazon': 294942, alias: 'gamegear,game gear,sega gamegear', name: 'Gamegear'},
+		{'gamestats': 'sega-cd', 'amazon': 11000181, alias: 'cd,sega cd', name: 'Sega CD'}
 	];
 
 	// constants
@@ -147,7 +147,7 @@
 		// enter key
 		if (event.which == 13) {
 
-			// // // // console.info("LIST SEARCH");
+
 
 			// get input value
 			var listName = $(container).find('input').val().toLowerCase();
@@ -172,7 +172,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Utilities.autofillHighlightedElements = function(container) {
 
-		// // // // console.info(autoFillTimeOut);
+
 		clearTimeout(autoFillTimeOut);
 
 

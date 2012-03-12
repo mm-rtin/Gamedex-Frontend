@@ -16,8 +16,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
-		// // console.info(searchTerms);
-		// // // console.info(metascoreCache);
 		// find in cache first
 		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
 
@@ -33,16 +31,10 @@
 		} else {
 			var url = 'itemsearch/metacritic/';
 
-			// convert spaces to '+'
-			var re = /\s/g;
-			var modifiedSearchTerms = searchTerms.replace(re, '+');
-
-			// remove ':'
-			re = /:/g;
-			modifiedSearchTerms = modifiedSearchTerms.replace(re, '');
+			var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
 
 			var requestData = {
-				'keywords': encodeURI(modifiedSearchTerms)
+				'keywords': encodeURI(cleanedSearchTerms)
 			};
 
 			$.ajax({
@@ -82,14 +74,37 @@
 
 		$metascoreContainer
 			.html(textScore)
+			.removeClass('unavailable')
+			.removeClass('unfavorable')
+			.removeClass('neutral')
+			.removeClass('favorable')
 			.addClass(colorClass)
 			.attr('href', 'http://www.' + metacriticDomain + page)
 			.attr('data-score', score)
-			.attr('data-original-title', metacriticDomain + ' ' + page);
+			.attr('data-original-title', metacriticDomain + ' ' + page)
+			.fadeIn();
 
 		// activate tooltip
 		$metascoreContainer.tooltip();
 	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cleanupMetacriticSearchTerms -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cleanupMetacriticSearchTerms = function(searchTerms) {
+
+		// remove ':', '&'
+		re = /\s*[:&]\s*/g;
+		var cleanedSearchTerms = searchTerms.replace(re, ' ');
+
+		// convert spaces to '+'
+		var re = /\s/g;
+		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
+
+		return cleanedSearchTerms;
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -

@@ -15,6 +15,7 @@
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
+    var SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4};
     var PANEL_HEIGHT_OFFSET = 200;
     var PANEL_HEIGHT_PADDING = 40;
     var VIEW_ALL_TAG_ID = '0';
@@ -34,12 +35,26 @@
 
     // node cache
     var $itemResults = $('#itemResults');
+    var $viewlistContainer = $('#viewListContainer');
     var $viewItemsContainer = $('#viewItemsContainer');
     var $itemResultsContainer = $('#itemResultsContainer');
     var $displayOptions = $viewItemsContainer.find('.displayOptions');
     var $sortOptions = $viewItemsContainer.find('.sortOptions');
     var $filterOptions = $viewItemsContainer.find('.filterOptions');
     var $viewList = $('#viewList');
+
+    // filter nodes
+    var $filterStatus = $viewItemsContainer.find('.filterStatus');
+    var $filterDropDownBtn = $viewItemsContainer.find('.filterDropDown_btn');
+    var $listFiltersButton = $viewItemsContainer.find('.listFilters_btn');
+    var $applyFiltersButton = $('#applyFilters_btn');
+    var $filtersModal = $('#filters-modal');
+
+    var $releaseDateFilter = $('#releaseDate_filter');
+    var $gameStatusFilter = $('#gameStatus_filter');
+    var $playStatusFilter = $('#playStatus_filter');
+    var $metascoreFilter = $('#metascore_filter');
+    var $platformFilter = $('#platformFilterList');
 
 	// jquery objects
 	var currentHoverItem = null;
@@ -54,6 +69,18 @@
 	ItemView.init = function() {
 
 		ItemView.createEventHandlers();
+
+		// init tooltips
+		$filterStatus.tooltip();
+		$filterDropDownBtn.tooltip();
+		$displayOptions.find('button').each(function(key, button) {
+			$(button).tooltip();
+		});
+
+		// update nano scroller sizes periodically
+		setInterval(function() {
+			$itemResultsContainer.nanoScroller();
+		}, 1500);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,31 +88,38 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemView.createEventHandlers = function() {
 
-		var viewlistContainer = $('#viewListContainer');
-
 		// filter buttons
-        $('#filters-modal').on('click', '.btn-group button', function(e) {
+        $filtersModal.on('click', '.btn-group button', function(e) {
             e.preventDefault();
         });
 
 		// listFilters_btn: click
-		$('.listFilters_btn').click(function(e) {
+		$listFiltersButton.click(function(e) {
 			e.preventDefault();
 
-			$('#filters-modal').modal('show');
+			$filtersModal.modal('show');
 		});
 
 		// applyFilters_btn: click
-		$('#applyFilters_btn').click(function(e) {
+		$applyFiltersButton.click(function(e) {
 			e.preventDefault();
+			// apply filters
+			applyFilters();
+		});
+
+		// filterStatus: click
+		$filterStatus.click(function(e) {
+			e.preventDefault();
+			// clear filters
+			resetFilters();
 			applyFilters();
 		});
 
 		// viewList: keypress
-		$(viewlistContainer).find('input').live({
+		$viewlistContainer.find('input').live({
 			// keypress event
 			keydown: function(e){
-				Utilities.handleInputKeyDown(e, viewlistContainer, ListModel);
+				Utilities.handleInputKeyDown(e, $viewlistContainer, ListModel);
 			}
 		});
 
@@ -121,13 +155,13 @@
 		// sortOptions select
 		$sortOptions.find('li a').click(function(e) {
 			e.preventDefault();
-			sortList($(this).attr('data-content'));
+			sortList(parseInt($(this).attr('data-content'), 10));
 		});
 
 		// filterOptions select
 		$filterOptions.find('li a').click(function(e) {
 			e.preventDefault();
-			quickFilter($(this).attr('data-content'));
+			quickFilter(parseInt($(this).attr('data-content'), 10));
 		});
 
 		// show grid view button: click
@@ -161,24 +195,27 @@
 		// render model data to template
 		$itemResults.html(itemResultsTemplate(templateData));
 
-		// load extra information for each item
+		// load preliminary data (for filtering, sorting)
+		_.each(items, function(item, key) {
+			displayMetascore(item);
+		});
+
+		// load latest/extra information for each item
 		_.each(items, function(item, key) {
 			loadThirdPartyData(item);
 		});
 
-		// initialize list.js for item list
+		// update list.js for item list
 		itemList = new List('itemResultsContainer', listOptions);
-
-		// reset filters
-		filterHasBeenApplied = false;
 
 		// sort using current sort method
 		sortList(currentSortIndex);
 
-		// set nanoscroll
-		setTimeout(function() {
-			$itemResultsContainer.nanoScroller();
-		}, 1500);
+		// apply filters
+		applyFilters();
+
+		// reset filters - allow filter index to be recreated after dynamic data loaded
+		filterHasBeenApplied = false;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -219,8 +256,7 @@
 	ItemView.updateListDeletions = function(itemID, itemsDeleted) {
 
 		var tagCount = null;
-		console.info($itemResults.find('tr[data-content="' + itemID + '"]'));
-		console.info(itemsDeleted);
+
 		// remove items deleted from view
 		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
 
@@ -230,8 +266,6 @@
 
 				// get item by id
 				tagCount = ItemData.getDirectoryItemByItemID(itemID).tagCount;
-
-				console.info(tagCount);
 
 				if (tagCount === 0) {
 
@@ -249,27 +283,56 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateListAdditions
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListAdditions = function(addedItems) {
+	ItemView.updateListAdditions = function(data, addedItems) {
 
-		// get items and render
-		ItemData.getItems(currentViewTagID, function(items) {
+		var renderCurrentList = false;
 
-			// render items
-			render(items);
-		});
+		// viewing user list
+		if (currentViewTagID !== VIEW_ALL_TAG_ID) {
+
+			// iterate added listIDs - render if viewing list where item was added
+			for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
+
+				if (data.tagIDsAdded[i] == currentViewTagID) {
+					renderCurrentList = true;
+				}
+			}
+
+		// viewing 'all list' view
+		// don't re-render item already displayed in 'view all' list
+		} else if (ItemData.getDirectoryItemByItemID(data.itemID).tagCount === 1) {
+			renderCurrentList = true;
+		}
+
+		if (renderCurrentList) {
+			console.info('render');
+			// get and render items
+			ItemData.getItems(currentViewTagID, function(items) {
+				render(items);
+			});
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateListAttributesChanged
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListAttributesChanged = function() {
+	ItemView.updateListAttributesChanged = function(item) {
 
-		// get items and render
+		// get and render items
 		ItemData.getItems(currentViewTagID, function(items) {
-
-			// render items
 			render(items);
 		});
+
+		// get item element in view list
+		// var $item = $('#' + item.id);
+
+		// // update item html directly
+		// $item.find('.gameStatus').html(item.gameStatus);
+		// $item.find('.playStatus').html(item.playStatus);
+		// $item.find('.userRating').html(item.userRating);
+
+		// update list
+		//itemList = new List('itemResultsContainer', listOptions);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -316,7 +379,7 @@
 		});
 
 		// get metascore
-		Metacritic.getMetascore(item.standardName, item, metascore_result);
+		Metacritic.getMetascore(item.standardName, item, displayMetascore);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,9 +409,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* metascore_result -
+	* displayMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var metascore_result = function(item) {
+	var displayMetascore = function(item) {
 
 		// display score
 		var metascoreSelector = '#' + item.id + ' .metascore';
@@ -407,18 +470,161 @@
 		ListModel.getList();
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* quickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var quickFilter = function(filterType) {
+
+		var quickFilter = filterType;
+
+		// reset filters
+		resetFilters();
+
+		switch (quickFilter) {
+
+			// upcoming
+			case 0:
+				// unreleased, released
+				upcomingQuickFilter();
+				break;
+
+			// new releases
+			case 1:
+				newReleasesQuickFilter();
+				break;
+
+			// never played
+			case 2:
+				neverPlayedQuickFilter();
+				break;
+
+			// games playing
+			case 3:
+				gamesPlayingQuickFilter();
+				break;
+
+			// finished games
+			case 4:
+				finishedGamesQuickFilter();
+				break;
+
+			// owned games
+			case 5:
+				ownedGamesQuickFilter();
+				break;
+
+			// wanted games
+			case 6:
+				wantedGamesQuickFilter();
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* upcomingQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var upcomingQuickFilter = function() {
+
+		// activate filter panel option
+		$releaseDateFilter.find('button[data-content="0"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.releaseDate);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* newReleasesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var newReleasesQuickFilter = function() {
+
+		// activate filter panel option
+		$releaseDateFilter.find('button[data-content="1"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.releaseDate);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* neverPlayedQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var neverPlayedQuickFilter = function() {
+
+		// activate filter panel option
+		$playStatusFilter.find('button[data-content="0"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.metascore);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* gamesPlayingQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var gamesPlayingQuickFilter = function() {
+
+		// activate filter panel option
+		$playStatusFilter.find('button[data-content="1"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.metascore);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* finishedGamesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var finishedGamesQuickFilter = function() {
+
+		// activate filter panel option
+		$playStatusFilter.find('button[data-content="2"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.metascore);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* ownedGamesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var ownedGamesQuickFilter = function() {
+
+		// activate filter panel option
+		$gameStatusFilter.find('button[data-content="1"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.metascore);
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* wantedGamesQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var wantedGamesQuickFilter = function() {
+
+		// activate filter panel option
+		$gameStatusFilter.find('button[data-content="3"]').addClass('active');
+
+		// sort and apply filter
+		sortList(SORT_TYPES.metascore);
+		applyFilters();
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* applyFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
 
+		console.info('apply filter');
+
 		// re-initialize list if first run of filter
 		if (filterHasBeenApplied === false) {
-			itemList = new List('itemResultsContainer', listOptions);
+			//itemList = new List('itemResultsContainer', listOptions);
 			filterHasBeenApplied = true;
 		}
 
+		var filtered = false;
 		var releaseDateFilters = [];
 		var metascoreFilters = [];
 		var platformFilters = [];
@@ -426,7 +632,7 @@
 		var playStatusFilters = [];
 
 		// iterate all release date filter options
-		$('#releaseDate_filter').find('button').each(function() {
+		$releaseDateFilter.find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
 				releaseDateFilters.push(true);
@@ -436,7 +642,7 @@
 		});
 
 		// iterate all metascore filter options
-		$('#metascore_filter').find('button').each(function() {
+		$metascoreFilter.find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
 				metascoreFilters.push(true);
@@ -446,7 +652,7 @@
 		});
 
 		// iterate all gamestauts filter options
-		$('#gameStatus_filter').find('button').each(function() {
+		$gameStatusFilter.find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
 				gameStatusFilters.push(true);
@@ -456,7 +662,7 @@
 		});
 
 		// iterate all playstatus filter options
-		$('#playStatus_filter').find('button').each(function() {
+		$playStatusFilter.find('button').each(function() {
 
 			if ($(this).hasClass('active')) {
 				playStatusFilters.push(true);
@@ -466,7 +672,7 @@
 		});
 
 		// iterate platform filter options
-		platformFilters = $('#platformFilterList').val() || [];
+		platformFilters = $platformFilter.val() || [];
 
 		for (var i = 0, len = platformFilters.length; i < len; i++) {
 			platformFilters[i] = Utilities.getStandardPlatform(platformFilters[i]);
@@ -487,124 +693,64 @@
 			}
 
 			// filtered out
+			filtered = true;
 			return false;
 		});
-	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* quickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var quickFilter = function(filterType) {
-
-		var quickFilter = parseInt(filterType, 10);
-
-		switch (quickFilter) {
-
-			// upcoming
-			case 0:
-				// unreleased, released
-				releaseDatesQuickFilter([true, false]);
-				break;
-
-			// new releases
-			case 1:
-				// unreleased, released
-				releaseDatesQuickFilter([false, true]);
-				break;
-
-			// best unplayed
-			case 2:
-				// not started, playing, finished
-				bestPendingGamesQuickFilter([true, false, false]);
-				break;
-
-			// best unfinished
-			case 3:
-				// not started, playing, finished
-				bestPendingGamesQuickFilter([false, true, false]);
-				break;
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* releaseDatesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var releaseDatesQuickFilter = function(filterList) {
-
-		var applyFilterAndSort = function() {
-
-			// filter
-			itemList.filter(function(itemValues) {
-				if (releaseDateFilter(itemValues, filterList)) {
-					return true;
-				}
-				return false;
-			});
-
-			// sort
-			$sortOptions.find('.currentSort').text('Release Date');
-			itemList.sort('releaseDate', {sortFunction: releaseDateSort});
-		};
-
-		// already viewing all items: apply filter
-		if (currentViewTagID === VIEW_ALL_TAG_ID) {
-			applyFilterAndSort();
-
-		// view all: then apply filter
+		// check if filtered - show filterStatus button
+		if (filtered) {
+			console.info('filtered');
+			$filterStatus.show();
 		} else {
-			getItems(VIEW_ALL_TAG_ID, function(items) {
-
-				render(items);
-				applyFilterAndSort();
-			});
+			console.info('no filters');
+			$filterStatus.hide();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* bestPendingGamesQuickFilter -
+	* resetFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var bestPendingGamesQuickFilter = function(filterList) {
+	var resetFilters = function(item) {
 
-		var applyFilterAndSort = function() {
+		// iterate all release date filter options
+		$releaseDateFilter.find('button').each(function() {
+			$(this).removeClass('active');
+		});
 
-			// filter
-			itemList.filter(function(itemValues) {
-				if (playStatusFilter(itemValues, filterList)) {
-					return true;
-				}
-				return false;
-			});
+		// iterate all metascore filter options
+		$metascoreFilter.find('button').each(function() {
+			$(this).removeClass('active');
+		});
 
-			// sort
-			$sortOptions.find('.currentSort').text('Review Score');
-			itemList.sort('scoreDetails', {sortFunction: metascoreSort});
-		};
+		// iterate all gamestauts filter options
+		$gameStatusFilter.find('button').each(function() {
+			$(this).removeClass('active');
+		});
 
-		// already viewing all items: apply filter
-		if (currentViewTagID === VIEW_ALL_TAG_ID) {
-			applyFilterAndSort();
+		// iterate all playstatus filter options
+		$playStatusFilter.find('button').each(function() {
+			$(this).removeClass('active');
+		});
 
-		// view all: then apply filter
-		} else {
-			ItemData.getItems(VIEW_ALL_TAG_ID, function(items) {
-
-				render(items);
-				applyFilterAndSort();
-			});
-		}
+		// iterate all platform options, deselect
+		$platformFilter.find('option').each(function(key, item) {
+			$(this).removeAttr('selected');
+		});
+		$platformFilter.trigger("liszt:updated");
 	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortList = function(sortType) {
 
-		currentSortIndex = parseInt(sortType, 10);
+		currentSortIndex = sortType;
 
 		switch (currentSortIndex) {
 
 			// alphabetical
-			case 0:
+			case SORT_TYPES.alphabetical:
 				// set sort status
 				$sortOptions.find('.currentSort').text('Alphabetical');
 				// sort new list
@@ -612,29 +758,29 @@
 
 				break;
 
-			// review scores
-			case 1:
+			// metascores
+			case SORT_TYPES.metascore:
 				$sortOptions.find('.currentSort').text('Review Score');
 				itemList.sort('scoreDetails', {sortFunction: metascoreSort});
 
 				break;
 
 			// release date
-			case 2:
+			case SORT_TYPES.releaseDate:
 				$sortOptions.find('.currentSort').text('Release Date');
 				itemList.sort('releaseDate', {sortFunction: releaseDateSort});
 
 				break;
 
 			// platform
-			case 3:
+			case SORT_TYPES.platform:
 				$sortOptions.find('.currentSort').text('Platform');
 				itemList.sort('platform', { asc: true });
 
 				break;
 
 			// price
-			case 4:
+			case SORT_TYPES.price:
 				$sortOptions.find('.currentSort').text('Price');
 				itemList.sort('priceDetails', {sortFunction: priceSort});
 

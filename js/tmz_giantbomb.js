@@ -52,7 +52,7 @@
 			platform: 'n/a'
 		};
 
-		// // // // console.info('------------ GIANT BOMB -------------- ' + itemData.name);
+
 
 		// format date
 		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {
@@ -139,7 +139,7 @@
 
 				// cache result
 				giantBombDataCache[gbombID] = data.results;
-				// // console.info(giantBombDataCache);
+
 				onSuccess(data.results);
 
 			}, onError);
@@ -159,7 +159,7 @@
 
 			// return updated source item
 			onSuccess(cachedItem);
-			// // console.info(cachedItem);
+
 
 		// download gb item
 		} else {
@@ -171,7 +171,7 @@
 				// cache result
 				giantBombItemCache[gbombID] = data.results;
 				onSuccess(data.results);
-				// // console.info(data.results);
+
 			}, onError);
 		}
 	};
