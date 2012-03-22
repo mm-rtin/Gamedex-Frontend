@@ -12,6 +12,7 @@
     var Amazon = tmz.module('amazon');
     var Metacritic = tmz.module('metacritic');
     var ItemLinker = tmz.module('itemLinker');
+    var FilterPanel = tmz.module('filterPanel');
 
     // constants
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
@@ -40,21 +41,14 @@
     var $itemResultsContainer = $('#itemResultsContainer');
     var $displayOptions = $viewItemsContainer.find('.displayOptions');
     var $sortOptions = $viewItemsContainer.find('.sortOptions');
-    var $filterOptions = $viewItemsContainer.find('.filterOptions');
     var $viewList = $('#viewList');
 
     // filter nodes
-    var $filterStatus = $viewItemsContainer.find('.filterStatus');
-    var $filterDropDownBtn = $viewItemsContainer.find('.filterDropDown_btn');
-    var $listFiltersButton = $viewItemsContainer.find('.listFilters_btn');
+    var $filterOptions = $viewItemsContainer.find('.filterOptions');
+    var $filterStatus = $filterOptions.find('.filterStatus');
+    var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
+    var $listFiltersButton = $filterOptions.find('.listFilters_btn');
     var $applyFiltersButton = $('#applyFilters_btn');
-    var $filtersModal = $('#filters-modal');
-
-    var $releaseDateFilter = $('#releaseDate_filter');
-    var $gameStatusFilter = $('#gameStatus_filter');
-    var $playStatusFilter = $('#playStatus_filter');
-    var $metascoreFilter = $('#metascore_filter');
-    var $platformFilter = $('#platformFilterList');
 
 	// jquery objects
 	var currentHoverItem = null;
@@ -71,10 +65,10 @@
 		ItemView.createEventHandlers();
 
 		// init tooltips
-		$filterStatus.tooltip();
-		$filterDropDownBtn.tooltip();
+		$filterStatus.tooltip({delay: {show: 500, hide: 50}});
+		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
 		$displayOptions.find('button').each(function(key, button) {
-			$(button).tooltip();
+			$(button).tooltip({delay: {show: 500, hide: 50}});
 		});
 
 		// update nano scroller sizes periodically
@@ -88,16 +82,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemView.createEventHandlers = function() {
 
-		// filter buttons
-        $filtersModal.on('click', '.btn-group button', function(e) {
-            e.preventDefault();
-        });
-
 		// listFilters_btn: click
 		$listFiltersButton.click(function(e) {
 			e.preventDefault();
 
-			$filtersModal.modal('show');
+			FilterPanel.showFilterPanel();
 		});
 
 		// applyFilters_btn: click
@@ -111,7 +100,8 @@
 		$filterStatus.click(function(e) {
 			e.preventDefault();
 			// clear filters
-			resetFilters();
+			$listFiltersButton.find('.filterName').text(' Filters');
+			FilterPanel.resetFilters();
 			applyFilters();
 		});
 
@@ -286,6 +276,9 @@
 	ItemView.updateListAdditions = function(data, addedItems) {
 
 		var renderCurrentList = false;
+
+		// update view list
+		ListModel.updateViewList(data.tagIDsAdded);
 
 		// viewing user list
 		if (currentViewTagID !== VIEW_ALL_TAG_ID) {
@@ -478,7 +471,8 @@
 		var quickFilter = filterType;
 
 		// reset filters
-		resetFilters();
+		$listFiltersButton.find('.filterName').text(' Filters');
+		FilterPanel.resetFilters();
 
 		switch (quickFilter) {
 
@@ -518,6 +512,9 @@
 				wantedGamesQuickFilter();
 				break;
 		}
+
+		// apply filters and toggle filter status
+		toggleFilterStatus(FilterPanel.applyListJSFiltering(itemList));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -525,90 +522,66 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var upcomingQuickFilter = function() {
 
-		// activate filter panel option
-		$releaseDateFilter.find('button[data-content="0"]').addClass('active');
-
 		// sort and apply filter
 		sortList(SORT_TYPES.releaseDate);
-		applyFilters();
+		// set current filter text on filters button
+		$listFiltersButton.find('.filterName').text(' Upcoming');
+		// set filter panel option
+		FilterPanel.upcomingQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* newReleasesQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var newReleasesQuickFilter = function() {
-
-		// activate filter panel option
-		$releaseDateFilter.find('button[data-content="1"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.releaseDate);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' New Releases');
+		FilterPanel.newReleasesQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* neverPlayedQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var neverPlayedQuickFilter = function() {
-
-		// activate filter panel option
-		$playStatusFilter.find('button[data-content="0"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.metascore);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' Never Played');
+		FilterPanel.neverPlayedQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* gamesPlayingQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var gamesPlayingQuickFilter = function() {
-
-		// activate filter panel option
-		$playStatusFilter.find('button[data-content="1"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.metascore);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' Playing');
+		FilterPanel.gamesPlayingQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* finishedGamesQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var finishedGamesQuickFilter = function() {
-
-		// activate filter panel option
-		$playStatusFilter.find('button[data-content="2"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.metascore);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' Finished');
+		FilterPanel.finishedGamesQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* ownedGamesQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var ownedGamesQuickFilter = function() {
-
-		// activate filter panel option
-		$gameStatusFilter.find('button[data-content="1"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.metascore);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' Owned');
+		FilterPanel.ownedGamesQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* wantedGamesQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var wantedGamesQuickFilter = function() {
-
-		// activate filter panel option
-		$gameStatusFilter.find('button[data-content="3"]').addClass('active');
-
-		// sort and apply filter
 		sortList(SORT_TYPES.metascore);
-		applyFilters();
+		$listFiltersButton.find('.filterName').text(' Wanted');
+		FilterPanel.wantedGamesQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -616,129 +589,24 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
 
-		console.info('apply filter');
-
-		// re-initialize list if first run of filter
-		if (filterHasBeenApplied === false) {
-			//itemList = new List('itemResultsContainer', listOptions);
-			filterHasBeenApplied = true;
-		}
-
-		var filtered = false;
-		var releaseDateFilters = [];
-		var metascoreFilters = [];
-		var platformFilters = [];
-		var gameStatusFilters = [];
-		var playStatusFilters = [];
-
-		// iterate all release date filter options
-		$releaseDateFilter.find('button').each(function() {
-
-			if ($(this).hasClass('active')) {
-				releaseDateFilters.push(true);
-			} else {
-				releaseDateFilters.push(false);
-			}
-		});
-
-		// iterate all metascore filter options
-		$metascoreFilter.find('button').each(function() {
-
-			if ($(this).hasClass('active')) {
-				metascoreFilters.push(true);
-			} else {
-				metascoreFilters.push(false);
-			}
-		});
-
-		// iterate all gamestauts filter options
-		$gameStatusFilter.find('button').each(function() {
-
-			if ($(this).hasClass('active')) {
-				gameStatusFilters.push(true);
-			} else {
-				gameStatusFilters.push(false);
-			}
-		});
-
-		// iterate all playstatus filter options
-		$playStatusFilter.find('button').each(function() {
-
-			if ($(this).hasClass('active')) {
-				playStatusFilters.push(true);
-			} else {
-				playStatusFilters.push(false);
-			}
-		});
-
-		// iterate platform filter options
-		platformFilters = $platformFilter.val() || [];
-
-		for (var i = 0, len = platformFilters.length; i < len; i++) {
-			platformFilters[i] = Utilities.getStandardPlatform(platformFilters[i]);
-		}
-
-		// apply  filters
-		itemList.filter(function(itemValues) {
-
-			var releaseDateStatus = releaseDateFilter(itemValues, releaseDateFilters);
-			var metascoreStatus = metascoreFilter(itemValues, metascoreFilters);
-			var platformStatus = platformFilter(itemValues, platformFilters);
-			var gameStatus = gameStatusFilter(itemValues, gameStatusFilters);
-			var playStatus = playStatusFilter(itemValues, playStatusFilters);
-
-			// not filtered
-			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
-				return true;
-			}
-
-			// filtered out
-			filtered = true;
-			return false;
-		});
-
-		// check if filtered - show filterStatus button
-		if (filtered) {
-			console.info('filtered');
-			$filterStatus.show();
-		} else {
-			console.info('no filters');
-			$filterStatus.hide();
-		}
+		// apply filters to itemList
+		var filtered = FilterPanel.applyListJSFiltering(itemList);
+		// set filtered Status icon
+		toggleFilterStatus(filtered);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* resetFilters -
+	* toggleFilterStatus -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var resetFilters = function(item) {
+	var toggleFilterStatus = function(filtered) {
 
-		// iterate all release date filter options
-		$releaseDateFilter.find('button').each(function() {
-			$(this).removeClass('active');
-		});
-
-		// iterate all metascore filter options
-		$metascoreFilter.find('button').each(function() {
-			$(this).removeClass('active');
-		});
-
-		// iterate all gamestauts filter options
-		$gameStatusFilter.find('button').each(function() {
-			$(this).removeClass('active');
-		});
-
-		// iterate all playstatus filter options
-		$playStatusFilter.find('button').each(function() {
-			$(this).removeClass('active');
-		});
-
-		// iterate all platform options, deselect
-		$platformFilter.find('option').each(function(key, item) {
-			$(this).removeAttr('selected');
-		});
-		$platformFilter.trigger("liszt:updated");
+		// check if filtered - show filterStatus button
+		if (filtered) {
+			$filterStatus.show();
+		} else {
+			$filterStatus.hide();
+		}
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* sortList -
@@ -836,170 +704,6 @@
 		return date2 - date1;
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* releaseDateFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var releaseDateFilter = function(itemValues, filterList) {
-
-		// filter config (1: unreleased, 2: released)
-		var unreleasedFilter = filterList[0];
-		var releasedFilter = filterList[1];
-
-		var releaseDate = moment(itemValues.releaseDate, 'YYYY-MM-DD');
-		var currentDate = moment();
-
-		var diff = releaseDate.diff(currentDate, 'seconds');
-
-		// all filters active - ignore filter
-		if (unreleasedFilter && releasedFilter) {
-			return true;
-
-		// no filters selected - ignore filter
-		} else if (!unreleasedFilter && !releasedFilter) {
-			return true;
-
-		// specific filter
-		} else if (unreleasedFilter && diff > 0) {
-			return true;
-		} else if (releasedFilter && diff < 0) {
-			return true;
-		}
-
-		// filtered
-		return false;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gameStatusFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var gameStatusFilter = function(itemValues, filterList) {
-
-		var noneFilter = filterList[0];
-		var ownFilter = filterList[1];
-		var soldFilter = filterList[2];
-		var wantedFilter = filterList[3];
-
-		var gameStatus = itemValues.gameStatus;
-
-		// all filters active - ignore filter
-		if (noneFilter && ownFilter && soldFilter && wantedFilter) {
-			return true;
-
-		// no filters selected - ignore filter
-		} else if (!noneFilter && !ownFilter && !soldFilter && !wantedFilter) {
-			return true;
-
-		// specific filters
-		} else if (noneFilter && gameStatus === '0') {
-			return true;
-		} else if (ownFilter && gameStatus === '1') {
-			return true;
-		} else if (soldFilter && gameStatus === '2') {
-			return true;
-		} else if (wantedFilter && gameStatus === '3') {
-			return true;
-		}
-
-		// filtered
-		return false;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* playStatusFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var playStatusFilter = function(itemValues, filterList) {
-
-		var notPlayingFilter = filterList[0];
-		var playingFilter = filterList[1];
-		var finishedFilter = filterList[2];
-
-		var playStatus = itemValues.playStatus;
-
-		// all filters active - ignore filter
-		if (notPlayingFilter && playingFilter && finishedFilter) {
-			return true;
-
-		// no filters selected - ignore filter
-		} else if (!notPlayingFilter && !playingFilter && !finishedFilter) {
-			return true;
-
-		// specific filters
-		} else if (notPlayingFilter && playStatus === '0') {
-			return true;
-		} else if (playingFilter && playStatus === '1') {
-			return true;
-		} else if (finishedFilter && playStatus === '2') {
-			return true;
-		}
-
-		// filtered
-		return false;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* metascoreFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var metascoreFilter = function(itemValues, filterList) {
-
-		var _90sFilter = filterList[0];
-		var _80sFilter = filterList[1];
-		var _70sFilter = filterList[2];
-		var _60sFilter = filterList[3];
-		var _50sFilter = filterList[4];
-		var _25to49Filter = filterList[5];
-		var _0to24Filter = filterList[6];
-
-		var score = parseInt(itemValues.metascore, 10);
-
-		// all filters selected - ignore filter
-		if (_90sFilter && _80sFilter && _70sFilter && _60sFilter && _50sFilter && _25to49Filter && _0to24Filter) {
-			return true;
-
-		// no filters selected - ignore filter
-		} else if (!_90sFilter && !_80sFilter && !_70sFilter && !_60sFilter && !_50sFilter && !_25to49Filter && !_0to24Filter) {
-			return true;
-
-		// specifc filter
-		} else if (_90sFilter && score >= 90) {
-			return true;
-		} else if (_80sFilter && score >= 80 && score < 90) {
-			return true;
-		} else if (_70sFilter && score >= 70 && score < 80) {
-			return true;
-		} else if (_60sFilter && score >= 60 && score < 70) {
-			return true;
-		} else if (_50sFilter && score >= 50 && score < 60) {
-			return true;
-		} else if (_25to49Filter && score >= 25 && score < 50) {
-			return true;
-		} else if (_0to24Filter && score >= 0 && score < 25) {
-			return true;
-		}
-
-		return false;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* platformFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var platformFilter = function(itemValues, filterList) {
-
-		// platform filter list empty - no filter
-		if (filterList.length === 0) {
-			return true;
-		}
-
-		// iterate platform list
-		var platform = itemValues.platform;
-		for (var i = 0, len = filterList.length; i < len; i++) {
-
-			if (filterList[i].name === platform) {
-				return true;
-			}
-		}
-
-		return false;
-	};
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

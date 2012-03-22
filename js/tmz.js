@@ -52,6 +52,7 @@ tmz.initialize = function() {
 
 	// module references
 	tmz.util = tmz.module('utilities');
+	tmz.filterPanel = tmz.module('filterPanel');
 
 	// models
 	tmz.user = tmz.module('user');
@@ -124,4 +125,7 @@ tmz.initializeModules = function() {
 
 	// GRID VIEW
 	tmz.gridView.init();
+
+	// FILTER PANEL
+	tmz.filterPanel.init();
 };

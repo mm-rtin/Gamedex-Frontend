@@ -101,6 +101,10 @@ input, select, textarea {
 		background-position: -312px 2px;
 	}
 
+	.icon-trash {
+		background-position: -456px 1px;
+	}
+
 	.icon-adjust {
 		background-position: -48px -71px;
 	}
@@ -300,7 +304,16 @@ input, select, textarea {
 	display: none;
 }
 
+.listDisplayOptions {
+	display: none;
+}
+
 #platformContainer {
+	float: left;
+}
+
+#commonPlatformContainer {
+	display: none;
 	float: left;
 }
 
@@ -311,16 +324,6 @@ input, select, textarea {
 #searchResultsContainer {
 	.transition(.4s);
 }
-#listResultsContainer {
-	.transition(.4s);
-}
-
-#listResults {
-	tr {
-		cursor: pointer;
-	}
-}
-
 #searchResults {
 
 	tr {
@@ -372,6 +375,69 @@ input, select, textarea {
 		}
 		.mediumImage {
 			min-width: 100px;
+			width: 15%;
+		}
+		.title {
+
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+		.platform {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+	}
+}
+
+#listResultsContainer {
+	.transition(.4s);
+}
+
+#listResults {
+
+	tr {
+		cursor: pointer;
+	}
+
+	.display-0 {
+
+		.mediumImage {
+			display: none;
+		}
+		.title {
+
+		}
+		.calendarDate {
+			display: none;
+		}
+	}
+
+	.display-1 {
+
+		.mediumImage {
+			width: 10%;
+			img {
+				width: 75px;
+			}
+		}
+		.title {
+
+		}
+		.calendarDate {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+		.platform {
+			color: #7D7D7D;
+			font-size: 12px;
+		}
+	}
+
+	.display-2 {
+
+		.mediumImage {
 			width: 15%;
 		}
 		.title {

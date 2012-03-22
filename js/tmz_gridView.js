@@ -6,9 +6,16 @@
 	var ItemData = tmz.module('itemData');
 	var Amazon = tmz.module('amazon');
 	var Utilities = tmz.module('utilities');
+	var FilterPanel = tmz.module('filterPanel');
 
 	// constants
 	var DEFAULT_DISPLAY_TYPE = 1;
+	var SORT_TYPES = {'itemName': 0, 'metacriticScore': 1, 'releaseDate': 2, 'platform': 3, 'rawPrice': 4};
+
+	// properties
+	var currentSortIndex = 0;
+	var currentSortType = null;
+	var currentSortAsc = true;
 
     // node cache
     var $gridViewContainer = $('#gridViewContainer');
@@ -17,7 +24,13 @@
 
     var $displayOptions = $gridViewOptions.find('.displayOptions');
     var $sortOptions = $gridViewOptions.find('.sortOptions');
+
     var $filterOptions = $gridViewOptions.find('.filterOptions');
+    var $filterStatus = $filterOptions.find('.filterStatus');
+    var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
+    var $listFiltersButton = $filterOptions.find('.listFilters_btn');
+    var $applyFiltersButton = $('#applyFilters_btn');
+    var $filtersModal = $('#filters-modal');
 
     // templates
     var gridResultsTemplate = _.template($('#grid-results-template').html());
@@ -36,6 +49,13 @@
 
 		// create event handlers
 		createEventHandlers();
+
+		// init tooltips
+		$filterStatus.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
+		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
+		$displayOptions.find('button').each(function(key, button) {
+			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,17 +69,40 @@
 			exitGridView();
 		});
 
+		// listFilters_btn: click
+		$listFiltersButton.click(function(e) {
+			e.preventDefault();
+			$filtersModal.modal('show');
+		});
+
+		// filterStatus: click
+		$filterStatus.click(function(e) {
+			console.info('clear');
+			e.preventDefault();
+			// clear filters
+			FilterPanel.resetFilters();
+			applyFilters();
+		});
+
+		// applyFilters_btn: click
+		$applyFiltersButton.click(function(e) {
+			e.preventDefault();
+			// apply filters
+			applyFilters();
+		});
+
 		// gridList: change
 		$gridList.chosen().change(gridListChanged);
 
 		// gridItem: click
 		$gridViewContainer.on('click', '.gridItem img', function(e) {
-			gridItemSelected($(this).parent().parent().attr('data-content'));
 			e.preventDefault();
+			gridItemSelected($(this).parent().parent().attr('data-content'));
 		});
 
 		// gridItem: mouseover
 		$gridViewContainer.on('mouseover', '.gridItem', function(e) {
+			e.preventDefault();
 
 			var $gridItem = $(this);
 			var id = $gridItem.attr('data-content');
@@ -80,10 +123,11 @@
 						'-webkit-transition-duration': '1s'
 						}
 			);
-			e.preventDefault();
 		});
+
 		// gridItem: mouseout
 		$gridViewContainer.on('mouseout', '.gridItem', function(e) {
+			e.preventDefault();
 
 			var $gridItem = $(this);
 
@@ -96,7 +140,6 @@
 						'-webkit-transition-duration': '1s'
 						}
 			);
-			e.preventDefault();
 		});
 
 		// displayOptions: click
@@ -180,15 +223,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initializeGrid = function(items) {
 
-
-
 		var templateData = {'items': items};
 
 		// set html from items data
 		$gridViewContainer.html(gridResultsTemplate(templateData));
-
-		// add filtering classes
-		addFilteringClasses(items);
 
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
@@ -196,67 +234,6 @@
 			// show gridViewContainer
 			$gridViewContainer.show();
 			initializeIsotope();
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addFilteringClasses -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addFilteringClasses = function(items) {
-
-		var $gridItem = null;
-		var id = null;
-		var item = null;
-		var releaseDate = null;
-		var currentDate = null;
-		var diff = null;
-		var score = null;
-
-		// iterate current grid items
-		$('.gridItem').each(function(key, item) {
-
-			$gridItem = $(item);
-
-			// get item data
-			id = $gridItem.attr('data-content');
-			item = items[id];
-
-			// platform
-			$gridItem.addClass(item.platform);
-
-			// releaseDate
-			releaseDate = moment(item.releaseDate, 'YYYY-MM-DD');
-			currentDate = moment();
-			diff = releaseDate.diff(currentDate, 'seconds');
-			if (diff > 0) {
-				$gridItem.addClass('unreleased');
-			} else {
-				$gridItem.addClass('released');
-			}
-
-			// gameStatus
-			$gridItem.addClass('gameStatus' + item.gameStatus);
-			// playStatus
-			$gridItem.addClass('playStatus' + item.playStatus);
-			// userRating
-			$gridItem.addClass('userRating' + item.userRating);
-
-			// metascore
-			if (score >= 90) {
-				$gridItem.addClass('m_90s');
-			} else if (score >= 80 && score < 90) {
-				$gridItem.addClass('m_80s');
-			} else if (score >= 70 && score < 80) {
-				$gridItem.addClass('m_70s');
-			} else if (score >= 60 && score < 70) {
-				$gridItem.addClass('m_60s');
-			} else if (score >= 50 && score < 60) {
-				$gridItem.addClass('m_50s');
-			} else if (score >= 25 && score < 50) {
-				$gridItem.addClass('m_25to50');
-			} else if (score >= 0 && score < 25) {
-				$gridItem.addClass('m_0to24');
-			}
 		});
 	};
 
@@ -294,8 +271,7 @@
 		// show item detail page
 		var item = ItemData.getItem(id);
 
-
-
+		// view in detail panel
 		DetailView.viewItemDetail(item);
 	};
 
@@ -308,32 +284,83 @@
 		clearTransitionProperties();
 
 		var quickFilter = parseInt(filterType, 10);
+		FilterPanel.resetFilters();
 
 		switch (quickFilter) {
 
 			// upcoming
 			case 0:
-				// unreleased, released
-				releaseDatesQuickFilter([true, false]);
+				FilterPanel.upcomingQuickFilter();
+				currentSortType = 'releaseDate';
+				currentSortAsc = true;
 				break;
 
 			// new releases
 			case 1:
-				// unreleased, released
-				releaseDatesQuickFilter([false, true]);
+				FilterPanel.newReleasesQuickFilter();
+				currentSortType = 'releaseDate';
+				currentSortAsc = false;
 				break;
 
-			// best unplayed
+			// never played
 			case 2:
-				// not started, playing, finished
-				bestPendingGamesQuickFilter([true, false, false]);
+				FilterPanel.neverPlayedQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
 				break;
 
-			// best unfinished
+			// games playing
 			case 3:
-				// not started, playing, finished
-				bestPendingGamesQuickFilter([false, true, false]);
+				FilterPanel.gamesPlayingQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
 				break;
+
+			// finished games
+			case 4:
+				FilterPanel.finishedGamesQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
+				break;
+
+			// owned games
+			case 5:
+				FilterPanel.ownedGamesQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
+				break;
+
+			// wanted games
+			case 6:
+				FilterPanel.wantedGamesQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
+				break;
+		}
+
+		// apply filters to itemList and set filtered Status icon
+		applyFilters();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* applyFilters -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var applyFilters = function() {
+
+		// apply filters to itemList and set filtered Status icon
+		toggleFilterStatus(FilterPanel.applyIsotopeFiltering($gridViewContainer, currentSortType, currentSortAsc));
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* toggleFilterStatus -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var toggleFilterStatus = function(filtered) {
+
+		// check if filtered - show filterStatus button
+		if (filtered) {
+			$filterStatus.show();
+		} else {
+			$filterStatus.hide();
 		}
 	};
 
@@ -350,222 +377,62 @@
 		switch (currentSortIndex) {
 
 			// alphabetical
-			case 0:
+			case SORT_TYPES.itemName:
 				// set sort status
 				$sortOptions.find('.currentSort').text('Alphabetical');
+				currentSortType = 'itemName';
 				// sort new list
 				$gridViewContainer.isotope({
-					sortBy : 'itemName',
+					sortBy : currentSortType,
 					sortAscending : true
 				});
 
 				break;
 
 			// review scores
-			case 1:
+			case SORT_TYPES.metacriticScore:
 				$sortOptions.find('.currentSort').text('Review Score');
+				currentSortType = 'metacriticScore';
 				$gridViewContainer.isotope({
-					sortBy : 'metacriticScore',
+					sortBy : currentSortType,
 					sortAscending : false
 				});
 
 				break;
 
 			// release date
-			case 2:
+			case SORT_TYPES.releaseDate:
 				$sortOptions.find('.currentSort').text('Release Date');
+				currentSortType = 'releaseDate';
 				$gridViewContainer.isotope({
-					sortBy : 'releaseDate',
+					sortBy : currentSortType,
 					sortAscending : false
 				});
 
 				break;
 
 			// platform
-			case 3:
+			case SORT_TYPES.platform:
 				$sortOptions.find('.currentSort').text('Platform');
+				currentSortType = 'platform';
 				$gridViewContainer.isotope({
-					sortBy : 'platform',
+					sortBy : currentSortType,
 					sortAscending : true
 				});
 
 				break;
 
 			// price
-			case 4:
+			case SORT_TYPES.rawPrice:
 				$sortOptions.find('.currentSort').text('Price');
+				currentSortType = 'rawPrice';
 				$gridViewContainer.isotope({
-					sortBy : 'rawPrice',
+					sortBy : currentSortType,
 					sortAscending : true
 				});
 
 				break;
 		}
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* releaseDatesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var releaseDatesQuickFilter = function(filterList) {
-
-
-
-		// get filter selection string
-		var filterString = releaseDateFilter(filterList);
-
-
-
-		// apply isotope filter and sort
-		$gridViewContainer.isotope({
-			filter: filterString,
-			sortBy : 'releaseDate',
-			sortAscending : false
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* bestPendingGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var bestPendingGamesQuickFilter = function(filterList) {
-
-		// get filter selection string
-		var filterString = playStatusFilter(filterList);
-
-		// apply isotope filter and sort
-		$gridViewContainer.isotope({
-			filter: filterString,
-			sortBy : 'metacriticScore',
-			sortAscending : false
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* releaseDateFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var releaseDateFilter = function(filterList) {
-
-		// filter config (1: unreleased, 2: released)
-		var unreleasedFilter = filterList[0];
-		var releasedFilter = filterList[1];
-		var filterString = '';
-
-		// construct filter string
-		if (unreleasedFilter) {
-			filterString += '.unreleased';
-		}
-		if (releasedFilter) {
-			filterString += '.released';
-		}
-
-		return filterString;
-	};
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gameStatusFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var gameStatusFilter = function(filterList) {
-
-		// filter config (0: none)
-		var noneFilter = filterList[0];
-		var ownFilter = filterList[1];
-		var soldFilter = filterList[2];
-		var wantedFilter = filterList[3];
-		var filterString = '';
-
-		// construct filter string
-		if (noneFilter) {
-			filterString += '.gameStatus0';
-		}
-		if (ownFilter) {
-			filterString += '.gameStatus1';
-		}
-		if (soldFilter) {
-			filterString += '.gameStatus2';
-		}
-		if (wantedFilter) {
-			filterString += '.gameStatus3';
-		}
-		return filterString;
-	};
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* playStatusFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var playStatusFilter = function(filterList) {
-
-		// filter config (1: unreleased, 2: released)
-		var notPlayingFilter = filterList[0];
-		var playingFilter = filterList[1];
-		var finishedFilter = filterList[2];
-		var filterString = '';
-
-		// construct filter string
-		if (notPlayingFilter) {
-			filterString += '.playStatus0';
-		}
-		if (playingFilter) {
-			filterString += '.playStatus1';
-		}
-		if (finishedFilter) {
-			filterString += '.playStatus2';
-		}
-
-		return filterString;
-	};
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* metascoreFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var metascoreFilter = function(filterList) {
-
-		var _90sFilter = filterList[0];
-		var _80sFilter = filterList[1];
-		var _70sFilter = filterList[2];
-		var _60sFilter = filterList[3];
-		var _50sFilter = filterList[4];
-		var _25to49Filter = filterList[5];
-		var _0to24Filter = filterList[6];
-		var filterString = '';
-
-		// construct filter string
-		if (_90sFilter) {
-			filterString += '.m_90s';
-		}
-		if (_80sFilter) {
-			filterString += '.m_80s';
-		}
-		if (_70sFilter) {
-			filterString += '.m_70s';
-		}
-		if (_60sFilter) {
-			filterString += '.m_60s';
-		}
-		if (_50sFilter) {
-			filterString += '.m_50s';
-		}
-		if (_25to49Filter) {
-			filterString += '.m_25to50';
-		}
-		if (_0to24Filter) {
-			filterString += '.m_0to24';
-		}
-
-		return filterString;
-	};
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* platformFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var platformFilter = function(filterList) {
-
-		var filterString = '';
-		// iterate platform filter options
-		platformFilters = $('#platformFilterList').val() || [];
-
-		// iterate selected platforms
-		for (var i = 0, len = platformFilters.length; i < len; i++) {
-			filterString += Utilities.getStandardPlatform(platformFilters[i]);
-		}
-
-		// construct filter string
-		return filterString;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -13,106 +13,80 @@
 	var $gridList = $('#gridList');
 
 	// data
+	var addList = {};
+	var viewList = {};
 	var sortedAddList = [];
 	var sortedViewList = [];
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: List Model
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.ListModel = Backbone.Model.extend({
-
-		defaults: {
-            list: {},
-            viewList: {}
-        },
-
-        initialize: function() {
-
-        },
-
-        // override parse method
-		parse : function(response) {
-			parseListResponse(response);
-		},
-
-        // get list
-		url: function () {
-			return tmz.api + 'list/';
-		}
-
-	});
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: List View
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.ListView = Backbone.View.extend({
-
-		viewListElement: $viewList,
-		addListElement: $addList,
-		gridListElement: $gridList,
-
-		template: _.template($('#tag-results-template').html()),
-
-        initialize: function() {
-
-            // orderedList: changed
-            this.model.bind('change:list', this.render, this);
-        },
-
-		render: function() {
-
-			// reset sorted lists
-			sortedAddList = [];
-			sortedViewList = [];
-
-			// generate sorted add list
-			_.each(this.model.get('list'), function(item, key) {
-				sortedAddList.push(item);
-			});
-			// generate sorted view list
-			_.each(this.model.get('viewList'), function(item, key) {
-				sortedViewList.push(item);
-			});
-
-			// sort lists
-			sortedViewList.sort(sortListItemByName);
-			sortedAddList.sort(sortListItemByName);
-
-
-
-			// create template data structure
-			var addListTemplateData = {'orderedList': sortedAddList};
-			var viewListTemplateData = {'orderedList': sortedViewList};
-
-			// set properties
-			addListTemplateData.showDynamic = false;
-			viewListTemplateData.showDynamic = true;
-
-			// output template to list containers
-			$(this.viewListElement).html(this.template(viewListTemplateData));
-			$(this.gridListElement).html(this.template(viewListTemplateData));
-			$(this.addListElement).html(this.template(addListTemplateData));
-
-			// send event to update chzn dropdown
-			$(this.viewListElement).trigger("liszt:updated");
-			$(this.gridListElement).trigger("liszt:updated");
-			$(this.addListElement).trigger("liszt:updated");
-
-			return this;
-		}
-	});
-
-	// backbone list model
-	var list = new List.ListModel();
-    // backbone view
-    var listView = new List.ListView({model: list});
+	// templates
+	var listTemplate = _.template($('#tag-results-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.createEventHandlers = function(keywords) {
+	List.createEventHandlers = function() {
 
 
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* renderViewLists
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.renderViewLists = function() {
+
+		// reset sorted lists
+		sortedViewList = [];
+
+		// generate sorted view list
+		_.each(viewList, function(item, key) {
+			sortedViewList.push(item);
+		});
+
+		// sort lists
+		sortedViewList.sort(sortListItemByName);
+
+		// create template data structure
+		var viewListTemplateData = {'orderedList': sortedViewList};
+
+		// set properties
+		viewListTemplateData.showDynamic = true;
+
+		// output template to list containers
+		$viewList.html(listTemplate(viewListTemplateData));
+		$gridList.html(listTemplate(viewListTemplateData));
+
+		// send event to update chzn dropdown
+		$viewList.trigger("liszt:updated");
+		$gridList.trigger("liszt:updated");
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* renderAddLists
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.renderAddLists = function() {
+
+		// reset sorted lists
+		sortedAddList = [];
+
+		// generate sorted add list
+		_.each(addList, function(item, key) {
+			sortedAddList.push(item);
+		});
+
+		// sort lists
+		sortedAddList.sort(sortListItemByName);
+
+		// create template data structure
+		var addListTemplateData = {'orderedList': sortedAddList};
+
+		// set properties
+		addListTemplateData.showDynamic = false;
+
+		// output template to list containers
+		$addList.html(listTemplate(addListTemplateData));
+
+		// send event to update chzn dropdown
+		$addList.trigger("liszt:updated");
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,19 +94,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.getList = function() {
 
-		var userData = User.getUserData();
+		// empty list data
+		viewList = {};
+		addList = {};
 
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key
-		};
+		ListData.getList(function(data) {
+			parseListResponse(data);
 
-		// fetch list - submit user key data via POST
-		list.fetch({data: requestData, type: 'POST'});
-
-		// clear items - if not cleared some cases result in items not updating
-		list.set({'list': {}});
-		list.set({'viewList': {}});
+			// render lits
+			List.renderViewLists();
+			List.renderAddLists();
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,49 +112,80 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.addList = function(listName) {
 
+		console.info(listName);
 		// check if list name exists
-		if (!list.get('list')[listName]) {
+		if (typeof addList[listName] === 'undefined') {
 
 			ListData.addList(listName, parseAddListResponse);
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateViewList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.updateViewList = function(tagIDsAdded) {
+
+		// get active tags from ItemData
+		var activeTags = ItemData.getActiveTags();
+		var updated = false;
+
+		// iterate response
+		_.each(addList, function(listItem, key) {
+
+			// iterate added tags
+			for (var i = 0, len = tagIDsAdded.length; i < len; i++) {
+
+				// check if listID is in activeTags or show in tagIDsAdded array
+				if (listItem.id === tagIDsAdded[i]) {
+
+					console.info('update list', listItem);
+					// add to view lists object
+					viewList[listItem.name] = listItem;
+					updated = true;
+				}
+			}
+		});
+
+		if (updated) {
+			List.renderViewLists();
+		}
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseListResponse
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseListResponse = function(response) {
+	var parseListResponse = function(data) {
+
+		// reset list data
+		viewList = {};
+		addList = {};
 
 		// temp list data
-		var tempAddList = {};
-		var tempViewList = {};
 		var listItem = {};
 
 		// get active tags from ItemData
 		var activeTags = ItemData.getActiveTags();
 
-		// iterate response
-		for (var i = 0, len = response.list.length; i < len; i++) {
+		// iterate data
+		for (var i = 0, len = data.list.length; i < len; i++) {
 
 			listItem = {};
 
 			// get attributes
-			listItem.name = response.list[i].listName.toLowerCase();
-			listItem.id = response.list[i].listID;
+			listItem.name = data.list[i].listName.toLowerCase();
+			listItem.id = data.list[i].listID;
 
 			// check if listID is in activeTags before adding to view list data
 			if (typeof activeTags[listItem.id] !== 'undefined') {
 
 				// add to view lists object
-				tempViewList[listItem.name] = listItem;
+				viewList[listItem.name] = listItem;
 			}
 
 			// add all to add list objects
-			tempAddList[listItem.name] = listItem;
+			addList[listItem.name] = listItem;
 		}
-
-		// set list model data
-		list.set({'viewList': tempViewList});
-		list.set({'list': tempAddList});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -190,18 +193,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAddListResponse = function(response) {
 
-		// get current list data
-		var tempList = list.get('list');
-
 		var listItem = {name: response.listName.toLowerCase(), id: response.listID};
 
-		tempList[listItem.name] = listItem;
+		addList[listItem.name] = listItem;
 
-		// set list model data
-		list.set({'list': tempList});
-
-		// trigger change manually since updating objects internally does not trigger update
-		list.trigger("change:list");
+		List.renderAddLists();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
