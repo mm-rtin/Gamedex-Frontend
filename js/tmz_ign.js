@@ -6,7 +6,7 @@
 	// properties
 
 	// data
-	var IGNCache = {};
+	var IGNUpcomingListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUpcomingGames -
@@ -36,55 +36,29 @@
 				cache: true,
 				success: function(data) {
 
-					// parse results and return items to onSuccess function
-					onSuccess(parseIGNResults(data));
+					console.info('not cached');
+					// cache result
+					IGNUpcomingListCache[platform] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
 				}
 			});
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseIGNResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseIGNResults = function(data) {
-
-		var items = [];
-		var item = {};
-
-		// get data table
-		var $results = $('#table-section-index', data);
-		var $nameElement = null;
-		var $imageElement = null;
-		var $dateElement = null;
-
-		// iterate and pull out item data
-		$results.find('.game-row').each(function() {
-
-			$nameElement = $(this).find('.title-game a');
-			$imageElement = $(this).find('.box-art img');
-			$dateElement = $(this).find('td:nth-child(3)');
-
-			console.info($dateElement);
-
-			item = {
-				'name': $nameElement.text(),
-				'IGNPage': $nameElement.attr('href'),
-				'calendarDate': $dateElement.text(),
-				'mediumImage': $imageElement.attr('src')
-			};
-
-			items.push(item);
-		});
-
-		return items;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function() {
+	var getCachedData = function(platform) {
 
-		return null;
+		var IGNUpcomingList = null;
+
+		if (typeof IGNUpcomingListCache[platform] !== 'undefined') {
+			IGNUpcomingList = IGNUpcomingListCache[platform];
+		}
+
+		return IGNUpcomingList;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

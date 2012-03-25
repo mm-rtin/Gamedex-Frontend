@@ -15,8 +15,13 @@
 	// data
 	var addList = {};
 	var viewList = {};
+	var emptyList = {};
+	var listIndex = {};
 	var sortedAddList = [];
 	var sortedViewList = [];
+
+	// active tags - tags currently used by items
+	var activeTags = {};
 
 	// templates
 	var listTemplate = _.template($('#tag-results-template').html());
@@ -36,20 +41,25 @@
 
 		// reset sorted lists
 		sortedViewList = [];
+		sortedEmptyList = [];
 
 		// generate sorted view list
 		_.each(viewList, function(item, key) {
 			sortedViewList.push(item);
+		});
+		// generate sorted empty list
+		_.each(emptyList, function(item, key) {
+			sortedEmptyList.push(item);
 		});
 
 		// sort lists
 		sortedViewList.sort(sortListItemByName);
 
 		// create template data structure
-		var viewListTemplateData = {'orderedList': sortedViewList};
+		var viewListTemplateData = {'orderedList': sortedViewList, 'emptyList': sortedEmptyList};
 
 		// set properties
-		viewListTemplateData.showDynamic = true;
+		viewListTemplateData.viewList = true;
 
 		// output template to list containers
 		$viewList.html(listTemplate(viewListTemplateData));
@@ -80,7 +90,7 @@
 		var addListTemplateData = {'orderedList': sortedAddList};
 
 		// set properties
-		addListTemplateData.showDynamic = false;
+		addListTemplateData.viewList = false;
 
 		// output template to list containers
 		$addList.html(listTemplate(addListTemplateData));
@@ -99,11 +109,16 @@
 		addList = {};
 
 		ListData.getList(function(data) {
+
+			// populate active tags
+			populateActiveTags();
+
 			parseListResponse(data);
 
 			// render lits
 			List.renderViewLists();
 			List.renderAddLists();
+
 		});
 	};
 
@@ -123,34 +138,95 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateViewList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.updateViewList = function(tagIDsAdded) {
+	List.updateViewList = function(tagIDsAdded, currentViewTagID) {
 
-		// get active tags from ItemData
-		var activeTags = ItemData.getActiveTags();
+		console.info('update view list');
+
 		var updated = false;
 
-		// iterate response
-		_.each(addList, function(listItem, key) {
+		// iterated added tag IDS
+		for (var i = 0, len = tagIDsAdded.length; i < len; i++) {
 
-			// iterate added tags
-			for (var i = 0, len = tagIDsAdded.length; i < len; i++) {
+			// check if added tagID is in activeTags
+			if (typeof activeTags[tagIDsAdded[i]] === 'undefined') {
 
-				// check if listID is in activeTags or show in tagIDsAdded array
-				if (listItem.id === tagIDsAdded[i]) {
+				// add tagID to activeTags
+				activeTags[tagIDsAdded[i]] = true;
 
-					console.info('update list', listItem);
-					// add to view lists object
-					viewList[listItem.name] = listItem;
-					updated = true;
-				}
+				// remove tag from empty list
+				delete emptyList[listIndex[tagIDsAdded[i]]];
+
+				// add to view lists object
+				viewList[listIndex[tagIDsAdded[i]]] = {'id': tagIDsAdded[i], 'name': listIndex[tagIDsAdded[i]]};
+				console.info('update list', viewList[listIndex[tagIDsAdded[i]]]);
+				updated = true;
 			}
-		});
+		}
 
 		if (updated) {
+
+			// update view list
 			List.renderViewLists();
+
+			// after render of view list - reselect currently viewing tag
+			List.selectViewTag(currentViewTagID);
 		}
+
+		return updated;
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* selectViewTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.selectViewTag = function(tagID) {
+
+		// get option node
+		option = $viewList.find('option[value="' + tagID + '"]');
+
+		// select option
+		$(option).attr('selected', '');
+
+		$viewList.trigger("liszt:updated");
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* selectGridTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.selectGridTag = function(tagID) {
+
+		// get option node
+		option = $gridList.find('option[value="' + tagID + '"]');
+
+		// select option
+		$(option).attr('selected', '');
+
+		$gridList.trigger("liszt:updated");
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* populateActiveTags -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var populateActiveTags = function() {
+
+		var itemDataDirectory = ItemData.getItemDirectory();
+
+		// reset activeTags
+		activeTags = {};
+
+		// iterate items in itemDirectory
+		_.each(itemDataDirectory, function(item, key) {
+
+			// iterate tags
+			_.each(item.tags, function(id, tag) {
+
+				// if tag not in activeTags: add it
+				if (typeof activeTags[tag] === 'undefined') {
+					activeTags[tag] = true;
+				}
+			});
+		});
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseListResponse
@@ -160,12 +236,11 @@
 		// reset list data
 		viewList = {};
 		addList = {};
+		emptyList = {};
+		listIndex = {};
 
 		// temp list data
 		var listItem = {};
-
-		// get active tags from ItemData
-		var activeTags = ItemData.getActiveTags();
 
 		// iterate data
 		for (var i = 0, len = data.list.length; i < len; i++) {
@@ -181,10 +256,14 @@
 
 				// add to view lists object
 				viewList[listItem.name] = listItem;
+
+			} else {
+				emptyList[listItem.name] = listItem;
 			}
 
 			// add all to add list objects
 			addList[listItem.name] = listItem;
+			listIndex[listItem.id] = listItem.name;
 		}
 	};
 
@@ -195,9 +274,13 @@
 
 		var listItem = {name: response.listName.toLowerCase(), id: response.listID};
 
+		// update addList and listIndex
 		addList[listItem.name] = listItem;
+		emptyList[listItem.name] = listItem;
+		listIndex[listItem.id] = listItem.name;
 
 		List.renderAddLists();
+		List.renderViewLists();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

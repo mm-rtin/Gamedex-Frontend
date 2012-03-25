@@ -4,6 +4,7 @@
     // module references
     var DetailView = tmz.module('detailView');
 	var ItemData = tmz.module('itemData');
+	var List = tmz.module('list');
 	var Amazon = tmz.module('amazon');
 	var Utilities = tmz.module('utilities');
 	var FilterPanel = tmz.module('filterPanel');
@@ -77,9 +78,10 @@
 
 		// filterStatus: click
 		$filterStatus.click(function(e) {
-			console.info('clear');
 			e.preventDefault();
+
 			// clear filters
+			$listFiltersButton.find('.filterName').text(' Filters');
 			FilterPanel.resetFilters();
 			applyFilters();
 		});
@@ -172,6 +174,9 @@
 		$('#content').removeClass('standardView');
 		$('#content').addClass('gridView');
 
+		// select gridList tagID
+		List.selectGridTag(tagID);
+
 		// load grid
 		loadGridData(tagID);
 	};
@@ -201,6 +206,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadGridData = function(tagID) {
 
+		$gridViewContainer.hide();
 		// reset isotop
 		if (isotopeInitialized) {
 			$gridViewContainer.isotope('destroy');
@@ -290,6 +296,7 @@
 
 			// upcoming
 			case 0:
+				$listFiltersButton.find('.filterName').text(' Upcoming');
 				FilterPanel.upcomingQuickFilter();
 				currentSortType = 'releaseDate';
 				currentSortAsc = true;
@@ -297,6 +304,7 @@
 
 			// new releases
 			case 1:
+				$listFiltersButton.find('.filterName').text(' New Releases');
 				FilterPanel.newReleasesQuickFilter();
 				currentSortType = 'releaseDate';
 				currentSortAsc = false;
@@ -304,6 +312,7 @@
 
 			// never played
 			case 2:
+				$listFiltersButton.find('.filterName').text(' Never Played');
 				FilterPanel.neverPlayedQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
@@ -311,6 +320,7 @@
 
 			// games playing
 			case 3:
+				$listFiltersButton.find('.filterName').text(' Playing');
 				FilterPanel.gamesPlayingQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
@@ -318,6 +328,7 @@
 
 			// finished games
 			case 4:
+				$listFiltersButton.find('.filterName').text(' Finished');
 				FilterPanel.finishedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
@@ -325,6 +336,7 @@
 
 			// owned games
 			case 5:
+				$listFiltersButton.find('.filterName').text(' Owned');
 				FilterPanel.ownedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
@@ -332,6 +344,7 @@
 
 			// wanted games
 			case 6:
+				$listFiltersButton.find('.filterName').text(' Wanted');
 				FilterPanel.wantedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;

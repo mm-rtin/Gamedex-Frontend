@@ -1,6 +1,7 @@
 // SEARCH VIEW
 (function(SearchView, tmz, $, _) {
 	"use strict";
+
 	// module references
 	var DetailView = tmz.module('detailView');
 	var Amazon = tmz.module('amazon');
@@ -245,7 +246,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getIGNUpcomingListByPlatform = function(platform) {
 
-		console.info(platform);
 		IGN.getUpcomingGames(platform.ign, getIGNUpcomingList_result);
 	};
 
@@ -283,6 +283,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getGamestatsPopularityList_result = function(data) {
 
+		console.info(data);
 		// renderSearchResults list
 		SearchView.renderListResults(data);
 	};
@@ -291,8 +292,6 @@
 	* getIGNUpcomingList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getIGNUpcomingList_result = function(data) {
-
-		console.info(data);
 
 		// renderSearchResults list
 		SearchView.renderListResults(data);

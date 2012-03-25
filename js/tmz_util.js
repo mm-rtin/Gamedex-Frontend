@@ -82,11 +82,11 @@
 				re = new RegExp(aliasArray[j], 'gi');
 				currentMatch = re.exec(platformName);
 
-				if (currentMatch !== null && currentMatch[0].length === originalTextLength) {
+				if (currentMatch && currentMatch[0].length === originalTextLength) {
 
 					return PLATFORM_INDEX[i];
 
-				} else if (currentMatch !== null && currentMatch[0].length > bestMatchLength) {
+				} else if (currentMatch && currentMatch[0].length > bestMatchLength) {
 
 					bestMatchLength = currentMatch[0].length;
 					bestMatch = PLATFORM_INDEX[i];
@@ -94,7 +94,7 @@
 			}
 		}
 
-		if (bestMatch !== null) {
+		if (bestMatch) {
 			return bestMatch;
 		}
 

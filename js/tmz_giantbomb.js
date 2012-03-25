@@ -55,7 +55,7 @@
 
 
 		// format date
-		if (resultItem.original_release_date !== null && resultItem.original_release_date !== '') {
+		if (resultItem.original_release_date && resultItem.original_release_date !== '') {
 			itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
 		} else {
 			itemData.releaseDate = '1900-01-01';
@@ -69,28 +69,28 @@
 		}
 
 		// set small url
-		if (resultItem.image !== null && resultItem.image.small_url && resultItem.image.small_url !== '') {
+		if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
 			itemData.smallImage = resultItem.image.small_url;
 		} else {
 			itemData.smallImage = 'no image.png';
 		}
 
 		// set thumb url
-		if (resultItem.image !== null && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
+		if (resultItem.image && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
 			itemData.thumbnailImage = resultItem.image.thumb_url;
 		} else {
 			itemData.thumbnailImage = 'no image.png';
 		}
 
 		// set large url
-		if (resultItem.image !== null && resultItem.image.super_url && resultItem.image.super_url !== '') {
+		if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
 			itemData.largeImage = resultItem.image.super_url;
 		} else {
 			itemData.largeImage = 'no image.png';
 		}
 
 		// set description
-		if (resultItem.description !== null && resultItem.description  !== '') {
+		if (resultItem.description && resultItem.description  !== '') {
 			itemData.description = resultItem.description;
 		} else {
 			itemData.description = 'No Description';

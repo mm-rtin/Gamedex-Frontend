@@ -96,13 +96,6 @@
 			var standardPlatform = Utilities.getStandardPlatform(searchItem.platform);
 		}
 
-
-
-
-
-
-
-
 		return score;
 	};
 
@@ -194,7 +187,7 @@
 
 				// run search for amazon
 				Amazon.searchAmazon(item.name, browseNode, function(data) {
-					findAmazonMatch(data, item, onSuccess);
+					findAmazonMatch(data, item, onSuccess, false);
 				});
 				break;
 		}
@@ -306,7 +299,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findAmazonMatch
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonMatch = function(data, sourceItem, onSuccess) {
+	var findAmazonMatch = function(data, sourceItem, onSuccess, final) {
 
 		var resultLength = ($('Item', data).length);
 		var searchItem = {};
@@ -316,8 +309,6 @@
 		var bestMatch = null;
 		var bestScore = -99999;
 		var score = 0;
-
-
 
 		// iterate results
 		$('Item', data).each(function() {
@@ -348,14 +339,14 @@
 		});
 
 		// return best match to onSuccess method
-		if (bestMatch !== null) {
+		if (bestMatch) {
 			// return best match
 			onSuccess(bestMatch);
 
-		// re-run search without platform filter
-		} else {
+		// re-run search without platform filter - only if this hasn't been run before
+		} else if (!final) {
 			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
-				findAmazonMatch(data, sourceItem, onSuccess);
+				findAmazonMatch(data, sourceItem, onSuccess, true);
 			});
 		}
 	};
@@ -372,10 +363,6 @@
 		var bestMatch = null;
 		var bestScore = -99999;
 		var score = 0;
-
-
-
-
 
 		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {

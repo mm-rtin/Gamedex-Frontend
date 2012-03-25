@@ -2,6 +2,7 @@
 (function(FilterPanel) {
 
 	// dependecies
+	var Utilities = tmz.module('utilities');
 
 	// node cache
 	var $filtersModal = $('#filters-modal');
@@ -153,7 +154,7 @@
 			var $this = $(this);
 
 			// releaseDate
-			var releaseDate = $this.find('.releaseDate .data').text();
+			var releaseDate = $this.find('.releaseDate').text();
 			var releaseDateFiltered = FilterPanel.releaseDateFilter(releaseDate, filters.releaseDateFilters);
 
 			// metacriticScore

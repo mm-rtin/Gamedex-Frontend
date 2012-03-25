@@ -150,11 +150,11 @@
 		var metascoreData = {};
 
 		// add metascore data to sourceItem
-		if (matchedResult !== null && matchedResult.score !== '') {
+		if (matchedResult && matchedResult.score !== '') {
 			sourceItem.metascore = matchedResult.score;
 			sourceItem.displayMetascore = matchedResult.score;
 			sourceItem.metascorePage = matchedResult.page;
-		} else if (matchedResult !== null) {
+		} else if (matchedResult) {
 			sourceItem.metascore = -1;
 			sourceItem.displayMetascore = 'n/a';
 			sourceItem.metascorePage = matchedResult.page;

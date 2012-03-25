@@ -6,7 +6,7 @@
 	// properties
 
 	// data
-	var gamestatsCache = {};
+	var gameStatsListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getPopularGamesListByPlatform -
@@ -18,6 +18,7 @@
 
 		if (cachedList) {
 
+			console.info('cached');
 			// return list
 			onSuccess(cachedList);
 
@@ -36,49 +37,29 @@
 				cache: true,
 				success: function(data) {
 
-					// parse results and return items to onSuccess function
-					onSuccess(parseGamestatsResults(data));
+					console.info('not cached');
+					// cache result
+					gameStatsListCache[platform] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
 				}
 			});
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGamestatsResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGamestatsResults = function(data) {
-
-		var items = [];
-		var item = {};
-
-		// get data table
-		var $results = $('table:eq(1)', data);
-		var $nameElement = null;
-
-		// iterate and pull out item data
-		$results.find('tr').each(function() {
-
-			$nameElement = $(this).find('td:nth-child(2) a');
-
-			item = {
-				'name': $.trim($nameElement.text()),
-				'gamestatsPage': $.trim($nameElement.attr('href'))
-			};
-
-			if (item.name !== '' && item.name !== 'Next 50') {
-				items.push(item);
-			}
-		});
-
-		return items;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function() {
+	var getCachedData = function(platform) {
 
-		return null;
+		var gameStatsList = null;
+
+		if (typeof gameStatsListCache[platform] !== 'undefined') {
+			gameStatsList = gameStatsListCache[platform];
+		}
+
+		return gameStatsList;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

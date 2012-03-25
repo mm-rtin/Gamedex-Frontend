@@ -99,6 +99,7 @@
 		// filterStatus: click
 		$filterStatus.click(function(e) {
 			e.preventDefault();
+
 			// clear filters
 			$listFiltersButton.find('.filterName').text(' Filters');
 			FilterPanel.resetFilters();
@@ -187,7 +188,7 @@
 
 		// load preliminary data (for filtering, sorting)
 		_.each(items, function(item, key) {
-			displayMetascore(item);
+			loadPreliminaryMetascore(item);
 		});
 
 		// load latest/extra information for each item
@@ -237,7 +238,7 @@
 	ItemView.userLoggedIn = function(item) {
 
 		// start with all items viewing
-		getItems(VIEW_ALL_TAG_ID, render);
+		getItems(VIEW_ALL_TAG_ID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -278,7 +279,7 @@
 		var renderCurrentList = false;
 
 		// update view list
-		ListModel.updateViewList(data.tagIDsAdded);
+		ListModel.updateViewList(data.tagIDsAdded, currentViewTagID);
 
 		// viewing user list
 		if (currentViewTagID !== VIEW_ALL_TAG_ID) {
@@ -298,11 +299,9 @@
 		}
 
 		if (renderCurrentList) {
-			console.info('render');
+
 			// get and render items
-			ItemData.getItems(currentViewTagID, function(items) {
-				render(items);
-			});
+			getItems(currentViewTagID);
 		}
 	};
 
@@ -312,20 +311,7 @@
 	ItemView.updateListAttributesChanged = function(item) {
 
 		// get and render items
-		ItemData.getItems(currentViewTagID, function(items) {
-			render(items);
-		});
-
-		// get item element in view list
-		// var $item = $('#' + item.id);
-
-		// // update item html directly
-		// $item.find('.gameStatus').html(item.gameStatus);
-		// $item.find('.playStatus').html(item.playStatus);
-		// $item.find('.userRating').html(item.userRating);
-
-		// update list
-		//itemList = new List('itemResultsContainer', listOptions);
+		getItems(currentViewTagID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,22 +329,30 @@
 	var viewListChanged = function() {
 
 		// load items
-		getItems($viewList.val(), render);
+		getItems($viewList.val());
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItems = function(tagID, onSuccess) {
+	var getItems = function(tagID) {
 
 		// save tagID
 		currentViewTagID = tagID;
 
 		// load item data for tagID
-		ItemData.getItems(tagID, function(items) {
+		ItemData.getItems(tagID,
 
-			onSuccess(items);
-		});
+			// success - render items
+			function(items) {
+				render(items);
+			},
+
+			// error - empty view
+			function() {
+				render({});
+			}
+		);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -371,7 +365,7 @@
 			amazonPrice_result(item.id, offers);
 		});
 
-		// get metascore
+		// get updated metascore
 		Metacritic.getMetascore(item.standardName, item, displayMetascore);
 	};
 
@@ -399,6 +393,22 @@
 
 		// attach to existing item result
 		$(priceSelector).html(priceMenuTemplate(offers));
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* load -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var loadPreliminaryMetascore = function(item) {
+
+		// set displayMetascore and metascorePage preliminary data attributes
+		if (item.metascore === -1) {
+			item.displayMetascore = 'n/a';
+		} else {
+			item.displayMetascore = item.metascore;
+		}
+		item.metascorePage = '';
+
+		displayMetascore(item);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -461,6 +471,9 @@
 
 		// update listModel
 		ListModel.getList();
+
+		// default back to 'view all' list
+		getItems(VIEW_ALL_TAG_ID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -478,110 +491,59 @@
 
 			// upcoming
 			case 0:
-				// unreleased, released
-				upcomingQuickFilter();
+				// sort and apply filter
+				sortList(SORT_TYPES.releaseDate);
+				// set current filter text on filters button
+				$listFiltersButton.find('.filterName').text(' Upcoming');
+				// set filter panel option
+				FilterPanel.upcomingQuickFilter(itemList);
 				break;
 
 			// new releases
 			case 1:
-				newReleasesQuickFilter();
+				sortList(SORT_TYPES.releaseDate);
+				$listFiltersButton.find('.filterName').text(' New Releases');
+				FilterPanel.newReleasesQuickFilter(itemList);
 				break;
 
 			// never played
 			case 2:
-				neverPlayedQuickFilter();
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Never Played');
+				FilterPanel.neverPlayedQuickFilter(itemList);
 				break;
 
 			// games playing
 			case 3:
-				gamesPlayingQuickFilter();
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Playing');
+				FilterPanel.gamesPlayingQuickFilter(itemList);
 				break;
 
 			// finished games
 			case 4:
-				finishedGamesQuickFilter();
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Finished');
+				FilterPanel.finishedGamesQuickFilter(itemList);
 				break;
 
 			// owned games
 			case 5:
-				ownedGamesQuickFilter();
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Owned');
+				FilterPanel.ownedGamesQuickFilter(itemList);
 				break;
 
 			// wanted games
 			case 6:
-				wantedGamesQuickFilter();
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Wanted');
+				FilterPanel.wantedGamesQuickFilter(itemList);
 				break;
 		}
 
 		// apply filters and toggle filter status
 		toggleFilterStatus(FilterPanel.applyListJSFiltering(itemList));
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* upcomingQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var upcomingQuickFilter = function() {
-
-		// sort and apply filter
-		sortList(SORT_TYPES.releaseDate);
-		// set current filter text on filters button
-		$listFiltersButton.find('.filterName').text(' Upcoming');
-		// set filter panel option
-		FilterPanel.upcomingQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* newReleasesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var newReleasesQuickFilter = function() {
-		sortList(SORT_TYPES.releaseDate);
-		$listFiltersButton.find('.filterName').text(' New Releases');
-		FilterPanel.newReleasesQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* neverPlayedQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var neverPlayedQuickFilter = function() {
-		sortList(SORT_TYPES.metascore);
-		$listFiltersButton.find('.filterName').text(' Never Played');
-		FilterPanel.neverPlayedQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gamesPlayingQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var gamesPlayingQuickFilter = function() {
-		sortList(SORT_TYPES.metascore);
-		$listFiltersButton.find('.filterName').text(' Playing');
-		FilterPanel.gamesPlayingQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* finishedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var finishedGamesQuickFilter = function() {
-		sortList(SORT_TYPES.metascore);
-		$listFiltersButton.find('.filterName').text(' Finished');
-		FilterPanel.finishedGamesQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* ownedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var ownedGamesQuickFilter = function() {
-		sortList(SORT_TYPES.metascore);
-		$listFiltersButton.find('.filterName').text(' Owned');
-		FilterPanel.ownedGamesQuickFilter(itemList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* wantedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var wantedGamesQuickFilter = function() {
-		sortList(SORT_TYPES.metascore);
-		$listFiltersButton.find('.filterName').text(' Wanted');
-		FilterPanel.wantedGamesQuickFilter(itemList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

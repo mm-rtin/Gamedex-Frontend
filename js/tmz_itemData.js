@@ -25,9 +25,6 @@
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
-	// active tags - tags currently used by items
-	var activeTags = {};
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItemDirectory -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -64,13 +61,6 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getActiveTags -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getActiveTags = function() {
-		return activeTags;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItems = function(tagID, onSuccess, onError) {
@@ -95,8 +85,6 @@
 
 			// assign as new current items data
 			items = cachedItems;
-
-
 
 			// return updated source item
 			onSuccess(cachedItems);
@@ -133,8 +121,6 @@
 				error: onError
 			});
 		}
-
-
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,7 +152,6 @@
 			success: function(data) {
 				getItemDirectory_result(data);
 				if (onSuccess) {
-					populateActiveTags();
 					onSuccess(data);
 				}
 			},
@@ -366,40 +351,12 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* populateActiveTags -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var populateActiveTags = function() {
-
-		// reset activeTags
-		activeTags = {};
-
-		// iterate items in itemDirectory
-		_.each(itemDataDirectory, function(item, key) {
-
-			// iterate tags
-			_.each(item.tags, function(id, tag) {
-
-				// if tag not in activeTags: add it
-				if (typeof activeTags[tag] === 'undefined') {
-					activeTags[tag] = true;
-				}
-			});
-		});
-
-
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteClientItem = function(id, tagID, itemID) {
 
-
-
 		var cachedItems = getCachedItemsByTag(tagID);
 		var cachedItem = null;
-
 
 		// delete item by id from cache by tagID
 		if (cachedItems) {
@@ -412,15 +369,15 @@
 		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
 		cachedItem = getCacheItemByItemID(itemID, VIEW_ALL_TAG_ID);
 
+		console.info(cachedItems);
 
 		// 'view all' cache available and item is in cache
 		if (cachedItem) {
 
-
-
 			// last tag for item, remove from 'view all' list
 			if (itemDataDirectory[itemID].tagCount === 0) {
 
+				// update cached items
 				delete cachedItems[cachedItem.id];
 			}
 		}
@@ -454,6 +411,7 @@
 
 			// check if item cache for tagID exists
 			cachedItems = getCachedItemsByTag(data.tagIDsAdded[i]);
+
 			// if cache found - add item to cache
 			if (cachedItems) {
 
@@ -630,9 +588,6 @@
 	* addItemDataToDirectory - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemDataToDirectory = function(item, data) {
-
-
-
 
 		// if itemID doesn't exist in directory
 		if (!itemDataDirectory[data.itemID]) {
