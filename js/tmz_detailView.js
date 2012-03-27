@@ -17,7 +17,7 @@
 	// constants
 	TAB_IDS = ['#amazonTab', '#giantBombTab'];
 	GAME_STATUS = {0: 'None', 1: 'Own', 2: 'Sold', 3: 'Wanted'};
-	PLAY_STATUS = {0: 'Not Started', 1: 'Playing', 2: 'Finished'};
+	PLAY_STATUS = {0: 'Not Started', 1: 'Playing', 2: 'Played', 3: 'Finished'};
 	ITEM_TYPES = {'new': 0, 'existing': 1};
 
     // properties
@@ -96,11 +96,14 @@
 				// set userRating attribute
 				firstItem.userRating = value;
 
-				if (isAttributesDirty()) {
+				// save changes
+				saveItemChanges(firstItem);
+
+/*				if (isAttributesDirty()) {
 					$saveAttributesContainer.fadeIn();
 				} else {
 					$saveAttributesContainer.fadeOut();
-				}
+				}*/
 			}
 		});
 	};
@@ -159,12 +162,15 @@
 			firstItem.gameStatus = $(this).attr('data-content');
 			$gameStatus.find('.currentSelection').text(GAME_STATUS[firstItem.gameStatus]);
 
+			// save changes
+			saveItemChanges(firstItem);
+
 			// show save button if attributes changed
-			if (isAttributesDirty()) {
+/*			if (isAttributesDirty()) {
 				$saveAttributesContainer.fadeIn();
 			} else {
 				$saveAttributesContainer.fadeOut();
-			}
+			}*/
 		});
 		// playStatus: select
 		$playStatus.find('li a').click(function(e) {
@@ -174,12 +180,15 @@
 			firstItem.playStatus = $(this).attr('data-content');
 			$playStatus.find('.currentSelection').text(PLAY_STATUS[firstItem.playStatus]);
 
+			// save changes
+			saveItemChanges(firstItem);
+
 			// show save button if attributes changed
-			if (isAttributesDirty()) {
+/*			if (isAttributesDirty()) {
 				$saveAttributesContainer.fadeIn();
 			} else {
 				$saveAttributesContainer.fadeOut();
-			}
+			}*/
 		});
     };
 
@@ -396,7 +405,6 @@
 		$tab.find('.itemDetailTitle h3').text(itemData.name);
 		$tab.find('.itemDetailThumbnail img').attr('src', itemData.largeImage);
     };
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateDataPanel -

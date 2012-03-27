@@ -5,6 +5,9 @@
 
 	// properties
 
+	// REST URL
+	var POPULAR_LIST_URL = tmz.api + 'popularlist/';
+
 	// data
 	var gameStatsListCache = {};
 
@@ -24,14 +27,12 @@
 
 		// fetch list data
 		} else {
-			var url = 'popularlist/gamestats/gpm';
-
 			var requestData = {
 				'platform': platform
 			};
 
 			$.ajax({
-				url: url,
+				url: POPULAR_LIST_URL,
 				type: 'GET',
 				data: requestData,
 				cache: true,

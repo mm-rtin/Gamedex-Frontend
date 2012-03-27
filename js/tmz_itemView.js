@@ -33,6 +33,7 @@
     var displayType = DISPLAY_TYPE.Icons;
     var currentSortIndex = 0;
     var filterHasBeenApplied = false;
+    var queueDisplayRefresh = false;
 
     // node cache
     var $itemResults = $('#itemResults');
@@ -130,6 +131,19 @@
 			deleteItem(id);
 		});
 
+		// quickAttributes: click
+		$itemResults.on('click', '.quickAttributes a', function(e) {
+
+			// get attribute id
+			var attributeID = parseInt($(this).attr('data-content'), 10);
+			var id = $(this).parent().parent().attr('data-content');
+
+			console.info(id);
+
+			// set quick attribute
+			setQuickAttribute($(this), id, attributeID);
+		});
+
 		// deleteList_btn: click
 		$viewItemsContainer.on('click', '#deleteList_btn', function() {
 
@@ -185,6 +199,11 @@
 
 		// render model data to template
 		$itemResults.html(itemResultsTemplate(templateData));
+
+		// activate tooltips for quickAttributes bar
+		$itemResults.find('.quickAttributes a').each(function(key, button) {
+			$(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
+		});
 
 		// load preliminary data (for filtering, sorting)
 		_.each(items, function(item, key) {
@@ -310,8 +329,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.updateListAttributesChanged = function(item) {
 
-		// get and render items
-		getItems(currentViewTagID);
+		queueDisplayRefresh = true;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,7 +353,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItems = function(tagID) {
+	var getItems = function(tagID, onSuccess) {
 
 		// save tagID
 		currentViewTagID = tagID;
@@ -346,6 +364,10 @@
 			// success - render items
 			function(items) {
 				render(items);
+
+				if (onSuccess) {
+					onSuccess();
+				}
 			},
 
 			// error - empty view
@@ -477,6 +499,90 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* setQuickAttribute -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var setQuickAttribute = function($button, id, attributeID) {
+
+		// get item by id
+		var item = ItemView.getItem(id);
+		console.info(item);
+
+		// flag for item refresh
+		queueDisplayRefresh = true;
+
+		switch (attributeID) {
+
+			// playing
+			case 0:
+				if (item.playStatus === '1') {
+					resetPlayStatusQuickAttributes($button, '0');
+					$button.parent().removeClass().addClass('playStatus-0');
+					item.playStatus = '0';
+				} else {
+					resetPlayStatusQuickAttributes($button, '1');
+					$button.parent().removeClass().addClass('playStatus-1');
+					item.playStatus = '1';
+				}
+				break;
+			// played
+			case 1:
+				if (item.playStatus === '2') {
+					resetPlayStatusQuickAttributes($button, '0');
+					$button.parent().removeClass().addClass('playStatus-0');
+					item.playStatus = '0';
+				} else {
+					resetPlayStatusQuickAttributes($button, '2');
+					$button.parent().removeClass().addClass('playStatus-2');
+					item.playStatus = '2';
+				}
+				break;
+			// finished
+			case 2:
+				if (item.playStatus === '3') {
+					resetPlayStatusQuickAttributes($button, '0');
+					$button.parent().removeClass().addClass('playStatus-0');
+					item.playStatus = '0';
+				} else {
+					resetPlayStatusQuickAttributes($button, '3');
+					$button.parent().removeClass().addClass('playStatus-3');
+					item.playStatus = '3';
+				}
+				break;
+			// favorite
+			case 3:
+				break;
+			// owned
+			case 4:
+				if (item.gameStatus === '1') {
+					$button.parent().removeClass().addClass('gameStatus-0');
+					item.gameStatus = '0';
+				} else {
+					$button.parent().removeClass().addClass('gameStatus-1');
+					item.gameStatus = '1';
+				}
+				break;
+		}
+
+		ItemData.updateItem(item, function(item, data) {
+
+			console.info(data);
+
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetPlayStatusQuickAttributes -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetPlayStatusQuickAttributes = function($button, status) {
+
+		// find all quick attribute buttons with class playStatus-x
+		$button.parent().parent().find('span[class*="playStatus"]').each(function() {
+			$(this).removeClass().addClass('playStatus-' + status);
+		});
+
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* quickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var quickFilter = function(filterType) {
@@ -520,22 +626,29 @@
 				FilterPanel.gamesPlayingQuickFilter(itemList);
 				break;
 
+			// games played
+			case 3:
+				sortList(SORT_TYPES.metascore);
+				$listFiltersButton.find('.filterName').text(' Played');
+				FilterPanel.gamesPlayedQuickFilter(itemList);
+				break;
+
 			// finished games
-			case 4:
+			case 5:
 				sortList(SORT_TYPES.metascore);
 				$listFiltersButton.find('.filterName').text(' Finished');
 				FilterPanel.finishedGamesQuickFilter(itemList);
 				break;
 
 			// owned games
-			case 5:
+			case 6:
 				sortList(SORT_TYPES.metascore);
 				$listFiltersButton.find('.filterName').text(' Owned');
 				FilterPanel.ownedGamesQuickFilter(itemList);
 				break;
 
 			// wanted games
-			case 6:
+			case 7:
 				sortList(SORT_TYPES.metascore);
 				$listFiltersButton.find('.filterName').text(' Wanted');
 				FilterPanel.wantedGamesQuickFilter(itemList);
@@ -543,7 +656,7 @@
 		}
 
 		// apply filters and toggle filter status
-		toggleFilterStatus(FilterPanel.applyListJSFiltering(itemList));
+		applyFilters();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -551,10 +664,29 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
 
-		// apply filters to itemList
-		var filtered = FilterPanel.applyListJSFiltering(itemList);
-		// set filtered Status icon
-		toggleFilterStatus(filtered);
+		console.info('apply filteres');
+
+		// refresh item display first - then filter
+		if (queueDisplayRefresh) {
+			console.info('refresh items');
+			queueDisplayRefresh = false;
+
+			// refresh item html for updated filtering
+			getItems(currentViewTagID, function() {
+
+				// apply filters to itemList
+				var filtered = FilterPanel.applyListJSFiltering(itemList);
+				// set filtered Status icon
+				toggleFilterStatus(filtered);
+			});
+
+		// filter immediately
+		} else {
+			// apply filters to itemList
+			var filtered = FilterPanel.applyListJSFiltering(itemList);
+			// set filtered Status icon
+			toggleFilterStatus(filtered);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

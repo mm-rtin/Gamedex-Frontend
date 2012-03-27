@@ -32,6 +32,8 @@ tmz.searchView = null;
 tmz.detailView = null;
 tmz.itemView = null;
 
+// set application properties
+tmz.api = '/';
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * DOCUMENT READY
@@ -46,9 +48,6 @@ $(document).ready(function() {
  * initialize
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 tmz.initialize = function() {
-
-	// set application properties
-	tmz.api = '/';
 
 	// module references
 	tmz.util = tmz.module('utilities');

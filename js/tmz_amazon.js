@@ -34,6 +34,10 @@
 		'wireless'
 	];
 
+	// REST URLS
+	var AMAZON_SEARCH_URL = tmz.api + 'amazon/search/';
+	var AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/';
+
 	// data
 	amazonOffersCache = {};
 
@@ -46,10 +50,8 @@
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
 
 		var searchTerms = encodeURIComponent(keywords);
-
+		console.info(tmz.api);
 		// browse node, search terms and response group in url
-		var restURL = tmz.api + 'itemsearch/amazon/';
-
 		var requestData = {
 			'keywords': keywords,
 			'browse_node': browseNode,
@@ -59,7 +61,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: AMAZON_SEARCH_URL,
 			type: 'GET',
 			data: requestData,
 			dataType: 'xml',
@@ -124,15 +126,13 @@
 	Amazon.getAmazonItemDetail = function(asin, onSuccess, onError) {
 
 		// browse node, search terms and response group in url
-		var restURL = tmz.api + 'itemdetail/amazon/';
-
 		var requestData = {
 			'asin': asin,
 			'response_group': 'Medium'
 		};
 
 		$.ajax({
-			url: restURL,
+			url: AMAZON_DETAIL_URL,
 			type: 'GET',
 			data: requestData,
 			dataType: 'xml',
@@ -160,9 +160,6 @@
 		// get new offer data
 		} else {
 
-			// browse node, search terms and response group in url
-			var restURL = tmz.api + 'itemdetail/amazon/';
-
 			// OfferSummary, OfferListings, Offers, OfferFull
 			var requestData = {
 				'asin': asin,
@@ -170,7 +167,7 @@
 			};
 
 			$.ajax({
-				url: restURL,
+				url: AMAZON_DETAIL_URL,
 				type: 'GET',
 				data: requestData,
 				dataType: 'xml',

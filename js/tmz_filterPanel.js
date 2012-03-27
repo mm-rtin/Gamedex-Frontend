@@ -251,12 +251,18 @@
 	FilterPanel.gamesPlayingQuickFilter = function(list) {
 		$playStatusFilter.find('button[data-content="1"]').addClass('active');
 	};
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* gamesPlayedQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	FilterPanel.gamesPlayedQuickFilter = function(list) {
+		$playStatusFilter.find('button[data-content="2"]').addClass('active');
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* finishedGamesQuickFilter -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.finishedGamesQuickFilter = function(list) {
-		$playStatusFilter.find('button[data-content="2"]').addClass('active');
+		$playStatusFilter.find('button[data-content="3"]').addClass('active');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -282,7 +288,12 @@
 		var unreleasedFilter = filterList[0];
 		var releasedFilter = filterList[1];
 
-		var releaseDate = moment(rawReleaseDate, 'YYYY-MM-DD');
+		var releaseDate = null;
+		if (rawReleaseDate === '1900-01-01') {
+			releaseDate = moment().add('days', 1);
+		} else {
+			releaseDate = moment(rawReleaseDate, 'YYYY-MM-DD');
+		}
 		var currentDate = moment();
 
 		var diff = releaseDate.diff(currentDate, 'seconds');
@@ -346,14 +357,15 @@
 
 		var notPlayingFilter = filterList[0];
 		var playingFilter = filterList[1];
-		var finishedFilter = filterList[2];
+		var playedFilter = filterList[2];
+		var finishedFilter = filterList[3];
 
 		// all filters active - ignore filter
-		if (notPlayingFilter && playingFilter && finishedFilter) {
+		if (notPlayingFilter && playingFilter && playedFilter && finishedFilter) {
 			return true;
 
 		// no filters selected - ignore filter
-		} else if (!notPlayingFilter && !playingFilter && !finishedFilter) {
+		} else if (!notPlayingFilter && !playingFilter && !playedFilter && !finishedFilter) {
 			return true;
 
 		// specific filters
@@ -361,7 +373,9 @@
 			return true;
 		} else if (playingFilter && playStatus === '1') {
 			return true;
-		} else if (finishedFilter && playStatus === '2') {
+		} else if (playedFilter && playStatus === '2') {
+			return true;
+		} else if (finishedFilter && playStatus === '3') {
 			return true;
 		}
 

@@ -5,16 +5,19 @@
 
 	// properties
 
+	// REST URL
+	var UPCOMING_LIST_URL = tmz.api + 'upcominglist/';
+
 	// data
 	var IGNUpcomingListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUpcomingGames -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	IGN.getUpcomingGames = function(platform, onSuccess) {
+	IGN.getUpcomingGames = function(platform, page, onSuccess) {
 
 		// find in cache first
-		var cachedList = getCachedData(platform);
+		var cachedList = getCachedData(platform, page);
 
 		if (cachedList) {
 
@@ -23,22 +26,20 @@
 
 		// fetch list data
 		} else {
-			var url = 'upcominglist/ign';
-
 			var requestData = {
-				'platform': platform
+				'platform': platform,
+				'page': page
 			};
 
 			$.ajax({
-				url: url,
+				url: UPCOMING_LIST_URL,
 				type: 'GET',
 				data: requestData,
 				cache: true,
 				success: function(data) {
 
-					console.info('not cached');
 					// cache result
-					IGNUpcomingListCache[platform] = data;
+					IGNUpcomingListCache[platform + '_' + page] = data;
 
 					// return items to onSuccess function
 					onSuccess(data);
@@ -50,12 +51,12 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(platform) {
+	var getCachedData = function(platform, page) {
 
 		var IGNUpcomingList = null;
 
-		if (typeof IGNUpcomingListCache[platform] !== 'undefined') {
-			IGNUpcomingList = IGNUpcomingListCache[platform];
+		if (typeof IGNUpcomingListCache[platform + '_' + page] !== 'undefined') {
+			IGNUpcomingList = IGNUpcomingListCache[platform + '_' + page];
 		}
 
 		return IGNUpcomingList;

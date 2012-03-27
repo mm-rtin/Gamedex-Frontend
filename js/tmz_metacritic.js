@@ -5,6 +5,10 @@
 	var Amazon = tmz.module('amazon');
 	var ItemLinker = tmz.module('itemLinker');
 
+	// REST URL
+	var METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search';
+	var METACRITIC_CACHE_URL = tmz.api + 'metacritic/cache';
+
 	// properties
 	var metacriticDomain = 'metacritic.com';
 
@@ -29,8 +33,6 @@
 
 		// fetch score data
 		} else {
-			var url = 'itemsearch/metacritic/';
-
 			var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
 
 			var requestData = {
@@ -38,13 +40,16 @@
 			};
 
 			$.ajax({
-				url: url,
+				url: METACRITIC_SEARCH_URL,
 				type: 'GET',
 				data: requestData,
 				cache: true,
 				success: function(data) {
-					parseMetascoreResults(data, sourceItem, function(data) {
 
+					// parse result
+					parseMetascoreResults(cleanedSearchTerms, data, sourceItem, function(data) {
+
+						// local cache
 						addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, data);
 						onSuccess(data);
 					});
@@ -85,7 +90,7 @@
 			.fadeIn();
 
 		// activate tooltip
-		$metascoreContainer.tooltip();
+		$metascoreContainer.tooltip({placement: 'left'});
 	};
 
 
@@ -143,21 +148,36 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseMetascoreResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseMetascoreResults = function(data, sourceItem, onSuccess) {
+	var parseMetascoreResults = function(keywords, data, sourceItem, onSuccess) {
 
-		// get result that matches sourceItem
-		var matchedResult = getMatchedSearchResult(data, sourceItem);
-		var metascoreData = {};
+		var result = null;
+
+		// parse raw result
+		if (typeof data.metascore === 'undefined') {
+
+			// get result that matches sourceItem
+			result = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (result) {
+				addToServerCache(keywords, result.metascore, result.metascorePage);
+			}
+
+		// parse cached result
+		} else {
+
+			result = data;
+		}
 
 		// add metascore data to sourceItem
-		if (matchedResult && matchedResult.score !== '') {
-			sourceItem.metascore = matchedResult.score;
-			sourceItem.displayMetascore = matchedResult.score;
-			sourceItem.metascorePage = matchedResult.page;
-		} else if (matchedResult) {
+		if (result && result.metascore !== '') {
+			sourceItem.metascore = result.metascore;
+			sourceItem.displayMetascore = result.metascore;
+			sourceItem.metascorePage = result.metascorePage;
+		} else if (result) {
 			sourceItem.metascore = -1;
 			sourceItem.displayMetascore = 'n/a';
-			sourceItem.metascorePage = matchedResult.page;
+			sourceItem.metascorePage = result.metascorePage;
 		} else {
 			sourceItem.metascore = -1;
 			sourceItem.displayMetascore = 'n/a';
@@ -165,6 +185,31 @@
 		}
 
 		onSuccess(sourceItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToServerCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToServerCache = function(keywords, metascore, metascorePage) {
+
+		var requestData = {
+			'keywords': encodeURI(keywords),
+			'metascore': encodeURI(metascore),
+			'metascorePage': encodeURI(metascorePage)
+		};
+
+		console.info(requestData);
+
+		$.ajax({
+			url: METACRITIC_CACHE_URL,
+			type: 'GET',
+			data: requestData,
+			cache: true,
+			success: function(data) {
+				console.info('metacritic: add to server cache');
+				console.info(data);
+			}
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,8 +242,8 @@
 				name: $(this).find('.product_title a').text(),
 				releaseDate: releaseDateObject.getFullYear() + '-' + month + '-' + date,
 				platform: $(this).find('.platform').text(),
-				score: $(this).find('.metascore').text(),
-				page: $(this).find('.product_title a').attr('href')
+				metascore: $(this).find('.metascore').text(),
+				metascorePage: $(this).find('.product_title a').attr('href')
 			};
 
 			// get similarity score

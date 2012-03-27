@@ -1,3 +1,4 @@
+@import 'mixins.less';
 @import 'grid.less';
 @import 'giantbomb';
 
@@ -69,7 +70,7 @@ input, select, textarea {
 
 #wrapper {
 	margin: 0 15px;
-	min-width: 960px;
+	min-width: 1140px;
 	text-align: center;
 
 	/* BOOTSTRAP OVERRIDES
@@ -293,19 +294,32 @@ input, select, textarea {
 #search {
 	margin: 8px 0px 8px 0px;
 }
-
-#searchProviderContainer {
-	float: left;
-	margin: 0px 10px 10px 0px;
+#search_field {
+	width: 147px;
+	margin-right: 7px;
 }
-#listProviderContainer {
+#providerContainer {
 	float: left;
-	margin: 0px 10px 10px 0px;
-	display: none;
+	margin: 0px 10px 0px 0px;
 }
+#searchProvider {
 
-.listDisplayOptions {
+}
+.btn-group + #listProvider.btn-group {
 	display: none;
+	margin-left: 0;
+}
+.providerSelect_btn {
+	width: 110px;
+}
+.searchDisplayOptions {
+	margin-left: 50px;
+	margin-right: 10px;
+}
+.btn-group + .listDisplayOptions.btn-group {
+	margin-left: 50px;
+	display: none;
+	margin-right: 10px;
 }
 
 #platformContainer {
@@ -417,7 +431,7 @@ input, select, textarea {
 	.display-1 {
 
 		.mediumImage {
-			width: 10%;
+			width: 30%;
 			img {
 				width: 75px;
 			}
@@ -438,7 +452,7 @@ input, select, textarea {
 	.display-2 {
 
 		.mediumImage {
-			width: 15%;
+			width: 42%;
 		}
 		.title {
 
@@ -477,6 +491,7 @@ input, select, textarea {
 	.itemDetailTitle {
 
 		h3 {
+			font-family: 'Open Sans',sans-serif;
 			.borderRadius(2px);
 			background-color: #929ca1;
 			color: #ffffff;
@@ -595,8 +610,21 @@ input, select, textarea {
 
 #itemResults {
 
+	.display-0 tr {
+		&:hover .quickAttributes {
+			left: -9999px;
+		}
+	}
 	tr {
 		cursor: pointer;
+		&:hover .quickAttributes {
+			left: 0px;
+		}
+	}
+
+	/* fixes 'gaps' between tds for hover event in chrome */
+	td {
+		position: relative;
 	}
 
 	/* data fields */
@@ -611,6 +639,38 @@ input, select, textarea {
 	}
 	.userRating {
 	display: none;
+	}
+
+	.extraData {
+		position: relative;
+
+	}
+
+	.quickAttributes {
+		position: absolute;
+		margin-top: 10px;
+		left: -9999px;
+
+		a {
+			.opacity(.25);
+
+			&:hover {
+				.opacity(1);
+			}
+		}
+
+		.playStatus-1 a.attrPlaying {
+			.opacity(1);
+		}
+		.playStatus-2 a.attrPlayed {
+			.opacity(1);
+		}
+		.playStatus-3 a.attrFinished {
+			.opacity(1);
+		}
+		.gameStatus-1 a.attrOwned {
+			.opacity(1);
+		}
 	}
 
 	/* LIST VIEW */
@@ -628,8 +688,11 @@ input, select, textarea {
 		.platform {
 			display: none;
 		}
-		.priceDetails {
+		.extraData {
 			min-width: 150px;
+		}
+		.quickAttributes {
+			left: -9999px;
 		}
 		.options {
 			text-align: right;
@@ -657,7 +720,7 @@ input, select, textarea {
 			font-size: 12px;
 			color: #7D7D7D;
 		}
-		.priceDetails {
+		.extraData {
 			min-width: 150px;
 		}
 		.options {
@@ -673,7 +736,7 @@ input, select, textarea {
 		}
 		.mediumImage {
 			min-width: 100px;
-			width: 31%;
+			width: 24%;
 		}
 		.itemName {
 			font-weight: 600;
@@ -688,7 +751,7 @@ input, select, textarea {
 			color: #7D7D7D;
 			font-size: 1.1em;
 		}
-		.priceDetails {
+		.extraData {
 			display: none;
 		}
 		.options {

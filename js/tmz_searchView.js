@@ -37,11 +37,8 @@
     var listDisplayType = DISPLAY_TYPE.Icons;
 
     // node cache
-    var $searchProviderContainer = $('#searchProviderContainer');
     var $searchContainer = $('#searchContainer');
     var $searchProvider = $('#searchProvider');
-
-    var $listProviderContainer = $('#listProviderContainer');
     var $listProvider = $('#listProvider');
 
     var $platformListContainer = $('#platformContainer');
@@ -64,6 +61,7 @@
 
     var $listResultsContainer = $('#listResultsContainer');
     var $listResults = $('#listResults');
+    var $listTable = $listResults.find('.list');
 
     var $searchDisplayOptions = $searchContainer.find('.searchDisplayOptions');
     var $listDisplayOptions = $searchContainer.find('.listDisplayOptions');
@@ -89,10 +87,10 @@
 
 		// init tooltips
 		$listDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip();
+			$(button).tooltip({delay: {show: 500, hide: 50}});
 		});
 		$searchDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip();
+			$(button).tooltip({delay: {show: 500, hide: 50}});
 		});
 
 		// set nanoscroll
@@ -119,10 +117,22 @@
 		$inputField.keyup(inputFieldKeyUp);
 
 		// searchProvider: change
-		$searchProvider.chosen().change(searchProviderChanged);
+		$searchProvider.find('li a').click(function(e) {
+			e.preventDefault();
+
+			// set attribute
+			$searchProvider.attr('data-content', $(this).attr('data-content'));
+			searchProviderChanged();
+		});
 
 		// listProvider: change
-		$listProvider.chosen().change(listProviderChanged);
+		$listProvider.find('li a').click(function(e) {
+			e.preventDefault();
+
+			// set attribute
+			$listProvider.attr('data-content', $(this).attr('data-content'));
+			listProviderChanged();
+		});
 
 		// commonPlatformList: change
 		$commonPlatformList.chosen().change(commonPlatformChanged);
@@ -142,7 +152,7 @@
 		// searchDisplayType toggle
 		$searchDisplayOptions.on('click', 'button', function(e) {
 			e.preventDefault();
-			changeDisplayOptions($(this).attr('data-content'));
+			changeDisplayType($(this).attr('data-content'));
 		});
 		// listDisplayType toggle
 		$listDisplayOptions.on('click', 'button', function(e) {
@@ -150,13 +160,12 @@
 
 			// only allow changes for provider which has multiple views (IGN - upcoming games)
 			if (listProvider == LIST_PROVIDERS.IGN) {
-				changeDisplayOptions($(this).attr('data-content'));
+				changeDisplayType($(this).attr('data-content'));
 			}
 		});
 
 		// search button: click
 		$searchButton.click(function() {
-
 			SearchView.search($inputField.val());
 		});
 
@@ -199,11 +208,11 @@
 		// get model data
 		var templateData = {'listResults': items};
 
-		// add listDisplayType to templateData
-		templateData.displayType = listDisplayType;
+		// set display type class
+		changeDisplayType(listDisplayType);
 
 		// output data to template
-		$listResults.html(listResultsTemplate(templateData));
+		$listTable.append(listResultsTemplate(templateData));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,6 +247,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
 
+		// clear listTable
+		$listTable.empty();
+
+		// get popular games
 		GameStats.getPopularGamesListByPlatform(platform.gamestats, getGamestatsPopularityList_result);
 	};
 
@@ -246,9 +259,19 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getIGNUpcomingListByPlatform = function(platform) {
 
-		IGN.getUpcomingGames(platform.ign, getIGNUpcomingList_result);
-	};
+		// clear listTable
+		$listTable.empty();
 
+		// get upcoming games (page 1)
+		IGN.getUpcomingGames(platform.ign, 0, function(data) {
+
+			// parse page 0 result
+			getIGNUpcomingList_result(data);
+
+			// get upcoming games (page 2)
+			IGN.getUpcomingGames(platform.ign, 1, getIGNUpcomingList_result);
+		});
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* resizePanel -
@@ -283,7 +306,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getGamestatsPopularityList_result = function(data) {
 
-		console.info(data);
 		// renderSearchResults list
 		SearchView.renderListResults(data);
 	};
@@ -296,7 +318,6 @@
 		// renderSearchResults list
 		SearchView.renderListResults(data);
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchAmazon_result - results callback from search()
@@ -326,8 +347,6 @@
 
 		// set tempSearchResults to searchResults data
 		searchResults = tempSearchResults;
-
-		console.info(searchResults);
 
 		// renderSearchResults results
 		SearchView.renderSearchResults(searchResults);
@@ -450,19 +469,65 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchProviderChanged = function() {
 
+		var providerID = $searchProvider.attr('data-content');
 		previousSearchTerms = '';
 
-		switch($searchProvider.val()) {
+		switch(providerID) {
 			case '0':
 				searchProvider = Utilities.getProviders().Amazon;
+				// set title
+				$searchProvider.find('.providerName').text('Amazon.com');
 				// show platform list
 				$platformListContainer.show();
 				break;
 			case '1':
 				searchProvider = Utilities.getProviders().GiantBomb;
+				// set title
+				$searchProvider.find('.providerName').text('GiantBomb.com');
+				// show platform list
 				$platformListContainer.hide();
 				break;
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* listProviderChanged
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var listProviderChanged = function() {
+
+		var providerID = $listProvider.attr('data-content');
+
+		switch(providerID) {
+
+			// popular games
+			case '0':
+				// disable display options and set to list
+				changeDisplayType(0);
+				$listDisplayOptions.fadeTo(100, 0.35);
+
+				// set title
+				$listProvider.find('.providerName').text('Popular Games');
+
+				listProvider = LIST_PROVIDERS.Gamestats;
+				break;
+
+			// upcoming games
+			case '1':
+
+				// set toggle button and enable display options
+				changeDisplayType(listDisplayType);
+				$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+				$listDisplayOptions.fadeTo(100, 1);
+
+				// set title
+				$listProvider.find('.providerName').text('Upcoming Games');
+
+				listProvider = LIST_PROVIDERS.IGN;
+				break;
+		}
+
+		// update list for new
+		getList(listProvider);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -488,38 +553,6 @@
 
 		// set platform object
 		platform = Utilities.getStandardPlatform($(this).val());
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* listProviderChanged
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var listProviderChanged = function() {
-
-		switch($listProvider.val()) {
-
-			// popular games
-			case '0':
-				// disable display options and set to list
-				changeDisplayOptions(0);
-				$listDisplayOptions.fadeTo(100, 0.35);
-
-				listProvider = LIST_PROVIDERS.Gamestats;
-				break;
-
-			// upcoming games
-			case '1':
-
-				// set toggle button and enable display options
-				changeDisplayOptions(1);
-				$listDisplayOptions.find('button:eq(1)').button('toggle');
-				$listDisplayOptions.fadeTo(100, 1);
-
-				listProvider = LIST_PROVIDERS.IGN;
-				break;
-		}
-
-		// update list for new
-		getList(listProvider);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -562,14 +595,12 @@
 		if (show) {
 			$searchDisplayOptions.show();
 			$platformListContainer.show();
-			$searchProviderContainer.show();
-			$search.show();
+			$searchProvider.show();
 
 		} else {
 			$searchDisplayOptions.hide();
 			$platformListContainer.hide();
-			$searchProviderContainer.hide();
-			$search.hide();
+			$searchProvider.hide();
 		}
 	};
 
@@ -581,19 +612,19 @@
 		if (show) {
 			$listDisplayOptions.show();
 			$commonPlatformListContainer.show();
-			$listProviderContainer.show();
+			$listProvider.show();
 
 		} else {
 			$listDisplayOptions.hide();
 			$commonPlatformListContainer.hide();
-			$listProviderContainer.hide();
+			$listProvider.hide();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeDisplayOptions
+	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayOptions = function(displayType) {
+	var changeDisplayType = function(displayType) {
 
 		// change #searchResults or #listResults tbody class based on current tab
 		if (currentTab === TAB_IDS['#searchTab'] && searchDisplayType !== displayType) {

@@ -4,6 +4,10 @@
     // module references
 	var Amazon = tmz.module('amazon');
 
+	// REST URLS
+	var GIANTBOMB_SEARCH_URL = tmz.api + 'giantbomb/search';
+	var GIANTBOMB_DETAIL_URL = tmz.api + 'giantbomb/detail';
+
 	// data
 	giantBombDataCache = {};
 	giantBombItemCache = {};
@@ -17,9 +21,6 @@
 
 		var searchTerms = encodeURIComponent(keywords);
 
-		// searchTerms and page number in url
-		var restURL = tmz.api + 'itemsearch/giantbomb/';
-
 		// list of fields to get as query parameter
 		var fieldList = ['id', 'name', 'original_release_date', 'image'];
 
@@ -30,7 +31,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: GIANTBOMB_SEARCH_URL,
 			type: 'GET',
 			data: requestData,
 			dataType: 'json',
@@ -105,9 +106,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	GiantBomb.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
 
-		// searchTerms and page number in url
-		var restURL = tmz.api + 'itemdetail/giantbomb/';
-
 		// list of fields to get as query parameter
 		var fieldList = ['platforms'];
 
@@ -181,16 +179,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
 
-		// searchTerms and page number in url
-		var restURL = tmz.api + 'itemdetail/giantbomb/';
-
 		var requestData = {
 			'field_list': fieldList.join(','),
 			'id': gbombID
 		};
 
 		$.ajax({
-			url: restURL,
+			url: GIANTBOMB_DETAIL_URL,
 			type: 'GET',
 			data: requestData,
 			dataType: 'json',
