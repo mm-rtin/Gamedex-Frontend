@@ -18,12 +18,22 @@
 
 /* MIXINS
 -----------------------------------------------------------*/
-.boxShadow(@opacity) {
-	-moz-box-shadow:5px 5px 20px 2px rgba(57,65,70,@opacity);
-	-webkit-box-shadow:5px 5px 20px 2px rgba(57,65,70,@opacity);
-	box-shadow: 5px 5px 20px 2px rgba(57,65,70,@opacity);
+.gradientBG_dark {
+	background-color: #747474;
+	background-image: -moz-linear-gradient(top, #696969, #747474);
+	background-image: -ms-linear-gradient(top, #696969, #747474);
+	background-image: -webkit-gradient(linear,0 0,0 100%,from( #696969),to( #747474));
+	background-image: -webkit-linear-gradient(top, #696969, #747474);
+	background-image: -o-linear-gradient(top, #696969, #747474);
+	background-image: linear-gradient(top, #696969, #747474);
+	border-color: #747474 #747474 #747474;
+	border-color: rgba(0, 0, 0, .1) rgba(0, 0, 0, .1) rgba(0, 0, 0, .25);
 }
-
+.boxShadow(@opacity) {
+	-webkit-box-shadow: 5px 5px 20px 2px rgba(0, 0, 0,@opacity);
+	-moz-box-shadow:    5px 5px 20px 2px rgba(0, 0, 0,@opacity);
+	box-shadow:         5px 5px 20px 2px rgba(0, 0, 0,@opacity);
+}
 .borderRadius(@radius) {
 	-moz-border-radius: @radius;
 	-webkit-border-radius: @radius;
@@ -55,11 +65,21 @@ html {
 }
 
 body {
-	background-color: #97a1a6;
+	background-image:  url('../images/bg_tile.png');
+	background-repeat: repeat;
 	color: #3C3C3C;
 	font-family: 'Open Sans', sans-serif;
 	font-size: 0.8em;
 	font-weight: 600;
+	min-width: 1140px;
+	text-align: center;
+}
+
+body.infoHeader {
+
+}
+
+body.useHeader {
 	padding-top: 60px;
 }
 
@@ -68,58 +88,109 @@ input, select, textarea {
 	font-weight: 600;
 }
 
+/* INFO HEADER STYLES
+-----------------------------------------------------------*/
+#infoHeader {
+	background-image:  url('../images/header_tile.png');
+	background-repeat: repeat-x;
+	height: 265px;
+	.column(48, @panel-columns);
+	margin-bottom: 20px;
+}
+
+#logo {
+	background-image:  url('../images/logo.png');
+	position: relative;
+	width: 407px;
+	height: 69px;
+	left: 15px;
+	top: 14px;
+}
+
+#siteDescription {
+	background-image:  url('../images/site_description.png');
+	position: relative;
+	width: 594px;
+	height: 95px;
+	top: -59px;
+	left: 600px;
+}
+
+#signupButton {
+	background-image:  url('../images/signup_button.png');
+	position: relative;
+	width: 174px;
+	height: 76px;
+	top: -25px;
+	left: 602px;
+}
+
+#loginButton {
+	background-image:  url('../images/login_button.png');
+	position: relative;
+	width: 144px;
+	height: 64px;
+	top: -101px;
+	left: 794px;
+}
+
+/* CONTENT CONTAINER
+-----------------------------------------------------------*/
 #wrapper {
-	margin: 0 15px;
-	min-width: 1140px;
-	text-align: center;
+	margin: 0 auto;
+	max-width: 1375px;
 
 	/* BOOTSTRAP OVERRIDES
 	-----------------------------------------------------------*/
+	.nav-list a {
+		color: #3C3C3C;
+	}
+	.nav-list a:hover {
+		color: #313131;
+	}
+	.nav-tabs a {
+		color: #3C3C3C;
+	}
+	.nav-tabs a:hover {
+		color: #313131;
+	}
+	.table-striped tbody tr:nth-child(odd) td {
+		background-color: #ffffff;
+	}
+	.table tbody tr:hover td {
+		background-color: #F5F5F5;
+	}
+	.table th, .table td {
+		border-top: 1px dotted #DDD;
+	}
 	.btn-dark {
+		.gradientBG_dark();
 		font-size: 12px;
 		color: #ffffff;
 		text-shadow: none;
 
-		background-color: #97A0A6;
-		background-image: -moz-linear-gradient(top,#738086,#97A0A6);
-		background-image: -ms-linear-gradient(top,#738086,#97A0A6);
-		background-image: -webkit-gradient(linear,0 0,0 100%,from(#738086),to(#97A0A6));
-		background-image: -webkit-linear-gradient(top,#738086,#97A0A6);
-		background-image: -o-linear-gradient(top,#738086,#97A0A6);
-		background-image: linear-gradient(top,#738086,#97A0A6);
-		border-color: #97A0A6 #97A0A6 #97A0A6;
-		border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
 	}
 	.btn-dark:hover{
-		background-color:#97A0A6
+		background-color:#696969
 	}
 
 	.nav-list [class^="icon-"] {
 		margin-top: 3px;
 	}
 
-	.icon-remove {
-		background-position: -312px 2px;
+	.options .icon-remove {
+		.opacity(.5);
 	}
-
-	.icon-trash {
-		background-position: -456px 1px;
-	}
-
 	.icon-adjust {
 		background-position: -48px -71px;
 	}
-
 	.tab-content {
 		display: block;
 	}
-}
 
-#content {
-
+	/* STANDARD VIEW
+	----------------------- */
 	&.standardView {
-		margin: 0 auto;
-		max-width: 1375px;
 		text-align: left;
 		width: 100%;
 
@@ -127,15 +198,15 @@ input, select, textarea {
 		----------------------- */
 		#panel1 {
 			.column(13, @panel-columns);
-			max-width: 375px;
+			/*max-width: 375px;*/
 		}
 		#panel2 {
 			.column(12, @panel-columns);
-			max-width: 320px;
+			/*max-width: 320px;*/
 		}
 		#panel3 {
 			.column(23, @panel-columns);
-			max-width: 600px;
+			/*max-width: 600px;*/
 		}
 		#panel4 {
 			display: none;
@@ -145,10 +216,16 @@ input, select, textarea {
 		}
 	}
 
+	/* GRID VIEW
+	----------------------- */
 	&.gridView {
 		margin: 0 auto;
 		text-align: left;
 		width: 100%;
+
+		#infoHeader {
+			display: none;
+		}
 
 		/* PANEL STYLES
 		----------------------- */
@@ -156,34 +233,37 @@ input, select, textarea {
 			display: none;
 		}
 		#panel2 {
-			width: 280px;
 			position: fixed;
+			top: -10px;
+			width: 280px;
 		}
 		#panel3 {
 			display: none;
 		}
 		#panel4 {
 			margin: 0 300px;
+			position: relative;
+			top: 52px;
 			width: 74%;
 		}
 		#panel5 {
 			margin: 0 300px;
 			position: fixed;
-			top: 21px;
+			top: -10px;
 			width: 875px;
 			z-index: 999;
 
 			.panel {
-				.boxShadow(.8);
-				padding: 18px 10px 10px 10px;
+				.boxShadow(.9);
 				background-color: rgba(255, 255, 255, 0.90);
+				padding: 18px 10px 10px 10px;
 			}
 		}
 	}
 }
 
 .header {
-	background-color: #6c777d;
+	background-color: #696969;
 	color: #ffffff;
 	height: 17px;
 	position: relative;
@@ -191,9 +271,8 @@ input, select, textarea {
 }
 
 .panel {
-	.boxShadow(.2);
+	.boxShadow(.9);
 	background-color: #ffffff;
-	border: 1px solid #777e82;
 	padding: 29px 10px 10px 10px;
 	position: relative;
 	top: -17px;
@@ -201,11 +280,11 @@ input, select, textarea {
 
 #header {
 	min-width: 960px;
+	display: none;
 }
 
 .popover {
 }
-
 
 
 /* COMPONENT STYLES
@@ -227,6 +306,7 @@ input, select, textarea {
 	background: no-repeat 0 0;
 	color: #ffffff;
 	display: block;
+	float: right;
 	font: bold 15px/32px arial,helvetica,sans-serif;
 	height: 32px;
 	margin: 0;
@@ -249,7 +329,10 @@ input, select, textarea {
 		background-color: #D70000;
 	}
 	&.unavailable {
-		background-color: #929ca1;
+		background-color: #696969;
+	}
+	&:hover {
+		color: #ffffff;
 	}
 }
 
@@ -363,7 +446,7 @@ input, select, textarea {
 	.display-1 {
 
 		.smallImage {
-			min-width: 60px;
+			min-width: 75px;
 			width: 10%;
 		}
 		.mediumImage {
@@ -431,10 +514,8 @@ input, select, textarea {
 	.display-1 {
 
 		.mediumImage {
-			width: 30%;
-			img {
-				width: 75px;
-			}
+			display: block;
+			min-width: 75px;
 		}
 		.title {
 
@@ -491,11 +572,11 @@ input, select, textarea {
 	.itemDetailTitle {
 
 		h3 {
-			font-family: 'Open Sans',sans-serif;
 			.borderRadius(2px);
-			background-color: #929ca1;
+			background-color: #696969;
 			color: #ffffff;
 			display: block;
+			font-family: 'Open Sans',sans-serif;
 			font-size: 16px;
 			padding: 2px 10px 3px 10px;
 		}
@@ -514,7 +595,7 @@ input, select, textarea {
 	}
 
 	.itemDetailThumbnail {
-		margin: 10px;
+		margin: 7px 2px 10px 2px;
 
 		img {
 			max-width: 100%;
@@ -611,14 +692,24 @@ input, select, textarea {
 #itemResults {
 
 	.display-0 tr {
-		&:hover .quickAttributes {
-			left: -9999px;
+		&:hover 
+			.quickAttributes {
+				.opacity(0)
+			}
+			.deleteItem_btn {
+				.opacity(0)
+			}
 		}
-	}
+
 	tr {
 		cursor: pointer;
-		&:hover .quickAttributes {
-			left: 0px;
+		&:hover {
+			.quickAttributes {
+				.opacity(1);
+			}
+			.deleteItem_btn {
+				.opacity(1);
+			}
 		}
 	}
 
@@ -640,16 +731,18 @@ input, select, textarea {
 	.userRating {
 	display: none;
 	}
+	.options {
+		text-align: right;
+	}
 
 	.extraData {
 		position: relative;
 
 	}
-
 	.quickAttributes {
-		position: absolute;
+		.transition(.5s);
+		.opacity(0);
 		margin-top: 10px;
-		left: -9999px;
 
 		a {
 			.opacity(.25);
@@ -672,6 +765,12 @@ input, select, textarea {
 			.opacity(1);
 		}
 	}
+	.deleteItem_btn {
+		.transition(.5s);
+		.opacity(.5);
+		padding-top: 9px;
+		height: 20px;
+	}
 
 	/* LIST VIEW */
 	.display-0 {
@@ -692,10 +791,10 @@ input, select, textarea {
 			min-width: 150px;
 		}
 		.quickAttributes {
-			left: -9999px;
+			.opacity(0)
 		}
-		.options {
-			text-align: right;
+		.deleteItem_btn {
+			.opacity(.5)
 		}
 	}
 
@@ -722,9 +821,6 @@ input, select, textarea {
 		}
 		.extraData {
 			min-width: 150px;
-		}
-		.options {
-			text-align: right;
 		}
 	}
 
@@ -753,9 +849,6 @@ input, select, textarea {
 		}
 		.extraData {
 			display: none;
-		}
-		.options {
-			text-align: right;
 		}
 	}
 }

@@ -506,7 +506,7 @@
 				$listDisplayOptions.fadeTo(100, 0.35);
 
 				// set title
-				$listProvider.find('.providerName').text('Popular Games');
+				$listProvider.find('.providerName').text('Popular');
 
 				listProvider = LIST_PROVIDERS.Gamestats;
 				break;
@@ -520,7 +520,7 @@
 				$listDisplayOptions.fadeTo(100, 1);
 
 				// set title
-				$listProvider.find('.providerName').text('Upcoming Games');
+				$listProvider.find('.providerName').text('Upcoming');
 
 				listProvider = LIST_PROVIDERS.IGN;
 				break;

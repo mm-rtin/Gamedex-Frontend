@@ -171,8 +171,8 @@
 		// switch content display to gridView
 
 		// modify styles
-		$('#content').removeClass('standardView');
-		$('#content').addClass('gridView');
+		$('#wrapper').removeClass('standardView');
+		$('#wrapper').addClass('gridView');
 
 		// select gridList tagID
 		List.selectGridTag(tagID);
@@ -188,8 +188,8 @@
 
 		// switch content display to standardView
 		// modify styles
-		$('#content').removeClass('gridView');
-		$('#content').addClass('standardView');
+		$('#wrapper').removeClass('gridView');
+		$('#wrapper').addClass('standardView');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -286,12 +286,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var quickFilter = function(filterType) {
 
+
 		// clear transition so isotope can animate
 		clearTransitionProperties();
 
 		var quickFilter = parseInt(filterType, 10);
 		FilterPanel.resetFilters();
 
+		console.info(quickFilter);
 		switch (quickFilter) {
 
 			// upcoming
@@ -326,8 +328,16 @@
 				currentSortAsc = false;
 				break;
 
-			// finished games
+			// games played
 			case 4:
+				$listFiltersButton.find('.filterName').text(' Played');
+				FilterPanel.gamesPlayedQuickFilter();
+				currentSortType = 'metacriticScore';
+				currentSortAsc = false;
+				break;
+
+			// finished games
+			case 5:
 				$listFiltersButton.find('.filterName').text(' Finished');
 				FilterPanel.finishedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
@@ -335,7 +345,7 @@
 				break;
 
 			// owned games
-			case 5:
+			case 6:
 				$listFiltersButton.find('.filterName').text(' Owned');
 				FilterPanel.ownedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
@@ -343,7 +353,7 @@
 				break;
 
 			// wanted games
-			case 6:
+			case 7:
 				$listFiltersButton.find('.filterName').text(' Wanted');
 				FilterPanel.wantedGamesQuickFilter();
 				currentSortType = 'metacriticScore';

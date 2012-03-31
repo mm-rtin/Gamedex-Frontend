@@ -627,7 +627,7 @@
 				break;
 
 			// games played
-			case 3:
+			case 4:
 				sortList(SORT_TYPES.metascore);
 				$listFiltersButton.find('.filterName').text(' Played');
 				FilterPanel.gamesPlayedQuickFilter(itemList);
@@ -663,8 +663,6 @@
 	* applyFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
-
-		console.info('apply filteres');
 
 		// refresh item display first - then filter
 		if (queueDisplayRefresh) {
