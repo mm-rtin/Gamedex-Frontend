@@ -1,185 +1,100 @@
-
 // USER
 (function(User) {
 
 	// Dependencies
 	var Utilities = tmz.module('utilities');
 	var List = tmz.module('list');
-	var ItemData = tmz.module('itemData');
 	var ItemView = tmz.module('itemView');
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: User Model
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.UserModel = Backbone.Model.extend({
-
-		defaults: {
-            userData: {}
-        },
-
-        initialize: function() {
-
-        },
-
-        // override parse method
-		parse : function(response) {
-			parseUserResponse(response);
-		},
-
-        // url
-		url: function () {
-			return tmz.api + 'login/';
-		}
-
-	});
+	// data
+	var userData = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* BACKBONE: User View
+	* getUserData
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.UserView = Backbone.View.extend({
-
-        initialize: function() {
-
-            // userData: changed
-            this.model.bind('change:userData', this.render, this);
-        },
-
-		render: function() {
-
-			return this;
-		}
-	});
-
-	// backbone model
-	var user = new User.UserModel();
-    // backbone view
-    var userView = new User.UserView({model: user});
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* init
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.init = function() {
-
-		// debug login
-		User.login('1', '1');
-
-		User.createEventHandlers();
+	User.getUserData = function() {
+		return userData;
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* createEventHandlers
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.createEventHandlers = function(keywords) {
-
-		/* HEADER
-		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		// login button: click
-		$('#login_btn').click(function(e) {
-
-			e.preventDefault();
-
-
-			// send post request
-			User.login($('#userLogin_field').val(), $('#password_field').val());
-		});
-		// create user button: click
-		$('#createUser_btn').click(function(e) {
-			e.preventDefault();
-
-			$('#createuser-modal').modal('show');
-
-		});
-
-		/* CREATE USER DIALOG
-		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		// create user: click
-		$('#newAccount_btn').click(function(e) {
-
-			e.preventDefault();
-			var restURL = tmz.api + 'createuser/';
-
-			// get parameters
-			var postData = {
-				user_login: $('#userNameCreate_field').val(),
-				user_password: $('#passwordCreate_field').val(),
-				user_email: $('#emailCreate_field').val()
-			};
-
-			$.post(restURL, postData, function(data) {
-
-				$('#createuser-modal').modal('hide');
-			}, "html");
-
-
-		});
-		// cancel create click: click
-		$('#newAccount_cancel_btn').click(function() {
-			$('#createuser-modal').modal('hide');
-
-		});
-	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* login
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.login = function(username, password) {
+	User.login = function(email, password, onSuccess) {
 
-		var loginData = {
-			user_login: username,
+		var restURL = tmz.api + 'login/';
+
+		var requestData = {
+			user_email: email,
 			user_password: password
 		};
 
+		// login request
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				login_result(data);
+				onSuccess(data, email);
+			},
+			error: function(data) {
 
+			}
+		});
+	};
 
-		// login user
-		user.fetch({data: loginData, type: 'POST', success: login_result});
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* logout
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.logout = function(email, password, onSuccess) {
+
+		// clear user data (session)
+		userData.user_id = null;
+		userData.secret_key = null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* createUser -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.createUser = function(email, password, onSuccess) {
+
+		var restURL = tmz.api + 'createuser/';
+
+		// get parameters
+		var requestData = {
+			user_email: email,
+			user_password: password
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				login_result(data);
+				onSuccess(data, email);
+			},
+			error: function(data) {
+
+			}
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* login_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var login_result = function(model, data) {
+	var login_result = function(data) {
 
 		if (data.userID) {
 
-			// get item directory
-			ItemData.downloadItemDirectory(function() {
-
-				// get user lists
-				List.getList();
-
-				// init ItemView for logged in user after item directory loaded
-				ItemView.userLoggedIn();
-			});
-
-
-		} else {
-
+			// save user data (session)
+			userData.user_id = data.userID;
+			userData.secret_key = data.secretKey;
 		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseUserResponse
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseUserResponse = function(response) {
-
-		var tempUserData = {};
-
-		// save user data (session)
-		tempUserData.user_id = response.userID;
-		tempUserData.secret_key = response.secretKey;
-
-		user.set({'userData': tempUserData});
-	};
-
-
-	/* GETTER/SETTERS
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	// get userData
-	User.getUserData = function() {
-		return user.get('userData');
 	};
 
 })(tmz.module('user'));

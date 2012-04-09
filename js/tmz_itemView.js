@@ -116,7 +116,9 @@
 		});
 
 		// item record: click
-		$viewItemsContainer.on('click', '#itemResults tr', function() {
+		$viewItemsContainer.on('click', '#itemResults tr', function(e) {
+			e.preventDefault();
+
 			viewItem($(this).attr('id'));
 		});
 
@@ -125,6 +127,7 @@
 
 		// deleteItem_btn: click
 		$itemResults.on('click', '.deleteItem_btn', function(e) {
+			e.preventDefault();
 
 			// get id from delete button attribute
 			var id = $(this).attr('data-content');
@@ -133,20 +136,19 @@
 
 		// quickAttributes: click
 		$itemResults.on('click', '.quickAttributes a', function(e) {
+			e.preventDefault();
 
 			// get attribute id
 			var attributeID = parseInt($(this).attr('data-content'), 10);
 			var id = $(this).parent().parent().attr('data-content');
-
-			console.info(id);
 
 			// set quick attribute
 			setQuickAttribute($(this), id, attributeID);
 		});
 
 		// deleteList_btn: click
-		$viewItemsContainer.on('click', '#deleteList_btn', function() {
-
+		$viewItemsContainer.on('click', '#deleteList_btn', function(e) {
+			e.preventDefault();
 			// delete currently viewing list
 			deleteList(currentViewTagID);
 		});
@@ -185,13 +187,16 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var render = function(items) {
 
+		// item length
+		var length = 0;
 		// add user attributes to model
 		_.each(items, function(item, key) {
 			addUserAttributes(item);
+			length++;
 		});
 
 		// get model data
-		var templateData = {'items': items};
+		var templateData = {'items': items, 'length': length};
 
 		// add displayType/currentViewTagID to templateData
 		templateData.displayType = displayType;
@@ -200,32 +205,34 @@
 		// render model data to template
 		$itemResults.html(itemResultsTemplate(templateData));
 
-		// activate tooltips for quickAttributes bar
-		$itemResults.find('.quickAttributes a').each(function(key, button) {
-			$(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
-		});
+		if (length > 0) {
+			// activate tooltips for quickAttributes bar
+			$itemResults.find('.quickAttributes a').each(function(key, button) {
+				$(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
+			});
 
-		// load preliminary data (for filtering, sorting)
-		_.each(items, function(item, key) {
-			loadPreliminaryMetascore(item);
-		});
+			// load preliminary data (for filtering, sorting)
+			_.each(items, function(item, key) {
+				loadPreliminaryMetascore(item);
+			});
 
-		// load latest/extra information for each item
-		_.each(items, function(item, key) {
-			loadThirdPartyData(item);
-		});
+			// load latest/extra information for each item
+			_.each(items, function(item, key) {
+				loadThirdPartyData(item);
+			});
 
-		// update list.js for item list
-		itemList = new List('itemResultsContainer', listOptions);
+			// update list.js for item list
+			itemList = new List('itemResultsContainer', listOptions);
 
-		// sort using current sort method
-		sortList(currentSortIndex);
+			// sort using current sort method
+			sortList(currentSortIndex);
 
-		// apply filters
-		applyFilters();
+			// apply filters
+			applyFilters();
 
-		// reset filters - allow filter index to be recreated after dynamic data loaded
-		filterHasBeenApplied = false;
+			// reset filters - allow filter index to be recreated after dynamic data loaded
+			filterHasBeenApplied = false;
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,6 +241,14 @@
 	ItemView.getItem = function(id) {
 
 		return ItemData.getItem(id);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearItemView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.clearItemView = function() {
+
+		render({});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

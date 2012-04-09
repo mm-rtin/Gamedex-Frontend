@@ -31,6 +31,7 @@ tmz.user = null;
 tmz.searchView = null;
 tmz.detailView = null;
 tmz.itemView = null;
+tmz.siteView = null;
 
 // set application properties
 tmz.api = '/';
@@ -64,6 +65,7 @@ tmz.initialize = function() {
 
 	// views
 	tmz.searchView = tmz.module('searchView');
+	tmz.siteView = tmz.module('siteView');
 	tmz.detailView = tmz.module('detailView');
 	tmz.itemView = tmz.module('itemView');
 	tmz.gridView = tmz.module('gridView');
@@ -119,8 +121,8 @@ tmz.initializeModules = function() {
 	// ITEM PANEL
 	tmz.itemView.init();
 
-	// USER
-	tmz.user.init();
+	// USER VIEW
+	tmz.siteView.init();
 
 	// GRID VIEW
 	tmz.gridView.init();

@@ -60,6 +60,19 @@
 		return item;
 	};
 
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetItemData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.resetItemData = function() {
+
+		items = {};
+		itemDataDirectory = {};
+		itemsCacheByTag = {};
+		amazonDirectory = {};
+		giantBombDirectory = {};
+	};
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

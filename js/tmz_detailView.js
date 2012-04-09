@@ -21,6 +21,7 @@
 	ITEM_TYPES = {'new': 0, 'existing': 1};
 
     // properties
+    var hasRendered = false;
     var currentProvider = null;
     var saveInProgress = false;
     var currentTab = TAB_IDS[0];
@@ -442,6 +443,13 @@
 	* renderDetail - render to corresponding tab based on provider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var renderDetail = function(provider, item) {
+
+		// show hidden elements for first rendering
+		if (!hasRendered) {
+			$('#dataTab').show();
+			$('.detailTitleBar').show();
+			hasRendered = true;
+		}
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:

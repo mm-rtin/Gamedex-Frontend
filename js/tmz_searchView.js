@@ -29,7 +29,7 @@
 
     // properties
     var searchProvider = Utilities.getProviders().Amazon;
-    var listProvider = LIST_PROVIDERS.Gamestats;
+    var listProvider = LIST_PROVIDERS.IGN;
     var currentTab = TAB_IDS['#searchTab'];
     var platform = null;
     var commonPlatform = null;
@@ -208,9 +208,6 @@
 		// get model data
 		var templateData = {'listResults': items};
 
-		// set display type class
-		changeDisplayType(listDisplayType);
-
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 	};
@@ -220,6 +217,14 @@
 	* @param {string} keywords
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
+
+		// change finder tab to search if not on search tab
+		if (currentTab !== TAB_IDS['#searchTab']) {
+
+			// manually toggle search tab
+			$searchTabLink.trigger('click');
+			finderTabChanged(TAB_IDS['#searchTab']);
+		}
 
 		// don't search previous search terms
 		if (searchTerms !== previousSearchTerms) {
@@ -502,7 +507,10 @@
 			// popular games
 			case '0':
 				// disable display options and set to list
-				changeDisplayType(0);
+
+				// EXCEPTION:
+				// do not update listDisplayType as popular list cannot have any other view
+				changeDisplayType(0, true);
 				$listDisplayOptions.fadeTo(100, 0.35);
 
 				// set title
@@ -624,16 +632,21 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayType = function(displayType) {
+	var changeDisplayType = function(displayType, doNotUpdateCurrentDisplayType) {
 
 		// change #searchResults or #listResults tbody class based on current tab
-		if (currentTab === TAB_IDS['#searchTab'] && searchDisplayType !== displayType) {
+		if (currentTab === TAB_IDS['#searchTab']) {
 			searchDisplayType = displayType;
-			$searchResults.find('tbody').removeClass().addClass('display-' + searchDisplayType);
+			$searchResults.find('tbody').removeClass().addClass('display-' + displayType);
 
-		} else if (listDisplayType !== displayType) {
-			listDisplayType = displayType;
-			$listResults.find('tbody').removeClass().addClass('display-' + listDisplayType);
+		// check if the actual element has the displayType class
+		} else if ($listResults.find('tbody').hasClass('display-' + displayType) === false) {
+
+			// this is so popular list does not define the view for upcoming list
+			if (typeof doNotUpdateCurrentDisplayType === 'undefined') {
+				listDisplayType = displayType;
+			}
+			$listResults.find('tbody').removeClass().addClass('display-' + displayType);
 		}
 
 		// set nanoscroll

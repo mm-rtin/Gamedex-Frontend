@@ -15,18 +15,21 @@
 @total-width: 100%;
 
 
+@neutralDark1: #666d6e;
+@neutralDark2: #8a9394;
+
 
 /* MIXINS
 -----------------------------------------------------------*/
 .gradientBG_dark {
-	background-color: #747474;
-	background-image: -moz-linear-gradient(top, #696969, #747474);
-	background-image: -ms-linear-gradient(top, #696969, #747474);
-	background-image: -webkit-gradient(linear,0 0,0 100%,from( #696969),to( #747474));
-	background-image: -webkit-linear-gradient(top, #696969, #747474);
-	background-image: -o-linear-gradient(top, #696969, #747474);
-	background-image: linear-gradient(top, #696969, #747474);
-	border-color: #747474 #747474 #747474;
+	background-color: @neutralDark2;
+	background-image: -moz-linear-gradient(top, @neutralDark1, @neutralDark2);
+	background-image: -ms-linear-gradient(top, @neutralDark1, @neutralDark2);
+	background-image: -webkit-gradient(linear,0 0,0 100%,from( @neutralDark1),to( @neutralDark2));
+	background-image: -webkit-linear-gradient(top, @neutralDark1, @neutralDark2);
+	background-image: -o-linear-gradient(top, @neutralDark1, @neutralDark2);
+	background-image: linear-gradient(top, @neutralDark1, @neutralDark2);
+	border-color: @neutralDark2 @neutralDark2 @neutralDark2;
 	border-color: rgba(0, 0, 0, .1) rgba(0, 0, 0, .1) rgba(0, 0, 0, .25);
 }
 .boxShadow(@opacity) {
@@ -72,7 +75,6 @@ body {
 	font-size: 0.8em;
 	font-weight: 600;
 	min-width: 1140px;
-	text-align: center;
 }
 
 body.infoHeader {
@@ -81,6 +83,11 @@ body.infoHeader {
 
 body.useHeader {
 	padding-top: 60px;
+
+	.header {
+		background-color: #3D3D3D;
+		border-top: 1px solid #575757;
+	}
 }
 
 input, select, textarea {
@@ -93,45 +100,161 @@ input, select, textarea {
 #infoHeader {
 	background-image:  url('../images/header_tile.png');
 	background-repeat: repeat-x;
-	height: 265px;
+	height: 298px;
 	.column(48, @panel-columns);
-	margin-bottom: 20px;
+	margin-bottom: 8px;
 }
 
 #logo {
 	background-image:  url('../images/logo.png');
 	position: relative;
-	width: 407px;
-	height: 69px;
-	left: 15px;
-	top: 14px;
+	width: 308px;
+	height: 51px;
+	left: 29px;
+	top: 31px;
 }
 
 #siteDescription {
 	background-image:  url('../images/site_description.png');
 	position: relative;
-	width: 594px;
-	height: 95px;
-	top: -59px;
-	left: 600px;
+	width: 483px;
+	height: 64px;
+	top: -27px;
+	left: 39%;
+}
+#siteFeatures {
+	background-image:  url('../images/site_features.png');
+	position: relative;
+	width: 706px;
+	height: 108px;
+	top: 45px;
+	left: 39%;
 }
 
 #signupButton {
+	.opacity(.6);
+	cursor: pointer;
 	background-image:  url('../images/signup_button.png');
 	position: relative;
-	width: 174px;
-	height: 76px;
-	top: -25px;
-	left: 602px;
+	width: 148px;
+	height: 44px;
+	top: -63px;
+	left: 30px;
+
+	&:hover {
+		.opacity(.8);
+	}
 }
 
 #loginButton {
+	.opacity(.6);
+	cursor: pointer;
 	background-image:  url('../images/login_button.png');
 	position: relative;
-	width: 144px;
-	height: 64px;
-	top: -101px;
-	left: 794px;
+	width: 122px;
+	height: 44px;
+	top: -107px;
+	left: 194px;
+
+	&:hover {
+		.opacity(.8);
+	}
+}
+
+#signupSubmitButton {
+	display: none;
+	.opacity(.6);
+	cursor: pointer;
+	background-image:  url('../images/signup_button_small.png');
+	position: relative;
+	width: 112px;
+	height: 34px;
+	top: 15px;
+	left: 201px;
+
+	&:hover {
+		.opacity(.8);
+	}
+}
+
+#loginSubmitButton {
+	display: none;
+	.opacity(.6);
+	cursor: pointer;
+	background-image:  url('../images/login_button_small.png');
+	position: relative;
+	width: 91px;
+	height: 34px;
+	top: 15px;
+	left: 221px;
+
+	&:hover {
+		.opacity(.8);
+	}
+}
+
+#backButton {
+	display: none;
+	.opacity(.6);
+	cursor: pointer;
+	background-image:  url('../images/back_button.png');
+	position: relative;
+	width: 25px;
+	height: 34px;
+	top: -19px;
+
+	&.login {
+		left: 193px;
+	}
+	&.signup {
+		left: 173px;
+	}
+
+	&:hover {
+		.opacity(.8);
+	}
+}
+
+#loginForm {
+	position: relative;
+	background-image:  url('../images/form_bg.png');
+	background-repeat: no-repeat;
+	top: -64px;
+	left: 30px;
+	height: 84px;
+	display: none;
+
+	input {
+		width: 194px;
+		background-color: transparent;
+		border: none;
+		color: #fff;
+		-webkit-box-shadow: none;
+		-moz-box-shadow:    none;
+		box-shadow:         none;
+		font-size: 20px;
+		height: 22px;
+		padding-left: 45px;
+		margin-bottom: 4px;
+
+		&:focus {
+			-webkit-box-shadow: none;
+			-moz-box-shadow:    none;
+			box-shadow:         none;
+		}
+	}
+}
+
+#email {
+	position: relative;
+	top: 5px;
+	left: 68px;
+}
+
+#password {
+	position: relative;
+	top: 12px;
+	left: 68px;
 }
 
 /* CONTENT CONTAINER
@@ -155,10 +278,10 @@ input, select, textarea {
 		color: #313131;
 	}
 	.table-striped tbody tr:nth-child(odd) td {
-		background-color: #ffffff;
+		background-color: #F5F5F5;
 	}
 	.table tbody tr:hover td {
-		background-color: #F5F5F5;
+		background-color: #ffffff;
 	}
 	.table th, .table td {
 		border-top: 1px dotted #DDD;
@@ -171,7 +294,7 @@ input, select, textarea {
 
 	}
 	.btn-dark:hover{
-		background-color:#696969
+
 	}
 
 	.nav-list [class^="icon-"] {
@@ -234,7 +357,7 @@ input, select, textarea {
 		}
 		#panel2 {
 			position: fixed;
-			top: -10px;
+			top: 50px;
 			width: 280px;
 		}
 		#panel3 {
@@ -249,7 +372,7 @@ input, select, textarea {
 		#panel5 {
 			margin: 0 300px;
 			position: fixed;
-			top: -10px;
+			top: 50px;
 			width: 875px;
 			z-index: 999;
 
@@ -263,24 +386,45 @@ input, select, textarea {
 }
 
 .header {
-	background-color: #696969;
+	background-color: #364546;
 	color: #ffffff;
 	height: 17px;
 	position: relative;
 	z-index: 999;
+	border-top: 1px solid #626d6b;
 }
 
 .panel {
-	.boxShadow(.9);
-	background-color: #ffffff;
+	background-color: #F5F5F5;
 	padding: 29px 10px 10px 10px;
 	position: relative;
 	top: -17px;
 }
 
 #header {
-	min-width: 960px;
+	min-width: 1140px;
 	display: none;
+
+	.navbar-inner {
+		background-color: #2C2C2C;
+		background-image: -moz-linear-gradient(top, #333, #222);
+		background-image: -ms-linear-gradient(top, #333, #222);
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));
+		background-image: -webkit-linear-gradient(top, #333, #222);
+		background-image: -o-linear-gradient(top, #333, #222);
+		background-image: linear-gradient(top, #333, #222);
+		background-repeat: repeat-x;
+	}
+
+	.miniLogo {
+		background-image:  url('../images/logo_small.png');
+		float: left;
+		position: relative;
+		height: 22px;
+		width: 129px;
+		top: 9px;
+		left: -1px;
+	}
 }
 
 .popover {
@@ -329,11 +473,20 @@ input, select, textarea {
 		background-color: #D70000;
 	}
 	&.unavailable {
-		background-color: #696969;
+		background-color: @neutralDark1;
 	}
 	&:hover {
 		color: #ffffff;
 	}
+}
+
+.noSearchResults {
+	.borderRadius(2px);
+	background-color: #C0C4C4;
+	color: white;
+	font-weight: 700;
+	padding: 10px;
+	text-align: center;
 }
 
 .nano .content      { padding: 10px; }
@@ -375,15 +528,15 @@ input, select, textarea {
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
 #search {
-	margin: 8px 0px 8px 0px;
+	margin: 0px 0px 8px 0px;
 }
 #search_field {
-	width: 147px;
+	width: 139px;
 	margin-right: 7px;
 }
 #providerContainer {
 	float: left;
-	margin: 0px 10px 0px 0px;
+	margin: 0px 10px 8px 0px;
 }
 #searchProvider {
 
@@ -393,34 +546,42 @@ input, select, textarea {
 	margin-left: 0;
 }
 .providerSelect_btn {
-	width: 110px;
+	width: 101px;
+	text-align: left;
 }
 .searchDisplayOptions {
-	margin-left: 50px;
+	margin-left: 43px;
 	margin-right: 10px;
 }
 .btn-group + .listDisplayOptions.btn-group {
-	margin-left: 50px;
+	margin-left: 43px;
 	display: none;
 	margin-right: 10px;
 }
 
 #platformContainer {
 	float: left;
+	margin-bottom: 8px;
 }
 
 #commonPlatformContainer {
 	display: none;
 	float: left;
+	margin-bottom: 8px;
 }
 
 #searchResultsDisplayGroup {
 	margin: 8px 0px 8px 0px;
 }
 
+#finderTabLinks {
+	margin-bottom: -6px;
+}
+
 #searchResultsContainer {
 	.transition(.4s);
 }
+
 #searchResults {
 
 	tr {
@@ -564,16 +725,20 @@ input, select, textarea {
 	table {
 		width: 100%;
 
-	td {
-		padding: 3px;
+		td {
+			padding: 3px;
+		}
 	}
+
+	.detailTitleBar {
+		display: none;
 	}
 
 	.itemDetailTitle {
 
 		h3 {
 			.borderRadius(2px);
-			background-color: #696969;
+			background-color: @neutralDark1;
 			color: #ffffff;
 			display: block;
 			font-family: 'Open Sans',sans-serif;
@@ -604,6 +769,7 @@ input, select, textarea {
 }
 
 #dataTab {
+	display: none;
 	margin-bottom: 10px;
 }
 
@@ -692,7 +858,7 @@ input, select, textarea {
 #itemResults {
 
 	.display-0 tr {
-		&:hover 
+		&:hover
 			.quickAttributes {
 				.opacity(0)
 			}
@@ -791,7 +957,7 @@ input, select, textarea {
 			min-width: 150px;
 		}
 		.quickAttributes {
-			.opacity(0)
+			display: none;
 		}
 		.deleteItem_btn {
 			.opacity(.5)
