@@ -10,7 +10,7 @@
 		'case',
 		'codes',
 		'combo',
-		'console',
+		'// console',
 		'controller',
 		'covers',
 		'face plate',
@@ -50,7 +50,7 @@
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
 
 		var searchTerms = encodeURIComponent(keywords);
-		console.info(tmz.api);
+		// console.info(tmz.api);
 		// browse node, search terms and response group in url
 		var requestData = {
 			'keywords': keywords,
@@ -89,7 +89,7 @@
 		// result has been filtered
 		if (re.test(itemData.name) || itemData.platform === '') {
 
-			// console.error('amazon item filtered: ', itemData.name, itemData.platform);
+			// // console.error('amazon item filtered: ', itemData.name, itemData.platform);
 			itemData.isFiltered = true;
 
 		// not filtered > add more properties to itemData

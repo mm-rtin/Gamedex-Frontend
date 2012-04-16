@@ -21,13 +21,21 @@
     // node cache
     var $gridViewContainer = $('#gridViewContainer');
     var $gridList = $('#gridList');
+    var $viewName = $gridList.find('.viewName');
     var $gridViewOptions = $('#gridViewOptions');
 
+    // display options
     var $displayOptions = $gridViewOptions.find('.displayOptions');
-    var $sortOptions = $gridViewOptions.find('.sortOptions');
+    var $displayTypeField = $displayOptions.find('.displayType');
 
+    // sort options
+    var $sortOptions = $gridViewOptions.find('.sortOptions');
+    var $sortTypeField = $sortOptions.find('.sortType');
+
+    // filter options
     var $filterOptions = $gridViewOptions.find('.filterOptions');
-    var $filterStatus = $filterOptions.find('.filterStatus');
+    var $clearFiltersBtn = $filterOptions.find('.clearFilters_btn');
+    var $filterTypeField = $filterOptions.find('.filterType');
     var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
     var $listFiltersButton = $filterOptions.find('.listFilters_btn');
     var $applyFiltersButton = $('#applyFilters_btn');
@@ -52,11 +60,13 @@
 		createEventHandlers();
 
 		// init tooltips
-		$filterStatus.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		$displayOptions.find('button').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
+
+		// set initial filtered status
+		setClearFiltersButton(false);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,12 +86,14 @@
 			$filtersModal.modal('show');
 		});
 
-		// filterStatus: click
-		$filterStatus.click(function(e) {
+		// clearFiltersBtn: click
+		$clearFiltersBtn.click(function(e) {
 			e.preventDefault();
 
+			// hide clear filters button
+			setClearFiltersButton(false);
+			$filterTypeField.text('None');
 			// clear filters
-			$listFiltersButton.find('.filterName').text(' Filters');
 			FilterPanel.resetFilters();
 			applyFilters();
 		});
@@ -91,10 +103,16 @@
 			e.preventDefault();
 			// apply filters
 			applyFilters();
+
+			// show clear filters button
+			setClearFiltersButton(true);
 		});
 
-		// gridList: change
-		$gridList.chosen().change(gridListChanged);
+		// gridList: click
+		$gridList.find('ul').on('click', 'a', function(e) {
+			e.preventDefault();
+			changeGridList($(this).text(), $(this).attr('data-content'));
+		});
 
 		// gridItem: click
 		$gridViewContainer.on('click', '.gridItem img', function(e) {
@@ -145,8 +163,13 @@
 		});
 
 		// displayOptions: click
-		$displayOptions.find('button').click(function(e) {
+		$displayOptions.find('li a').click(function(e) {
 			e.preventDefault();
+
+			// set type field
+			$displayTypeField.text($(this).text());
+
+			// change display type
 			changeDisplayType($(this).attr('data-content'));
 		});
 
@@ -159,7 +182,23 @@
 		// filterOptions: click
 		$filterOptions.find('li a').click(function(e) {
 			e.preventDefault();
-			quickFilter($(this).attr('data-content'));
+
+			// custom filter
+			var filterType = parseInt($(this).attr('data-content'), 10);
+			if (filterType === 0) {
+				FilterPanel.showFilterPanel();
+
+			// quick filter
+			} else {
+
+				// show clear filters button
+				setClearFiltersButton(true);
+
+				// set filterType field
+				$filterTypeField.text($(this).text());
+
+				quickFilter(parseInt($(this).attr('data-content'), 10));
+			}
 		});
 	};
 
@@ -193,12 +232,16 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gridListChanged -
+	* changeGridList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var gridListChanged = function() {
+	var changeGridList = function(tagName, tagID) {
+
+		// console.info(tagName, tagID);
+		// set view name
+		$viewName.text(tagName);
 
 		// load items
-		loadGridData($gridList.val());
+		loadGridData(tagID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -286,75 +329,66 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var quickFilter = function(filterType) {
 
-
 		// clear transition so isotope can animate
 		clearTransitionProperties();
 
 		var quickFilter = parseInt(filterType, 10);
 		FilterPanel.resetFilters();
 
-		console.info(quickFilter);
+		// console.info(quickFilter);
 		switch (quickFilter) {
 
 			// upcoming
-			case 0:
-				$listFiltersButton.find('.filterName').text(' Upcoming');
+			case 1:
 				FilterPanel.upcomingQuickFilter();
 				currentSortType = 'releaseDate';
 				currentSortAsc = true;
 				break;
 
 			// new releases
-			case 1:
-				$listFiltersButton.find('.filterName').text(' New Releases');
+			case 2:
 				FilterPanel.newReleasesQuickFilter();
 				currentSortType = 'releaseDate';
 				currentSortAsc = false;
 				break;
 
 			// never played
-			case 2:
-				$listFiltersButton.find('.filterName').text(' Never Played');
+			case 3:
 				FilterPanel.neverPlayedQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
 
 			// games playing
-			case 3:
-				$listFiltersButton.find('.filterName').text(' Playing');
+			case 4:
 				FilterPanel.gamesPlayingQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
 
 			// games played
-			case 4:
-				$listFiltersButton.find('.filterName').text(' Played');
+			case 5:
 				FilterPanel.gamesPlayedQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
 
 			// finished games
-			case 5:
-				$listFiltersButton.find('.filterName').text(' Finished');
+			case 6:
 				FilterPanel.finishedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
 
 			// owned games
-			case 6:
-				$listFiltersButton.find('.filterName').text(' Owned');
+			case 7:
 				FilterPanel.ownedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
 
 			// wanted games
-			case 7:
-				$listFiltersButton.find('.filterName').text(' Wanted');
+			case 8:
 				FilterPanel.wantedGamesQuickFilter();
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
@@ -371,20 +405,7 @@
 	var applyFilters = function() {
 
 		// apply filters to itemList and set filtered Status icon
-		toggleFilterStatus(FilterPanel.applyIsotopeFiltering($gridViewContainer, currentSortType, currentSortAsc));
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* toggleFilterStatus -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var toggleFilterStatus = function(filtered) {
-
-		// check if filtered - show filterStatus button
-		if (filtered) {
-			$filterStatus.show();
-		} else {
-			$filterStatus.hide();
-		}
+		setClearFiltersButton(FilterPanel.applyIsotopeFiltering($gridViewContainer, currentSortType, currentSortAsc));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -402,7 +423,7 @@
 			// alphabetical
 			case SORT_TYPES.itemName:
 				// set sort status
-				$sortOptions.find('.currentSort').text('Alphabetical');
+				$sortTypeField.text('Alphabetical');
 				currentSortType = 'itemName';
 				// sort new list
 				$gridViewContainer.isotope({
@@ -414,7 +435,7 @@
 
 			// review scores
 			case SORT_TYPES.metacriticScore:
-				$sortOptions.find('.currentSort').text('Review Score');
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				$gridViewContainer.isotope({
 					sortBy : currentSortType,
@@ -425,7 +446,7 @@
 
 			// release date
 			case SORT_TYPES.releaseDate:
-				$sortOptions.find('.currentSort').text('Release Date');
+				$sortTypeField.text('Release Date');
 				currentSortType = 'releaseDate';
 				$gridViewContainer.isotope({
 					sortBy : currentSortType,
@@ -436,7 +457,7 @@
 
 			// platform
 			case SORT_TYPES.platform:
-				$sortOptions.find('.currentSort').text('Platform');
+				$sortTypeField.text('Platform');
 				currentSortType = 'platform';
 				$gridViewContainer.isotope({
 					sortBy : currentSortType,
@@ -447,7 +468,7 @@
 
 			// price
 			case SORT_TYPES.rawPrice:
-				$sortOptions.find('.currentSort').text('Price');
+				$sortTypeField.text('Price');
 				currentSortType = 'rawPrice';
 				$gridViewContainer.isotope({
 					sortBy : currentSortType,
@@ -493,6 +514,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var priceSort = function($elem) {
 		return parseInt($elem.find('.rawPrice').text(), 10);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* setClearFiltersButton -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var setClearFiltersButton = function(filtered) {
+
+		// check if filtered - show clearFiltersBtn button
+		if (filtered) {
+			$clearFiltersBtn.show();
+			$clearFiltersBtn.next().show();
+		} else {
+			$clearFiltersBtn.hide();
+			$clearFiltersBtn.next().hide();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

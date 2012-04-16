@@ -21,7 +21,7 @@
 
 		if (cachedList) {
 
-			console.info('cached');
+			// console.info('cached');
 			// return list
 			onSuccess(cachedList);
 
@@ -38,7 +38,7 @@
 				cache: true,
 				success: function(data) {
 
-					console.info('not cached');
+					// console.info('not cached');
 					// cache result
 					gameStatsListCache[platform] = data;
 

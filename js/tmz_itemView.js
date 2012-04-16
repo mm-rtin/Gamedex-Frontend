@@ -35,20 +35,23 @@
     var filterHasBeenApplied = false;
     var queueDisplayRefresh = false;
 
-    // node cache
+    // element cache
     var $itemResults = $('#itemResults');
-    var $viewlistContainer = $('#viewListContainer');
     var $viewItemsContainer = $('#viewItemsContainer');
     var $itemResultsContainer = $('#itemResultsContainer');
     var $displayOptions = $viewItemsContainer.find('.displayOptions');
-    var $sortOptions = $viewItemsContainer.find('.sortOptions');
     var $viewList = $('#viewList');
+    var $viewName = $viewList.find('.viewName');
 
-    // filter nodes
+    // sort elements
+    var $sortOptions = $viewItemsContainer.find('.sortOptions');
+    var $sortTypeField = $sortOptions.find('.sortType');
+
+    // filter elements
     var $filterOptions = $viewItemsContainer.find('.filterOptions');
-    var $filterStatus = $filterOptions.find('.filterStatus');
+    var $clearFiltersBtn = $filterOptions.find('.clearFilters_btn');
     var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
-    var $listFiltersButton = $filterOptions.find('.listFilters_btn');
+    var $filterTypeField = $filterOptions.find('.filterType');
     var $applyFiltersButton = $('#applyFilters_btn');
 
 	// jquery objects
@@ -66,7 +69,6 @@
 		ItemView.createEventHandlers();
 
 		// init tooltips
-		$filterStatus.tooltip({delay: {show: 500, hide: 50}});
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
 		$displayOptions.find('button').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}});
@@ -76,6 +78,9 @@
 		setInterval(function() {
 			$itemResultsContainer.nanoScroller();
 		}, 1500);
+
+		// set initial filtered status
+		setClearFiltersButton(false);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,47 +88,38 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemView.createEventHandlers = function() {
 
-		// listFilters_btn: click
-		$listFiltersButton.click(function(e) {
+		// viewList: click
+		$viewList.find('ul').on('click', 'a', function(e) {
 			e.preventDefault();
-
-			FilterPanel.showFilterPanel();
+			changeViewList($(this).text(), $(this).attr('data-content'));
 		});
 
 		// applyFilters_btn: click
 		$applyFiltersButton.click(function(e) {
 			e.preventDefault();
-			// apply filters
+
+			// show clear filters button
+			setClearFiltersButton(true);
 			applyFilters();
 		});
 
-		// filterStatus: click
-		$filterStatus.click(function(e) {
+		// clearFiltersBtn: click
+		$clearFiltersBtn.click(function(e) {
 			e.preventDefault();
 
+			// hide clear filters button
+			setClearFiltersButton(false);
+			$filterTypeField.text('None');
 			// clear filters
-			$listFiltersButton.find('.filterName').text(' Filters');
 			FilterPanel.resetFilters();
 			applyFilters();
 		});
 
-		// viewList: keypress
-		$viewlistContainer.find('input').live({
-			// keypress event
-			keydown: function(e){
-				Utilities.handleInputKeyDown(e, $viewlistContainer, ListModel);
-			}
-		});
-
 		// item record: click
 		$viewItemsContainer.on('click', '#itemResults tr', function(e) {
-			e.preventDefault();
-
+			// view item
 			viewItem($(this).attr('id'));
 		});
-
-		// viewList: change
-		$viewList.chosen().change(viewListChanged);
 
 		// deleteItem_btn: click
 		$itemResults.on('click', '.deleteItem_btn', function(e) {
@@ -168,7 +164,24 @@
 		// filterOptions select
 		$filterOptions.find('li a').click(function(e) {
 			e.preventDefault();
-			quickFilter(parseInt($(this).attr('data-content'), 10));
+
+			// custom filter
+			var filterType = parseInt($(this).attr('data-content'), 10);
+			if (filterType === 0) {
+				FilterPanel.showFilterPanel();
+
+			// quick filter
+			} else {
+
+				// show clear filters button
+				setClearFiltersButton(true);
+
+				// set filterType field
+				$filterTypeField.text($(this).text());
+
+				quickFilter(parseInt($(this).attr('data-content'), 10));
+			}
+
 		});
 
 		// show grid view button: click
@@ -235,6 +248,7 @@
 		}
 	};
 
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -267,12 +281,30 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* userLoggedIn -
+	* initializeUserItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.userLoggedIn = function(item) {
+	ItemView.initializeUserItems = function(onSuccess, onFail) {
 
-		// start with all items viewing
-		getItems(VIEW_ALL_TAG_ID);
+		// save tagID
+		currentViewTagID = VIEW_ALL_TAG_ID;
+
+		// load item data for tagID
+		return ItemData.getItems(VIEW_ALL_TAG_ID, onSuccess, onFail);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initializeUserItems_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.initializeUserItems_result = function(items) {
+
+		// cache items by tag
+		ItemData.cacheItemsByTag(items);
+
+		// render view with returned items data
+		render(items);
+
+		// view random item
+		viewRandomItem();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -357,12 +389,15 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* viewListChanged -
+	* changeViewList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewListChanged = function() {
+	var changeViewList = function(tagName, tagID) {
+
+		// set view name
+		$viewName.text(tagName);
 
 		// load items
-		getItems($viewList.val());
+		getItems(tagID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -378,6 +413,7 @@
 
 			// success - render items
 			function(items) {
+
 				render(items);
 
 				if (onSuccess) {
@@ -425,11 +461,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var amazonPrice_result = function(id, offers) {
 
-		// display price
-		var priceSelector = '#' + id + ' .priceDetails';
+		// render if offers available
+		if (typeof offers.productURL !== 'undefined') {
+			// display price
+			var priceSelector = '#' + id + ' .priceDetails';
 
-		// attach to existing item result
-		$(priceSelector).html(priceMenuTemplate(offers));
+			// attach to existing item result
+			$(priceSelector).html(priceMenuTemplate(offers));
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -456,6 +495,16 @@
 		// display score
 		var metascoreSelector = '#' + item.id + ' .metascore';
 		Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewRandomItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var viewRandomItem = function() {
+
+		// get random id and view item for id
+		var id = ItemData.getRandomItemID();
+		viewItem(id);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -520,7 +569,7 @@
 
 		// get item by id
 		var item = ItemView.getItem(id);
-		console.info(item);
+		// console.info(item);
 
 		// flag for item refresh
 		queueDisplayRefresh = true;
@@ -580,7 +629,7 @@
 
 		ItemData.updateItem(item, function(item, data) {
 
-			console.info(data);
+			// console.info(data);
 
 		});
 	};
@@ -605,67 +654,58 @@
 		var quickFilter = filterType;
 
 		// reset filters
-		$listFiltersButton.find('.filterName').text(' Filters');
 		FilterPanel.resetFilters();
 
 		switch (quickFilter) {
 
 			// upcoming
-			case 0:
+			case 1:
 				// sort and apply filter
 				sortList(SORT_TYPES.releaseDate);
 				// set current filter text on filters button
-				$listFiltersButton.find('.filterName').text(' Upcoming');
 				// set filter panel option
 				FilterPanel.upcomingQuickFilter(itemList);
 				break;
 
 			// new releases
-			case 1:
+			case 2:
 				sortList(SORT_TYPES.releaseDate);
-				$listFiltersButton.find('.filterName').text(' New Releases');
 				FilterPanel.newReleasesQuickFilter(itemList);
 				break;
 
 			// never played
-			case 2:
+			case 3:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Never Played');
 				FilterPanel.neverPlayedQuickFilter(itemList);
 				break;
 
 			// games playing
-			case 3:
+			case 4:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Playing');
 				FilterPanel.gamesPlayingQuickFilter(itemList);
 				break;
 
 			// games played
-			case 4:
+			case 5:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Played');
 				FilterPanel.gamesPlayedQuickFilter(itemList);
 				break;
 
 			// finished games
-			case 5:
+			case 6:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Finished');
 				FilterPanel.finishedGamesQuickFilter(itemList);
 				break;
 
 			// owned games
-			case 6:
+			case 7:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Owned');
 				FilterPanel.ownedGamesQuickFilter(itemList);
 				break;
 
 			// wanted games
-			case 7:
+			case 8:
 				sortList(SORT_TYPES.metascore);
-				$listFiltersButton.find('.filterName').text(' Wanted');
 				FilterPanel.wantedGamesQuickFilter(itemList);
 				break;
 		}
@@ -681,7 +721,7 @@
 
 		// refresh item display first - then filter
 		if (queueDisplayRefresh) {
-			console.info('refresh items');
+			// console.info('refresh items');
 			queueDisplayRefresh = false;
 
 			// refresh item html for updated filtering
@@ -689,29 +729,27 @@
 
 				// apply filters to itemList
 				var filtered = FilterPanel.applyListJSFiltering(itemList);
-				// set filtered Status icon
-				toggleFilterStatus(filtered);
 			});
 
 		// filter immediately
 		} else {
 			// apply filters to itemList
 			var filtered = FilterPanel.applyListJSFiltering(itemList);
-			// set filtered Status icon
-			toggleFilterStatus(filtered);
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* toggleFilterStatus -
+	* setClearFiltersButton -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var toggleFilterStatus = function(filtered) {
+	var setClearFiltersButton = function(filtered) {
 
-		// check if filtered - show filterStatus button
+		// check if filtered - show clearFiltersBtn button
 		if (filtered) {
-			$filterStatus.show();
+			$clearFiltersBtn.show();
+			$clearFiltersBtn.next().show();
 		} else {
-			$filterStatus.hide();
+			$clearFiltersBtn.hide();
+			$clearFiltersBtn.next().hide();
 		}
 	};
 
@@ -727,7 +765,7 @@
 			// alphabetical
 			case SORT_TYPES.alphabetical:
 				// set sort status
-				$sortOptions.find('.currentSort').text('Alphabetical');
+				$sortTypeField.text('Alphabetical');
 				// sort new list
 				itemList.sort('itemName', { asc: true });
 
@@ -735,28 +773,28 @@
 
 			// metascores
 			case SORT_TYPES.metascore:
-				$sortOptions.find('.currentSort').text('Review Score');
+				$sortTypeField.text('Review Score');
 				itemList.sort('scoreDetails', {sortFunction: metascoreSort});
 
 				break;
 
 			// release date
 			case SORT_TYPES.releaseDate:
-				$sortOptions.find('.currentSort').text('Release Date');
+				$sortTypeField.text('Release Date');
 				itemList.sort('releaseDate', {sortFunction: releaseDateSort});
 
 				break;
 
 			// platform
 			case SORT_TYPES.platform:
-				$sortOptions.find('.currentSort').text('Platform');
+				$sortTypeField.text('Platform');
 				itemList.sort('platform', { asc: true });
 
 				break;
 
 			// price
 			case SORT_TYPES.price:
-				$sortOptions.find('.currentSort').text('Price');
+				$sortTypeField.text('Price');
 				itemList.sort('priceDetails', {sortFunction: priceSort});
 
 				break;

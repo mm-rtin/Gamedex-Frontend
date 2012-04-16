@@ -35,11 +35,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SiteView.init = function() {
 
-		console.info('user view init');
-		// debug login
-		//login('1', '1');
-
 		SiteView.createEventHandlers();
+
+		// start demo app
+		startDemo();
 	};
 
 
@@ -137,6 +136,18 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* startDemo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var startDemo = function() {
+
+		// demo login
+		User.demoLogin();
+
+		// start user app
+		startApp();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var logout = function(email, password) {
@@ -152,6 +163,9 @@
 
 		// clear user data
 		User.logout();
+
+		// start demo app
+		startDemo();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,7 +173,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var signup = function(email, password) {
 
-		console.info(email, password);
+		// console.info(email, password);
 		// create user
 		User.createUser(email, password, signup_result);
 	};
@@ -169,22 +183,16 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var login_result = function(data, email) {
 
+		// success
 		if (data.userID) {
 
 			// show logged in view
 			showLoggedInView(email);
 
-			// get item directory
-			ItemData.downloadItemDirectory(function(data) {
+			// start user app
+			startApp();
 
-				console.info(data);
-
-				// get user lists
-				List.getList();
-
-				// init ItemView for logged in user after item directory loaded
-				ItemView.userLoggedIn();
-			});
+		// failed
 		} else {
 
 		}
@@ -199,7 +207,7 @@
 		if (typeof data.status !== 'undefined') {
 
 			if (data.status === 'user_exists') {
-				console.info('user exists');
+				// console.info('user exists');
 			}
 
 		// success
@@ -207,6 +215,57 @@
 			// login new user
 			login_result(data, email);
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* startApp - user credentials must be available before calling
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var startApp = function() {
+
+		// clear view and item data
+		ItemView.clearItemView();
+		ItemData.resetItemData();
+
+		// returned data
+		var itemsReturnedData = null;
+		var listReturnedData = null;
+
+		// directory request promise
+		var directoryRequest = ItemData.downloadItemDirectory();
+
+		// items request promise
+		var itemsRequest = ItemView.initializeUserItems(function(items) {
+			itemsReturnedData = items;
+
+		}, function() {
+			itemsReturnedData = {};
+		});
+
+		// get user lists
+		var listRequest = List.getList(function(data) {
+			listReturnedData = data;
+
+		}, function() {
+
+
+		});
+
+		// deferreds: wait for itemsRequest and directoryRequest
+		$.when(itemsRequest, directoryRequest, listRequest).then(
+
+			// all ajax requests returned
+			function() {
+
+				// list result
+				List.getList_result(listReturnedData);
+
+				// itemView result
+				ItemView.initializeUserItems_result(itemsReturnedData);
+			},
+			function() {
+
+			}
+		);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,7 +302,6 @@
 		// show info header
 		$infoHeader.show();
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showLoginForm -

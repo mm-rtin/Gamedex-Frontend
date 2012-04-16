@@ -10,6 +10,7 @@
 
 	// full item detail results for last viewed tag:
 	// alias of itemsCacheByTag[tagID]
+	// key by ID
 	var items = {};
 
 	// items cached by tagID
@@ -18,10 +19,10 @@
 	// basic item framework - loaded before item details
 	// all directories share item data
 
-	// items by itemID = contains tags for each itemID
+	// key by itemID = contains tags for each itemID
 	var itemDataDirectory = {};
 
-	// items by 3RD party ID
+	// key 3RD party ID
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
@@ -74,13 +75,51 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getRandomItemID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.getRandomItemID = function() {
+
+		var idList = [];
+
+		// add ids to idList
+		_.each(items, function(item, key) {
+			idList.push(key);
+		});
+
+		// get random number between 0 and idList.length
+		var randomIndex = Math.floor(Math.random() * idList.length);
+		// console.info(idList, randomIndex);
+
+		return idList[randomIndex];
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cacheItemsByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.cacheItemsByTag = function(items) {
+
+		// iterate items
+		_.each(items, function(item, id) {
+
+			// get item in itemDataDirectory and iterate tags
+			_.each(itemDataDirectory[item.itemID].tags, function(tag, tagID) {
+
+				// console.info('cached: ' + id + '  to: ' + tagID);
+
+				// cache item by tag
+				cacheItemByTag(tagID, item);
+			});
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.getItems = function(tagID, onSuccess, onError) {
 
 		// DEBUG
 		if (typeof $(document).data('events').keypress === 'undefined') {
-			console.info($(document).data('events'));
+			// console.info($(document).data('events'));
 			$(document).keypress(function(e) {
 				if (e.which == 96) {
 					console.warn('------------ itemsCacheByTag: ---------', itemsCacheByTag);
@@ -89,6 +128,8 @@
 				}
 			});
 		}
+
+		var ajax = null;
 
 		// find in itemsCacheByTag first
 		var cachedItems = getCachedItemsByTag(tagID);
@@ -114,7 +155,7 @@
 				list_id: tagID
 			};
 
-			$.ajax({
+			ajax = $.ajax({
 				url: restURL,
 				type: 'POST',
 				data: requestData,
@@ -122,10 +163,12 @@
 				cache: true,
 				success: function(data) {
 
+					// console.info('itemData done');
+
 					// parse results and assign as new items data
 					items = parseItemResults(data);
 
-					// save reference to itemsCacheByTag
+					// cache items to tagID
 					itemsCacheByTag[tagID] = items;
 
 					// return data to callee
@@ -134,6 +177,8 @@
 				error: onError
 			});
 		}
+
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,6 +193,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemData.downloadItemDirectory = function(onSuccess, onError) {
 
+		var ajax = null;
 		var restURL = tmz.api + 'item/directory';
 		var userData = User.getUserData();
 
@@ -156,13 +202,14 @@
 			uk: userData.secret_key
 		};
 
-		$.ajax({
+		ajax = $.ajax({
 			url: restURL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
+				// console.info('itemDirectory done');
 				getItemDirectory_result(data);
 				if (onSuccess) {
 					onSuccess(data);
@@ -170,6 +217,8 @@
 			},
 			error: onError
 		});
+
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -289,8 +338,44 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				updateDirectoryItem(item);
+				updateUserAttributes(item);
 				onSuccess(item, data);
+			},
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateMetacritic
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemData.updateMetacritic = function(currentItem, onSuccess, onError) {
+
+		var restURL = tmz.api + 'item/updateMetacritic';
+		var userData = User.getUserData();
+
+		// clone currentItem as new object
+		var item = jQuery.extend(true, {}, currentItem);
+
+		var requestData = {
+			'uid': userData.user_id,
+			'uk': userData.secret_key,
+
+			'id': item.itemID,
+			'mp': item.metascorePage,
+			'ms': item.metascore
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+
+				if(onSuccess) {
+					onSuccess(item, data);
+				}
 			},
 			error: onError
 		});
@@ -364,6 +449,22 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cacheItemByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cacheItemByTag = function(tagID, item) {
+
+		// cache item by tag
+		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
+			itemsCacheByTag[tagID][item.id] = item;
+
+		} else {
+			itemsCacheByTag[tagID] = {};
+			itemsCacheByTag[tagID][item.id] = item;
+		}
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteClientItem = function(id, tagID, itemID) {
@@ -382,7 +483,7 @@
 		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
 		cachedItem = getCacheItemByItemID(itemID, VIEW_ALL_TAG_ID);
 
-		console.info(cachedItems);
+		// console.info(cachedItems);
 
 		// 'view all' cache available and item is in cache
 		if (cachedItem) {
@@ -422,15 +523,8 @@
 			// add custom formated properties
 			addCustomProperties(newItem);
 
-			// check if item cache for tagID exists
-			cachedItems = getCachedItemsByTag(data.tagIDsAdded[i]);
-
-			// if cache found - add item to cache
-			if (cachedItems) {
-
-				// add to existing cache
-				cachedItems[newItem.id] = newItem;
-			}
+			// cache new item by tag
+			cacheItemByTag(data.tagIDsAdded[i], newItem);
 
 			// item added
 			addedItems.push(newItem);
@@ -585,9 +679,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateDirectoryItem - also updates 3rd party directories
+	* updateUserAttributes - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateDirectoryItem = function(item) {
+	var updateUserAttributes = function(item) {
 
 		var directoryItem = itemDataDirectory[item.itemID];
 

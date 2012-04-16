@@ -121,12 +121,12 @@ tmz.initializeModules = function() {
 	// ITEM PANEL
 	tmz.itemView.init();
 
-	// USER VIEW
-	tmz.siteView.init();
-
 	// GRID VIEW
 	tmz.gridView.init();
 
 	// FILTER PANEL
 	tmz.filterPanel.init();
+	// USER VIEW
+
+	tmz.siteView.init();
 };

@@ -14,9 +14,9 @@
     // constants
 	var LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1};
     var TAB_IDS = {'#searchTab': 0, '#listTab': 1};
-    var TIME_TO_SUBMIT_QUERY = 500;	// the number of miliseconds to wait before submiting search query
+    var TIME_TO_SUBMIT_QUERY = 250;	// the number of miliseconds to wait before submiting search query
     var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
-    var PANEL_HEIGHT_OFFSET = 275;
+    var PANEL_HEIGHT_OFFSET = 225;
     var PANEL_HEIGHT_PADDING = 40;
 
     // search field timeout
@@ -31,20 +31,23 @@
     var searchProvider = Utilities.getProviders().Amazon;
     var listProvider = LIST_PROVIDERS.IGN;
     var currentTab = TAB_IDS['#searchTab'];
-    var platform = null;
-    var commonPlatform = null;
+    var searchPlatform = null;
+    var listPlatform = null;
     var searchDisplayType = DISPLAY_TYPE.Icons;
     var listDisplayType = DISPLAY_TYPE.Icons;
 
     // node cache
     var $searchContainer = $('#searchContainer');
+
     var $searchProvider = $('#searchProvider');
     var $listProvider = $('#listProvider');
+    var $searchProviderName = $searchProvider.find('.providerName');
+    var $listProviderName = $listProvider.find('.providerName');
 
-    var $platformListContainer = $('#platformContainer');
-    var $commonPlatformListContainer = $('#commonPlatformContainer');
-    var $platformList = $('.platformList');
-    var $commonPlatformList = $commonPlatformListContainer.find('.platformList');
+    var $searchPlatforms = $('#searchPlatforms');
+    var $listPlatforms = $('#listPlatforms');
+    var $searchPlatformsName = $searchPlatforms.find('.platformName');
+    var $listPlatformsName = $listPlatforms.find('.platformName');
 
     var $finderTabLinks = $('#finderTabLinks');
     var $finderTabContent = $('#finderTabContent');
@@ -53,7 +56,7 @@
     var $searchTabLink = $('#searchTabLink');
     var $listTabLink = $('#listTabLink');
 
-    var $search = $('#search');
+    var $search = $('#searchField');
     var $searchButton = $('#search_btn');
     var $searchResultsContainer = $('#searchResultsContainer');
     var $searchResults = $('#searchResults');
@@ -76,14 +79,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.init = function(keywords) {
 
-		// get current state
-		searchProviderChanged();
-
 		SearchView.createEventHandlers();
 
-		// set platform
-		platform = Utilities.getPlatformIndex()[0];
-		commonPlatform = Utilities.getStandardPlatform('pc');
+		// set default platform
+		searchPlatform = Utilities.getPlatformIndex()[0];
+		listPlatform = Utilities.getStandardPlatform('');
+
+		// set default search provider
+		searchProvider = Utilities.getProviders().Amazon;
 
 		// init tooltips
 		$listDisplayOptions.find('button').each(function(key, button) {
@@ -119,26 +122,32 @@
 		// searchProvider: change
 		$searchProvider.find('li a').click(function(e) {
 			e.preventDefault();
-
 			// set attribute
 			$searchProvider.attr('data-content', $(this).attr('data-content'));
+			previousSearchTerms = '';
+
 			searchProviderChanged();
 		});
 
 		// listProvider: change
 		$listProvider.find('li a').click(function(e) {
 			e.preventDefault();
-
 			// set attribute
 			$listProvider.attr('data-content', $(this).attr('data-content'));
 			listProviderChanged();
 		});
 
-		// commonPlatformList: change
-		$commonPlatformList.chosen().change(commonPlatformChanged);
+		// listPlatforms: change
+		$listPlatforms.find('li a').click(function(e) {
+			e.preventDefault();
+			changeListPlatform($(this).attr('data-content'), $(this).text());
+		});
 
-		// platformList: change
-		$platformList.chosen().change(platformChanged);
+		// searchPlatforms: change
+		$searchPlatforms.find('li a').click(function(e) {
+			e.preventDefault();
+			changeSearchPlatform($(this).attr('data-content'), $(this).text());
+		});
 
 		// search results: click
 		$searchResults.on('click', 'tr', searchResultItem_onClick);
@@ -147,7 +156,10 @@
 		$listResults.on('click', 'tr', listResultItem_onClick);
 
 		// dropdown menu > li: click
-		$searchResults.on('click', '.dropdown-menu li', platformMenu_onClick);
+		$searchResults.on('click', '.dropdown-menu li', function(e) {
+			e.preventDefault();
+			selectPlatform(this);
+		});
 
 		// searchDisplayType toggle
 		$searchDisplayOptions.on('click', 'button', function(e) {
@@ -166,7 +178,7 @@
 
 		// search button: click
 		$searchButton.click(function() {
-			SearchView.search($inputField.val());
+			SearchView.search(searchTerms);
 		});
 
 		// window, searchResults: resized
@@ -227,16 +239,16 @@
 		}
 
 		// don't search previous search terms
-		if (searchTerms !== previousSearchTerms) {
+		if (keywords !== previousSearchTerms) {
 
-			previousSearchTerms = searchTerms;
+			previousSearchTerms = keywords;
 
 			// search based on search provider
 			switch (searchProvider) {
 
 				// amazon
 				case Utilities.getProviders().Amazon:
-					Amazon.searchAmazon(keywords, platform.amazon, searchAmazon_result);
+					Amazon.searchAmazon(keywords, searchPlatform.amazon, searchAmazon_result);
 					break;
 
 				// giantbomb
@@ -475,24 +487,26 @@
 	var searchProviderChanged = function() {
 
 		var providerID = $searchProvider.attr('data-content');
-		previousSearchTerms = '';
 
 		switch(providerID) {
 			case '0':
 				searchProvider = Utilities.getProviders().Amazon;
 				// set title
-				$searchProvider.find('.providerName').text('Amazon.com');
+				$searchProviderName.text('Amazon');
 				// show platform list
-				$platformListContainer.show();
+				$searchPlatforms.show();
 				break;
 			case '1':
 				searchProvider = Utilities.getProviders().GiantBomb;
 				// set title
-				$searchProvider.find('.providerName').text('GiantBomb.com');
+				$searchProviderName.text('GiantBomb');
 				// show platform list
-				$platformListContainer.hide();
+				$searchPlatforms.hide();
 				break;
 		}
+
+		// run search with new search provider
+		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -514,7 +528,7 @@
 				$listDisplayOptions.fadeTo(100, 0.35);
 
 				// set title
-				$listProvider.find('.providerName').text('Popular');
+				$listProviderName.text('Popular');
 
 				listProvider = LIST_PROVIDERS.Gamestats;
 				break;
@@ -528,7 +542,7 @@
 				$listDisplayOptions.fadeTo(100, 1);
 
 				// set title
-				$listProvider.find('.providerName').text('Upcoming');
+				$listProviderName.text('Upcoming');
 
 				listProvider = LIST_PROVIDERS.IGN;
 				break;
@@ -539,28 +553,35 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* commonPlatformChanged
+	* changeListPlatform
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var commonPlatformChanged = function() {
+	var changeListPlatform = function(platform, name) {
 
-		previousSearchTerms = '';
+		// set platform name
+		$listPlatformsName.text(name);
 
 		// set platform object
-		commonPlatform = Utilities.getStandardPlatform($(this).val());
+		listPlatform = Utilities.getStandardPlatform(platform);
 
 		// get game lists
 		getList(listProvider);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* platformChanged
+	* changeSearchPlatform
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var platformChanged = function() {
+	var changeSearchPlatform = function(platform, name) {
 
 		previousSearchTerms = '';
 
+		// set platform name
+		$searchPlatformsName.text(name);
+
 		// set platform object
-		platform = Utilities.getStandardPlatform($(this).val());
+		searchPlatform = Utilities.getStandardPlatform(platform);
+
+		// do search with new platform
+		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -586,11 +607,11 @@
 
 		switch (listProvider) {
 			case LIST_PROVIDERS.Gamestats:
-				SearchView.getGamestatsPopularityListByPlatform(commonPlatform);
+				SearchView.getGamestatsPopularityListByPlatform(listPlatform);
 				break;
 
 			case LIST_PROVIDERS.IGN:
-				SearchView.getIGNUpcomingListByPlatform(commonPlatform);
+				SearchView.getIGNUpcomingListByPlatform(listPlatform);
 				break;
 		}
 	};
@@ -602,12 +623,12 @@
 
 		if (show) {
 			$searchDisplayOptions.show();
-			$platformListContainer.show();
+			$searchPlatforms.show();
 			$searchProvider.show();
 
 		} else {
 			$searchDisplayOptions.hide();
-			$platformListContainer.hide();
+			$searchPlatforms.hide();
 			$searchProvider.hide();
 		}
 	};
@@ -619,12 +640,12 @@
 
 		if (show) {
 			$listDisplayOptions.show();
-			$commonPlatformListContainer.show();
+			$listPlatforms.show();
 			$listProvider.show();
 
 		} else {
 			$listDisplayOptions.hide();
-			$commonPlatformListContainer.hide();
+			$listPlatforms.hide();
 			$listProvider.hide();
 		}
 	};
@@ -710,21 +731,24 @@
 		// set search input field
 		$inputField.val(searchTerms);
 
+		// change searchPlatform to listPlatform
+		changeSearchPlatform(listPlatform.id);
+
 		// start search for clicked item text
 		SearchView.search(searchTerms);
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* platformMenu_onClick
+	* selectPlatform
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var platformMenu_onClick = function(e) {
+    var selectPlatform = function(element) {
 
 		// assign platform to searchItem and relaunch detail view
-		var searchResult = SearchView.getSearchResult($(this).attr('data-content'));
-		searchResult.platform = $(this).find('a').text();
+		var searchResult = SearchView.getSearchResult($(element).attr('data-content'));
+		searchResult.platform = $(element).find('a').text();
 
 		// get title element
-		$(this).parent().siblings('.dropdown-toggle').html(searchResult.platform).append('<b class="caret"></b>');
+		$(element).parent().siblings('.dropdown-toggle').html(searchResult.platform).append('<b class="caret"></b>');
     };
 
 })(tmz.module('searchView'), tmz, jQuery, _);

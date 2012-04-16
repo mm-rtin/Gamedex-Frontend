@@ -48,7 +48,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.getFilters = function() {
 
-		console.info('apply filter');
+		// console.info('apply filter');
 
 		var filters = {};
 		filters.releaseDateFilters = [];
@@ -145,8 +145,8 @@
 
 		var filters = FilterPanel.getFilters();
 		var filtered = false;
-		console.info(filters);
-		console.info(sortType);
+		// console.info(filters);
+		// console.info(sortType);
 
 		// get selected items
 		var selectedItems = $('.gridItem').filter(function(index){

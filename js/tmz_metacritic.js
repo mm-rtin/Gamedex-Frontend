@@ -4,6 +4,7 @@
     // module references
 	var Amazon = tmz.module('amazon');
 	var ItemLinker = tmz.module('itemLinker');
+	var ItemData = tmz.module('itemData');
 
 	// REST URL
 	var METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search';
@@ -20,10 +21,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
+
+		// console.info(sourceItem.asin, sourceItem.gbombID);
 		// find in cache first
 		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
 
 		if (cachedScore) {
+			// console.info('cached metascore:', cachedScore);
+
 			// add score data to source item
 			sourceItem.metascore = cachedScore.metascore;
 			sourceItem.metascorePage = cachedScore.metascorePage;
@@ -45,6 +50,8 @@
 				data: requestData,
 				cache: true,
 				success: function(data) {
+
+					// console.info('fetch metascore:', data);
 
 					// parse result
 					parseMetascoreResults(cleanedSearchTerms, data, sourceItem, function(data) {
@@ -136,11 +143,11 @@
 	var addToMetascoreCache = function(asin, gbombID, metacriticItem) {
 
 		// add to metascoreCache linked by asin
-		if (asin !== '0') {
+		if (asin != '0') {
 			metascoreCache[asin] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
 		}
 		// add to metascoreCache linked by gbombID
-		if (gbombID !== '0') {
+		if (gbombID != '0') {
 			metascoreCache[gbombID] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
 		}
 	};
@@ -151,6 +158,10 @@
 	var parseMetascoreResults = function(keywords, data, sourceItem, onSuccess) {
 
 		var result = null;
+
+		// save values before updated with current info
+		var previousMetascore = sourceItem.metascore;
+		var previousMetascorePage = sourceItem.metascorePage;
 
 		// parse raw result
 		if (typeof data.metascore === 'undefined') {
@@ -169,7 +180,7 @@
 			result = data;
 		}
 
-		// add metascore data to sourceItem
+		// add/update metascore data to sourceItem
 		if (result && result.metascore !== '') {
 			sourceItem.metascore = result.metascore;
 			sourceItem.displayMetascore = result.metascore;
@@ -182,6 +193,16 @@
 			sourceItem.metascore = -1;
 			sourceItem.displayMetascore = 'n/a';
 			sourceItem.metascorePage = '';
+		}
+
+		// console.info(sourceItem, previousMetascore);
+
+		// check if source item score or page differs from return score/page
+		if (previousMetascore && sourceItem.metascore != previousMetascore) {
+
+			// console.info('######## UPDATE METACRITIC RECORD:', sourceItem.metascore, previousMetascore, sourceItem.metascorePage, previousMetascorePage);
+			// update metacritic data for source item record
+			ItemData.updateMetacritic(sourceItem);
 		}
 
 		onSuccess(sourceItem);
@@ -198,7 +219,7 @@
 			'metascorePage': encodeURI(metascorePage)
 		};
 
-		console.info(requestData);
+		// console.info(requestData);
 
 		$.ajax({
 			url: METACRITIC_CACHE_URL,
@@ -206,8 +227,8 @@
 			data: requestData,
 			cache: true,
 			success: function(data) {
-				console.info('metacritic: add to server cache');
-				console.info(data);
+				// console.info('metacritic: add to server cache');
+				// console.info(data);
 			}
 		});
 	};

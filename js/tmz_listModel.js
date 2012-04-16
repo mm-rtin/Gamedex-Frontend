@@ -24,7 +24,8 @@
 	var activeTags = {};
 
 	// templates
-	var listTemplate = _.template($('#tag-results-template').html());
+	var addListTemplate = _.template($('#add-list-template').html());
+	var viewListTemplate = _.template($('#view-list-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
@@ -62,12 +63,8 @@
 		viewListTemplateData.viewList = true;
 
 		// output template to list containers
-		$viewList.html(listTemplate(viewListTemplateData));
-		$gridList.html(listTemplate(viewListTemplateData));
-
-		// send event to update chzn dropdown
-		$viewList.trigger("liszt:updated");
-		$gridList.trigger("liszt:updated");
+		$viewList.find('ul').html(viewListTemplate(viewListTemplateData));
+		$gridList.find('ul').html(viewListTemplate(viewListTemplateData));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,7 +90,7 @@
 		addListTemplateData.viewList = false;
 
 		// output template to list containers
-		$addList.html(listTemplate(addListTemplateData));
+		$addList.html(addListTemplate(addListTemplateData));
 
 		// send event to update chzn dropdown
 		$addList.trigger("liszt:updated");
@@ -102,32 +99,41 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getList
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.getList = function() {
+	List.getList = function(onSuccess, onFail) {
+
+		var ajax = null;
 
 		// empty list data
 		viewList = {};
 		addList = {};
 
-		ListData.getList(function(data) {
+		ajax = ListData.getList(onSuccess, onFail);
 
-			// populate active tags
-			populateActiveTags();
-
-			parseListResponse(data);
-
-			// render lits
-			List.renderViewLists();
-			List.renderAddLists();
-
-		});
+		return ajax;
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getList_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.getList_result = function(data) {
+
+		// populate active tags
+		populateActiveTags();
+
+		parseListResponse(data);
+
+		// render lits
+		List.renderViewLists();
+		List.renderAddLists();
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addList
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.addList = function(listName) {
 
-		console.info(listName);
+		// console.info(listName);
 		// check if list name exists
 		if (typeof addList[listName] === 'undefined') {
 
@@ -140,7 +146,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.updateViewList = function(tagIDsAdded, currentViewTagID) {
 
-		console.info('update view list');
+		// console.info('update view list');
 
 		var updated = false;
 
@@ -158,7 +164,7 @@
 
 				// add to view lists object
 				viewList[listIndex[tagIDsAdded[i]]] = {'id': tagIDsAdded[i], 'name': listIndex[tagIDsAdded[i]]};
-				console.info('update list', viewList[listIndex[tagIDsAdded[i]]]);
+				// console.info('update list', viewList[listIndex[tagIDsAdded[i]]]);
 				updated = true;
 			}
 		}
@@ -181,12 +187,10 @@
 	List.selectViewTag = function(tagID) {
 
 		// get option node
-		option = $viewList.find('option[value="' + tagID + '"]');
+		option = $viewList.find('a[data-content="' + tagID + '"]');
 
 		// select option
-		$(option).attr('selected', '');
 
-		$viewList.trigger("liszt:updated");
 	};
 
 
@@ -196,12 +200,10 @@
 	List.selectGridTag = function(tagID) {
 
 		// get option node
-		option = $gridList.find('option[value="' + tagID + '"]');
+		$listItem = $gridList.find('a[data-content="' + tagID + '"]');
 
-		// select option
-		$(option).attr('selected', '');
-
-		$gridList.trigger("liszt:updated");
+		// set gridList name as listItem name
+		$gridList.find('.viewName').text($listItem.text());
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -277,6 +277,9 @@
 		// get item attributes data
 		itemAttributes = ItemData.getDirectoryItemByItemID(firstItem.itemID);
 
+		// set current viewing id
+		currentID = firstItem.id;
+
 		// clear secondItem model
 		clearSecondItemModel(currentProvider);
 
@@ -479,7 +482,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getMetascore = function(title, item, sourceItem) {
 
-		console.info(title, item);
 		var metascoreSelector = '';
 
 		// hide old metascore on each tab
@@ -492,23 +494,21 @@
 		// fetch metascore
 		Metacritic.getMetascore(title, item, function(item) {
 
-			// update source item metascore
-			if (sourceItem) {
-				sourceItem.metascorePage = item.metascorePage;
-				sourceItem.metascore = item.metascore;
-			}
+			// ignore results which do not match currently viewing item
+			if (currentID === item.id) {
 
-			// show metascore on each tab
-			for (var i = 0, len = TAB_IDS.length; i < len; i++) {
+				// show metascore on each tab
+				for (var i = 0, len = TAB_IDS.length; i < len; i++) {
 
-				metascoreSelector = TAB_IDS[i] + ' .metascore';
+					metascoreSelector = TAB_IDS[i] + ' .metascore';
 
-				// add metascore info to item detail
-				Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
+					// add metascore info to item detail
+					Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 
-				// show page in detail attributes
-				$metacriticPage.fadeIn();
-				$metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+					// show page in detail attributes
+					$metacriticPage.fadeIn();
+					$metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+				}
 			}
 		});
 	};
@@ -858,9 +858,8 @@
 
 		// 1 or more attributes changed - only change for existing items
 		// for new items, attributes are added through add item method
-		console.info(isAttributesDirty(), itemType);
 		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
-			console.info('update');
+			// console.info('update');
 			// update item
 			ItemData.updateItem(item, updateItem_result);
 		}

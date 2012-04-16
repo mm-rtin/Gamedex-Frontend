@@ -13,6 +13,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ListData.getList = function(onSuccess, onError) {
 
+		var ajax = null;
 		var userData = User.getUserData();
 		var restURL = tmz.api + 'list/';
 
@@ -21,7 +22,7 @@
 			uk: userData.secret_key
 		};
 
-		$.ajax({
+		ajax = $.ajax({
 			url: restURL,
 			type: 'POST',
 			data: requestData,
@@ -30,6 +31,8 @@
 			success: onSuccess,
 			error: onError
 		});
+
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

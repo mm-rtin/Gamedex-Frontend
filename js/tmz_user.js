@@ -9,6 +9,9 @@
 	// data
 	var userData = {};
 
+	// demo account
+	var demoUser = {'user_id': '1', 'secret_key': '1'};
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUserData
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -43,6 +46,16 @@
 
 			}
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* demoLogin
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.demoLogin = function() {
+
+		// assign demo credentials to user
+		userData.user_id = demoUser.user_id;
+		userData.secret_key = demoUser.secret_key;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
