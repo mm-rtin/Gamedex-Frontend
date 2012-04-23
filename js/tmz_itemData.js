@@ -4,21 +4,19 @@
 	// Dependencies
 	var User = tmz.module('user');
 	var ItemLinker = tmz.module('itemLinker');
+	var ItemCache = tmz.module('itemCache');
+	var Utilities = tmz.module('utilities');
 
 	// constants
-	var VIEW_ALL_TAG_ID = '0';
+	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID();
 
 	// full item detail results for last viewed tag:
 	// alias of itemsCacheByTag[tagID]
 	// key by ID
 	var items = {};
 
-	// items cached by tagID
-	itemsCacheByTag = {};
-
 	// basic item framework - loaded before item details
 	// all directories share item data
-
 	// key by itemID = contains tags for each itemID
 	var itemDataDirectory = {};
 
@@ -26,104 +24,120 @@
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDirectory -
+	* itemsAndDirectoryLoaded -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemDirectory = function() {
-		return itemDataDirectory;
+	var itemsAndDirectoryLoaded = function(items) {
+		ItemCache.cacheItemsByTag(items, itemDataDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getDirectoryItemByItemID
+	* downloadItemDirectory
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getDirectoryItemByItemID = function(itemID) {
+	var downloadItemDirectory = function(onSuccess, onError) {
 
-		// return item or empty object
-		return itemDataDirectory[itemID] || null;
-	};
+		var ajax = null;
+		var restURL = tmz.api + 'item/directory';
+		var userData = User.getUserData();
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemByThirdPartyID
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItemByThirdPartyID = function(gbombID, asin) {
+		// check local storage
+		var itemDirectory = ItemCache.getStoredItemDirectory();
 
-		// itemID from directory
-		var item = null;
+		if (itemDirectory) {
 
-		// select appropriate 3rd party item directory
-		if (gbombID !== 0) {
-			item = giantBombDirectory[gbombID];
+			storedItemDirectory_result(itemDirectory);
+			if (onSuccess) {
+				onSuccess(itemDirectory);
+			}
 
-		} else if (asin !== 0) {
-			item = amazonDirectory[asin];
+		// download directory data
+		} else {
+
+			var requestData = {
+				user_id: userData.user_id,
+				uk: userData.secret_key
+			};
+
+			ajax = $.ajax({
+				url: restURL,
+				type: 'POST',
+				data: requestData,
+				dataType: 'json',
+				cache: true,
+				success: function(data) {
+
+					downloadedItemDirectory_result(data);
+
+					// store finished directory
+					ItemCache.storeItemDirectory(itemDataDirectory);
+
+					if (onSuccess) {
+						onSuccess(data);
+					}
+				},
+				error: onError
+			});
 		}
 
-		return item;
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* resetItemData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.resetItemData = function() {
-
-		items = {};
-		itemDataDirectory = {};
-		itemsCacheByTag = {};
-		amazonDirectory = {};
-		giantBombDirectory = {};
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getRandomItemID -
+	* downloadedItemDirectory_result - run after a itemDirectory downloaded through AJAX
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getRandomItemID = function() {
+	var downloadedItemDirectory_result = function(data) {
 
-		var idList = [];
+		var directoryItem = {};
 
-		// add ids to idList
-		_.each(items, function(item, key) {
-			idList.push(key);
+		// create new directory, set 3rd party IDs as keys
+		_.each(data.directory, function(item, itemID) {
+
+			directoryItem = {
+				// add itemID to directoryItem
+				itemID: itemID,
+				asin: item.aid,
+				gbombID: item.gid,
+				gameStatus: item.gs,
+				playStatus: item.ps,
+				tags: item.t,
+				tagCount: item.tc,
+				userRating: item.ur
+			};
+
+			// for each 3RD party directory sets their ID as keys
+			addItemToDirectories(directoryItem);
 		});
-
-		// get random number between 0 and idList.length
-		var randomIndex = Math.floor(Math.random() * idList.length);
-		// console.info(idList, randomIndex);
-
-		return idList[randomIndex];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cacheItemsByTag -
+	* storedItemDirectory_result - run after itemDirectory loaded through localStorage
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.cacheItemsByTag = function(items) {
+	var storedItemDirectory_result = function(itemDirectory) {
 
-		// iterate items
-		_.each(items, function(item, id) {
+		var directoryItem = {};
 
-			// get item in itemDataDirectory and iterate tags
-			_.each(itemDataDirectory[item.itemID].tags, function(tag, tagID) {
+		// create new directory, set 3rd party IDs as keys
+		_.each(itemDirectory, function(item) {
 
-				// console.info('cached: ' + id + '  to: ' + tagID);
-
-				// cache item by tag
-				cacheItemByTag(tagID, item);
-			});
+			// for each 3RD party directory sets their ID as keys
+			addItemToDirectories(item);
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItems = function(tagID, onSuccess, onError) {
+	var getItems = function(tagID, onSuccess, onError) {
 
 		// DEBUG
 		if (typeof $(document).data('events').keypress === 'undefined') {
 			// console.info($(document).data('events'));
 			$(document).keypress(function(e) {
 				if (e.which == 96) {
-					console.warn('------------ itemsCacheByTag: ---------', itemsCacheByTag);
 					console.warn('------------ itemDataDirectory: -------', itemDataDirectory);
+					console.warn('------------ amazonDirectory: -------', amazonDirectory);
+					console.warn('------------ giantBombDirectory: -------', giantBombDirectory);
 					console.warn('------------ items: -------------------', items);
 				}
 			});
@@ -132,7 +146,7 @@
 		var ajax = null;
 
 		// find in itemsCacheByTag first
-		var cachedItems = getCachedItemsByTag(tagID);
+		var cachedItems = ItemCache.getCachedItemsByTag(tagID);
 
 		// load cached items offer
 		if (cachedItems) {
@@ -163,13 +177,8 @@
 				cache: true,
 				success: function(data) {
 
-					// console.info('itemData done');
-
 					// parse results and assign as new items data
 					items = parseItemResults(data);
-
-					// cache items to tagID
-					itemsCacheByTag[tagID] = items;
 
 					// return data to callee
 					onSuccess(items);
@@ -182,49 +191,61 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItems
+	* parseItemResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getItem = function(id) {
-		return items[id];
+	var parseItemResults = function(itemResults) {
+
+		// temp item data
+		var tempItems = {};
+		var item = {};
+
+		var itemLength = 0;
+		var calendarDate = null;
+
+		// iterate itemResults
+		for (var i = 0, len = itemResults.items.length; i < len; i++) {
+
+			item = {};
+
+			// get attributes
+			item.id = itemResults.items[i].iid;
+			item.initialProvider = itemResults.items[i].ip;
+			item.itemID = itemResults.items[i].iid;
+			item.asin = itemResults.items[i].aid;
+			item.gbombID = itemResults.items[i].gid;
+
+			item.name = itemResults.items[i].n;
+			item.releaseDate = itemResults.items[i].rd;
+			item.platform = itemResults.items[i].p;
+			item.smallImage = itemResults.items[i].si;
+			item.thumbnailImage = itemResults.items[i].ti;
+			item.largeImage = itemResults.items[i].li;
+			item.metascore = itemResults.items[i].ms;
+			item.offers = {};
+
+			item.description = '';
+
+			// add custom formated properties
+			addCustomProperties(item);
+
+			// add to lists objects
+			tempItems[item.itemID] = item;
+		}
+
+		return tempItems;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* downloadItemDirectory
+	* getItem
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.downloadItemDirectory = function(onSuccess, onError) {
-
-		var ajax = null;
-		var restURL = tmz.api + 'item/directory';
-		var userData = User.getUserData();
-
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key
-		};
-
-		ajax = $.ajax({
-			url: restURL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-				// console.info('itemDirectory done');
-				getItemDirectory_result(data);
-				if (onSuccess) {
-					onSuccess(data);
-				}
-			},
-			error: onError
-		});
-
-		return ajax;
+	var getItem = function(id) {
+		return items[id];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getTagsByItemID - currently not used
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.getTagsByItemID = function(itemID, onSuccess, onError) {
+	var getTagsByItemID = function(itemID, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/tags';
 		var userData = User.getUserData();
@@ -251,7 +272,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemToTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.addItemToTags = function(listIDs, currentItem, onSuccess, onError) {
+	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/add';
 		var userData = User.getUserData();
@@ -262,7 +283,7 @@
 		var requestData = {
 			'uid': userData.user_id,
 			'uk': userData.secret_key,
-			'lids': listIDs,
+			'lids': tagIDs,
 
 			'n': item.name,
 			'rd': item.releaseDate,
@@ -298,9 +319,90 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteTagsForItem
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteTagsForItem = function(deletedIDs, deletedTagIDs, currentItem, onSuccess, onError) {
+
+		var restURL = tmz.api + 'item/batch-delete';
+		var userData = User.getUserData();
+
+		var requestData = {
+			user_id: userData.user_id,
+			uk: userData.secret_key,
+			ids: deletedIDs
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+
+			},
+			error: onError
+		});
+
+		// delete 1 or more tags from item
+		batchTagDelete(currentItem.itemID, deletedIDs, deletedTagIDs);
+
+		onSuccess(currentItem.itemID, deletedTagIDs);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* batchTagDelete -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var batchTagDelete = function(itemID, deletedIDs, deletedTagIDs) {
+
+		// iterate delete tagIDs
+		for (var i = 0, len = deletedIDs.length; i < len; i++) {
+
+			// delete item for tag
+			deleteClientItem(deletedIDs[i], deletedTagIDs[i], itemID);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteSingleTagForItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteSingleTagForItem = function(itemID, tagID, onSuccess, onError) {
+
+		// get itemTagID
+		var id = getDirectoryItemByItemID(itemID).tags[tagID];
+
+		var restURL = tmz.api + 'item/delete';
+		var userData = User.getUserData();
+
+		var requestData = {
+			user_id: userData.user_id,
+			uk: userData.secret_key,
+			id: id
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+			},
+			error: onError
+		});
+
+		// delete client item
+		deleteClientItem(id, tagID, itemID);
+
+		onSuccess(id, tagID);
+
+		return itemID;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateItem
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.updateItem = function(currentItem, onSuccess, onError) {
+	var updateItem = function(currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/update';
 		var userData = User.getUserData();
@@ -338,7 +440,8 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				updateUserAttributes(item);
+
+				updateItemData(item);
 				onSuccess(item, data);
 			},
 			error: onError
@@ -348,7 +451,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateMetacritic
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.updateMetacritic = function(currentItem, onSuccess, onError) {
+	var updateMetacritic = function(currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/updateMetacritic';
 		var userData = User.getUserData();
@@ -381,121 +484,7 @@
 		});
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteTagsForItem
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteTagsForItem = function(listIDs, currentItem, onSuccess, onError) {
 
-		var restURL = tmz.api + 'item/batch-delete';
-		var userData = User.getUserData();
-
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			ids: listIDs
-		};
-
-		$.ajax({
-			url: restURL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-
-				// delete 1 or more tags from item
-				batchTagDelete(currentItem.itemID, data.itemsDeleted);
-				onSuccess(currentItem.itemID, data);
-			},
-			error: onError
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteSingleTagForItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemData.deleteSingleTagForItem = function(id, tagID, onSuccess, onError) {
-
-		var itemID = items[id].itemID;
-
-		var restURL = tmz.api + 'item/delete';
-		var userData = User.getUserData();
-
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			id: id
-		};
-
-		$.ajax({
-			url: restURL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-				onSuccess(data);
-			},
-			error: onError
-		});
-
-		// delete tag from directory
-		deleteTagFromDirectory(itemID, tagID);
-
-		// delete client item
-		deleteClientItem(id, tagID, itemID);
-
-		return itemID;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cacheItemByTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cacheItemByTag = function(tagID, item) {
-
-		// cache item by tag
-		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
-			itemsCacheByTag[tagID][item.id] = item;
-
-		} else {
-			itemsCacheByTag[tagID] = {};
-			itemsCacheByTag[tagID][item.id] = item;
-		}
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteClientItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteClientItem = function(id, tagID, itemID) {
-
-		var cachedItems = getCachedItemsByTag(tagID);
-		var cachedItem = null;
-
-		// delete item by id from cache by tagID
-		if (cachedItems) {
-			delete cachedItems[id];
-		}
-
-		// delete from view all list if cached
-		// but only if last tag for itemID is deleted
-		// find 'view all' cache item by itemID
-		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
-		cachedItem = getCacheItemByItemID(itemID, VIEW_ALL_TAG_ID);
-
-		// console.info(cachedItems);
-
-		// 'view all' cache available and item is in cache
-		if (cachedItem) {
-
-			// last tag for item, remove from 'view all' list
-			if (itemDataDirectory[itemID].tagCount === 0) {
-
-				// update cached items
-				delete cachedItems[cachedItem.id];
-			}
-		}
-	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addClientItem -
@@ -503,7 +492,7 @@
 	var addClientItem = function(item, data) {
 
 		// cached items
-		var cachedItems = null;
+		var viewAllCachedItems = null;
 		var newItem = null;
 		var addedItems = [];
 
@@ -518,13 +507,13 @@
 			newItem = jQuery.extend(true, {}, item);
 
 			// update item with new id
-			newItem.id = data.idsAdded[i];
+			newItem.id = data.itemID;
 
 			// add custom formated properties
 			addCustomProperties(newItem);
 
 			// cache new item by tag
-			cacheItemByTag(data.tagIDsAdded[i], newItem);
+			ItemCache.cacheItemByTag(data.tagIDsAdded[i], newItem);
 
 			// item added
 			addedItems.push(newItem);
@@ -534,133 +523,43 @@
 		addItemDataToDirectory(newItem, data);
 
 		// add last item to 'view all' list (id: 0) cache if exists and itemID does not exist in all items cache
-		cachedItems = getCachedItemsByTag(VIEW_ALL_TAG_ID);
+		viewAllCachedItems = ItemCache.getCachedItemsByTag(VIEW_ALL_TAG_ID);
+
+		console.info(viewAllCachedItems);
+
 		var itemIDExists = false;
-		_.each(cachedItems, function(item, key) {
+		_.each(viewAllCachedItems, function(item, key) {
 			if (item.itemID === newItem.itemID) {
 				itemIDExists = true;
 			}
 		});
 		// is unique: add item to 'view all' list
-		if (cachedItems && !itemIDExists) {
-			cachedItems[newItem.id] = newItem;
+		if (!itemIDExists) {
+
+			// add item to view all cache
+			ItemCache.cacheItemByTag(VIEW_ALL_TAG_ID, newItem);
 		}
 
 		return addedItems;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedItemsByTag -
+	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItemsByTag = function(tagID) {
+	var deleteClientItem = function(id, tagID, itemID) {
 
-		var cachedItems = null;
+		// delete item by id from cache by tagID
+		ItemCache.deleteCachedItem(itemID, tagID);
 
-		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
-			cachedItems = itemsCacheByTag[tagID];
+		// delete tag from directory
+		deleteTagFromDirectory(itemID, tagID);
+
+		// last tag for item, remove from 'view all' list
+		if (itemDataDirectory[itemID].tagCount === 0) {
+			console.info('deleted view all item');
+			// update cached items
+			ItemCache.deleteCachedItem(itemID, VIEW_ALL_TAG_ID);
 		}
-		return cachedItems;
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCacheItemByItemID -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCacheItemByItemID = function(itemID, tagID) {
-
-		var cachedItems = getCachedItemsByTag(tagID);
-		var foundItem = null;
-
-		if (cachedItems) {
-
-			// iterate cachedItems: search for item with itemID
-			_.each(cachedItems, function(item, key) {
-
-				if (item.itemID === itemID) {
-					foundItem = item;
-				}
-			});
-		}
-
-		return foundItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseItemResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseItemResults = function(itemResults) {
-
-		// temp item data
-		var tempItems = {};
-		var item = {};
-
-		var itemLength = 0;
-		var calendarDate = null;
-		var i = 0;
-
-		listLength = itemResults.items.length;
-
-		// iterate itemResults
-		for (i; i < listLength; i++) {
-
-			item = {};
-
-			// get attributes
-			item.id = itemResults.items[i].id;
-			item.initialProvider = itemResults.items[i].ip;
-			item.itemID = itemResults.items[i].iid;
-			item.asin = itemResults.items[i].aid;
-			item.gbombID = itemResults.items[i].gid;
-
-			item.name = itemResults.items[i].n;
-			item.releaseDate = itemResults.items[i].rd;
-			item.platform = itemResults.items[i].p;
-			item.smallImage = itemResults.items[i].si;
-			item.thumbnailImage = itemResults.items[i].ti;
-			item.largeImage = itemResults.items[i].li;
-			item.metascore = itemResults.items[i].ms;
-			item.offers = {};
-
-			item.description = '';
-
-			// add custom formated properties
-			addCustomProperties(item);
-
-			// add to lists objects
-			tempItems[item.id] = item;
-		}
-
-		return tempItems;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* batchTagDelete -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var batchTagDelete = function(itemID, deletedItems) {
-
-		// iterate delete tagIDs
-		for (var i = 0, len = deletedItems.length; i < len; i++) {
-
-			// delete tag from directory
-			deleteTagFromDirectory(itemID, deletedItems[i].tagID);
-
-			// delete item for tag
-			deleteClientItem(deletedItems[i].id, deletedItems[i].tagID, itemID);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteTagFromDirectory - also updates 3rd party directories
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteTagFromDirectory = function(itemID, tagID) {
-
-		var item = itemDataDirectory[itemID];
-
-		// remove tag from item - will also remove from 3rd party directories
-		delete item.tags[tagID];
-
-		// decrement tagCount
-		item.tagCount += -1;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -679,9 +578,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateUserAttributes - also updates 3rd party directories
+	* updateItemData - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateUserAttributes = function(item) {
+	var updateItemData = function(item) {
 
 		var directoryItem = itemDataDirectory[item.itemID];
 
@@ -689,6 +588,9 @@
 		directoryItem.gameStatus = item.gameStatus;
 		directoryItem.playStatus = item.playStatus;
 		directoryItem.userRating = item.userRating;
+
+		// update itemDirectory local storage
+		ItemCache.storeItemDirectory(itemDataDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -724,7 +626,25 @@
 			itemDataDirectory[data.itemID].tagCount += 1;
 		}
 
-		return itemDataDirectory[data.itemID];
+		// update itemDirectory local storage
+		ItemCache.storeItemDirectory(itemDataDirectory);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteTagFromDirectory - also updates 3rd party directories
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteTagFromDirectory = function(itemID, tagID) {
+
+		var item = itemDataDirectory[itemID];
+
+		// remove tag from item - will also remove from 3rd party directories
+		delete item.tags[tagID];
+
+		// decrement tagCount
+		item.tagCount += -1;
+
+		// update itemDirectory local storage
+		ItemCache.storeItemDirectory(itemDataDirectory);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -746,31 +666,95 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItemDirectory_result
+	* getItemDirectory -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItemDirectory_result = function(data) {
-
-		var directoryItem = {};
-
-		// create new directory, set 3rd party IDs as keys
-		_.each(data.directory, function(item, itemID) {
-
-			directoryItem = {
-				// add itemID to directoryItem
-				itemID: itemID,
-				asin: item.aid,
-				gbombID: item.gid,
-				gameStatus: item.gs,
-				playStatus: item.ps,
-				tags: item.t,
-				tagCount: item.tc,
-				userRating: item.ur
-			};
-
-			// for each 3RD party directory sets their ID as keys
-			addItemToDirectories(directoryItem);
-		});
+	var getItemDirectory = function() {
+		return itemDataDirectory;
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getDirectoryItemByItemID
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getDirectoryItemByItemID = function(itemID) {
+
+		// return item or empty object
+		return itemDataDirectory[itemID] || null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getItemByThirdPartyID
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getItemByThirdPartyID = function(gbombID, asin) {
+
+		// itemID from directory
+		var item = null;
+
+		// select appropriate 3rd party item directory
+		if (gbombID !== 0) {
+			item = giantBombDirectory[gbombID];
+
+		} else if (asin !== 0) {
+			item = amazonDirectory[asin];
+		}
+
+		return item;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetItemData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetItemData = function() {
+
+		items = {};
+		itemDataDirectory = {};
+		amazonDirectory = {};
+		giantBombDirectory = {};
+
+		// clear cache
+		ItemCache.clearItemCache();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getRandomItemID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getRandomItemID = function() {
+
+		var idList = [];
+
+		// add ids to idList
+		_.each(items, function(item, key) {
+			idList.push(key);
+		});
+
+		// get random number between 0 and idList.length
+		var randomIndex = Math.floor(Math.random() * idList.length);
+		// console.info(idList, randomIndex);
+
+		return idList[randomIndex];
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* PUBLIC METHODS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var publicMethods = {
+		'itemsAndDirectoryLoaded': itemsAndDirectoryLoaded,
+		'getItemDirectory': getItemDirectory,
+		'getDirectoryItemByItemID': getDirectoryItemByItemID,
+		'getItemByThirdPartyID': getItemByThirdPartyID,
+		'resetItemData': resetItemData,
+		'getRandomItemID': getRandomItemID,
+		'getItems': getItems,
+		'getItem': getItem,
+		'downloadItemDirectory': downloadItemDirectory,
+		'getTagsByItemID': getTagsByItemID,
+		'addItemToTags': addItemToTags,
+		'updateItem': updateItem,
+		'updateMetacritic': updateMetacritic,
+		'deleteTagsForItem': deleteTagsForItem,
+		'deleteSingleTagForItem': deleteSingleTagForItem
+	};
+
+	$.extend(ItemData, publicMethods);
 
 })(tmz.module('itemData'));
 

@@ -8,6 +8,7 @@
     var DetailView = tmz.module('detailView');
     var GridView = tmz.module('gridView');
     var ItemData = tmz.module('itemData');
+    var ItemCache = tmz.module('itemCache');
     var ListData = tmz.module('listData');
     var Amazon = tmz.module('amazon');
     var Metacritic = tmz.module('metacritic');
@@ -40,8 +41,15 @@
     var $viewItemsContainer = $('#viewItemsContainer');
     var $itemResultsContainer = $('#itemResultsContainer');
     var $displayOptions = $viewItemsContainer.find('.displayOptions');
+
     var $viewList = $('#viewList');
     var $viewName = $viewList.find('.viewName');
+
+    var $editMenu = $('#editMenu');
+    var $deleteListBtn = $('#deleteList_btn');
+    var $deleteListName = $deleteListBtn.find('.listName');
+    var $editListBtn = $('#editList_btn');
+    var $editListItemsBtn = $('#editListItems_btn');
 
     // sort elements
     var $sortOptions = $viewItemsContainer.find('.sortOptions');
@@ -143,7 +151,7 @@
 		});
 
 		// deleteList_btn: click
-		$viewItemsContainer.on('click', '#deleteList_btn', function(e) {
+		$deleteListBtn.click(function(e) {
 			e.preventDefault();
 			// delete currently viewing list
 			deleteList(currentViewTagID);
@@ -297,25 +305,33 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.initializeUserItems_result = function(items) {
 
-		// cache items by tag
-		ItemData.cacheItemsByTag(items);
+		if (!$.isEmptyObject(items)) {
 
-		// render view with returned items data
-		render(items);
+			// ItemData items result
+			ItemData.itemsAndDirectoryLoaded(items);
 
-		// view random item
-		viewRandomItem();
+			// render view with returned items data
+			render(items);
+
+			// view random item
+			viewRandomItem();
+
+		} else {
+			DetailView.resetDetail();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateListDeletions -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.updateListDeletions = function(itemID, itemsDeleted) {
+	ItemView.updateListDeletions = function(itemID, deletedTagIDs) {
 
 		var tagCount = null;
 
+		console.info(itemID, deletedTagIDs);
+
 		// remove items deleted from view
-		for (var i = 0, len = itemsDeleted.length; i < len; i++) {
+		for (var i = 0, len = deletedTagIDs.length; i < len; i++) {
 
 			// remove element from html
 			// except when in 'view all' list (id: 0) and itemDeleted is the last tag for itemID
@@ -327,12 +343,12 @@
 				if (tagCount === 0) {
 
 					// remove item by itemID
-					$itemResults.find('tr[data-content="' + itemID + '"]').remove();
+					$('#' + itemID).remove();
 				}
 
 			// not viewing 'all items' remove item
-			} else {
-				$('#' + itemsDeleted[i].id).remove();
+			} else if (currentViewTagID === deletedTagIDs[i]) {
+				$('#' + itemID).remove();
 			}
 		}
 	};
@@ -360,7 +376,7 @@
 
 		// viewing 'all list' view
 		// don't re-render item already displayed in 'view all' list
-		} else if (ItemData.getDirectoryItemByItemID(data.itemID).tagCount === 1) {
+		} else if (ItemData.getDirectoryItemByItemID(data.itemID).tagCount >= 1) {
 			renderCurrentList = true;
 		}
 
@@ -395,6 +411,15 @@
 
 		// set view name
 		$viewName.text(tagName);
+
+		if (tagID !== VIEW_ALL_TAG_ID) {
+
+			// change edit menu delete list name
+			$deleteListName.text(tagName);
+
+			// show edit menu
+			$editMenu.show();
+		}
 
 		// load items
 		getItems(tagID);
@@ -450,10 +475,12 @@
 		// find directory item by itemID
 		itemData = ItemData.getDirectoryItemByItemID(item.itemID);
 
-		// add attributes to model item
-		item.gameStatus = itemData.gameStatus;
-		item.playStatus = itemData.playStatus;
-		item.userRating = itemData.userRating;
+		if (itemData) {
+			// add attributes to model item
+			item.gameStatus = itemData.gameStatus;
+			item.playStatus = itemData.playStatus;
+			item.userRating = itemData.userRating;
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

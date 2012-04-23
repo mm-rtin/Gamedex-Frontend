@@ -3,6 +3,10 @@
 
 	// Dependencies
 	var User = tmz.module('user');
+	var Storage = tmz.module('storage');
+
+	// local represenation of localStorage data model
+	var storedList = {};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getters
@@ -22,15 +26,34 @@
 			uk: userData.secret_key
 		};
 
-		ajax = $.ajax({
-			url: restURL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
+		// check local storage
+		storedList = Storage.get('list');
+
+		if (storedList) {
+
+			if (onSuccess) {
+				onSuccess(storedList);
+			}
+
+		// download directory data
+		} else {
+
+			ajax = $.ajax({
+				url: restURL,
+				type: 'POST',
+				data: requestData,
+				dataType: 'json',
+				cache: true,
+				success: function(data) {
+
+					// store list data
+					storedList = Storage.set('list', data.list);
+
+					onSuccess(data.list);
+				},
+				error: onError
+			});
+		}
 
 		return ajax;
 	};
@@ -55,9 +78,19 @@
 			data: requestData,
 			dataType: 'json',
 			cache: true,
-			success: onSuccess,
+			success: function(data) {
+
+				// add response to stored list internal model
+				storedList.push({'listName': data.listName.toLowerCase(), 'listID': data.listID});
+
+				// update local storage with store list model
+				Storage.set('list', storedList);
+
+				onSuccess(data);
+			},
 			error: onError
 		});
+
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,6 +117,16 @@
 			success: onSuccess,
 			error: onError
 		});
+
+		// delete list item from storedList model
+		for (var i = 0, len = storedList.length; i < len; i++) {
+			if (storedList[i].id === listID) {
+				delete storedList[i];
+
+				// update local storage with store list model
+				Storage.set('list', storedList);
+			}
+		}
 	};
 
 

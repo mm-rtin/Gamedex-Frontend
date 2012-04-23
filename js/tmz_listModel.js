@@ -23,6 +23,9 @@
 	// active tags - tags currently used by items
 	var activeTags = {};
 
+	// selected tags - tags currently selected
+	var selectedTags = [];
+
 	// templates
 	var addListTemplate = _.template($('#add-list-template').html());
 	var viewListTemplate = _.template($('#view-list-template').html());
@@ -59,9 +62,6 @@
 		// create template data structure
 		var viewListTemplateData = {'orderedList': sortedViewList, 'emptyList': sortedEmptyList};
 
-		// set properties
-		viewListTemplateData.viewList = true;
-
 		// output template to list containers
 		$viewList.find('ul').html(viewListTemplate(viewListTemplateData));
 		$gridList.find('ul').html(viewListTemplate(viewListTemplateData));
@@ -86,14 +86,18 @@
 		// create template data structure
 		var addListTemplateData = {'orderedList': sortedAddList};
 
-		// set properties
-		addListTemplateData.viewList = false;
-
 		// output template to list containers
 		$addList.html(addListTemplate(addListTemplateData));
 
+		// reselected currently selected tags
+		if (selectedTags.length !== 0) {
+			reselectTags();
+
+			$addList.trigger('change');
+		}
+
 		// send event to update chzn dropdown
-		$addList.trigger("liszt:updated");
+		$addList.trigger('liszt:updated');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,17 +131,15 @@
 		List.renderAddLists();
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addList
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.addList = function(listName) {
 
-		// console.info(listName);
 		// check if list name exists
 		if (typeof addList[listName] === 'undefined') {
 
-			ListData.addList(listName, parseAddListResponse);
+			ListData.addList(listName, addList_result);
 		}
 	};
 
@@ -145,8 +147,6 @@
 	* updateViewList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.updateViewList = function(tagIDsAdded, currentViewTagID) {
-
-		// console.info('update view list');
 
 		var updated = false;
 
@@ -173,26 +173,34 @@
 
 			// update view list
 			List.renderViewLists();
-
-			// after render of view list - reselect currently viewing tag
-			List.selectViewTag(currentViewTagID);
 		}
 
 		return updated;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* selectViewTag -
+	* selectAddListTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.selectViewTag = function(tagID) {
+	List.selectAddListTag = function(tagID) {
 
 		// get option node
-		option = $viewList.find('a[data-content="' + tagID + '"]');
+		$option = $addList.find('option[value="' + tagID + '"]');
 
 		// select option
-
+		$option.attr('selected', '');
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetAddList - clear all addList selected attributes
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.resetAddList = function() {
+
+		// reset tags
+		$addList.find('option').each(function() {
+			// remove selected attribute
+			$(this).removeAttr('selected');
+		});
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* selectGridTag -
@@ -204,6 +212,21 @@
 
 		// set gridList name as listItem name
 		$gridList.find('.viewName').text($listItem.text());
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* reselectTags -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var reselectTags = function() {
+
+		for (var i = 0, len = selectedTags.length; i < len; i++) {
+
+			// get option node
+			option = $addList.find('option[value="' + selectedTags[i] + '"]');
+
+			// select option
+			$(option).attr('selected', '');
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,27 +256,27 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseListResponse
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseListResponse = function(data) {
+	var parseListResponse = function(listData) {
 
-		// reset list data
+		// reset list listData
 		viewList = {};
 		addList = {};
 		emptyList = {};
 		listIndex = {};
 
-		// temp list data
+		// temp list listData
 		var listItem = {};
 
-		// iterate data
-		for (var i = 0, len = data.list.length; i < len; i++) {
+		// iterate listData
+		for (var i = 0, len = listData.length; i < len; i++) {
 
 			listItem = {};
 
 			// get attributes
-			listItem.name = data.list[i].listName.toLowerCase();
-			listItem.id = data.list[i].listID;
+			listItem.name = listData[i].listName.toLowerCase();
+			listItem.id = listData[i].listID;
 
-			// check if listID is in activeTags before adding to view list data
+			// check if listID is in activeTags before adding to view list
 			if (typeof activeTags[listItem.id] !== 'undefined') {
 
 				// add to view lists object
@@ -270,9 +293,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAddListResponse
+	* addList_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAddListResponse = function(response) {
+	var addList_result = function(response) {
 
 		var listItem = {name: response.listName.toLowerCase(), id: response.listID};
 
@@ -280,6 +303,12 @@
 		addList[listItem.name] = listItem;
 		emptyList[listItem.name] = listItem;
 		listIndex[listItem.id] = listItem.name;
+
+		// save currently selected tags
+		selectedTags = $addList.val() || [];
+
+		// add new tag to selectedTags
+		selectedTags.push(listItem.id);
 
 		List.renderAddLists();
 		List.renderViewLists();

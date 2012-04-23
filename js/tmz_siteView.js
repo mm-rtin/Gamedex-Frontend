@@ -7,7 +7,11 @@
 	var List = tmz.module('list');
 	var ItemView = tmz.module('itemView');
 
+	// constants
+	var FORM_TYPES = {'login': 0, 'signup': 1};
+
 	// properties
+	var formType = FORM_TYPES.login;
 
 	// data
 
@@ -49,16 +53,12 @@
 
 		// email field: keydown
 		$email.on('keydown', function(e) {
-			if (e.which === 13) {
-				login($email.val(), $password.val());
-			}
+			submitForm(e.which);
 		});
 
 		// password field: keydown
 		$password.on('keydown', function(e) {
-			if (e.which === 13) {
-				login($email.val(), $password.val());
-			}
+			submitForm(e.which);
 		});
 
 		// logout button: click
@@ -148,6 +148,60 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* startApp - user credentials must be available before calling
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var startApp = function() {
+
+		// clear view and item data
+		ItemView.clearItemView();
+		ItemData.resetItemData();
+
+		// returned data
+		var itemsReturnedData = null;
+		var listReturnedData = null;
+
+		// directory request promise
+		var directoryRequest = ItemData.downloadItemDirectory();
+
+		// items request promise
+		var itemsRequest = ItemView.initializeUserItems(function(items) {
+			itemsReturnedData = items;
+
+		}, function() {
+			itemsReturnedData = {};
+		});
+
+		// get user lists
+		var listRequest = List.getList(function(data) {
+			listReturnedData = data;
+
+		}, function() {
+
+
+		});
+
+		// deferreds: wait for itemsRequest and directoryRequest
+		$.when(itemsRequest, directoryRequest, listRequest).then(
+
+			// all ajax requests returned
+			function() {
+
+				console.info('all methods returned');
+
+				// list result
+				List.getList_result(listReturnedData);
+
+				// itemView result
+				ItemView.initializeUserItems_result(itemsReturnedData);
+			},
+			function() {
+
+			}
+		);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var logout = function(email, password) {
@@ -218,57 +272,6 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* startApp - user credentials must be available before calling
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var startApp = function() {
-
-		// clear view and item data
-		ItemView.clearItemView();
-		ItemData.resetItemData();
-
-		// returned data
-		var itemsReturnedData = null;
-		var listReturnedData = null;
-
-		// directory request promise
-		var directoryRequest = ItemData.downloadItemDirectory();
-
-		// items request promise
-		var itemsRequest = ItemView.initializeUserItems(function(items) {
-			itemsReturnedData = items;
-
-		}, function() {
-			itemsReturnedData = {};
-		});
-
-		// get user lists
-		var listRequest = List.getList(function(data) {
-			listReturnedData = data;
-
-		}, function() {
-
-
-		});
-
-		// deferreds: wait for itemsRequest and directoryRequest
-		$.when(itemsRequest, directoryRequest, listRequest).then(
-
-			// all ajax requests returned
-			function() {
-
-				// list result
-				List.getList_result(listReturnedData);
-
-				// itemView result
-				ItemView.initializeUserItems_result(itemsReturnedData);
-			},
-			function() {
-
-			}
-		);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showLoggedInView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showLoggedInView = function(email) {
@@ -279,12 +282,6 @@
 
 		// set user button
 		$loggedInButton.find('.userEmail').text(email);
-
-		// hide info header
-		$infoHeader.hide();
-
-		// show header
-		$header.show();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -295,18 +292,14 @@
 		// set new body class
 		$('body').removeClass('useHeader');
 		$('body').addClass('infoHeader');
-
-		// hide header
-		$header.hide();
-
-		// show info header
-		$infoHeader.show();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showLoginForm -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showLoginForm = function() {
+
+		formType = FORM_TYPES.login;
 
 		showForms();
 
@@ -325,6 +318,8 @@
 	* showSignupForm -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showSignupForm = function() {
+
+		formType = FORM_TYPES.signup;
 
 		showForms();
 
@@ -350,7 +345,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showForms -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showForms = function(item) {
+	var showForms = function() {
 
 		// show input form
 		$loginForm.show();
@@ -369,7 +364,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showFormNavigation -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showFormNavigation = function(item) {
+	var showFormNavigation = function() {
 
 		// hide input form
 		$loginForm.hide();
@@ -382,6 +377,19 @@
 		// show main form navigation
 		$loginButton.show();
 		$signupButton.show();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* submitForm -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var submitForm = function(key) {
+
+		if (key === 13 && formType === FORM_TYPES.login) {
+			login($email.val(), $password.val());
+
+		} else if (key === 13 && formType === FORM_TYPES.signup) {
+			signup($email.val(), $password.val());
+		}
 	};
 
 })(tmz.module('siteView'));

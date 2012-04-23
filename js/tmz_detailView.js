@@ -3,6 +3,7 @@
 
     // module references
     var User = tmz.module('user');
+    var List = tmz.module('list');
     var Utilities = tmz.module('utilities');
     var ListModel = tmz.module('list');
     var SearchView = tmz.module('searchView');
@@ -27,6 +28,9 @@
     var currentTab = TAB_IDS[0];
     var currentID = null;
     var itemType = ITEM_TYPES['new'];
+
+	// timeout
+	var autoFillTimeOut = null;
 
     // data
 	var initialItemTags = {};	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
@@ -120,7 +124,7 @@
 		$(addListContainer).find('input').live({
 			// keypress event
 			keydown: function(event){
-				Utilities.handleInputKeyDown(event, addListContainer, ListModel);
+				addList_keydown(event, addListContainer, ListModel);
 			}
 		});
 
@@ -340,6 +344,27 @@
 		}
 	};
 
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	DetailView.resetDetail = function(item) {
+
+		initialItemTags = {};
+		currentItemTags = {};
+		userSetTags = {};
+		firstItem = {};
+		secondItem = {};
+		itemAttributes = {};
+
+		$('#dataTab').hide();
+		$('.detailTitleBar').hide();
+		hasRendered = false;
+
+		clearDetail($giantBombTab);
+		clearDetail($amazonTab);
+	};
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewSecondSearchItemDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -474,7 +499,7 @@
 
 		// clear detail
 		$tab.find('.itemDetailTitle h3').text('');
-		$tab.find('.itemDetailThumbnail img').attr('src', '');
+		$tab.find('.itemDetailThumbnail img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -549,8 +574,6 @@
 		$amazonPriceHeader.fadeIn();
 		$amazonPriceNew.fadeIn();
 		$amazonPriceUsed.fadeIn();
-
-
 
 		$amazonPriceNew.find('a').attr('href', offers.productURL);
 		$amazonPriceNew.find('.data').text(offers.buyNowPrice);
@@ -659,8 +682,8 @@
 		if (type === ITEM_TYPES['existing']) {
 
 			itemType = ITEM_TYPES['existing'];
-			$saveItemButton.show();
 			$addItemButton.hide();
+			$saveItemButton.hide();
 
 		// new item with no current tags
 		} else if (type === ITEM_TYPES['new']) {
@@ -696,10 +719,8 @@
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
-			resetTags();
+			List.resetAddList();
 			setUserTags(userSetTags);
-
-			$addList.trigger("liszt:updated");
 		}
 	};
 
@@ -711,15 +732,12 @@
 		var option = null;
 
 		// clear selected attributes from all options
-		resetTags();
+		List.resetAddList();
 
 		_.each(tagList, function(id, tagID) {
 
-			// get option node
-			option = $addList.find('option[value="' + tagID + '"]');
-
-			// select option
-			$(option).attr('selected', '');
+			// select addList tag
+			List.selectAddListTag(tagID);
 
 			// create associate of tags with item ids
 			initialItemTags[tagID] = id;
@@ -737,25 +755,12 @@
 
 			for (var i = 0, len = tagList.length; i < len; i++) {
 
-				// get option node
-				option = $addList.find('option[value="' + tagList[i] + '"]');
-
-				// select option
-				$(option).attr('selected', '');
+				// select addList tag
+				List.selectAddListTag(tagList[i]);
 			}
+
+			$addList.trigger("liszt:updated");
 		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* resetTags - clear all selected attributes
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var resetTags = function() {
-
-		// reset tags
-		$addList.find('option').each(function() {
-			// remove selected attribute
-			$(this).removeAttr('selected');
-		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -812,6 +817,7 @@
 		// data
 		var tagsToAdd = [];
 		var idsToDelete = [];
+		var tagsToDelete = [];
 		var currentTags = getAddListIDs() || [];
 		var tagID = '';
 
@@ -834,26 +840,38 @@
 		}
 
 		// iterate initial tags - find tags to delete
-		$.each(initialItemTags, function(key, value){
+		$.each(initialItemTags, function(key, id){
 
 			if (!currentItemTags[key]) {
 
 				// remove tag from initial state
 				delete initialItemTags[key];
 
-				// add item/tag key to list for batch delete
-				idsToDelete.push(value);
+				// add item/tag keys to lists for batch delete
+				idsToDelete.push(id);
+				tagsToDelete.push(key);
 			}
 		});
 
-		// check for tags to add
+		// check for tags to add - then run delete tags in serial
 		if (tagsToAdd.length > 0) {
-			ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
+			ItemData.addItemToTags(tagsToAdd, item, function(data) {
+
+				addItemToTags_result(data);
+
+				deleteTagsForItem();
+			});
+
+		// no tags to add - check tags to delete
+		} else {
+			deleteTagsForItem();
 		}
 
-		// check for tags to delete
-		if (idsToDelete.length > 0) {
-			ItemData.deleteTagsForItem(idsToDelete, item, deleteTagsForItem_result);
+		function deleteTagsForItem() {
+			// check for tags to delete
+			if (idsToDelete.length > 0) {
+				ItemData.deleteTagsForItem(idsToDelete, tagsToDelete, item, deleteTagsForItem_result);
+			}
 		}
 
 		// 1 or more attributes changed - only change for existing items
@@ -863,6 +881,9 @@
 			// update item
 			ItemData.updateItem(item, updateItem_result);
 		}
+
+		// update save item button
+		updateSaveItemButton();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -887,10 +908,10 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteTagsForItem_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteTagsForItem_result = function(itemID, data) {
+	var deleteTagsForItem_result = function(itemID, deletedTagIDs) {
 
 		// update list view model
-		ItemView.updateListDeletions(itemID, data.itemsDeleted);
+		ItemView.updateListDeletions(itemID, deletedTagIDs);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -898,7 +919,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags_result = function(data, addedItems) {
 
-		setItemType(ITEM_TYPES['existing']);
+		if (itemType !== ITEM_TYPES['existing']) {
+			setItemType(ITEM_TYPES['existing']);
+		}
 
 		// update firstItem with returned data
 		firstItem.itemID = data.itemID;
@@ -945,8 +968,92 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addListChanged = function(e) {
 
-		// save userSetTags
-		userSetTags = $addList.val();
+		if (hasRendered) {
+
+			// save userSetTags
+			if (itemType === ITEM_TYPES['new']) {
+				userSetTags = $addList.val();
+			}
+
+			updateSaveItemButton();
+		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateSaveItemButton -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateSaveItemButton = function(item) {
+
+		// if addList changed and existing item
+		if (itemType === ITEM_TYPES.existing && isAddListChanged()) {
+			$saveItemButton.fadeIn();
+		} else {
+			$saveItemButton.fadeOut();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* isAddListChanged -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var isAddListChanged = function() {
+
+		var userTags = {};
+		var addListChanged = false;
+		var currentTags = $addList.val();
+
+		// iterate currentTags
+		_.each(currentTags, function(item) {
+
+			userTags[item] = true;
+
+			// match with initial tags
+			if (typeof initialItemTags[item] === 'undefined') {
+				addListChanged = true;
+			}
+		});
+
+		// iterate initialItemTags
+		_.each(initialItemTags, function(item, key) {
+
+			// match with user userSetTags
+			if (typeof userTags[key] === 'undefined') {
+				addListChanged = true;
+			}
+		});
+
+		return addListChanged;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addList_keydown
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addList_keydown = function(event, container, List){
+
+		if (autoFillTimeOut) {
+			clearTimeout(autoFillTimeOut);
+		}
+
+		// enter key
+		if (event.which == 13) {
+
+			// get input value
+			var listName = $.trim($(container).find('input').val().toLowerCase());
+
+			// create new list if not empty string
+			if (listName !== '') {
+				List.addList(listName);
+			}
+
+		// entering text event, exclude backspace so text may be erased without autofilling
+		} else if (event.which != 8 && event.which != 38 && event.which != 40 && event.which != 37 && event.which != 39) {
+
+			// autofill input box with active-result highlighted
+			// wait until chosen has a chance to update css classes
+			autoFillTimeOut = setTimeout(function(){
+				Utilities.autofillHighlightedElements(container);
+			}, 250);
+		}
+	};
+
 
 })(tmz.module('detailView'));

@@ -15,7 +15,7 @@ var tmz = {
       }
 
       // create module - return module template to be extended by module
-      return modules[name] = { Views: {} };
+      return modules[name] = {};
     };
   }()
 };
@@ -53,6 +53,7 @@ tmz.initialize = function() {
 	// module references
 	tmz.util = tmz.module('utilities');
 	tmz.filterPanel = tmz.module('filterPanel');
+	tmz.storage = tmz.module('storage');
 
 	// models
 	tmz.user = tmz.module('user');
@@ -86,7 +87,7 @@ tmz.initialize = function() {
 tmz.initializeLibraries = function() {
 
 	// chosen list: add to list
-	$(".chzn-select").chosen({no_results_text: "<strong>Press ENTER key to add:<br/><br/></strong>"});
+	$(".chzn-select").chosen({no_results_text: "<strong>Press ENTER to create:<br/><br/></strong>"});
 
 	// moment.js calendar config
 	moment.calendar = {

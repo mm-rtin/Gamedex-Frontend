@@ -38,12 +38,9 @@
 
 	// constants
 	var SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1};
+	var VIEW_ALL_TAG_ID = '0';
 
 	// properties
-
-	// timeout
-	var autoFillTimeOut = null;
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getStandardPlatform -
@@ -109,6 +106,13 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getViewAllTagID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Utilities.getViewAllTagID = function() {
+		return VIEW_ALL_TAG_ID;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getProviders
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Utilities.getProviders = function() {
@@ -135,46 +139,13 @@
 		}
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* handleInputKeyDown
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.handleInputKeyDown = function(event, container, ListModel){
-
-		if (autoFillTimeOut) {
-			clearTimeout(autoFillTimeOut);
-		}
-
-		// enter key
-		if (event.which == 13) {
-
-
-
-			// get input value
-			var listName = $(container).find('input').val().toLowerCase();
-
-			// create new list
-			ListModel.addList(listName);
-
-		// entering text event, exclude backspace so text may be erased without autofilling
-		} else if (event.which != 8 && event.which != 38 && event.which != 40 && event.which != 37 && event.which != 39) {
-
-			// autofill input box with active-result highlighted
-			// wait until chosen has a chance to update css classes
-			autoFillTimeOut = setTimeout(function(){
-				Utilities.autofillHighlightedElements(container);
-			}, 250);
-		}
-	};
-
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* autofillHighlightedElements -
 	* autofills search box with first found item, highlights autofilled portion of text
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Utilities.autofillHighlightedElements = function(container) {
 
-
 		clearTimeout(autoFillTimeOut);
-
 
 		var highlightedText = '';
 		var currentInputText = '';

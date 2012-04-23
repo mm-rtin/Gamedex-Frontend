@@ -75,18 +75,33 @@ body {
 	font-size: 0.8em;
 	font-weight: 600;
 	min-width: 1140px;
-}
 
-body.infoHeader {
+	&.infoHeader {
+		#infoHeader {
+			display: block;
+		}
+		#wrapper {
+			margin: 0 auto;
+		}
+		#header {
+			display: none;
+		}
+	}
 
-}
+	&.useHeader {
+		.header {
+			background-color: #3D3D3D;
+			border-top: 1px solid #575757;
+		}
 
-body.useHeader {
-	padding-top: 46px;
+		#infoHeader {
+			display: none;
+		}
+		#header {
+			display: block;
+		}
 
-	.header {
-		background-color: #3D3D3D;
-		border-top: 1px solid #575757;
+
 	}
 }
 
@@ -260,7 +275,6 @@ input, select, textarea {
 /* CONTENT CONTAINER
 -----------------------------------------------------------*/
 #wrapper {
-	margin: 0 auto;
 	max-width: 1450px;
 
 	/* BOOTSTRAP OVERRIDES
@@ -291,10 +305,13 @@ input, select, textarea {
 		font-size: 12px;
 		color: #ffffff;
 		text-shadow: none;
+	}
+	.btn-dark:hover {
 
 	}
-	.btn-dark:hover{
 
+	.tab-content {
+		overflow: inherit;
 	}
 
 	.nav i {
@@ -321,21 +338,19 @@ input, select, textarea {
 	----------------------- */
 	&.standardView {
 		text-align: left;
+		margin: 46px auto;
 		width: 100%;
 
 		/* PANEL STYLES
 		----------------------- */
 		#panel1 {
 			.column(13, @panel-columns);
-			/*max-width: 375px;*/
 		}
 		#panel2 {
 			.column(12, @panel-columns);
-			/*max-width: 320px;*/
 		}
 		#panel3 {
 			.column(23, @panel-columns);
-			/*max-width: 600px;*/
 		}
 		#panel4 {
 			display: none;
@@ -348,12 +363,16 @@ input, select, textarea {
 	/* GRID VIEW
 	----------------------- */
 	&.gridView {
-		margin: 0 auto;
 		text-align: left;
 		width: 100%;
+		margin: 46px auto !important;
 
 		#infoHeader {
 			display: none;
+		}
+
+		#header {
+			display: block;
 		}
 
 		/* PANEL STYLES
@@ -901,6 +920,10 @@ input, select, textarea {
 	height: 500px;
 }
 
+#editMenu {
+	display: none;
+}
+
 #itemResults {
 
 	.display-0 tr {
@@ -1069,15 +1092,6 @@ input, select, textarea {
 #viewList {
 
 }
-
-#deleteList_btn {
-	float: right;
-}
-
-#gridView_btn {
-	float: left;
-}
-
 
 
 /* GRID VIEW PANEL
