@@ -143,11 +143,34 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteCachedItem = function(itemID, tagID) {
 
-		if (getCachedItemsByTag(tagID)) {
+		if (itemsCacheByTag[tagID]) {
 			delete itemsCacheByTag[tagID][itemID];
 		}
 
 		deleteStoredItem(itemID, tagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteCachedTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteCachedTag = function(tagID) {
+
+		if (itemsCacheByTag[tagID]) {
+			delete itemsCacheByTag[tagID];
+		}
+
+		deleteStoredTag(tagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteStoredTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteStoredTag = function(tagID) {
+
+		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
+		delete storedItemsCacheByTag[tagID];
+
+		Storage.set('itemsCacheByTag', storedItemsCacheByTag);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -204,6 +227,15 @@
 		storedItems = {};
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearStoredData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearStoredData = function(item) {
+
+		Storage.remove('itemsCacheByTag');
+		Storage.remove('itemDataDirectory');
+		Storage.remove('list');
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* PUBLIC METHODS -
@@ -215,8 +247,9 @@
 		'getStoredItemDirectory': getStoredItemDirectory,
 		'storeItemDirectory': storeItemDirectory,
 		'deleteCachedItem': deleteCachedItem,
-		'deleteStoredItem': deleteStoredItem,
-		'clearItemCache': clearItemCache
+		'deleteCachedTag': deleteCachedTag,
+		'clearItemCache': clearItemCache,
+		'clearStoredData': clearStoredData
 	};
 
 	$.extend(ItemCache, publicMethods);

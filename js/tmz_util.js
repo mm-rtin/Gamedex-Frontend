@@ -143,7 +143,7 @@
 	* autofillHighlightedElements -
 	* autofills search box with first found item, highlights autofilled portion of text
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.autofillHighlightedElements = function(container) {
+	Utilities.autofillHighlightedElements = function(container, autoFillTimeOut) {
 
 		clearTimeout(autoFillTimeOut);
 

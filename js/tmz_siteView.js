@@ -6,12 +6,14 @@
     var ItemData = tmz.module('itemData');
 	var List = tmz.module('list');
 	var ItemView = tmz.module('itemView');
+	var Storage = tmz.module('storage');
 
 	// constants
 	var FORM_TYPES = {'login': 0, 'signup': 1};
 
 	// properties
 	var formType = FORM_TYPES.login;
+	var rememberMe = false;
 
 	// data
 
@@ -33,6 +35,22 @@
 	$backButton = $('#backButton');
 	$email = $('#email').find('input');
 	$password = $('#password').find('input');
+	$rememberMeCheckbox = $('#rememberCheckbox');
+
+	// account management
+	$accountManagementModal = $('#accountManagement-modal');
+	$clearLocalStorageButton = $('#clearLocalStorage_btn');
+	$deleteAccountButton = $('#deleteAccount_btn');
+	$managementButton = $('#managementButton');
+	$updateAccountButton = $('#updateAccount_btn');
+	$userNameUpdateField = $('#userNameUpdateField');
+	$passwordField = $('#passwordField');
+	$passwordUpdateField = $('#passwordUpdateField');
+	$emailUpdateField = $('#emailUpdateField');
+	$existingPasswordGroup = $accountManagementModal.find('.existingPasswordGroup');
+	$emailGroup = $accountManagementModal.find('.emailGroup');
+	$successAlert = $accountManagementModal.find('.alert-success');
+	$errorAlert = $accountManagementModal.find('.alert-error');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -41,15 +59,29 @@
 
 		SiteView.createEventHandlers();
 
+		// init login form
+		initLoginForm();
+
 		// start demo app
 		startDemo();
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SiteView.createEventHandlers = function() {
+
+		// managementButton: click
+		$managementButton.click(function(e) {
+			e.preventDefault();
+			showAccountManagement();
+		});
+
+		// updateAccountButton: click
+		$updateAccountButton.click(function(e) {
+
+			updateAccount();
+		});
 
 		// email field: keydown
 		$email.on('keydown', function(e) {
@@ -68,11 +100,16 @@
 			logout();
 		});
 
-		// management button: click
-		$managementButton.click(function(e) {
+		// clearLocalStorageButton: click
+		$clearLocalStorageButton.click(function(e) {
 			e.preventDefault();
-			// management modal
-			showManagementModal();
+			Storage.clearStorage();
+		});
+
+		// deleteAccountButton: click
+		$deleteAccountButton.click(function(e) {
+			e.preventDefault();
+			deleteAccount();
 		});
 
 		// login button: click
@@ -111,6 +148,18 @@
 			showFormNavigation();
 		});
 
+		// rememberMeCheckbox: click
+		$rememberMeCheckbox.click(function(e) {
+			if (rememberMe) {
+				rememberMe = false;
+				$(this).removeClass('on');
+				setupRememberMe();
+			} else {
+				rememberMe = true;
+				$(this).addClass('on');
+			}
+		});
+
 		/* CREATE USER DIALOG
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		// create user: click
@@ -125,6 +174,36 @@
 		});
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initLoginForm -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var initLoginForm = function() {
+
+		// get e-mail storage key
+		var email = Storage.getGlobal('email');
+
+		// populate field
+		if (email) {
+			rememberMe = true;
+			$email.val(email);
+			$rememberMeCheckbox.addClass('on');
+			$password.focus();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* setupRememberMe -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var setupRememberMe = function() {
+
+		console.info('setup remember', rememberMe);
+
+		if (rememberMe) {
+			Storage.setGlobal('email', $email.val());
+		} else {
+			Storage.removeGlobal('email');
+		}
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* login -
@@ -240,6 +319,9 @@
 		// success
 		if (data.userID) {
 
+			console.info(rememberMe);
+			setupRememberMe();
+
 			// show logged in view
 			showLoggedInView(email);
 
@@ -266,6 +348,9 @@
 
 		// success
 		} else {
+
+			setupRememberMe();
+
 			// login new user
 			login_result(data, email);
 		}
@@ -353,8 +438,12 @@
 		// show back button
 		$backButton.show();
 
-		// focus email field
-		$email.focus();
+		if (rememberMe && $email.val() !== '') {
+			$password.focus();
+		} else {
+			$email.focus();
+		}
+
 
 		// hide main form navigation
 		$loginButton.hide();
@@ -391,6 +480,105 @@
 			signup($email.val(), $password.val());
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showAccountManagement -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showAccountManagement = function(item) {
+
+		resetAccountManagementForm();
+
+		// populate fields
+		var userData = User.getUserData();
+
+		$userNameUpdateField.val(userData.userName);
+		$emailUpdateField.val(userData.email);
+
+		// show modal
+		$accountManagementModal.modal('show');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateAccount -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateAccount = function() {
+
+		resetAccountManagementForm();
+
+		// get field values
+		var password = $passwordField.val();
+		var email = $emailUpdateField.val();
+
+		// existing password provided
+		if (password !== '' && email !== '') {
+
+			var userName = $userNameUpdateField.val();
+			var newPassword = $passwordUpdateField.val();
+
+			// send update request
+			User.updateUser(password, email, userName, newPassword, function(data) {
+
+				console.info(data);
+
+				// update success
+				if (data.status === 'success') {
+
+					// update user email
+					$loggedInButton.find('.userEmail').text(email);
+					$passwordField.val('');
+					$passwordUpdateField.val('');
+
+					// show alert
+					$successAlert.fadeIn().find('.alertText').text('Account updated');
+
+				// password incorrect error
+				} else if (data.status === 'incorrect password') {
+
+					$existingPasswordGroup.addClass('error');
+					$errorAlert.fadeIn().find('.alertText').text('Incorrect password');
+				}
+
+			});
+		}
+
+		// no existing password
+		if (password === '') {
+			// password empty error
+			$existingPasswordGroup.addClass('error');
+			$errorAlert.fadeIn().find('.alertText').text('Please enter existing password');
+		}
+
+		if (email === '') {
+			// email empty error
+			$emailGroup.addClass('error');
+			$errorAlert.fadeIn().find('.alertText').text('E-mail cannot be blank');
+		}
+
+		// clear password field
+		$passwordUpdateField.val('');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteAccount -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteAccount = function() {
+
+
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetAccountManagementForm -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetAccountManagementForm = function() {
+
+		// reset form
+		$successAlert.hide();
+		$errorAlert.hide();
+		$existingPasswordGroup.removeClass('error');
+		$emailGroup.removeClass('error');
+	};
+
 
 })(tmz.module('siteView'));
 

@@ -498,7 +498,7 @@
     var clearDetail = function($tab) {
 
 		// clear detail
-		$tab.find('.itemDetailTitle h3').text('');
+		$tab.find('.itemDetailTitle h3').text('No Match found');
 		$tab.find('.itemDetailThumbnail img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
     };
 
@@ -1050,7 +1050,7 @@
 			// autofill input box with active-result highlighted
 			// wait until chosen has a chance to update css classes
 			autoFillTimeOut = setTimeout(function(){
-				Utilities.autofillHighlightedElements(container);
+				Utilities.autofillHighlightedElements(container, autoFillTimeOut);
 			}, 250);
 		}
 	};

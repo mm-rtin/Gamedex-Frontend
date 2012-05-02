@@ -10,7 +10,7 @@
 		'case',
 		'codes',
 		'combo',
-		'// console',
+		'console',
 		'controller',
 		'covers',
 		'face plate',
@@ -187,13 +187,11 @@
 		var buyNowPrice = null;
 		var buyNowRawPrice = null;
 
-		// remove $ sign
-		var re = /\$/;
 
 		// iterate offers
 		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
 			if (offerItem.offers[i].availability === 'now') {
-				buyNowPrice = offerItem.offers[i].price.replace(re, '');
+				buyNowPrice = offerItem.offers[i].price;
 				buyNowRawPrice = offerItem.offers[i].rawPrice;
 			}
 		}
@@ -260,9 +258,12 @@
 		var offerItem = {};
 		var offer = {};
 
+		// remove $ sign
+		var re = /\$/;
+
 		// get attributes from xml
-		offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text();
-		offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text();
+		offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text().replace(re, '');
+		offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text().replace(re, '');
 		offerItem.totalNew = $resultItem.find('TotalNew').text();
 		offerItem.totalUsed = $resultItem.find('TotalUsed').text();
 		offerItem.totalOffers = $resultItem.find('TotalOffers').text();
@@ -271,8 +272,8 @@
 		offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
 
 		// convert offer url to a product url
-		var re = /offer-listing/gi;
-		offerItem.productURL = offerItem.offersURL.replace(re, 'product');
+		var offerRE = /offer-listing/gi;
+		offerItem.productURL = offerItem.offersURL.replace(offerRE, 'product');
 		offerItem.offers = [];
 
 		// iterate offers
@@ -281,7 +282,7 @@
 
 			offer = {};
 
-			offer.price = $(this).find('Price FormattedPrice').text();
+			offer.price = $(this).find('Price FormattedPrice').text().replace(re, '');
 			offer.rawPrice = $(this).find('Price Amount').text();
 			offer.availability = $(this).find('AvailabilityType').text();
 			offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();

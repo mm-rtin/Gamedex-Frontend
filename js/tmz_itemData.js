@@ -24,7 +24,6 @@
 	var amazonDirectory = {};
 	var giantBombDirectory = {};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* itemsAndDirectoryLoaded -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -243,39 +242,12 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getTagsByItemID - currently not used
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getTagsByItemID = function(itemID, onSuccess, onError) {
-
-		var restURL = tmz.api + 'item/tags';
-		var userData = User.getUserData();
-
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			item_id: itemID
-		};
-
-		$.ajax({
-			url: restURL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-				onSuccess(data.itemTags);
-			},
-			error: onError
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemToTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/add';
-		var userData = User.getUserData();
+		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
 		var item = jQuery.extend(true, {}, currentItem);
@@ -283,6 +255,7 @@
 		var requestData = {
 			'uid': userData.user_id,
 			'uk': userData.secret_key,
+			'ts': userData.timestamp,
 			'lids': tagIDs,
 
 			'n': item.name,
@@ -324,12 +297,13 @@
 	var deleteTagsForItem = function(deletedIDs, deletedTagIDs, currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/batch-delete';
-		var userData = User.getUserData();
+		var userData = User.getUserData(true);
 
 		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			ids: deletedIDs
+			'user_id': userData.user_id,
+			'uk': userData.secret_key,
+			'ts': userData.timestamp,
+			'ids': deletedIDs
 		};
 
 		$.ajax({
@@ -372,12 +346,13 @@
 		var id = getDirectoryItemByItemID(itemID).tags[tagID];
 
 		var restURL = tmz.api + 'item/delete';
-		var userData = User.getUserData();
+		var userData = User.getUserData(true);
 
 		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			id: id
+			'user_id': userData.user_id,
+			'ts': userData.timestamp,
+			'uk': userData.secret_key,
+			'id': id
 		};
 
 		$.ajax({
@@ -404,8 +379,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateItem = function(currentItem, onSuccess, onError) {
 
+		console.info(currentItem);
+
 		var restURL = tmz.api + 'item/update';
-		var userData = User.getUserData();
+		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
 		var item = jQuery.extend(true, {}, currentItem);
@@ -413,6 +390,7 @@
 		var requestData = {
 			'uid': userData.user_id,
 			'uk': userData.secret_key,
+			'ts': userData.timestamp,
 
 			'id': item.itemID,
 			'n': item.name,
@@ -454,7 +432,7 @@
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
 
 		var restURL = tmz.api + 'item/updateMetacritic';
-		var userData = User.getUserData();
+		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
 		var item = jQuery.extend(true, {}, currentItem);
@@ -462,6 +440,7 @@
 		var requestData = {
 			'uid': userData.user_id,
 			'uk': userData.secret_key,
+			'ts': userData.timestamp,
 
 			'id': item.itemID,
 			'mp': item.metascorePage,
@@ -483,8 +462,6 @@
 			error: onError
 		});
 	};
-
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addClientItem -
@@ -746,12 +723,12 @@
 		'getItems': getItems,
 		'getItem': getItem,
 		'downloadItemDirectory': downloadItemDirectory,
-		'getTagsByItemID': getTagsByItemID,
 		'addItemToTags': addItemToTags,
 		'updateItem': updateItem,
 		'updateMetacritic': updateMetacritic,
 		'deleteTagsForItem': deleteTagsForItem,
-		'deleteSingleTagForItem': deleteSingleTagForItem
+		'deleteSingleTagForItem': deleteSingleTagForItem,
+		'deleteTagFromDirectory': deleteTagFromDirectory
 	};
 
 	$.extend(ItemData, publicMethods);

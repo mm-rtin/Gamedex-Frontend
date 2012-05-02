@@ -51,8 +51,11 @@
 	transition: all @duration ease-out;
 }
 .opacity(@opacity) {
+	@opacityPercentage: @opacity * 100;
 	-moz-opacity: @opacity;
 	opacity: @opacity;
+    -ms-filter: ~"progid:DXImageTransform.Microsoft.Alpha(opacity=(@{opacityPercentage}))";
+    filter: ~"alpha(opacity = (@{opacityPercentage}))";
 }
 
 
@@ -73,7 +76,7 @@ body {
 	color: #3C3C3C;
 	font-family: 'Open Sans', sans-serif;
 	font-size: 0.8em;
-	font-weight: 600;
+	font-weight: 400;
 	min-width: 1140px;
 
 	&.infoHeader {
@@ -182,10 +185,10 @@ input, select, textarea {
 	cursor: pointer;
 	background-image:  url('../images/signup_button_small.png');
 	position: relative;
-	width: 112px;
-	height: 34px;
-	top: 15px;
-	left: 201px;
+	width: 84px;
+	height: 30px;
+	top: 12px;
+	left: 221px;
 
 	&:hover {
 		.opacity(.8);
@@ -198,10 +201,10 @@ input, select, textarea {
 	cursor: pointer;
 	background-image:  url('../images/login_button_small.png');
 	position: relative;
-	width: 91px;
-	height: 34px;
-	top: 15px;
-	left: 221px;
+	width: 71px;
+	height: 30px;
+	top: 12px;
+	left: 234px;
 
 	&:hover {
 		.opacity(.8);
@@ -214,19 +217,38 @@ input, select, textarea {
 	cursor: pointer;
 	background-image:  url('../images/back_button.png');
 	position: relative;
-	width: 25px;
-	height: 34px;
-	top: -19px;
+	width: 31px;
+	height: 30px;
+	top: -18px;
 
 	&.login {
-		left: 193px;
+		left: 201px;
 	}
 	&.signup {
-		left: 173px;
+		left: 189px;
 	}
 
 	&:hover {
 		.opacity(.8);
+	}
+}
+
+#rememberCheckbox {
+	.opacity(.6);
+	cursor: pointer;
+	background-image:  url('../images/remember_checkbox_off.png');
+	position: relative;
+	width: 118px;
+	height: 17px;
+	top: -47px;
+	left: 4px;
+
+	&:hover {
+		.opacity(1);
+	}
+
+	&.on {
+		background-image:  url('../images/remember_checkbox_on.png');
 	}
 }
 
@@ -240,16 +262,15 @@ input, select, textarea {
 	display: none;
 
 	input {
-		width: 194px;
+		width: 183px;
 		background-color: transparent;
-		border: none;
-		color: #fff;
+		border: 0;
+		color: white;
 		-webkit-box-shadow: none;
-		-moz-box-shadow:    none;
-		box-shadow:         none;
-		font-size: 20px;
+		-moz-box-shadow: none;
+		box-shadow: none;
+		font-size: 15px;
 		height: 22px;
-		padding-left: 45px;
 		margin-bottom: 4px;
 
 		&:focus {
@@ -263,13 +284,13 @@ input, select, textarea {
 #email {
 	position: relative;
 	top: 5px;
-	left: 68px;
+	left: 107px;
 }
 
 #password {
 	position: relative;
-	top: 12px;
-	left: 68px;
+	top: 7px;
+	left: 107px;
 }
 
 /* CONTENT CONTAINER
@@ -334,6 +355,9 @@ input, select, textarea {
 		display: block;
 	}
 
+	.dropdown-menu li > a:hover, .dropdown-menu .active > a, .dropdown-menu .active > a:hover {
+		background-color: #31a500;
+	}
 	/* STANDARD VIEW
 	----------------------- */
 	&.standardView {
@@ -454,14 +478,29 @@ input, select, textarea {
 /* COMPONENT STYLES
 -----------------------------------------------------------*/
 
-#createuser-modal {
-	.modal-footer {
-		padding-left: 175px;
-		text-align: left;
+#accountManagement-modal {
+
+	#deleteAccount_btn {
+		float: left;
 	}
 
-	#newAccount_btn {
-		width: 100px;
+	#clearLocalStorage_btn {
+		float: left;
+	}
+
+	.alert {
+		display: none;
+		margin-bottom: 0;
+	}
+}
+
+.priceDesc {
+	font-size: 11px;
+	color: #808080;
+}
+.dropdown-menu a {
+	&:hover .priceDesc {
+		color: #ffffff;
 	}
 }
 
@@ -471,7 +510,9 @@ input, select, textarea {
 	color: #ffffff;
 	display: block;
 	float: right;
-	font: bold 15px/32px arial,helvetica,sans-serif;
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 32px;
 	height: 32px;
 	margin: 0;
 	padding: 0;
@@ -494,6 +535,8 @@ input, select, textarea {
 	}
 	&.unavailable {
 		background-color: @neutralDark1;
+		font-size: 14px;
+		line-height: 32px;
 	}
 	&:hover {
 		color: #ffffff;
@@ -778,12 +821,13 @@ input, select, textarea {
 	}
 
 	.detailTitleBar {
+		margin-top: 14px;
 		display: none;
 	}
 
 	.itemDetailTitle {
 
-		width: 80%;
+		width: 85%;
 		float: left;
 
 		h3 {
@@ -978,7 +1022,7 @@ input, select, textarea {
 		.transition(.5s);
 		.opacity(0);
 		margin-top: 10px;
-		width: 152px;
+		width: 160px;
 
 		a {
 			.opacity(.25);
@@ -998,6 +1042,9 @@ input, select, textarea {
 			.opacity(1);
 		}
 		.gameStatus-1 a.attrOwned {
+			.opacity(1);
+		}
+		.rating-10 a.attrFavorite {
 			.opacity(1);
 		}
 	}
@@ -1038,8 +1085,8 @@ input, select, textarea {
 	.display-1 {
 
 		.smallImage {
-			width: 10%;
-			min-width: 60px;
+			width: 11%;
+			min-width: 52px;
 		}
 		.mediumImage {
 			display: none;
@@ -1068,7 +1115,7 @@ input, select, textarea {
 		}
 		.mediumImage {
 			min-width: 100px;
-			width: 24%;
+			width: 19%;
 		}
 		.itemName {
 			font-weight: 600;
@@ -1077,11 +1124,11 @@ input, select, textarea {
 		}
 		.calendarDate {
 			color: #7D7D7D;
-			font-size: 1.1em;
+			font-size: 13px;
 		}
 		.platform {
 			color: #7D7D7D;
-			font-size: 1.1em;
+			font-size: 13px;
 		}
 		.extraData {
 			display: none;

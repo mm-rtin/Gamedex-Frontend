@@ -67,9 +67,10 @@
 		var restURL = tmz.api + 'list/add';
 
 		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			list_name: listName
+			'user_id': userData.user_id,
+			'uk': userData.secret_key,
+			'ts': userData.timestamp,
+			'list_name': listName
 		};
 
 		$.ajax({
@@ -94,18 +95,64 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateList
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ListData.updateList = function(listName, tagID, onSuccess, onError) {
+
+		var userData = User.getUserData();
+		var restURL = tmz.api + 'list/update';
+
+		var requestData = {
+			'user_id': userData.user_id,
+			'uk': userData.secret_key,
+			'ts': userData.timestamp,
+			'list_name': listName,
+			'list_id': tagID
+		};
+
+		$.ajax({
+			url: restURL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+
+				onSuccess(data);
+			},
+			error: onError
+		});
+
+		// update list in storedList model
+		for (var i = 0, len = storedList.length; i < len; i++) {
+			if (storedList[i].listID === tagID) {
+
+				// update name
+				storedList[i].listName = listName;
+
+				// update local storage with stored list model
+				Storage.set('list', storedList);
+			}
+		}
+
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ListData.deleteList = function(listID, onSuccess, onError) {
+	ListData.deleteList = function(tagID, onSuccess, onError) {
+
+		console.info('deleteList', tagID);
 
 		var userData = User.getUserData();
 		var restURL = tmz.api + 'list/delete';
 
 		// delete list
 		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key,
-			id: listID
+			'user_id': userData.user_id,
+			'uk': userData.secret_key,
+			'ts': userData.timestamp,
+			'id': tagID
 		};
 
 		$.ajax({
@@ -120,10 +167,11 @@
 
 		// delete list item from storedList model
 		for (var i = 0, len = storedList.length; i < len; i++) {
-			if (storedList[i].id === listID) {
-				delete storedList[i];
+			if (storedList[i].listID === tagID) {
 
-				// update local storage with store list model
+				storedList.splice(i, 1);
+
+				// update local storage with stored list model
 				Storage.set('list', storedList);
 			}
 		}

@@ -21,6 +21,7 @@
     var PANEL_HEIGHT_OFFSET = 200;
     var PANEL_HEIGHT_PADDING = 40;
     var VIEW_ALL_TAG_ID = '0';
+    var VIEW_ALL_TAG_NAME = 'View All';
 
     // list
     var itemList = null;
@@ -35,6 +36,7 @@
     var currentSortIndex = 0;
     var filterHasBeenApplied = false;
     var queueDisplayRefresh = false;
+    var filterType = null;
 
     // element cache
     var $itemResults = $('#itemResults');
@@ -46,10 +48,6 @@
     var $viewName = $viewList.find('.viewName');
 
     var $editMenu = $('#editMenu');
-    var $deleteListBtn = $('#deleteList_btn');
-    var $deleteListName = $deleteListBtn.find('.listName');
-    var $editListBtn = $('#editList_btn');
-    var $editListItemsBtn = $('#editListItems_btn');
 
     // sort elements
     var $sortOptions = $viewItemsContainer.find('.sortOptions');
@@ -61,6 +59,18 @@
     var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
     var $filterTypeField = $filterOptions.find('.filterType');
     var $applyFiltersButton = $('#applyFilters_btn');
+
+    // delete list modal
+    var $deleteListConfirmModal = $('#deleteListConfirm-modal');
+    var $deleteListConfirmBtn = $('#deleteListConfirm_btn');
+    var $deleteListBtn = $('#deleteList_btn');
+    var $deleteListName = $deleteListBtn.find('.listName');
+
+    // update list modal
+    var $updateListModal = $('#updateList-modal');
+    var $tagNameField = $('#tagNameField');
+    var $updateListBtn = $('#updateListConfirm_btn');
+    var $editListBtn = $('#editList_btn');
 
 	// jquery objects
 	var currentHoverItem = null;
@@ -99,7 +109,7 @@
 		// viewList: click
 		$viewList.find('ul').on('click', 'a', function(e) {
 			e.preventDefault();
-			changeViewList($(this).text(), $(this).attr('data-content'));
+			changeViewList($(this).attr('data-content'));
 		});
 
 		// applyFilters_btn: click
@@ -153,8 +163,45 @@
 		// deleteList_btn: click
 		$deleteListBtn.click(function(e) {
 			e.preventDefault();
+			$deleteListConfirmModal.modal('show');
+		});
+
+		// deleteListConfirm_btn: click
+		$deleteListConfirmBtn.click(function(e) {
 			// delete currently viewing list
 			deleteList(currentViewTagID);
+			$deleteListConfirmModal.modal('hide');
+		});
+
+		// updateListModal: form submit
+		$updateListModal.find('form').submit(function(e) {
+			e.preventDefault();
+			// update tag name
+			updateList(currentViewTagID, $tagNameField.val());
+			$updateListModal.modal('hide');
+		});
+
+		// updateListBtn: click
+		$updateListBtn.click(function(e) {
+
+			// update tag name
+			updateList(currentViewTagID, $tagNameField.val());
+			$updateListModal.modal('hide');
+		});
+
+		// editListBtn: click
+		$editListBtn.click(function(e) {
+			e.preventDefault();
+
+			var currentListName = ListModel.getListName(currentViewTagID);
+
+			// set field name
+			$tagNameField.val(currentListName);
+
+			$updateListModal.modal('show');
+
+			// select field text
+			$tagNameField.focus().select();
 		});
 
 		// displayType toggle
@@ -174,7 +221,7 @@
 			e.preventDefault();
 
 			// custom filter
-			var filterType = parseInt($(this).attr('data-content'), 10);
+			filterType = parseInt($(this).attr('data-content'), 10);
 			if (filterType === 0) {
 				FilterPanel.showFilterPanel();
 
@@ -187,7 +234,7 @@
 				// set filterType field
 				$filterTypeField.text($(this).text());
 
-				quickFilter(parseInt($(this).attr('data-content'), 10));
+				quickFilter(filterType);
 			}
 
 		});
@@ -383,7 +430,7 @@
 		if (renderCurrentList) {
 
 			// get and render items
-			getItems(currentViewTagID);
+			changeViewList(currentViewTagID);
 		}
 	};
 
@@ -407,19 +454,30 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeViewList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeViewList = function(tagName, tagID) {
+	var changeViewList = function(tagID) {
 
-		// set view name
-		$viewName.text(tagName);
+		var tagName = '';
 
+		// show edit menu
 		if (tagID !== VIEW_ALL_TAG_ID) {
+
+			tagName = ListModel.getListName(tagID);
 
 			// change edit menu delete list name
 			$deleteListName.text(tagName);
 
 			// show edit menu
 			$editMenu.show();
+
+		// hide edit menu
+		} else {
+
+			tagName = VIEW_ALL_TAG_NAME;
+			$editMenu.hide();
 		}
+
+		// set view name
+		$viewName.text(tagName);
 
 		// load items
 		getItems(tagID);
@@ -574,19 +632,66 @@
 	var deleteList = function(tagID) {
 
 		// delete database data
-		ListData.deleteList(tagID, deleteList_result);
+		ListData.deleteList(tagID, function() {
+			deleteList_result(tagID);
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteList_result = function(data) {
+	var deleteList_result = function(tagID) {
+
+		// iterate cached tag items
+		var tagItems = ItemCache.getCachedItemsByTag(tagID);
+
+		// iterate itemIDs and delete tag from item data directory
+		_.each(tagItems, function(item, key) {
+
+			ItemData.deleteTagFromDirectory(key, tagID);
+		});
+
+		// delete cached tag
+		ItemCache.deleteCachedTag(tagID);
 
 		// update listModel
-		ListModel.getList();
+		ListModel.getList(function(data) {
+
+			ListModel.getList_result(data);
+		});
 
 		// default back to 'view all' list
-		getItems(VIEW_ALL_TAG_ID);
+		changeViewList(VIEW_ALL_TAG_ID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateList = function(tagID, tagName) {
+
+		console.info(tagID);
+		// delete database data
+		ListData.updateList(tagName, tagID, function(data) {
+		});
+
+		// update listModel
+		ListModel.getList(function(data) {
+
+			ListModel.getList_result(data);
+		});
+
+		// update list name
+		updateListName(tagName, tagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateListName -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateListName = function(tagName, tagID) {
+
+		// update update tag input field and current viewing tag name
+		$viewName.text(tagName);
+		$tagNameField.val(tagName);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -641,6 +746,13 @@
 				break;
 			// favorite
 			case 3:
+				if (item.userRating === '10') {
+					$button.parent().removeClass('rating-10');
+					item.userRating = '0';
+				} else {
+					$button.parent().removeClass().addClass('rating-10');
+					item.userRating = '10';
+				}
 				break;
 			// owned
 			case 4:
@@ -746,13 +858,19 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
 
+		// check if custom filter type
+		if (filterType === 0) {
+			// set filterType field
+			$filterTypeField.text('Custom');
+		}
+
 		// refresh item display first - then filter
 		if (queueDisplayRefresh) {
 			// console.info('refresh items');
 			queueDisplayRefresh = false;
 
 			// refresh item html for updated filtering
-			getItems(currentViewTagID, function() {
+			changeViewList(currentViewTagID, function() {
 
 				// apply filters to itemList
 				var filtered = FilterPanel.applyListJSFiltering(itemList);
