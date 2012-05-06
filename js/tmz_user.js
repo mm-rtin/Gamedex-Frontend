@@ -1,18 +1,26 @@
 // USER
-(function(User) {
+(function(User, tmz, $, _) {
+	"use strict";
 
 	// Dependencies
-	var Utilities = tmz.module('utilities');
-	var List = tmz.module('list');
-	var Storage = tmz.module('storage');
-	var ItemView = tmz.module('itemView');
-	var ItemCache = tmz.module('itemCache');
+	var Utilities = tmz.module('utilities'),
+		Storage = tmz.module('storage'),
+		ItemView = tmz.module('itemView'),
+		ItemCache = tmz.module('itemCache'),
 
-	// data
-	var userData = {'user_id': '', 'secret_key': ''};
+		// constants
+		USER_LOGIN_URL = tmz.api + 'login/',
+		USER_CREATE_URL = tmz.api + 'createuser/',
+		USER_UPDATE_URL = tmz.api + 'updateuser/',
+		USER_SEND_RESET_CODE_URL = tmz.api + 'sendresetcode/',
+		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'submitresetcode/',
+		USER_UPDATE_PASSWORD_URL = tmz.api + 'updatepassword/',
 
-	// demo account
-	var demoUser = {'user_id': '1', 'secret_key': '1'};
+		// data
+		userData = {'user_id': '', 'secret_key': ''},
+
+		// demo account
+		demoUser = {'user_id': '1', 'secret_key': '1'};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUserData
@@ -38,8 +46,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.login = function(email, password, onSuccess) {
 
-		var restURL = tmz.api + 'login/';
-
 		var requestData = {
 			user_email: email,
 			user_password: password
@@ -47,7 +53,7 @@
 
 		// login request
 		$.ajax({
-			url: restURL,
+			url: USER_LOGIN_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -87,8 +93,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.createUser = function(email, password, onSuccess) {
 
-		var restURL = tmz.api + 'createuser/';
-
 		// get parameters
 		var requestData = {
 			user_email: email,
@@ -96,7 +100,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: USER_CREATE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -119,8 +123,6 @@
 		// only update if existing password provided
 		if (password !== '') {
 
-			var restURL = tmz.api + 'updateuser/';
-
 			var requestData = {'user_id': userData.user_id, 'user_password': password};
 
 			if (userName !== userData.userName) {
@@ -137,7 +139,7 @@
 
 			// login request
 			$.ajax({
-				url: restURL,
+				url: USER_UPDATE_URL,
 				type: 'POST',
 				data: requestData,
 				dataType: 'json',
@@ -153,9 +155,79 @@
 
 				}
 			});
-
 		}
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sendResetPasswordCode -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.sendResetPasswordCode = function(email, onSuccess) {
+
+		var requestData = {'user_email': email};
+
+		// login request
+		$.ajax({
+			url: USER_SEND_RESET_CODE_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				onSuccess(data);
+			},
+			error: function(data) {
+
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* submitResetPasswordCode -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.submitResetPasswordCode = function(email, resetCode, onSuccess) {
+
+		var requestData = {'user_email': email, 'user_reset_code': resetCode};
+
+		// login request
+		$.ajax({
+			url: USER_SUBMIT_RESET_CODE_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				onSuccess(data);
+			},
+			error: function(data) {
+
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updatePassword -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.updatePassword = function(email, resetCode, newPassword, onSuccess) {
+
+		var requestData = {'user_email': email, 'user_reset_code': resetCode, 'user_new_password': newPassword};
+
+		// login request
+		$.ajax({
+			url: USER_UPDATE_PASSWORD_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				onSuccess(data);
+			},
+			error: function(data) {
+
+			}
+		});
+
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateUser_result -
@@ -189,11 +261,11 @@
 			var localTimestamp = Storage.get('timestamp');
 
 			if (data.timestamp != localTimestamp) {
-				console.info(data.timestamp, localTimestamp);
+
 
 				ItemCache.clearStoredData();
 			}
 		}
 	};
 
-})(tmz.module('user'));
+})(tmz.module('user'), tmz, jQuery, _);

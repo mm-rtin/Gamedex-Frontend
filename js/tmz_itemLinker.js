@@ -1,10 +1,11 @@
 // ItemLinker$
-(function(ItemLinker) {
+(function(ItemLinker, tmz, $, _) {
+	"use strict";
 
 	// Dependencies
-	var Amazon = tmz.module('amazon');
-	var GiantBomb = tmz.module('giantbomb');
-	var Utilities = tmz.module('utilities');
+	var Amazon = tmz.module('amazon'),
+		GiantBomb = tmz.module('giantbomb'),
+		Utilities = tmz.module('utilities');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* standardizeTitle -
@@ -62,10 +63,10 @@
 		// fuzzy name check
 		} else {
 			// check if searchItem title exists within original title and vice versa
-			reSource = new RegExp(sourceItem.standardName, 'gi');
-			reSearch = new RegExp(standardResultName, 'gi');
-			sourceInTarget = reSource.exec(standardResultName);
-			targetInSource = reSearch.exec(sourceItem.standardName);
+			var reSource = new RegExp(sourceItem.standardName, 'gi');
+			var reSearch = new RegExp(standardResultName, 'gi');
+			var sourceInTarget = reSource.exec(standardResultName);
+			var targetInSource = reSearch.exec(sourceItem.standardName);
 
 			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
 
@@ -104,36 +105,38 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemLinker.convertRomanNumerals = function(name) {
 
-		reRoman = new RegExp('\\s[XVI]+', 'gi');
-		match = reRoman.exec(name);
+		var reRoman = new RegExp('\\s[XVI]+', 'gi');
+		var match = reRoman.exec(name);
 
 		// roman numeral found
 		if (match && match[0].length > 0) {
 
-			roman = match[0];
+			var roman = match[0];
 			// remove III first and set dec to start at 3
 			// the simplified converter below does add 'III' of anything correctly
-			re = new RegExp('III', 'gi');
-			match2 = re.exec(roman);
+			var re = new RegExp('III', 'gi');
+			var match2 = re.exec(roman);
+			var dec = '';
 
 			if (match2 && match2[0].length > 0) {
 				dec = 3;
 				roman = roman.replace(re, '');
 			}
 
-			arr = roman.split('');
+			var arr = roman.split('');
+			var num = null;
 
 			// iterate each roman character except last blank character
 			for (var i = arr.length - 1; i >= 1; i--) {
 				switch(arr[i]) {
 					case 'I':
-				num = 1;
+					num = 1;
 				break;
 					case 'V':
-				num = 5;
+					num = 5;
 				break;
 					case 'X':
-				num = 10;
+					num = 10;
 				break;
 			}
 
@@ -161,10 +164,7 @@
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
 
-
-				searchName = item.standardName;
-
-
+				var searchName = item.standardName;
 
 				// run search for giantbomb
 				GiantBomb.searchGiantBomb(searchName, function(data) {
@@ -392,5 +392,5 @@
 		}
 	};
 
-})(tmz.module('itemLinker'));
+})(tmz.module('itemLinker'), tmz, jQuery, _);
 

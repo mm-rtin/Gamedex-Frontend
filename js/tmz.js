@@ -20,19 +20,6 @@ var tmz = {
   }()
 };
 
-// module references
-tmz.util = null;
-
-// models
-tmz.listModel = null;
-tmz.user = null;
-
-// views
-tmz.searchView = null;
-tmz.detailView = null;
-tmz.itemView = null;
-tmz.siteView = null;
-
 // set application properties
 tmz.api = '/';
 
@@ -57,11 +44,11 @@ tmz.initialize = function() {
 
 	// models
 	tmz.user = tmz.module('user');
-	tmz.listModel = tmz.module('list');
+	tmz.tagView = tmz.module('tagView');
 
 	// data interfaces
 	tmz.itemData = tmz.module('itemData');
-	tmz.listData = tmz.module('listData');
+	tmz.tagData = tmz.module('tagData');
 	tmz.Amazon = tmz.module('amazon');
 
 	// views

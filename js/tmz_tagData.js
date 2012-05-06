@@ -1,25 +1,32 @@
-// ListData
-(function(ListData) {
+// TagData
+(function(TagData, tmz, $, _) {
+	"use strict";
 
-	// Dependencies
-	var User = tmz.module('user');
-	var Storage = tmz.module('storage');
+	// constants
+	var TAG_GET_URL = tmz.api + 'tag/',
+		TAG_ADD_URL = tmz.api + 'tag/add/',
+		TAG_UPDATE_URL = tmz.api + 'tag/update/',
+		TAG_DELETE_URL = tmz.api + 'tag/delete/',
 
-	// local represenation of localStorage data model
-	var storedList = {};
+
+		// Dependencies
+		User = tmz.module('user'),
+		Storage = tmz.module('storage'),
+
+		// local represenation of localStorage data model
+		storedList = {};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getters
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getList
+	* getTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ListData.getList = function(onSuccess, onError) {
+	TagData.getTags = function(onSuccess, onError) {
 
 		var ajax = null;
 		var userData = User.getUserData();
-		var restURL = tmz.api + 'list/';
 
 		var requestData = {
 			user_id: userData.user_id,
@@ -39,7 +46,7 @@
 		} else {
 
 			ajax = $.ajax({
-				url: restURL,
+				url: TAG_GET_URL,
 				type: 'POST',
 				data: requestData,
 				dataType: 'json',
@@ -59,22 +66,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addList
+	* addTag
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ListData.addList = function(listName, onSuccess, onError) {
+	TagData.addTag = function(listName, onSuccess, onError) {
 
 		var userData = User.getUserData();
-		var restURL = tmz.api + 'list/add';
 
 		var requestData = {
 			'user_id': userData.user_id,
 			'uk': userData.secret_key,
 			'ts': userData.timestamp,
-			'list_name': listName
+			'tag_name': listName
 		};
 
 		$.ajax({
-			url: restURL,
+			url: TAG_ADD_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -95,23 +101,22 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateList
+	* updateTag
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ListData.updateList = function(listName, tagID, onSuccess, onError) {
+	TagData.updateTag = function(listName, tagID, onSuccess, onError) {
 
 		var userData = User.getUserData();
-		var restURL = tmz.api + 'list/update';
 
 		var requestData = {
 			'user_id': userData.user_id,
 			'uk': userData.secret_key,
 			'ts': userData.timestamp,
-			'list_name': listName,
-			'list_id': tagID
+			'tag_name': listName,
+			'tag_id': tagID
 		};
 
 		$.ajax({
-			url: restURL,
+			url: TAG_UPDATE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -138,14 +143,13 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteList -
+	* deleteTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ListData.deleteList = function(tagID, onSuccess, onError) {
+	TagData.deleteTag = function(tagID, onSuccess, onError) {
 
-		console.info('deleteList', tagID);
+
 
 		var userData = User.getUserData();
-		var restURL = tmz.api + 'list/delete';
 
 		// delete list
 		var requestData = {
@@ -156,7 +160,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: TAG_DELETE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -178,5 +182,5 @@
 	};
 
 
-})(tmz.module('listData'));
+})(tmz.module('tagData'), tmz, jQuery, _);
 

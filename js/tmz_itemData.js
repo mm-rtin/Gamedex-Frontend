@@ -1,28 +1,40 @@
 // ItemData
-(function(ItemData) {
+(function(ItemData, tmz, $, _, moment) {
+	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user');
-	var ItemLinker = tmz.module('itemLinker');
-	var ItemCache = tmz.module('itemCache');
-	var Utilities = tmz.module('utilities');
+	var User = tmz.module('user'),
+		ItemLinker = tmz.module('itemLinker'),
+		ItemCache = tmz.module('itemCache'),
+		Utilities = tmz.module('utilities'),
 
-	// constants
-	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID();
+		// REST URLS
+		ITEM_DIRECTORY_URL = tmz.api + 'item/directory/',
+		ITEM_URL = tmz.api + 'item/',
+		ITEM_ADD_URL = tmz.api + 'item/add/',
+		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch',
+		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
+		ITEM_UPDATE_URL = tmz.api + 'item/update/',
+		UPDATE_METACRITIC_URL = tmz.api + 'item/update/metacritic/';
 
-	// full item detail results for last viewed tag:
-	// alias of itemsCacheByTag[tagID]
-	// key by ID
-	var items = {};
 
-	// basic item framework - loaded before item details
-	// all directories share item data
-	// key by itemID = contains tags for each itemID
-	var itemDataDirectory = {};
+		// constants
+	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
 
-	// key 3RD party ID
-	var amazonDirectory = {};
-	var giantBombDirectory = {};
+		// full item detail results for last viewed tag:
+		// alias of itemsCacheByTag[tagID]
+		// key by ID
+		items = {},
+
+		// basic item framework - loaded before item details
+		// all directories share item data
+		// key by itemID = contains tags for each itemID
+		itemDataDirectory = {},
+
+		// key 3RD party ID
+		amazonDirectory = {},
+		giantBombDirectory = {};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* itemsAndDirectoryLoaded -
@@ -37,7 +49,6 @@
 	var downloadItemDirectory = function(onSuccess, onError) {
 
 		var ajax = null;
-		var restURL = tmz.api + 'item/directory';
 		var userData = User.getUserData();
 
 		// check local storage
@@ -59,7 +70,7 @@
 			};
 
 			ajax = $.ajax({
-				url: restURL,
+				url: ITEM_DIRECTORY_URL,
 				type: 'POST',
 				data: requestData,
 				dataType: 'json',
@@ -131,7 +142,7 @@
 
 		// DEBUG
 		if (typeof $(document).data('events').keypress === 'undefined') {
-			// console.info($(document).data('events'));
+
 			$(document).keypress(function(e) {
 				if (e.which == 96) {
 					console.warn('------------ itemDataDirectory: -------', itemDataDirectory);
@@ -159,7 +170,6 @@
 		// get new items data
 		} else {
 
-			var restURL = tmz.api + 'item/';
 			var userData = User.getUserData();
 
 			var requestData = {
@@ -169,7 +179,7 @@
 			};
 
 			ajax = $.ajax({
-				url: restURL,
+				url: ITEM_URL,
 				type: 'POST',
 				data: requestData,
 				dataType: 'json',
@@ -246,11 +256,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
 
-		var restURL = tmz.api + 'item/add';
 		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
-		var item = jQuery.extend(true, {}, currentItem);
+		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
 			'uid': userData.user_id,
@@ -277,7 +286,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: ITEM_ADD_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -296,7 +305,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagsForItem = function(deletedIDs, deletedTagIDs, currentItem, onSuccess, onError) {
 
-		var restURL = tmz.api + 'item/batch-delete';
 		var userData = User.getUserData(true);
 
 		var requestData = {
@@ -307,7 +315,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: ITEM_BATCH_DELETE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -345,7 +353,6 @@
 		// get itemTagID
 		var id = getDirectoryItemByItemID(itemID).tags[tagID];
 
-		var restURL = tmz.api + 'item/delete';
 		var userData = User.getUserData(true);
 
 		var requestData = {
@@ -356,7 +363,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: ITEM_SINGLE_DELETE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -379,13 +386,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateItem = function(currentItem, onSuccess, onError) {
 
-		console.info(currentItem);
 
-		var restURL = tmz.api + 'item/update';
+
 		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
-		var item = jQuery.extend(true, {}, currentItem);
+		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
 			'uid': userData.user_id,
@@ -412,7 +418,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: ITEM_UPDATE_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -431,11 +437,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
 
-		var restURL = tmz.api + 'item/updateMetacritic';
 		var userData = User.getUserData(true);
 
 		// clone currentItem as new object
-		var item = jQuery.extend(true, {}, currentItem);
+		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
 			'uid': userData.user_id,
@@ -448,7 +453,7 @@
 		};
 
 		$.ajax({
-			url: restURL,
+			url: UPDATE_METACRITIC_URL,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -481,7 +486,7 @@
 		for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
 
 			// clone item
-			newItem = jQuery.extend(true, {}, item);
+			newItem = $.extend(true, {}, item);
 
 			// update item with new id
 			newItem.id = data.itemID;
@@ -502,7 +507,7 @@
 		// add last item to 'view all' list (id: 0) cache if exists and itemID does not exist in all items cache
 		viewAllCachedItems = ItemCache.getCachedItemsByTag(VIEW_ALL_TAG_ID);
 
-		console.info(viewAllCachedItems);
+
 
 		var itemIDExists = false;
 		_.each(viewAllCachedItems, function(item, key) {
@@ -533,7 +538,7 @@
 
 		// last tag for item, remove from 'view all' list
 		if (itemDataDirectory[itemID].tagCount === 0) {
-			console.info('deleted view all item');
+
 			// update cached items
 			ItemCache.deleteCachedItem(itemID, VIEW_ALL_TAG_ID);
 		}
@@ -579,7 +584,7 @@
 		if (!itemDataDirectory[data.itemID]) {
 
 			// add to tag directory
-			directoryItem = {
+			var directoryItem = {
 				itemID: item.itemID,
 				asin: item.asin,
 				gbombID: item.gbombID,
@@ -705,7 +710,7 @@
 
 		// get random number between 0 and idList.length
 		var randomIndex = Math.floor(Math.random() * idList.length);
-		// console.info(idList, randomIndex);
+
 
 		return idList[randomIndex];
 	};
@@ -733,5 +738,5 @@
 
 	$.extend(ItemData, publicMethods);
 
-})(tmz.module('itemData'));
+})(tmz.module('itemData'), tmz, $, _, moment);
 

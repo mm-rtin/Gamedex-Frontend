@@ -1,18 +1,19 @@
 // FILTER PANEL
-(function(FilterPanel) {
+(function(FilterPanel, tmz, $, _, moment) {
+	"use strict";
 
 	// dependecies
-	var Utilities = tmz.module('utilities');
+	var Utilities = tmz.module('utilities'),
 
-	// node cache
-	var $filtersModal = $('#filters-modal');
+		// node cache
+		$filtersModal = $('#filters-modal'),
 
-	// filters
-    var $releaseDateFilter = $('#releaseDate_filter');
-    var $gameStatusFilter = $('#gameStatus_filter');
-    var $playStatusFilter = $('#playStatus_filter');
-    var $metascoreFilter = $('#metascore_filter');
-    var $platformFilter = $('#platformFilterList');
+		// filters
+		$releaseDateFilter = $('#releaseDate_filter'),
+		$gameStatusFilter = $('#gameStatus_filter'),
+		$playStatusFilter = $('#playStatus_filter'),
+		$metascoreFilter = $('#metascore_filter'),
+		$platformFilter = $('#platformFilterList');
 
 	// data
 
@@ -48,7 +49,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.getFilters = function() {
 
-		// console.info('apply filter');
+
 
 		var filters = {};
 		filters.releaseDateFilters = [];
@@ -98,7 +99,7 @@
 		});
 
 		// iterate platform filter options
-		platformFilters = $platformFilter.val() || [];
+		var platformFilters = $platformFilter.val() || [];
 
 		for (var i = 0, len = platformFilters.length; i < len; i++) {
 			filters.platformFilters[i] = Utilities.getStandardPlatform(platformFilters[i]);
@@ -145,8 +146,8 @@
 
 		var filters = FilterPanel.getFilters();
 		var filtered = false;
-		// console.info(filters);
-		// console.info(sortType);
+
+
 
 		// get selected items
 		var selectedItems = $('.gridItem').filter(function(index){
@@ -447,4 +448,4 @@
 		return false;
 	};
 
-})(tmz.module('filterPanel'));
+})(tmz.module('filterPanel'), tmz, $, _, moment);

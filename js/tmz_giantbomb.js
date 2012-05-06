@@ -1,18 +1,19 @@
 // GiantBomb
-(function(GiantBomb) {
+(function(GiantBomb, tmz, $, _, moment) {
+	"use strict";
 
     // module references
-	var Amazon = tmz.module('amazon');
+	var Amazon = tmz.module('amazon'),
 
-	// REST URLS
-	var GIANTBOMB_SEARCH_URL = tmz.api + 'giantbomb/search';
-	var GIANTBOMB_DETAIL_URL = tmz.api + 'giantbomb/detail';
+		// REST URLS
+		GIANTBOMB_SEARCH_URL = tmz.api + 'giantbomb/search/',
+		GIANTBOMB_DETAIL_URL = tmz.api + 'giantbomb/detail/',
 
-	// data
-	giantBombDataCache = {};
-	giantBombItemCache = {};
+		// data
+		giantBombDataCache = {},
+		giantBombItemCache = {};
 
-	// templates
+		// templates
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchGiantBomb -
@@ -45,15 +46,13 @@
 	* parseGiantBombResultItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	GiantBomb.parseGiantBombResultItem = function(resultItem) {
-		itemData = {
+		var itemData = {
 			id: resultItem.id,
 			asin: 0,
 			gbombID: resultItem.id,
 			name: resultItem.name,
 			platform: 'n/a'
 		};
-
-
 
 		// format date
 		if (resultItem.original_release_date && resultItem.original_release_date !== '') {
@@ -224,5 +223,5 @@
 	};
 
 
-})(tmz.module('giantbomb'));
+})(tmz.module('giantbomb'), tmz, jQuery, _, moment);
 

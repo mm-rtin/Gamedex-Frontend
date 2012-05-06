@@ -1,21 +1,22 @@
 // ItemCache
-(function(ItemCache) {
+(function(ItemCache, tmz, $, _) {
+	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user');
-	var Storage = tmz.module('storage');
-	var Utilities = tmz.module('utilities');
+	var User = tmz.module('user'),
+		Storage = tmz.module('storage'),
+		Utilities = tmz.module('utilities'),
 
-	// constants
-	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID();
+		// constants
+		VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
 
-	// data
+		// data
 
-	// items cached by tagID
-	var itemsCacheByTag = {};
+		// items cached by tagID
+		itemsCacheByTag = {},
 
-	// tagIDs which have been retrieved from local storage
-	var storedItems = {};
+		// tagIDs which have been retrieved from local storage
+		storedItems = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedItemsByTag -
@@ -98,7 +99,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var storeItemByTag = function(tagID, item) {
 
-		console.info('try store item by tag: ', tagID, item.itemID);
+
 
 		// skip storage if itemID was retrieved from local storage
 		if (typeof storedItems[tagID + '_' + item.itemID] === 'undefined') {
@@ -134,7 +135,7 @@
 			// store user object as string back into userID key
 			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
 
-			console.info('save to local storage: ' + tagID, item.itemID);
+
 		}
 	};
 
@@ -180,9 +181,9 @@
 
 		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
 
-		console.info(storedItemsCacheByTag);
-		console.info(tagID, itemID);
-		console.info(storedItemsCacheByTag[tagID][itemID]);
+
+
+
 
 		delete storedItemsCacheByTag[tagID][itemID];
 
@@ -210,8 +211,8 @@
 					storedItems[tagID + '_' + key] = true;
 				});
 
-				console.info('get stored items by tag: ', tagID);
-				console.info(storedTag);
+
+
 			}
 		}
 
@@ -254,5 +255,5 @@
 
 	$.extend(ItemCache, publicMethods);
 
-})(tmz.module('itemCache'));
+})(tmz.module('itemCache'), tmz, $, _);
 

@@ -1,48 +1,46 @@
 // Amazon
-(function(Amazon) {
+(function(Amazon, tmz, $, _, moment) {
+	"use strict";
 
     // module references
-    var Utilities = tmz.module('utilities');
+    var Utilities = tmz.module('utilities'),
 
-	// constants
-	var FILTERED_NAMES = [
-		'accessory',
-		'case',
-		'codes',
-		'combo',
-		'console',
-		'controller',
-		'covers',
-		'face plate',
-		'faceplate',
-		'head set',
-		'headset',
-		'import',
-		'japan',
-		'kit',
-		'map',
-		'membership',
-		'new',
-		'pack',
-		'poster',
-		'pre-paid',
-		'set',
-		'shell',
-		'skin',
-		'software',
-		'stylus',
-		'wireless'
-	];
+		// constants
+		FILTERED_NAMES = [
+			'accessory',
+			'case',
+			'codes',
+			'combo',
+			'console',
+			'controller',
+			'covers',
+			'face plate',
+			'faceplate',
+			'head set',
+			'headset',
+			'import',
+			'japan',
+			'kit',
+			'map',
+			'membership',
+			'new',
+			'pack',
+			'poster',
+			'pre-paid',
+			'set',
+			'shell',
+			'skin',
+			'software',
+			'stylus',
+			'wireless'
+		],
 
-	// REST URLS
-	var AMAZON_SEARCH_URL = tmz.api + 'amazon/search/';
-	var AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/';
+		// REST URLS
+		AMAZON_SEARCH_URL = tmz.api + 'amazon/search/',
+		AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/',
 
-	// data
-	amazonOffersCache = {};
-
-	// templates
-	var priceMenuTemplate = _.template($('#price-menu-template').html());
+		// data
+		amazonOffersCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchAmazon
@@ -50,7 +48,7 @@
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
 
 		var searchTerms = encodeURIComponent(keywords);
-		// console.info(tmz.api);
+
 		// browse node, search terms and response group in url
 		var requestData = {
 			'keywords': keywords,
@@ -114,8 +112,6 @@
 				itemData.calendarDate = 'Unknown';
 			}
 		}
-
-
 
 		return itemData;
 	};
@@ -296,5 +292,5 @@
 		return offerItem;
 	};
 
-})(tmz.module('amazon'));
+})(tmz.module('amazon'), tmz, jQuery, _, moment);
 

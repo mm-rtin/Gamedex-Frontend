@@ -1,15 +1,16 @@
 // GameStats
-(function(GameStats) {
+(function(GameStats, tmz, $, _) {
+	"use strict";
 
     // module references
 
 	// properties
 
 	// REST URL
-	var POPULAR_LIST_URL = tmz.api + 'popularlist/';
+	var POPULAR_LIST_URL = tmz.api + 'popularlist/',
 
-	// data
-	var gameStatsListCache = {};
+		// data
+		gameStatsListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getPopularGamesListByPlatform -
@@ -21,7 +22,7 @@
 
 		if (cachedList) {
 
-			// console.info('cached');
+
 			// return list
 			onSuccess(cachedList);
 
@@ -38,7 +39,7 @@
 				cache: true,
 				success: function(data) {
 
-					// console.info('not cached');
+
 					// cache result
 					gameStatsListCache[platform] = data;
 
@@ -74,5 +75,5 @@
 
 
 
-})(tmz.module('gameStats'));
+})(tmz.module('gameStats'), tmz, jQuery, _);
 

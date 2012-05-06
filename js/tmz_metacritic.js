@@ -1,20 +1,21 @@
 // Metacritic
-(function(Metacritic) {
+(function(Metacritic, tmz, $, _) {
+	"use strict";
 
     // module references
-	var Amazon = tmz.module('amazon');
-	var ItemLinker = tmz.module('itemLinker');
-	var ItemData = tmz.module('itemData');
+	var Amazon = tmz.module('amazon'),
+		ItemLinker = tmz.module('itemLinker'),
+		ItemData = tmz.module('itemData'),
 
-	// REST URL
-	var METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search';
-	var METACRITIC_CACHE_URL = tmz.api + 'metacritic/cache';
+		// REST URL
+		METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search/',
+		METACRITIC_CACHE_URL = tmz.api + 'metacritic/cache/',
 
-	// properties
-	var metacriticDomain = 'metacritic.com';
+		// properties
+		metacriticDomain = 'metacritic.com',
 
-	// data
-	var metascoreCache = {};
+		// data
+		metascoreCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
@@ -22,12 +23,12 @@
 	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
 
 
-		// console.info(sourceItem.asin, sourceItem.gbombID);
+
 		// find in cache first
 		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
 
 		if (cachedScore) {
-			// console.info('cached metascore:', cachedScore);
+
 
 			// add score data to source item
 			sourceItem.metascore = cachedScore.metascore;
@@ -51,7 +52,7 @@
 				cache: true,
 				success: function(data) {
 
-					// console.info('fetch metascore:', data);
+
 
 					// parse result
 					parseMetascoreResults(cleanedSearchTerms, data, sourceItem, function(data) {
@@ -195,12 +196,12 @@
 			sourceItem.metascorePage = '';
 		}
 
-		// console.info(sourceItem, previousMetascore);
+
 
 		// check if source item score or page differs from return score/page
 		if (previousMetascore && sourceItem.metascore != previousMetascore) {
 
-			// console.info('######## UPDATE METACRITIC RECORD:', sourceItem.metascore, previousMetascore, sourceItem.metascorePage, previousMetascorePage);
+
 			// update metacritic data for source item record
 			ItemData.updateMetacritic(sourceItem);
 		}
@@ -219,7 +220,7 @@
 			'metascorePage': encodeURI(metascorePage)
 		};
 
-		// console.info(requestData);
+
 
 		$.ajax({
 			url: METACRITIC_CACHE_URL,
@@ -227,8 +228,8 @@
 			data: requestData,
 			cache: true,
 			success: function(data) {
-				// console.info('metacritic: add to server cache');
-				// console.info(data);
+
+
 			}
 		});
 	};
@@ -250,7 +251,7 @@
 		$(results).each(function() {
 
 			// convert to date object
-			releaseDateObject = new Date($(this).find('.release_date .data').text());
+			var releaseDateObject = new Date($(this).find('.release_date .data').text());
 			// format month
 			var month = releaseDateObject.getMonth() + 1;
 			month = month < 10 ? '0' + month : month;
@@ -282,5 +283,5 @@
 
 
 
-})(tmz.module('metacritic'));
+})(tmz.module('metacritic'), tmz, jQuery, _);
 

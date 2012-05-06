@@ -1,5 +1,6 @@
 // Storage
-(function(Storage) {
+(function(Storage, tmz, $, _) {
+	"use strict";
 
 	// Dependencies
 	var User = tmz.module('user');
@@ -100,5 +101,5 @@
 		localStorage.clear();
 	};
 
-})(tmz.module('storage'));
+})(tmz.module('storage'), tmz, jQuery, _);
 

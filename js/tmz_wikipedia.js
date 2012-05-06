@@ -2,12 +2,12 @@
 (function(Wikipedia) {
 
 	// Dependencies
-	var User = tmz.module('user');
-	var Utilities = tmz.module('utilities');
-	var ItemLinker = tmz.module('itemLinker');
+	var User = tmz.module('user'),
+		Utilities = tmz.module('utilities'),
+		ItemLinker = tmz.module('itemLinker'),
 
-	// wikipedia cache
-	var wikipediaPageCache = {};
+		// wikipedia cache
+		wikipediaPageCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getWikipediaPage -

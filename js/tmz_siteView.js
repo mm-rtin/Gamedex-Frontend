@@ -1,56 +1,75 @@
 // SITEVIEW
-(function(SiteView) {
+(function(SiteView, tmz, $, _) {
+	"use strict";
 
     // module references
-    var User = tmz.module('user');
-    var ItemData = tmz.module('itemData');
-	var List = tmz.module('list');
-	var ItemView = tmz.module('itemView');
-	var Storage = tmz.module('storage');
+    var User = tmz.module('user'),
+		ItemData = tmz.module('itemData'),
+		TagView = tmz.module('tagView'),
+		ItemView = tmz.module('itemView'),
+		Storage = tmz.module('storage'),
 
-	// constants
-	var FORM_TYPES = {'login': 0, 'signup': 1};
+		// constants
+		FORM_TYPES = {'login': 0, 'signup': 1},
 
-	// properties
-	var formType = FORM_TYPES.login;
-	var rememberMe = false;
+		// properties
+		formType = FORM_TYPES.login,
+		rememberMe = false,
 
-	// data
+		// data
 
-	// jquery cache
-	// header
-	$infoHeader = $('#infoHeader');
-	$header = $('#header');
-	$logoutButton = $('#logoutButton');
-	$loggedInButton = $('#loggedInButton');
-	$managementButton = $('#managementButton');
+		// jquery cache
+		// header
+		$infoHeader = $('#infoHeader'),
+		$header = $('#header'),
+		$logoutButton = $('#logoutButton'),
+		$loggedInButton = $('#loggedInButton'),
 
-	// login/signup
-	$loginForm = $('#loginForm');
-	$loginButton = $('#loginButton');
-	$signupButton = $('#signupButton');
-	$backButton = $('#backButton');
-	$loginSubmitButton = $('#loginSubmitButton');
-	$signupSubmitButton = $('#signupSubmitButton');
-	$backButton = $('#backButton');
-	$email = $('#email').find('input');
-	$password = $('#password').find('input');
-	$rememberMeCheckbox = $('#rememberCheckbox');
+		// login/signup
+		$loginForm = $('#loginForm'),
+		$loginButton = $('#loginButton'),
+		$signupButton = $('#signupButton'),
+		$loginSubmitButton = $('#loginSubmitButton'),
+		$signupSubmitButton = $('#signupSubmitButton'),
+		$backButton = $('#backButton'),
+		$email = $('#email').find('input'),
+		$password = $('#password').find('input'),
+		$rememberCheckboxToggle = $('#rememberCheckboxToggle'),
+		$resetPasswordButton = $('#resetPasswordButton'),
+		$invalidLoginTag = $('#invalidLoginTag'),
+		$accountExistsTag = $('#accountExistsTag'),
 
-	// account management
-	$accountManagementModal = $('#accountManagement-modal');
-	$clearLocalStorageButton = $('#clearLocalStorage_btn');
-	$deleteAccountButton = $('#deleteAccount_btn');
-	$managementButton = $('#managementButton');
-	$updateAccountButton = $('#updateAccount_btn');
-	$userNameUpdateField = $('#userNameUpdateField');
-	$passwordField = $('#passwordField');
-	$passwordUpdateField = $('#passwordUpdateField');
-	$emailUpdateField = $('#emailUpdateField');
-	$existingPasswordGroup = $accountManagementModal.find('.existingPasswordGroup');
-	$emailGroup = $accountManagementModal.find('.emailGroup');
-	$successAlert = $accountManagementModal.find('.alert-success');
-	$errorAlert = $accountManagementModal.find('.alert-error');
+		// account management
+		$accountManagementModal = $('#accountManagement-modal'),
+		$clearLocalStorageButton = $('#clearLocalStorage_btn'),
+		$deleteAccountButton = $('#deleteAccount_btn'),
+		$managementButton = $('#managementButton'),
+		$updateAccountButton = $('#updateAccount_btn'),
+		$userNameUpdateField = $('#userNameUpdateField'),
+		$passwordField = $('#passwordField'),
+		$passwordUpdateField = $('#passwordUpdateField'),
+		$emailUpdateField = $('#emailUpdateField'),
+		$existingPasswordGroup = $accountManagementModal.find('.existingPasswordGroup'),
+		$emailGroup = $accountManagementModal.find('.emailGroup'),
+		$successAlert = $accountManagementModal.find('.alert-success'),
+		$errorAlert = $accountManagementModal.find('.alert-error'),
+
+		// reset password
+		$resetpasswordModal = $('#resetpassword-modal'),
+		$resetCodeForm = $resetpasswordModal.find('.resetCodeForm'),
+		$updatePasswordForm = $resetpasswordModal.find('.updatePasswordForm'),
+		$passwordResetCodeContainer = $resetpasswordModal.find('.passwordResetCodeContainer'),
+		$passwordResetEmailContainer = $resetpasswordModal.find('.passwordResetEmailContainer'),
+		$passwordResetAlertSuccess = $resetpasswordModal.find('.alert-success'),
+		$passwordResetAlertError = $resetpasswordModal.find('.alert-error'),
+
+		$resetPasswordEmailField = $('#resetPasswordEmailField'),
+		$resetPasswordCodeField = $('#resetPasswordCodeField'),
+		$resetPasswordPasswordField = $('#resetPasswordPasswordField'),
+
+		$sendResetCodeButton = $('#sendResetCode_btn'),
+		$submitResetCodeButton = $('#submitResetCode_btn'),
+		$updatePasswordButton = $('#updatePassword_btn');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -61,6 +80,8 @@
 
 		// init login form
 		initLoginForm();
+
+		$resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
 		// start demo app
 		startDemo();
@@ -79,7 +100,7 @@
 
 		// updateAccountButton: click
 		$updateAccountButton.click(function(e) {
-
+			e.preventDefault();
 			updateAccount();
 		});
 
@@ -148,8 +169,8 @@
 			showFormNavigation();
 		});
 
-		// rememberMeCheckbox: click
-		$rememberMeCheckbox.click(function(e) {
+		// rememberCheckboxToggle: click
+		$rememberCheckboxToggle.click(function(e) {
 			if (rememberMe) {
 				rememberMe = false;
 				$(this).removeClass('on');
@@ -160,17 +181,72 @@
 			}
 		});
 
-		/* CREATE USER DIALOG
+		/* RESET PASSWORD
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		// create user: click
-		$('#newAccount_btn').click(function(e) {
+		// resetPasswordButton: click
+		$resetPasswordButton.click(function(e) {
+			e.preventDefault();
 
+			// get e-mail storage key
+			var email = $email.val() || Storage.getGlobal('email');
 
+			// populate field
+			if (email) {
+				$resetPasswordEmailField.val(email);
+			}
+
+			$resetpasswordModal.modal('show');
 		});
-		// cancel create click: click
-		$('#newAccount_cancel_btn').click(function() {
-			$('#createuser-modal').modal('hide');
+		// sendResetCodeButton: click
+		$sendResetCodeButton.click(function(e) {
+			e.preventDefault();
 
+			// send reset password code
+			sendResetPasswordCode($resetPasswordEmailField.val());
+		});
+
+		// submitResetCodeButton: click
+		$submitResetCodeButton.click(function(e) {
+			e.preventDefault();
+			// submit reset password code
+			submitResetPasswordCode($resetPasswordEmailField.val(), $resetPasswordCodeField.val());
+		});
+
+		// updatePasswordButton: click
+		$updatePasswordButton.click(function(e) {
+			e.preventDefault();
+			// update password
+			updatePassword($resetPasswordEmailField.val(), $resetPasswordCodeField.val(), $resetPasswordPasswordField.val());
+		});
+
+		// resetPasswordEmailField: keydown
+		$resetPasswordEmailField.keydown(function(e) {
+
+			if (e.which === 13) {
+				e.preventDefault();
+				// send reset password code
+				sendResetPasswordCode($resetPasswordEmailField.val());
+			}
+		});
+
+		// resetPasswordCodeField: keydown
+		$resetPasswordCodeField.keydown(function(e) {
+
+			if (e.which === 13) {
+				e.preventDefault();
+				// submit reset password code
+				submitResetPasswordCode($resetPasswordEmailField.val(), $resetPasswordCodeField.val());
+			}
+		});
+
+		// resetPasswordPasswordField: keydown
+		$resetPasswordPasswordField.keydown(function(e) {
+
+			if (e.which === 13) {
+				e.preventDefault();
+				// update password
+				updatePassword($resetPasswordEmailField.val(), $resetPasswordCodeField.val(), $resetPasswordPasswordField.val());
+			}
 		});
 	};
 
@@ -186,7 +262,7 @@
 		if (email) {
 			rememberMe = true;
 			$email.val(email);
-			$rememberMeCheckbox.addClass('on');
+			$rememberCheckboxToggle.addClass('on');
 			$password.focus();
 		}
 	};
@@ -196,7 +272,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var setupRememberMe = function() {
 
-		console.info('setup remember', rememberMe);
+
 
 		if (rememberMe) {
 			Storage.setGlobal('email', $email.val());
@@ -210,8 +286,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var login = function(email, password) {
 
+		resetLoginForm();
+
 		// send login request
 		User.login(email, password, login_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetLoginForm -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetLoginForm = function() {
+
+		$password.val('');
+
+		$invalidLoginTag.hide();
+		$accountExistsTag.hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -250,8 +339,8 @@
 			itemsReturnedData = {};
 		});
 
-		// get user lists
-		var listRequest = List.getList(function(data) {
+		// get user tags
+		var listRequest = TagView.getTags(function(data) {
 			listReturnedData = data;
 
 		}, function() {
@@ -265,10 +354,10 @@
 			// all ajax requests returned
 			function() {
 
-				console.info('all methods returned');
+
 
 				// list result
-				List.getList_result(listReturnedData);
+				TagView.getTags_result(listReturnedData);
 
 				// itemView result
 				ItemView.initializeUserItems_result(itemsReturnedData);
@@ -306,7 +395,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var signup = function(email, password) {
 
-		// console.info(email, password);
+		resetLoginForm();
+
 		// create user
 		User.createUser(email, password, signup_result);
 	};
@@ -317,9 +407,9 @@
 	var login_result = function(data, email) {
 
 		// success
-		if (data.userID) {
+		if (data.status === 'success') {
 
-			console.info(rememberMe);
+
 			setupRememberMe();
 
 			// show logged in view
@@ -328,9 +418,11 @@
 			// start user app
 			startApp();
 
-		// failed
-		} else {
+		// invalid login
+		} else if (typeof data.status !== 'undefined' && data.status === 'invalid_login') {
 
+			// show invalid login tag
+			$invalidLoginTag.fadeIn();
 		}
 	};
 
@@ -340,11 +432,9 @@
 	var signup_result = function(data, email) {
 
 		// returned error status
-		if (typeof data.status !== 'undefined') {
+		if (typeof data.status !== 'undefined' && data.status === 'user_exists') {
 
-			if (data.status === 'user_exists') {
-				// console.info('user exists');
-			}
+			$accountExistsTag.fadeIn();
 
 		// success
 		} else {
@@ -354,6 +444,140 @@
 			// login new user
 			login_result(data, email);
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sendResetPasswordCode -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sendResetPasswordCode = function(email) {
+
+		User.sendResetPasswordCode(email, sendResetPasswordCode_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sendResetPasswordCode_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sendResetPasswordCode_result = function(data) {
+
+		// e-mail sent: success
+		if (typeof data.status !== 'undefined' && data.status === 'success') {
+
+			// hide previous buttons
+			$sendResetCodeButton.hide();
+			$submitResetCodeButton.show();
+
+			// hide email field
+			$passwordResetEmailContainer.hide();
+			// show code field
+			$passwordResetCodeContainer.show();
+
+			// show success alert
+			$passwordResetAlertSuccess.find('.alertTitle').text('E-mail sent:');
+			$passwordResetAlertSuccess.show().find('.alertText').html('Check your e-mail and enter the <strong>3-digit code</strong> into the field above');
+
+			$passwordResetAlertError.hide();
+
+		// invalid e-mail address
+		} else if (typeof data.status !== 'undefined' && data.status === 'invalid_email') {
+
+			// show error alert
+			$passwordResetAlertError.find('.alertTitle').text('Invalid E-mail address:');
+			$passwordResetAlertError.show().find('.alertText').html('Cannot send password reset code');
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* submitResetPasswordCode -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var submitResetPasswordCode = function(email, resetCode) {
+
+		User.submitResetPasswordCode(email, resetCode, submitResetPasswordCode_result);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* submitResetPasswordCode_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var submitResetPasswordCode_result = function(data) {
+
+		// show update password form
+		if (typeof data.status !== 'undefined' && data.status === 'success') {
+
+			// hide previous form and buttons
+			$resetCodeForm.hide();
+			$submitResetCodeButton.hide();
+
+			// show password form and button
+			$updatePasswordForm.show();
+			$updatePasswordButton.show();
+
+			// hide success alert
+			$passwordResetAlertSuccess.hide();
+			$passwordResetAlertError.hide();
+
+		// incorrect code
+		} else {
+
+			$passwordResetAlertSuccess.hide();
+
+			// show error alert
+			$passwordResetAlertError.find('.alertTitle').text('Invalid code:');
+			$passwordResetAlertError.show().find('.alertText').html('Reset code is incorrect, please try again');
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updatePassword -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updatePassword = function(email, resetCode, newPassword) {
+
+		User.updatePassword(email, resetCode, newPassword, function(data) {
+			updatePassword_result(data, email, newPassword);
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updatePassword_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updatePassword_result = function(data, email, newPassword) {
+
+		// show update password form
+		if (typeof data.status !== 'undefined' && data.status === 'success') {
+
+			// reset modal
+			resetResetPasswordModal();
+
+			// auto populate login info
+			$email.val(email);
+			$password.val(newPassword);
+
+			// auto login
+			login($email.val(), $password.val());
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetResetPasswordModal -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetResetPasswordModal = function() {
+
+		$resetpasswordModal.modal('hide');
+
+		$sendResetCodeButton.show();
+		$submitResetCodeButton.hide();
+		$updatePasswordButton.hide();
+
+		$resetCodeForm.show();
+		$updatePasswordForm.hide();
+
+		$passwordResetEmailContainer.show();
+		$passwordResetCodeContainer.hide();
+		$passwordResetAlertSuccess.hide();
+		$passwordResetAlertError.hide();
+
+		// clear form fields
+		$resetPasswordEmailField.val('');
+		$resetPasswordCodeField.val('');
+		$resetPasswordPasswordField.val('');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -518,7 +742,7 @@
 			// send update request
 			User.updateUser(password, email, userName, newPassword, function(data) {
 
-				console.info(data);
+
 
 				// update success
 				if (data.status === 'success') {
@@ -580,5 +804,5 @@
 	};
 
 
-})(tmz.module('siteView'));
+})(tmz.module('siteView'), tmz, jQuery, _);
 

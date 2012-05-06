@@ -3,76 +3,76 @@
 	"use strict";
 
 	// module references
-	var DetailView = tmz.module('detailView');
-	var Amazon = tmz.module('amazon');
-	var GiantBomb = tmz.module('giantbomb');
-	var Utilities = tmz.module('utilities');
-	var GameStats = tmz.module('gameStats');
-	var IGN = tmz.module('ign');
-	var ItemLinker = tmz.module('itemLinker');
+	var DetailView = tmz.module('detailView'),
+		Amazon = tmz.module('amazon'),
+		GiantBomb = tmz.module('giantbomb'),
+		Utilities = tmz.module('utilities'),
+		GameStats = tmz.module('gameStats'),
+		IGN = tmz.module('ign'),
+		ItemLinker = tmz.module('itemLinker'),
 
-    // constants
-	var LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1};
-    var TAB_IDS = {'#searchTab': 0, '#listTab': 1};
-    var TIME_TO_SUBMIT_QUERY = 250;	// the number of miliseconds to wait before submiting search query
-    var DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2};
-    var PANEL_HEIGHT_OFFSET = 225;
-    var PANEL_HEIGHT_PADDING = 40;
+		// constants
+		LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1},
+		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
+		TIME_TO_SUBMIT_QUERY = 250,	// the number of miliseconds to wait before submiting search query
+		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
+		PANEL_HEIGHT_OFFSET = 225,
+		PANEL_HEIGHT_PADDING = 40,
 
-    // search field timeout
-    var timeout = null;
+		// search field timeout
+		timeout = null,
 
-    // data
-    var searchTerms = 'skyrim';
-    var previousSearchTerms = '';
-    var searchResults = {};
+		// data
+		searchTerms = 'skyrim',
+		previousSearchTerms = '',
+		searchResults = {},
 
-    // properties
-    var searchProvider = Utilities.getProviders().Amazon;
-    var listProvider = LIST_PROVIDERS.IGN;
-    var currentTab = TAB_IDS['#searchTab'];
-    var searchPlatform = null;
-    var listPlatform = null;
-    var searchDisplayType = DISPLAY_TYPE.Icons;
-    var listDisplayType = DISPLAY_TYPE.Icons;
+		// properties
+		searchProvider = Utilities.getProviders().Amazon,
+		listProvider = LIST_PROVIDERS.IGN,
+		currentTab = TAB_IDS['#searchTab'],
+		searchPlatform = null,
+		listPlatform = null,
+		searchDisplayType = DISPLAY_TYPE.Icons,
+		listDisplayType = DISPLAY_TYPE.Icons,
 
-    // node cache
-    var $searchContainer = $('#searchContainer');
+		// node cache
+		$searchContainer = $('#searchContainer'),
 
-    var $searchProvider = $('#searchProvider');
-    var $listProvider = $('#listProvider');
-    var $searchProviderName = $searchProvider.find('.providerName');
-    var $listProviderName = $listProvider.find('.providerName');
+		$searchProvider = $('#searchProvider'),
+		$listProvider = $('#listProvider'),
+		$searchProviderName = $searchProvider.find('.providerName'),
+		$listProviderName = $listProvider.find('.providerName'),
 
-    var $searchPlatforms = $('#searchPlatforms');
-    var $listPlatforms = $('#listPlatforms');
-    var $searchPlatformsName = $searchPlatforms.find('.platformName');
-    var $listPlatformsName = $listPlatforms.find('.platformName');
+		$searchPlatforms = $('#searchPlatforms'),
+		$listPlatforms = $('#listPlatforms'),
+		$searchPlatformsName = $searchPlatforms.find('.platformName'),
+		$listPlatformsName = $listPlatforms.find('.platformName'),
 
-    var $finderTabLinks = $('#finderTabLinks');
-    var $finderTabContent = $('#finderTabContent');
-    var $searchTab = $('#searchTab');
-    var $listTab = $('#listTab');
-    var $searchTabLink = $('#searchTabLink');
-    var $listTabLink = $('#listTabLink');
+		$finderTabLinks = $('#finderTabLinks'),
+		$finderTabContent = $('#finderTabContent'),
+		$searchTab = $('#searchTab'),
+		$listTab = $('#listTab'),
+		$searchTabLink = $('#searchTabLink'),
+		$listTabLink = $('#listTabLink'),
 
-    var $search = $('#searchField');
-    var $searchButton = $('#search_btn');
-    var $searchResultsContainer = $('#searchResultsContainer');
-    var $searchResults = $('#searchResults');
-    var $inputField = $search.find('input');
+		$search = $('#searchField'),
+		$searchButton = $('#search_btn'),
+		$searchResultsContainer = $('#searchResultsContainer'),
+		$searchResults = $('#searchResults'),
+		$inputField = $search.find('input'),
 
-    var $listResultsContainer = $('#listResultsContainer');
-    var $listResults = $('#listResults');
-    var $listTable = $listResults.find('.list');
+		$listResultsContainer = $('#listResultsContainer'),
+		$listResults = $('#listResults'),
+		$listTable = $listResults.find('.list'),
 
-    var $searchDisplayOptions = $searchContainer.find('.searchDisplayOptions');
-    var $listDisplayOptions = $searchContainer.find('.listDisplayOptions');
+		$searchDisplayOptions = $searchContainer.find('.searchDisplayOptions'),
+		$listDisplayOptions = $searchContainer.find('.listDisplayOptions'),
 
-    // templates
-    var searchResultsTemplate = _.template($('#search-results-template').html());
-    var listResultsTemplate = _.template($('#list-results-template').html());
-    var platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
+		// templates
+		searchResultsTemplate = _.template($('#search-results-template').html()),
+		listResultsTemplate = _.template($('#list-results-template').html()),
+		platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init

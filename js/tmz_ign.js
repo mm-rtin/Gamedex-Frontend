@@ -1,15 +1,15 @@
 // IGN
-(function(IGN) {
+(function(IGN, tmz, $, _) {
 
     // module references
 
 	// properties
 
 	// REST URL
-	var UPCOMING_LIST_URL = tmz.api + 'upcominglist/';
+	var UPCOMING_LIST_URL = tmz.api + 'upcominglist/',
 
-	// data
-	var IGNUpcomingListCache = {};
+		// data
+		IGNUpcomingListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUpcomingGames -
@@ -73,5 +73,5 @@
 
 
 
-})(tmz.module('ign'));
+})(tmz.module('ign'), tmz, jQuery, _);
 

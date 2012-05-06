@@ -52,19 +52,17 @@
 }
 .opacity(@opacity) {
 	@opacityPercentage: @opacity * 100;
-	-moz-opacity: @opacity;
+	zoom: 1;
+	filter: alpha(opacity=@opacityPercentage);
 	opacity: @opacity;
-    -ms-filter: ~"progid:DXImageTransform.Microsoft.Alpha(opacity=(@{opacityPercentage}))";
-    filter: ~"alpha(opacity = (@{opacityPercentage}))";
 }
-
 
 .clear {
 	clear: both;
 }
 
 
-/* LAYOUT STYLES
+/* LAYOUT
 -----------------------------------------------------------*/
 html {
 
@@ -77,7 +75,8 @@ body {
 	font-family: 'Open Sans', sans-serif;
 	font-size: 0.8em;
 	font-weight: 400;
-	min-width: 1140px;
+	min-width: 1000px;
+	overflow-x: hidden;
 
 	&.infoHeader {
 		#infoHeader {
@@ -93,7 +92,7 @@ body {
 
 	&.useHeader {
 		.header {
-			background-color: #3D3D3D;
+			background-image:  url('../images/bg_tile_light2.png');
 			border-top: 1px solid #575757;
 		}
 
@@ -108,12 +107,15 @@ body {
 	}
 }
 
+
+/* ELEMENT GLOBALS
+-----------------------------------------------------------*/
 input, select, textarea {
 	font-family: 'Open Sans', sans-serif;
 	font-weight: 600;
 }
 
-/* INFO HEADER STYLES
+/* INFO HEADER
 -----------------------------------------------------------*/
 #infoHeader {
 	background-image:  url('../images/header_tile.png');
@@ -126,7 +128,7 @@ input, select, textarea {
 #logo {
 	background-image:  url('../images/logo.png');
 	position: relative;
-	width: 308px;
+	width: 300px;
 	height: 51px;
 	left: 29px;
 	top: 31px;
@@ -135,7 +137,7 @@ input, select, textarea {
 #siteDescription {
 	background-image:  url('../images/site_description.png');
 	position: relative;
-	width: 483px;
+	width: 514px;
 	height: 64px;
 	top: -27px;
 	left: 39%;
@@ -179,84 +181,14 @@ input, select, textarea {
 	}
 }
 
-#signupSubmitButton {
-	display: none;
-	.opacity(.6);
-	cursor: pointer;
-	background-image:  url('../images/signup_button_small.png');
-	position: relative;
-	width: 84px;
-	height: 30px;
-	top: 12px;
-	left: 221px;
 
-	&:hover {
-		.opacity(.8);
-	}
-}
-
-#loginSubmitButton {
-	display: none;
-	.opacity(.6);
-	cursor: pointer;
-	background-image:  url('../images/login_button_small.png');
-	position: relative;
-	width: 71px;
-	height: 30px;
-	top: 12px;
-	left: 234px;
-
-	&:hover {
-		.opacity(.8);
-	}
-}
-
-#backButton {
-	display: none;
-	.opacity(.6);
-	cursor: pointer;
-	background-image:  url('../images/back_button.png');
-	position: relative;
-	width: 31px;
-	height: 30px;
-	top: -18px;
-
-	&.login {
-		left: 201px;
-	}
-	&.signup {
-		left: 189px;
-	}
-
-	&:hover {
-		.opacity(.8);
-	}
-}
-
-#rememberCheckbox {
-	.opacity(.6);
-	cursor: pointer;
-	background-image:  url('../images/remember_checkbox_off.png');
-	position: relative;
-	width: 118px;
-	height: 17px;
-	top: -47px;
-	left: 4px;
-
-	&:hover {
-		.opacity(1);
-	}
-
-	&.on {
-		background-image:  url('../images/remember_checkbox_on.png');
-	}
-}
-
+/* LOGIN FORM
+-----------------------------------------------------------*/
 #loginForm {
 	position: relative;
 	background-image:  url('../images/form_bg.png');
 	background-repeat: no-repeat;
-	top: -64px;
+	top: -83px;
 	left: 30px;
 	height: 84px;
 	display: none;
@@ -281,22 +213,139 @@ input, select, textarea {
 	}
 }
 
+#signupSubmitButton {
+	display: none;
+	.opacity(.8);
+	cursor: pointer;
+	background-image:  url('../images/signup_button_small.png');
+	position: absolute;
+	width: 100px;
+	height: 35px;
+	top: 78px;
+	left: 208px;
+
+	&:hover {
+		.opacity(1);
+	}
+}
+
+#loginSubmitButton {
+	display: none;
+	.opacity(.8);
+	cursor: pointer;
+	background-image:  url('../images/login_button_small.png');
+	position: absolute;
+	width: 80px;
+	height: 35px;
+	top: 78px;
+	left: 228px;
+
+	&:hover {
+		.opacity(1);
+	}
+}
+
+#backButton {
+	display: none;
+	.opacity(.5);
+	cursor: pointer;
+	background-image:  url('../images/back_button.png');
+	position: absolute;
+	width: 35px;
+	height: 34px;
+	top: 78px;
+
+	&.login {
+		left: 191px;
+	}
+	&.signup {
+		left: 172px;
+	}
+
+	&:hover {
+		.opacity(1);
+	}
+}
+
 #email {
-	position: relative;
-	top: 5px;
+	position: absolute;
+	top: 4px;
 	left: 107px;
 }
 
 #password {
-	position: relative;
-	top: 7px;
+	position: absolute;
+	top: 41px;
 	left: 107px;
 }
+
+#rememberCheckboxToggle {
+	.opacity(.6);
+	cursor: pointer;
+	background-image: url('../images/remember_checkbox_off.png');
+	position: absolute;
+	width: 118px;
+	height: 17px;
+	top: 79px;
+	left: 4px;
+
+	&:hover {
+		.opacity(1);
+	}
+
+	&.on {
+		background-image: url('../images/remember_checkbox_on.png');
+	}
+}
+
+#resetPasswordButton {
+	.opacity(.4);
+	cursor: pointer;
+	background-image: url('../images/reset_password.png');
+	position: absolute;
+	width: 124px;
+	height: 19px;
+	top: 99px;
+	left: 0;
+
+	&:hover {
+		.opacity(1);
+	}
+}
+
+#invalidLoginTag {
+	display: none;
+	background-image: url('../images/invalid_login_tag.png');
+	position: absolute;
+	width: 115px;
+	height: 31px;
+	top: 82px;
+	left: 309px;
+}
+
+#accountExistsTag {
+	display: none;
+	background-image: url('../images/account_exists_tag.png');
+	position: absolute;
+	width: 130px;
+	height: 31px;
+	top: 82px;
+	left: 309px;
+
+}
+
 
 /* CONTENT CONTAINER
 -----------------------------------------------------------*/
 #wrapper {
 	max-width: 1450px;
+
+	a {
+		outline: 0;
+	}
+	input {
+		outline: 0;
+	}
 
 	/* BOOTSTRAP OVERRIDES
 	-----------------------------------------------------------*/
@@ -358,6 +407,7 @@ input, select, textarea {
 	.dropdown-menu li > a:hover, .dropdown-menu .active > a, .dropdown-menu .active > a:hover {
 		background-color: #31a500;
 	}
+
 	/* STANDARD VIEW
 	----------------------- */
 	&.standardView {
@@ -368,10 +418,10 @@ input, select, textarea {
 		/* PANEL STYLES
 		----------------------- */
 		#panel1 {
-			.column(13, @panel-columns);
+			.column(14, @panel-columns);
 		}
 		#panel2 {
-			.column(12, @panel-columns);
+			.column(11, @panel-columns);
 		}
 		#panel3 {
 			.column(23, @panel-columns);
@@ -407,17 +457,31 @@ input, select, textarea {
 		#panel2 {
 			position: fixed;
 			top: 46px;
+			margin-left: 10px;
 			width: 280px;
 		}
 		#panel3 {
 			display: none;
 		}
+
+		@media only screen and (max-width: 1500px), only screen and (max-device-width: 1500px) {
+			#panel4 {
+				width: 72% !important;
+			}
+		}
+		@media only screen and (max-width: 1200px), only screen and (max-device-width: 1200px) {
+			#panel4 {
+				width: 69% !important;
+			}
+		}
+
 		#panel4 {
 			margin: 0 300px;
 			position: relative;
 			top: 0px;
-			width: 74%;
+			width: 78%;
 		}
+
 		#panel5 {
 			margin: 0 300px;
 			position: fixed;
@@ -429,7 +493,7 @@ input, select, textarea {
 }
 
 .header {
-	background-color: #364546;
+	background-image:  url('../images/bg_tile_light.png');
 	color: #ffffff;
 	height: 17px;
 	position: relative;
@@ -446,7 +510,7 @@ input, select, textarea {
 }
 
 #header {
-	min-width: 1140px;
+	min-width: 1000px;
 	display: none;
 
 	.navbar-inner {
@@ -555,6 +619,28 @@ input, select, textarea {
 .nano .content      { padding: 10px; }
 .nano .pane         { background: #444; }
 .nano .pane .slider { background: #111; }
+
+/* RESET PASSWORD MODAL
+-----------------------------------------------------------*/
+#resetpassword-modal {
+	.alert {
+		display: none;
+		margin-bottom: 0;
+	}
+}
+.updatePasswordForm {
+	display: none;
+}
+
+.passwordResetCodeContainer {
+	display: none;
+}
+#submitResetCode_btn {
+	display: none;
+}
+#updatePassword_btn {
+	display: none;
+}
 
 /* OPTIONS
 -----------------------------------------------------------*/
@@ -827,7 +913,7 @@ input, select, textarea {
 
 	.itemDetailTitle {
 
-		width: 85%;
+		width: 83%;
 		float: left;
 
 		h3 {
@@ -913,12 +999,12 @@ input, select, textarea {
 
 #giantBombDescription-modal {
 	margin: -250px 0 0 -480px;
-	width: 960px;
+	width: 1000px;
 }
 
 #amazonDescription-modal {
 	margin: -250px 0 0 -480px;
-	width: 960px;
+	width: 1000px;
 }
 
 #customTab {
@@ -973,10 +1059,10 @@ input, select, textarea {
 	.display-0 tr {
 		&:hover
 			.quickAttributes {
-				.opacity(0)
+				display: none;
 			}
 			.deleteItem_btn {
-				.opacity(0)
+				display: none;
 			}
 		}
 
@@ -984,10 +1070,10 @@ input, select, textarea {
 		cursor: pointer;
 		&:hover {
 			.quickAttributes {
-				.opacity(1);
+				display: block;
 			}
 			.deleteItem_btn {
-				.opacity(1);
+				display: block;
 			}
 		}
 	}
@@ -1018,17 +1104,20 @@ input, select, textarea {
 		position: relative;
 
 	}
+	.priceDetails {
+		width: 160px;
+	}
 	.quickAttributes {
-		.transition(.5s);
-		.opacity(0);
+		display: none;
 		margin-top: 10px;
 		width: 160px;
 
 		a {
-			.opacity(.25);
+			.opacity(.3);
 
 			&:hover {
 				.opacity(1);
+
 			}
 		}
 
@@ -1049,8 +1138,7 @@ input, select, textarea {
 		}
 	}
 	.deleteItem_btn {
-		.transition(.5s);
-		.opacity(.5);
+		display: none;
 		padding-top: 9px;
 		height: 20px;
 	}
@@ -1077,7 +1165,7 @@ input, select, textarea {
 			display: none;
 		}
 		.deleteItem_btn {
-			.opacity(.5)
+			display: none;
 		}
 	}
 
@@ -1146,6 +1234,7 @@ input, select, textarea {
 #gridViewContainer {
 
 	display: none;
+	padding-bottom: 50px;
 
 	&.display-0 {
 		.gridItem {

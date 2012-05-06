@@ -1,55 +1,57 @@
 // GiantBomb
-(function(GridView) {
+(function(GridView, tmz, $, _) {
+	"use strict";
 
     // module references
-    var DetailView = tmz.module('detailView');
-	var ItemData = tmz.module('itemData');
-	var List = tmz.module('list');
-	var Amazon = tmz.module('amazon');
-	var Utilities = tmz.module('utilities');
-	var FilterPanel = tmz.module('filterPanel');
+    var DetailView = tmz.module('detailView'),
+		ItemData = tmz.module('itemData'),
+		TagView = tmz.module('tagView'),
+		Amazon = tmz.module('amazon'),
+		Utilities = tmz.module('utilities'),
+		FilterPanel = tmz.module('filterPanel'),
 
-	// constants
-	var DEFAULT_DISPLAY_TYPE = 1;
-	var SORT_TYPES = {'itemName': 0, 'metacriticScore': 1, 'releaseDate': 2, 'platform': 3, 'rawPrice': 4};
+		// constants
+		DEFAULT_DISPLAY_TYPE = 1,
+		SORT_TYPES = {'itemName': 0, 'metacriticScore': 1, 'releaseDate': 2, 'platform': 3, 'rawPrice': 4},
 
-	// properties
-	var currentSortIndex = 0;
-	var currentSortType = null;
-	var currentSortAsc = true;
+		// properties
+		currentSortIndex = 0,
+		currentSortType = null,
+		currentSortAsc = true,
+		filterType = null,
 
-    // node cache
-    var $gridViewContainer = $('#gridViewContainer');
-    var $gridList = $('#gridList');
-    var $viewName = $gridList.find('.viewName');
-    var $gridViewOptions = $('#gridViewOptions');
+		// node cache
+		$gridViewContainer = $('#gridViewContainer'),
+		$gridList = $('#gridList'),
+		$viewName = $gridList.find('.viewName'),
+		$gridViewOptions = $('#gridViewOptions'),
 
-    // display options
-    var $displayOptions = $gridViewOptions.find('.displayOptions');
-    var $displayTypeField = $displayOptions.find('.displayType');
+		// display options
+		$displayOptions = $gridViewOptions.find('.displayOptions'),
+		$displayTypeField = $displayOptions.find('.displayType'),
 
-    // sort options
-    var $sortOptions = $gridViewOptions.find('.sortOptions');
-    var $sortTypeField = $sortOptions.find('.sortType');
+		// sort options
+		$sortOptions = $gridViewOptions.find('.sortOptions'),
+		$sortTypeField = $sortOptions.find('.sortType'),
 
-    // filter options
-    var $filterOptions = $gridViewOptions.find('.filterOptions');
-    var $clearFiltersBtn = $filterOptions.find('.clearFilters_btn');
-    var $filterTypeField = $filterOptions.find('.filterType');
-    var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
-    var $listFiltersButton = $filterOptions.find('.listFilters_btn');
-    var $applyFiltersButton = $('#applyFilters_btn');
-    var $filtersModal = $('#filters-modal');
+		// filter options
+		$filterOptions = $gridViewOptions.find('.filterOptions'),
+		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
+		$filterTypeField = $filterOptions.find('.filterType'),
+		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
+		$listFiltersButton = $filterOptions.find('.listFilters_btn'),
+		$applyFiltersButton = $('#applyFilters_btn'),
+		$filtersModal = $('#filters-modal'),
 
-    // templates
-    var gridResultsTemplate = _.template($('#grid-results-template').html());
+		// templates
+		gridResultsTemplate = _.template($('#grid-results-template').html()),
 
-    // data
-    var widthCache = {};
+		// data
+		widthCache = {},
 
-    // properties
-    var isotopeInitialized = false;
-    var displayType = null;
+		// properties
+		isotopeInitialized = false,
+		displayType = null;
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init -
@@ -135,8 +137,8 @@
 			var offset = Math.round((width * 1.2 - width) / 2);
 
 			$gridItem.css({'z-index': '999',
-						'top': -offset + 'px',
-						'left': -offset + 'px',
+						//'top': -offset + 'px',
+						//'left': -offset + 'px',
 						'width': width * 1.2 + 'px',
 						'-webkit-transition-timing-function': 'cubic-bezier(0.01,0.53,0.00,1.00)',
 						'-webkit-transition-property': 'top,left,width',
@@ -152,8 +154,8 @@
 			var $gridItem = $(this);
 
 			$gridItem.css({'z-index': '',
-						'top': '',
-						'left': '',
+						//'top': '',
+						//'left': '',
 						'width': '',
 						'-webkit-transition-timing-function': 'cubic-bezier(0.01,0.53,0.00,1.00)',
 						'-webkit-transition-property': 'top,left,width',
@@ -184,7 +186,7 @@
 			e.preventDefault();
 
 			// custom filter
-			var filterType = parseInt($(this).attr('data-content'), 10);
+			filterType = parseInt($(this).attr('data-content'), 10);
 			if (filterType === 0) {
 				FilterPanel.showFilterPanel();
 
@@ -214,7 +216,7 @@
 		$('#wrapper').addClass('gridView');
 
 		// select gridList tagID
-		List.selectGridTag(tagID);
+		TagView.selectGridTag(tagID);
 
 		// load grid
 		loadGridData(tagID);
@@ -236,7 +238,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeGridList = function(tagName, tagID) {
 
-		// console.info(tagName, tagID);
+
 		// set view name
 		$viewName.text(tagName);
 
@@ -335,7 +337,7 @@
 		var quickFilter = parseInt(filterType, 10);
 		FilterPanel.resetFilters();
 
-		// console.info(quickFilter);
+
 		switch (quickFilter) {
 
 			// upcoming
@@ -403,6 +405,12 @@
 	* applyFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var applyFilters = function() {
+
+		// check if custom filter type
+		if (filterType === 0) {
+			// set filterType field
+			$filterTypeField.text('Custom');
+		}
 
 		// apply filters to itemList and set filtered Status icon
 		setClearFiltersButton(FilterPanel.applyIsotopeFiltering($gridViewContainer, currentSortType, currentSortAsc));
@@ -570,4 +578,4 @@
 	};
 
 
-})(tmz.module('gridView'));
+})(tmz.module('gridView'), tmz, jQuery, _);

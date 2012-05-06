@@ -1,34 +1,36 @@
 
 // LIST MODEL
-(function(List) {
+(function(List, tmz, $, _) {
+	"use strict";
 
 	// dependecies
-	var User = tmz.module('user');
-	var ListData = tmz.module('listData');
-	var ItemData = tmz.module('itemData');
+	var User = tmz.module('user'),
+		TagData = tmz.module('tagData'),
+		ItemData = tmz.module('itemData'),
 
-	// node cache
-	var $addList = $('#addList');
-	var $viewList = $('#viewList');
-	var $gridList = $('#gridList');
+		// node cache
+		$addList = $('#addList'),
+		$viewList = $('#viewList'),
+		$gridList = $('#gridList'),
 
-	// data
-	var addList = {};
-	var viewList = {};
-	var emptyList = {};
-	var listIndex = {};
-	var sortedAddList = [];
-	var sortedViewList = [];
+		// data
+		addList = {},
+		viewList = {},
+		emptyList = {},
+		listIndex = {},
+		sortedAddList = [],
+		sortedViewList = [],
+		sortedEmptyList = [],
 
-	// active tags - tags currently used by items
-	var activeTags = {};
+		// active tags - tags currently used by items
+		activeTags = {},
 
-	// selected tags - tags currently selected
-	var selectedTags = [];
+		// selected tags - tags currently selected
+		selectedTags = [],
 
-	// templates
-	var addListTemplate = _.template($('#add-list-template').html());
-	var viewListTemplate = _.template($('#view-list-template').html());
+		// templates
+		addListTemplate = _.template($('#add-list-template').html()),
+		viewListTemplate = _.template($('#view-list-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
@@ -109,9 +111,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getList
+	* getTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.getList = function(onSuccess, onFail) {
+	List.getTags = function(onSuccess, onFail) {
 
 		var ajax = null;
 
@@ -119,17 +121,17 @@
 		viewList = {};
 		addList = {};
 
-		ajax = ListData.getList(onSuccess, onFail);
+		ajax = TagData.getTags(onSuccess, onFail);
 
 		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getList_result -
+	* getTags_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.getList_result = function(data) {
+	List.getTags_result = function(data) {
 
-		console.info(data);
+
 
 		// populate active tags
 		populateActiveTags();
@@ -142,14 +144,14 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addList
+	* addTag
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.addList = function(listName) {
+	List.addTag = function(listName) {
 
 		// check if list name exists
 		if (typeof addList[listName] === 'undefined') {
 
-			ListData.addList(listName, addList_result);
+			TagData.addTag(listName, addTag_result);
 		}
 	};
 
@@ -174,7 +176,7 @@
 
 				// add to view lists object
 				viewList[listIndex[tagIDsAdded[i]]] = {'id': tagIDsAdded[i], 'name': listIndex[tagIDsAdded[i]]};
-				// console.info('update list', viewList[listIndex[tagIDsAdded[i]]]);
+
 				updated = true;
 			}
 		}
@@ -194,7 +196,7 @@
 	List.selectAddListTag = function(tagID) {
 
 		// get option node
-		$option = $addList.find('option[value="' + tagID + '"]');
+		var $option = $addList.find('option[value="' + tagID + '"]');
 
 		// select option
 		$option.attr('selected', '');
@@ -218,7 +220,7 @@
 	List.selectGridTag = function(tagID) {
 
 		// get option node
-		$listItem = $gridList.find('a[data-content="' + tagID + '"]');
+		var $listItem = $gridList.find('a[data-content="' + tagID + '"]');
 
 		// set gridList name as listItem name
 		$gridList.find('.viewName').text($listItem.text());
@@ -232,10 +234,10 @@
 		for (var i = 0, len = selectedTags.length; i < len; i++) {
 
 			// get option node
-			option = $addList.find('option[value="' + selectedTags[i] + '"]');
+			var $option = $addList.find('option[value="' + selectedTags[i] + '"]');
 
 			// select option
-			$(option).attr('selected', '');
+			$option.attr('selected', '');
 		}
 	};
 
@@ -266,25 +268,25 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseListResponse
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseListResponse = function(listData) {
+	var parseListResponse = function(tagData) {
 
-		// reset list listData
+		// reset list tagData
 		viewList = {};
 		addList = {};
 		emptyList = {};
 		listIndex = {};
 
-		// temp list listData
+		// temp list tagData
 		var listItem = {};
 
-		// iterate listData
-		for (var i = 0, len = listData.length; i < len; i++) {
+		// iterate tagData
+		for (var i = 0, len = tagData.length; i < len; i++) {
 
 			listItem = {};
 
 			// get attributes
-			listItem.name = listData[i].listName.toLowerCase();
-			listItem.id = listData[i].listID;
+			listItem.name = tagData[i].listName.toLowerCase();
+			listItem.id = tagData[i].listID;
 
 			// check if listID is in activeTags before adding to view list
 			if (typeof activeTags[listItem.id] !== 'undefined') {
@@ -303,9 +305,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addList_result
+	* addTag_result
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addList_result = function(response) {
+	var addTag_result = function(response) {
 
 		var listItem = {name: response.listName.toLowerCase(), id: response.listID};
 
@@ -335,4 +337,4 @@
 		return name_a.toLowerCase().localeCompare(name_b.toLowerCase());
 	};
 
-})(tmz.module('list'));
+})(tmz.module('tagView'), tmz, jQuery, _);

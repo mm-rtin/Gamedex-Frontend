@@ -1,83 +1,84 @@
 // ITEM VIEW
-(function(ItemView) {
+(function(ItemView, tmz, $, _) {
+	"use strict";
 
     // modules references
-    var User = tmz.module('user');
-    var ListModel = tmz.module('list');
-    var Utilities = tmz.module('utilities');
-    var DetailView = tmz.module('detailView');
-    var GridView = tmz.module('gridView');
-    var ItemData = tmz.module('itemData');
-    var ItemCache = tmz.module('itemCache');
-    var ListData = tmz.module('listData');
-    var Amazon = tmz.module('amazon');
-    var Metacritic = tmz.module('metacritic');
-    var ItemLinker = tmz.module('itemLinker');
-    var FilterPanel = tmz.module('filterPanel');
+    var User = tmz.module('user'),
+		TagView = tmz.module('tagView'),
+		Utilities = tmz.module('utilities'),
+		DetailView = tmz.module('detailView'),
+		GridView = tmz.module('gridView'),
+		ItemData = tmz.module('itemData'),
+		ItemCache = tmz.module('itemCache'),
+		TagData = tmz.module('tagData'),
+		Amazon = tmz.module('amazon'),
+		Metacritic = tmz.module('metacritic'),
+		ItemLinker = tmz.module('itemLinker'),
+		FilterPanel = tmz.module('filterPanel'),
 
-    // constants
-    var DISPLAY_TYPE = {'List': 0, 'Icons': 1};
-    var SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4};
-    var PANEL_HEIGHT_OFFSET = 200;
-    var PANEL_HEIGHT_PADDING = 40;
-    var VIEW_ALL_TAG_ID = '0';
-    var VIEW_ALL_TAG_NAME = 'View All';
+		// constants
+		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
+		SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4},
+		PANEL_HEIGHT_OFFSET = 200,
+		PANEL_HEIGHT_PADDING = 40,
+		VIEW_ALL_TAG_ID = '0',
+		VIEW_ALL_TAG_NAME = 'View All',
 
-    // list
-    var itemList = null;
-	var listOptions = {
+		// list
+		itemList = null,
+		listOptions = {
 		valueNames: ['itemName', 'metascore', 'releaseDate', 'platform', 'gameStatus', 'playStatus', 'userRating'],
 		item: 'list-item'
-	};
+		},
 
-    // properties
-	var currentViewTagID = VIEW_ALL_TAG_ID;
-    var displayType = DISPLAY_TYPE.Icons;
-    var currentSortIndex = 0;
-    var filterHasBeenApplied = false;
-    var queueDisplayRefresh = false;
-    var filterType = null;
+		// properties
+		currentViewTagID = VIEW_ALL_TAG_ID,
+		displayType = DISPLAY_TYPE.Icons,
+		currentSortIndex = 0,
+		filterHasBeenApplied = false,
+		queueDisplayRefresh = false,
+		filterType = null,
 
-    // element cache
-    var $itemResults = $('#itemResults');
-    var $viewItemsContainer = $('#viewItemsContainer');
-    var $itemResultsContainer = $('#itemResultsContainer');
-    var $displayOptions = $viewItemsContainer.find('.displayOptions');
+		// element cache
+		$itemResults = $('#itemResults'),
+		$viewItemsContainer = $('#viewItemsContainer'),
+		$itemResultsContainer = $('#itemResultsContainer'),
+		$displayOptions = $viewItemsContainer.find('.displayOptions'),
 
-    var $viewList = $('#viewList');
-    var $viewName = $viewList.find('.viewName');
+		$viewList = $('#viewList'),
+		$viewName = $viewList.find('.viewName'),
 
-    var $editMenu = $('#editMenu');
+		$editMenu = $('#editMenu'),
 
-    // sort elements
-    var $sortOptions = $viewItemsContainer.find('.sortOptions');
-    var $sortTypeField = $sortOptions.find('.sortType');
+		// sort elements
+		$sortOptions = $viewItemsContainer.find('.sortOptions'),
+		$sortTypeField = $sortOptions.find('.sortType'),
 
-    // filter elements
-    var $filterOptions = $viewItemsContainer.find('.filterOptions');
-    var $clearFiltersBtn = $filterOptions.find('.clearFilters_btn');
-    var $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn');
-    var $filterTypeField = $filterOptions.find('.filterType');
-    var $applyFiltersButton = $('#applyFilters_btn');
+		// filter elements
+		$filterOptions = $viewItemsContainer.find('.filterOptions'),
+		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
+		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
+		$filterTypeField = $filterOptions.find('.filterType'),
+		$applyFiltersButton = $('#applyFilters_btn'),
 
-    // delete list modal
-    var $deleteListConfirmModal = $('#deleteListConfirm-modal');
-    var $deleteListConfirmBtn = $('#deleteListConfirm_btn');
-    var $deleteListBtn = $('#deleteList_btn');
-    var $deleteListName = $deleteListBtn.find('.listName');
+		// delete list modal
+		$deleteListConfirmModal = $('#deleteListConfirm-modal'),
+		$deleteListConfirmBtn = $('#deleteListConfirm_btn'),
+		$deleteListBtn = $('#deleteList_btn'),
+		$deleteListName = $deleteListBtn.find('.listName'),
 
-    // update list modal
-    var $updateListModal = $('#updateList-modal');
-    var $tagNameField = $('#tagNameField');
-    var $updateListBtn = $('#updateListConfirm_btn');
-    var $editListBtn = $('#editList_btn');
+		// update list modal
+		$updateListModal = $('#updateList-modal'),
+		$tagNameField = $('#tagNameField'),
+		$updateListBtn = $('#updateListConfirm_btn'),
+		$editListBtn = $('#editList_btn'),
 
-	// jquery objects
-	var currentHoverItem = null;
+		// jquery objects
+		currentHoverItem = null,
 
-	// templates
-	var priceMenuTemplate = _.template($('#price-menu-template').html());
-	var itemResultsTemplate = _.template($('#item-results-template').html());
+		// templates
+		priceMenuTemplate = _.template($('#price-menu-template').html()),
+		itemResultsTemplate = _.template($('#item-results-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -169,7 +170,7 @@
 		// deleteListConfirm_btn: click
 		$deleteListConfirmBtn.click(function(e) {
 			// delete currently viewing list
-			deleteList(currentViewTagID);
+			deleteTag(currentViewTagID);
 			$deleteListConfirmModal.modal('hide');
 		});
 
@@ -177,7 +178,7 @@
 		$updateListModal.find('form').submit(function(e) {
 			e.preventDefault();
 			// update tag name
-			updateList(currentViewTagID, $tagNameField.val());
+			updateTag(currentViewTagID, $tagNameField.val());
 			$updateListModal.modal('hide');
 		});
 
@@ -185,7 +186,7 @@
 		$updateListBtn.click(function(e) {
 
 			// update tag name
-			updateList(currentViewTagID, $tagNameField.val());
+			updateTag(currentViewTagID, $tagNameField.val());
 			$updateListModal.modal('hide');
 		});
 
@@ -193,7 +194,7 @@
 		$editListBtn.click(function(e) {
 			e.preventDefault();
 
-			var currentListName = ListModel.getListName(currentViewTagID);
+			var currentListName = TagView.getListName(currentViewTagID);
 
 			// set field name
 			$tagNameField.val(currentListName);
@@ -375,7 +376,7 @@
 
 		var tagCount = null;
 
-		console.info(itemID, deletedTagIDs);
+
 
 		// remove items deleted from view
 		for (var i = 0, len = deletedTagIDs.length; i < len; i++) {
@@ -408,7 +409,7 @@
 		var renderCurrentList = false;
 
 		// update view list
-		ListModel.updateViewList(data.tagIDsAdded, currentViewTagID);
+		TagView.updateViewList(data.tagIDsAdded, currentViewTagID);
 
 		// viewing user list
 		if (currentViewTagID !== VIEW_ALL_TAG_ID) {
@@ -461,7 +462,7 @@
 		// show edit menu
 		if (tagID !== VIEW_ALL_TAG_ID) {
 
-			tagName = ListModel.getListName(tagID);
+			tagName = TagView.getListName(tagID);
 
 			// change edit menu delete list name
 			$deleteListName.text(tagName);
@@ -531,7 +532,7 @@
 	var addUserAttributes = function(item) {
 
 		// find directory item by itemID
-		itemData = ItemData.getDirectoryItemByItemID(item.itemID);
+		var itemData = ItemData.getDirectoryItemByItemID(item.itemID);
 
 		if (itemData) {
 			// add attributes to model item
@@ -545,6 +546,8 @@
 	* amazonPrice_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var amazonPrice_result = function(id, offers) {
+
+
 
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
@@ -627,12 +630,12 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteList -
+	* deleteTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteList = function(tagID) {
+	var deleteTag = function(tagID) {
 
 		// delete database data
-		ListData.deleteList(tagID, function() {
+		TagData.deleteTag(tagID, function() {
 			deleteList_result(tagID);
 		});
 	};
@@ -654,10 +657,10 @@
 		// delete cached tag
 		ItemCache.deleteCachedTag(tagID);
 
-		// update listModel
-		ListModel.getList(function(data) {
+		// update List
+		TagView.getList(function(data) {
 
-			ListModel.getList_result(data);
+			TagView.getTags_result(data);
 		});
 
 		// default back to 'view all' list
@@ -665,19 +668,19 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateList -
+	* updateTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateList = function(tagID, tagName) {
+	var updateTag = function(tagID, tagName) {
 
-		console.info(tagID);
+
 		// delete database data
-		ListData.updateList(tagName, tagID, function(data) {
+		TagData.updateTag(tagName, tagID, function(data) {
 		});
 
-		// update listModel
-		ListModel.getList(function(data) {
+		// update List
+		TagView.getList(function(data) {
 
-			ListModel.getList_result(data);
+			TagView.getTags_result(data);
 		});
 
 		// update list name
@@ -701,7 +704,7 @@
 
 		// get item by id
 		var item = ItemView.getItem(id);
-		// console.info(item);
+
 
 		// flag for item refresh
 		queueDisplayRefresh = true;
@@ -768,7 +771,7 @@
 
 		ItemData.updateItem(item, function(item, data) {
 
-			// console.info(data);
+
 
 		});
 	};
@@ -866,7 +869,7 @@
 
 		// refresh item display first - then filter
 		if (queueDisplayRefresh) {
-			// console.info('refresh items');
+
 			queueDisplayRefresh = false;
 
 			// refresh item html for updated filtering
@@ -954,8 +957,8 @@
 		$element1 = $(firstItem.elm).find('.metascore');
 		$element2 = $(secondItem.elm).find('.metascore');
 
-		score1 = parseInt($element1.attr('data-score'), 10);
-		score2 = parseInt($element2.attr('data-score'), 10);
+		var score1 = parseInt($element1.attr('data-score'), 10);
+		var score2 = parseInt($element2.attr('data-score'), 10);
 
 		if (score1 < score2) {
 			return 1;
@@ -971,8 +974,18 @@
 		$element1 = $(firstItem.elm).find('.priceDetails .lowestNew');
 		$element2 = $(secondItem.elm).find('.priceDetails .lowestNew');
 
-		price1 = parseInt($element1.attr('data-price'), 10);
-		price2 = parseInt($element2.attr('data-price'), 10);
+		var price1 = 0;
+		var price2 = 0;
+
+		if ($element1.length > 0 ) {
+			price1 = parseFloat($element1.attr('data-price'));
+		}
+
+		if ($element2.length > 0) {
+			price2 = parseFloat($element2.attr('data-price'));
+		}
+
+
 
 		if (price1 < price2) {
 			return -1;
@@ -1013,4 +1026,4 @@
 		}
 	};
 
-})(tmz.module('itemView'));
+})(tmz.module('itemView'), tmz, jQuery, _);

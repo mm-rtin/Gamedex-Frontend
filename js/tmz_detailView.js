@@ -1,81 +1,82 @@
 // DETAIL VIEW
-(function(DetailView) {
+(function(DetailView, tmz, $, _) {
+	"use strict";
 
     // module references
-    var User = tmz.module('user');
-    var List = tmz.module('list');
-    var Utilities = tmz.module('utilities');
-    var ListModel = tmz.module('list');
-    var SearchView = tmz.module('searchView');
-    var ItemView = tmz.module('itemView');
-    var ItemData = tmz.module('itemData');
-	var Amazon = tmz.module('amazon');
-	var ItemLinker = tmz.module('itemLinker');
-	var Metacritic = tmz.module('metacritic');
-	var GiantBomb = tmz.module('giantbomb');
-	var Wikipedia = tmz.module('wikipedia');
+    var User = tmz.module('user'),
+		TagView = tmz.module('tagView'),
+		Utilities = tmz.module('utilities'),
+		SearchView = tmz.module('searchView'),
+		ItemView = tmz.module('itemView'),
+		ItemData = tmz.module('itemData'),
+		Amazon = tmz.module('amazon'),
+		ItemLinker = tmz.module('itemLinker'),
+		Metacritic = tmz.module('metacritic'),
+		GiantBomb = tmz.module('giantbomb'),
+		Wikipedia = tmz.module('wikipedia'),
 
-	// constants
-	TAB_IDS = ['#amazonTab', '#giantBombTab'];
-	GAME_STATUS = {0: 'None', 1: 'Own', 2: 'Sold', 3: 'Wanted'};
-	PLAY_STATUS = {0: 'Not Started', 1: 'Playing', 2: 'Played', 3: 'Finished'};
-	ITEM_TYPES = {'new': 0, 'existing': 1};
+		// constants
+		TAB_IDS = ['#amazonTab', '#giantBombTab'],
+		GAME_STATUS = {0: 'None', 1: 'Own', 2: 'Sold', 3: 'Wanted'},
+		PLAY_STATUS = {0: 'Not Started', 1: 'Playing', 2: 'Played', 3: 'Finished'},
+		ITEM_TYPES = {'new': 0, 'existing': 1},
 
-    // properties
-    var hasRendered = false;
-    var currentProvider = null;
-    var saveInProgress = false;
-    var currentTab = TAB_IDS[0];
-    var currentID = null;
-    var itemType = ITEM_TYPES['new'];
+		// properties
+		hasRendered = false,
+		currentProvider = null,
+		saveInProgress = false,
+		currentTab = TAB_IDS[0],
+		currentID = null,
+		itemType = ITEM_TYPES['new'],
 
-	// timeout
-	var autoFillTimeOut = null;
+		// timeout
+		autoFillTimeOut = null,
 
-    // data
-	var initialItemTags = {};	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
-	var currentItemTags = {};	// current selected tags, key = tagID, value = true
-	var userSetTags = {};		// tags set by user for adding new items to list
-	var firstItem = {};			// current item data (first)
-	var secondItem = {};		// current item data (second)
-	var itemAttributes = {};	// current item attributes
+		// data
+		initialItemTags = {},	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
+		currentItemTags = {},	// current selected tags, key = tagID, value = true
+		userSetTags = {},		// tags set by user for adding new items to list
+		firstItem = {},			// current item data (first)
+		secondItem = {},		// current item data (second)
+		itemAttributes = {},	// current item attributes
 
-    // node cache
-    var $amazonDescriptionModal = $('#amazonDescription-modal');
-    var $giantBombDescriptionModal = $('#giantBombDescription-modal');
+		// node cache
+		$amazonDescriptionModal = $('#amazonDescription-modal'),
+		$giantBombDescriptionModal = $('#giantBombDescription-modal'),
 
-    var $detailTabContent = $('#detailTabContent');
-    var $amazonTab = $('#amazonTab');
-    var $giantBombTab = $('#giantBombTab');
-    var $amazonTabLink = $('#amazonTabLink');
-    var $giantBombTabLink = $('#giantBombTabLink');
+		$detailTabContent = $('#detailTabContent'),
+		$amazonTab = $('#amazonTab'),
+		$giantBombTab = $('#giantBombTab'),
+		$amazonTabLink = $('#amazonTabLink'),
+		$giantBombTabLink = $('#giantBombTabLink'),
 
-    var $addList = $('#addList');
-    var $saveItemButton = $('#saveItem_btn');
-    var $addItemButton = $('#addItem_btn');
-    var $saveAttributesContainer = $('#saveAttributesContainer');
-    var $saveAttributesButton = $('#saveAttributes_btn');
+		$addListContainer = $('#addListContainer'),
+		$addList = $('#addList'),
+		$saveItemButton = $('#saveItem_btn'),
+		$addItemButton = $('#addItem_btn'),
+		$saveAttributesContainer = $('#saveAttributesContainer'),
+		$saveAttributesButton = $('#saveAttributes_btn'),
 
-    // node cache: data fields
-    var $itemAttributes = $('#itemAttributes');
-    var $platform = $('#platform');
-    var $releaseDate = $('#releaseDate');
-    var $wikipediaPage = $('#wikipediaPage');
-    var $giantBombPage = $('#giantBombPage');
-    var $metacriticPage = $('#metacriticPage');
+		// node cache: data fields
+		$itemAttributes = $('#itemAttributes'),
+		$platform = $('#platform'),
+		$releaseDate = $('#releaseDate'),
+		$wikipediaPage = $('#wikipediaPage'),
+		$giantBombPage = $('#giantBombPage'),
+		$metacriticPage = $('#metacriticPage'),
 
-    var $amazonPriceHeader = $('#amazonPriceHeader');
-    var $amazonPriceNew = $('#amazonPriceNew');
-    var $amazonPriceUsed = $('#amazonPriceUsed');
+		$amazonPriceHeader = $('#amazonPriceHeader'),
+		$amazonPriceNew = $('#amazonPriceNew'),
+		$amazonPriceUsed = $('#amazonPriceUsed'),
 
-    // node cache: custom attributes
-    var $gameStatus = $('#gameStatus');
-    var $playStatus = $('#playStatus');
-    var $userRating = $('#userRating');
-    var $ratingCaption = $('#ratingCaption');
+		// node cache: custom attributes
+		$gameStatus = $('#gameStatus'),
+		$playStatus = $('#playStatus'),
+		$userRating = $('#userRating'),
+		$ratingCaption = $('#ratingCaption'),
 
-    // templates
-    var modalTemplate = _.template($('#description-modal-template').html());
+		// templates
+		modalTemplate = _.template($('#description-modal-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -118,13 +119,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     DetailView.createEventHandlers = function() {
 
-		var addListContainer = $('#addListContainer');
-
 		// addToList: keypress
-		$(addListContainer).find('input').live({
+		$addListContainer.find('input').live({
 			// keypress event
 			keydown: function(event){
-				addList_keydown(event, addListContainer, ListModel);
+				addList_keydown(event);
 			}
 		});
 
@@ -719,7 +718,7 @@
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
-			List.resetAddList();
+			TagView.resetAddList();
 			setUserTags(userSetTags);
 		}
 	};
@@ -732,12 +731,12 @@
 		var option = null;
 
 		// clear selected attributes from all options
-		List.resetAddList();
+		TagView.resetAddList();
 
 		_.each(tagList, function(id, tagID) {
 
 			// select addList tag
-			List.selectAddListTag(tagID);
+			TagView.selectAddListTag(tagID);
 
 			// create associate of tags with item ids
 			initialItemTags[tagID] = id;
@@ -756,7 +755,7 @@
 			for (var i = 0, len = tagList.length; i < len; i++) {
 
 				// select addList tag
-				List.selectAddListTag(tagList[i]);
+				TagView.selectAddListTag(tagList[i]);
 			}
 
 			$addList.trigger("liszt:updated");
@@ -877,7 +876,7 @@
 		// 1 or more attributes changed - only change for existing items
 		// for new items, attributes are added through add item method
 		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
-			// console.info('update');
+
 			// update item
 			ItemData.updateItem(item, updateItem_result);
 		}
@@ -1027,7 +1026,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addList_keydown
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addList_keydown = function(event, container, List){
+	var addList_keydown = function(event, container){
 
 		if (autoFillTimeOut) {
 			clearTimeout(autoFillTimeOut);
@@ -1037,11 +1036,11 @@
 		if (event.which == 13) {
 
 			// get input value
-			var listName = $.trim($(container).find('input').val().toLowerCase());
+			var listName = $.trim($addListContainer.find('input').val().toLowerCase());
 
 			// create new list if not empty string
 			if (listName !== '') {
-				List.addList(listName);
+				TagView.addTag(listName);
 			}
 
 		// entering text event, exclude backspace so text may be erased without autofilling
@@ -1050,10 +1049,10 @@
 			// autofill input box with active-result highlighted
 			// wait until chosen has a chance to update css classes
 			autoFillTimeOut = setTimeout(function(){
-				Utilities.autofillHighlightedElements(container, autoFillTimeOut);
+				Utilities.autofillHighlightedElements($addListContainer, autoFillTimeOut);
 			}, 250);
 		}
 	};
 
 
-})(tmz.module('detailView'));
+})(tmz.module('detailView'), tmz, jQuery, _);
