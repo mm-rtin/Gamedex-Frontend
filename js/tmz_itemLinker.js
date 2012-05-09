@@ -201,7 +201,6 @@
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
 
-
 				// get item from giantbomb
 				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
 					getGiantBombItemDetail_result(data, onSuccess);
@@ -209,7 +208,6 @@
 				break;
 
 			case Utilities.getProviders().GiantBomb:
-
 
 				// get item from amazon
 				Amazon.getAmazonItemDetail(item.asin, function(data) {
@@ -224,8 +222,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemLinker.findWikipediaMatch = function(data, sourceItem, onSuccess) {
 
-
-
 		var results = data;
 		var searchItem = {};
 
@@ -233,9 +229,6 @@
 		var bestMatch = null;
 		var bestScore = -99999;
 		var score = 0;
-
-
-
 
 		// iterate search results
 		for (var i = 0, len = results.length; i < len; i++) {

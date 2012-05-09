@@ -58,6 +58,8 @@ tmz.initialize = function() {
 	tmz.itemView = tmz.module('itemView');
 	tmz.gridView = tmz.module('gridView');
 
+	tmz.videoPanel = tmz.module('videoPanel');
+
 	// linkers
 	tmz.itemLinker = tmz.module('itemLinker');
 
@@ -114,7 +116,10 @@ tmz.initializeModules = function() {
 
 	// FILTER PANEL
 	tmz.filterPanel.init();
-	// USER VIEW
 
+	// VIDEO PANEL
+	tmz.videoPanel.init();
+
+	// SITE VIEW
 	tmz.siteView.init();
 };

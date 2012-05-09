@@ -131,7 +131,7 @@
 		} else {
 
 			// download data
-			var fieldList = ['description', 'site_detail_url'];
+			var fieldList = ['description', 'site_detail_url', 'videos'];
 			getGiantBombItem(gbombID, fieldList, function(data) {
 
 				// cache result

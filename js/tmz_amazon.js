@@ -141,7 +141,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getAmazonItemOffers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess) {
+	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
 
 		// find in amazon offer cache first
 		var cachedOffer = getCachedData(sourceItem.id);
@@ -170,7 +170,8 @@
 				cache: true,
 				success: function(data) {
 					parseAmazonOffers(data, sourceItem, onSuccess);
-				}
+				},
+				error: onError
 			});
 		}
 	};

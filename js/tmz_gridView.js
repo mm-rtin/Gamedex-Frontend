@@ -266,15 +266,17 @@
 	var getItems_result = function(items) {
 
 		// setup isotope gride
-		initializeGrid(items);
+		render(items);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* initializeGrid -
+	* render -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var initializeGrid = function(items) {
+	var render = function(items) {
 
 		var templateData = {'items': items};
+
+		console.info(templateData);
 
 		// set html from items data
 		$gridViewContainer.html(gridResultsTemplate(templateData));

@@ -1,5 +1,5 @@
 // ITEM VIEW
-(function(ItemView, tmz, $, _) {
+(function(ItemView, tmz, $, _, ListJS) {
 	"use strict";
 
     // modules references
@@ -152,6 +152,7 @@
 		// quickAttributes: click
 		$itemResults.on('click', '.quickAttributes a', function(e) {
 			e.preventDefault();
+			e.stopPropagation();
 
 			// get attribute id
 			var attributeID = parseInt($(this).attr('data-content'), 10);
@@ -291,7 +292,7 @@
 			});
 
 			// update list.js for item list
-			itemList = new List('itemResultsContainer', listOptions);
+			itemList = new ListJS('itemResultsContainer', listOptions);
 
 			// sort using current sort method
 			sortList(currentSortIndex);
@@ -375,8 +376,6 @@
 	ItemView.updateListDeletions = function(itemID, deletedTagIDs) {
 
 		var tagCount = null;
-
-
 
 		// remove items deleted from view
 		for (var i = 0, len = deletedTagIDs.length; i < len; i++) {
@@ -547,8 +546,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var amazonPrice_result = function(id, offers) {
 
-
-
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
 			// display price
@@ -705,7 +702,6 @@
 		// get item by id
 		var item = ItemView.getItem(id);
 
-
 		// flag for item refresh
 		queueDisplayRefresh = true;
 
@@ -769,10 +765,10 @@
 				break;
 		}
 
+		// update remote data
 		ItemData.updateItem(item, function(item, data) {
-
-
-
+			// update item detail view
+			DetailView.viewItemDetail(item);
 		});
 	};
 
@@ -954,8 +950,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var metascoreSort = function(firstItem, secondItem) {
 
-		$element1 = $(firstItem.elm).find('.metascore');
-		$element2 = $(secondItem.elm).find('.metascore');
+		var $element1 = $(firstItem.elm).find('.metascore');
+		var $element2 = $(secondItem.elm).find('.metascore');
 
 		var score1 = parseInt($element1.attr('data-score'), 10);
 		var score2 = parseInt($element2.attr('data-score'), 10);
@@ -971,8 +967,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var priceSort = function(firstItem, secondItem) {
 
-		$element1 = $(firstItem.elm).find('.priceDetails .lowestNew');
-		$element2 = $(secondItem.elm).find('.priceDetails .lowestNew');
+		var $element1 = $(firstItem.elm).find('.priceDetails .lowestNew');
+		var $element2 = $(secondItem.elm).find('.priceDetails .lowestNew');
 
 		var price1 = 0;
 		var price2 = 0;
@@ -998,8 +994,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var releaseDateSort = function(firstItem, secondItem) {
 
-		$element1 = $(firstItem.elm).find('.releaseDate');
-		$element2 = $(secondItem.elm).find('.releaseDate');
+		var $element1 = $(firstItem.elm).find('.releaseDate');
+		var $element2 = $(secondItem.elm).find('.releaseDate');
 
 		var date1 = Date.parse($element1.text());
 		var date2 = Date.parse($element2.text());
@@ -1026,4 +1022,4 @@
 		}
 	};
 
-})(tmz.module('itemView'), tmz, jQuery, _);
+})(tmz.module('itemView'), tmz, jQuery, _, List);

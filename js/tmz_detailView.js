@@ -1,5 +1,5 @@
 // DETAIL VIEW
-(function(DetailView, tmz, $, _) {
+(function(DetailView, tmz, $, _, moment) {
 	"use strict";
 
     // module references
@@ -14,6 +14,7 @@
 		Metacritic = tmz.module('metacritic'),
 		GiantBomb = tmz.module('giantbomb'),
 		Wikipedia = tmz.module('wikipedia'),
+		VideoPanel = tmz.module('videoPanel'),
 
 		// constants
 		TAB_IDS = ['#amazonTab', '#giantBombTab'],
@@ -49,6 +50,7 @@
 		$giantBombTab = $('#giantBombTab'),
 		$amazonTabLink = $('#amazonTabLink'),
 		$giantBombTabLink = $('#giantBombTabLink'),
+		$itemDetailThumbnail = $detailTabContent.find('.itemDetailThumbnail'),
 
 		$addListContainer = $('#addListContainer'),
 		$addList = $('#addList'),
@@ -125,6 +127,12 @@
 			keydown: function(event){
 				addList_keydown(event);
 			}
+		});
+
+		// itemDetailThumbnail: click
+		$itemDetailThumbnail.click(function(e) {
+
+			VideoPanel.showVideoPanel();
 		});
 
 		// saveItem_btn: click
@@ -208,7 +216,7 @@
 			hideAsynchronousDetailAttributes();
 
 			// clone object as firstItem
-			firstItem = jQuery.extend(true, {}, searchItem);
+			firstItem = $.extend(true, {}, searchItem);
 
 			// figure out search provider for current item
 			currentProvider = getItemProvider(firstItem.asin, firstItem.gbombID);
@@ -258,6 +266,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewItemDetail = function(item) {
 
+		console.info('viewitemDetail');
+
 		// hide information until update query returns
 		hideAsynchronousDetailAttributes();
 
@@ -268,7 +278,7 @@
 		setItemType(ITEM_TYPES['existing']);
 
 		// clone object as firstItem
-		firstItem = jQuery.extend(true, {}, item);
+		firstItem = $.extend(true, {}, item);
 
 		// add standard name propery
 		firstItem.standardName = ItemLinker.standardizeTitle(firstItem.name);
@@ -312,7 +322,7 @@
 	DetailView.viewSecondItemDetail = function(item) {
 
 		// clone object as secondItem
-		secondItem = jQuery.extend(true, {}, item);
+		secondItem = $.extend(true, {}, item);
 		var provider = null;
 
 		// make sure that the second item matches the first
@@ -343,7 +353,6 @@
 		}
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* resetDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -370,7 +379,7 @@
 	var viewSecondSearchItemDetail = function(searchItem, linkedID) {
 
 		// clone object as secondItem
-		secondItem = jQuery.extend(true, {}, searchItem);
+		var secondItem = $.extend(true, {}, searchItem);
 
 
 		if (currentID === linkedID) {
@@ -431,7 +440,7 @@
 
 		// render detail
 		$tab.find('.itemDetailTitle h3').text(itemData.name);
-		$tab.find('.itemDetailThumbnail img').attr('src', itemData.largeImage);
+		$itemDetailThumbnail.find('img').attr('src', itemData.largeImage);
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -498,7 +507,7 @@
 
 		// clear detail
 		$tab.find('.itemDetailTitle h3').text('No Match found');
-		$tab.find('.itemDetailThumbnail img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
+		$itemDetailThumbnail.find('img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -530,7 +539,7 @@
 					Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 
 					// show page in detail attributes
-					$metacriticPage.fadeIn();
+					$metacriticPage.show();
 					$metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
 				}
 			}
@@ -542,7 +551,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var displayWikipediaAttribute = function(wikipediaURL) {
 
-		$wikipediaPage.fadeIn();
+		$wikipediaPage.show();
 		$wikipediaPage.find('a').attr('href', wikipediaURL);
 	};
 
@@ -570,14 +579,27 @@
 	var amazonItemOffers_result = function(offers) {
 
 		// update data panel information
-		$amazonPriceHeader.fadeIn();
-		$amazonPriceNew.fadeIn();
-		$amazonPriceUsed.fadeIn();
+		if (offers.buyNowPrice !== '' || offers.lowestUsedPrice !== '') {
+			$amazonPriceHeader.show();
+		}
 
-		$amazonPriceNew.find('a').attr('href', offers.productURL);
-		$amazonPriceNew.find('.data').text(offers.buyNowPrice);
-		$amazonPriceUsed.find('a').attr('href', offers.offersURLUsed);
-		$amazonPriceUsed.find('.data').text(offers.lowestUsedPrice);
+		// new price
+		if (offers.buyNowPrice !== '') {
+			$amazonPriceNew.find('a').attr('href', offers.productURL);
+			$amazonPriceNew.find('.data').text(offers.buyNowPrice);
+			$amazonPriceNew.show();
+		} else {
+			$amazonPriceNew.hide();
+		}
+
+		// used price
+		if (offers.lowestUsedPrice !== '') {
+			$amazonPriceUsed.find('.data').text(offers.lowestUsedPrice);
+			$amazonPriceUsed.find('a').attr('href', offers.offersURLUsed);
+			$amazonPriceUsed.show();
+		} else {
+			$amazonPriceUsed.hide();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -586,8 +608,11 @@
 	var giantBombItemData_result = function(itemDetail) {
 
 		// update giantbomb page url
-		$giantBombPage.fadeIn();
+		$giantBombPage.show();
 		$giantBombPage.find('a').attr('href', itemDetail.site_detail_url);
+
+		// render video results
+		VideoPanel.renderVideoModal(itemDetail.videos);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1054,5 +1079,4 @@
 		}
 	};
 
-
-})(tmz.module('detailView'), tmz, jQuery, _);
+})(tmz.module('detailView'), tmz, jQuery, _, moment);

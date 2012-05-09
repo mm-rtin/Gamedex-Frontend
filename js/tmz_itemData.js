@@ -386,8 +386,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateItem = function(currentItem, onSuccess, onError) {
 
-
-
 		var userData = User.getUserData(true);
 
 		// clone currentItem as new object

@@ -95,7 +95,7 @@
 			.attr('href', 'http://www.' + metacriticDomain + page)
 			.attr('data-score', score)
 			.attr('data-original-title', metacriticDomain + ' ' + page)
-			.fadeIn();
+			.show();
 
 		// activate tooltip
 		$metascoreContainer.tooltip({placement: 'left'});

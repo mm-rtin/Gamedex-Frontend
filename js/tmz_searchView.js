@@ -58,6 +58,8 @@
 
 		$search = $('#searchField'),
 		$searchButton = $('#search_btn'),
+		$clearSearchButton = $('#clearSearch_btn'),
+		$clearSearchIcon = $clearSearchButton.find('i'),
 		$searchResultsContainer = $('#searchResultsContainer'),
 		$searchResults = $('#searchResults'),
 		$inputField = $search.find('input'),
@@ -87,6 +89,8 @@
 
 		// set default search provider
 		searchProvider = Utilities.getProviders().Amazon;
+
+		toggleClearSearchButton(false);
 
 		// init tooltips
 		$listDisplayOptions.find('button').each(function(key, button) {
@@ -177,8 +181,15 @@
 		});
 
 		// search button: click
-		$searchButton.click(function() {
+		$searchButton.click(function(e) {
 			SearchView.search(searchTerms);
+		});
+
+		// clear search button: click
+		$clearSearchButton.click(function(e) {
+			$inputField.val('');
+			$inputField.focus();
+			toggleClearSearchButton(false);
 		});
 
 		// window, searchResults: resized
@@ -691,6 +702,12 @@
 		// get search value
 		searchTerms = $inputField.val();
 
+		if (searchTerms === '') {
+			toggleClearSearchButton(false);
+		} else {
+			toggleClearSearchButton(true);
+		}
+
 		if (timeout) {
 			clearTimeout(timeout);
 		}
@@ -750,5 +767,21 @@
 		// get title element
 		$(element).parent().siblings('.dropdown-toggle').html(searchResult.platform).append('<b class="caret"></b>');
     };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * toggleClearSearchButton -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var toggleClearSearchButton = function(toggle) {
+
+		if (toggle) {
+			$clearSearchIcon.show();
+			$clearSearchButton.addClass('hover');
+		} else {
+			$clearSearchIcon.hide();
+			$clearSearchButton.removeClass('hover');
+		}
+
+    };
+
 
 })(tmz.module('searchView'), tmz, jQuery, _);
