@@ -53,46 +53,6 @@
 -----------------------------------------------------------*/
 html {
 
-}
-
-body {
-	background-image:  url('../images/bg_tile.png');
-	background-repeat: repeat;
-	color: #3C3C3C;
-	font-family: 'Open Sans', sans-serif;
-	font-size: 0.8em;
-	font-weight: 400;
-	min-width: 1000px;
-	overflow-x: hidden;
-
-	&.infoHeader {
-		#infoHeader {
-			display: block;
-		}
-		#wrapper {
-			margin: 0 auto;
-		}
-		#header {
-			display: none;
-		}
-	}
-
-	&.useHeader {
-		.header {
-			background-image:  url('../images/bg_tile_light2.png');
-			border-top: 1px solid #575757;
-		}
-
-		#infoHeader {
-			display: none;
-		}
-		#header {
-			display: block;
-		}
-
-
-	}
-
 	/* BOOTSTRAP OVERRIDES
 	-----------------------------------------------------------*/
 	.btn-template(@topGradient, @bottomGradient, @color, @alpha) {
@@ -136,7 +96,7 @@ body {
 	@btnSuccess_hover: darken(@btnSuccessTop, 10%);
 	@btnSuccess_shadowColor: #289c00;
 	.btn-success {
-		.btn-template(@btnSuccessTop, @btnSuccessBottom, @btnSuccess_shadowColor, .6);
+		.btn-template(@btnSuccessTop, @btnSuccessBottom, @btnSuccess_shadowColor, .8);
 	}
 	.btn-success:hover {
 		.btn-template-hover(@btnSuccess_hover);
@@ -161,15 +121,35 @@ body {
 		.btn-template-active(@btnPrimaryTop_active, @btnPrimaryBottom_active);
 	}
 
+	@btnDangerTop: #BF2C00;
+	@btnDangerBottom: #801D00;
+	@btnDangerTop_active: darken(@btnDangerBottom, 10%);
+	@btnDangerBottom_active: @btnDangerTop;
+	@btnDanger_hover: darken(@btnDangerTop, 10%);
+	@btnDanger_shadowColor: #912F00;
+	.btn-danger {
+		.btn-template(@btnDangerTop, @btnDangerBottom, @btnDanger_shadowColor, .6);
+	}
+	.btn-danger:hover {
+		.btn-template-hover(@btnDanger_hover);
+	}
+	.btn-danger:active {
+		.btn-template-active(@btnDangerTop_active, @btnDangerBottom_active);
+	}
+
 	@btnDarkTop: #666d6e;
 	@btnDarkBottom: #8a9394;
 	@btnDark_hover: darken(@btnDarkTop, 1%);
 	@btnDark_active: darken(@btnDarkTop, 4%);
 	.btn-dark {
 		.btn-template(@btnDarkTop, @btnDarkBottom, #000, .3);
+		color: #ffffff;
+		text-shadow: none;
 	}
 	.btn-dark:hover {
 		.btn-template-hover(@btnDark_hover);
+		color: #ffffff;
+		text-shadow: none;
 	}
 	.btn-dark:active, .btn-dark.active {
 		background-color: @btnDark_active;
@@ -218,15 +198,61 @@ body {
 		min-height: 0px;
 	}
 
-	.options .icon-remove {
-		.opacity(.5);
-	}
 	.tab-content {
 		display: block;
 	}
 
 	.dropdown-menu li > a:hover, .dropdown-menu .active > a, .dropdown-menu .active > a:hover {
 		background-color: #31a500;
+	}
+
+	.alert {
+		display: none;
+		margin-bottom: 0;
+	}
+
+	/* ICON OVERRIDES
+	-----------------------------------------------------------*/
+	.icon-trash {
+		top: 2px;
+		position: relative;
+	}
+}
+
+body {
+	background-image:  url('../images/bg_tile.png');
+	background-repeat: repeat;
+	color: #3C3C3C;
+	font-family: 'Open Sans', sans-serif;
+	font-size: 0.8em;
+	font-weight: 400;
+	min-width: 1000px;
+	overflow-x: hidden;
+
+	&.infoHeader {
+		#infoHeader {
+			display: block;
+		}
+		#wrapper {
+			margin: 0 auto;
+		}
+		#header {
+			display: none;
+		}
+	}
+
+	&.useHeader {
+		.header {
+			background-image:  url('../images/bg_tile_light2.png');
+			border-top: 1px solid #575757;
+		}
+
+		#infoHeader {
+			display: none;
+		}
+		#header {
+			display: block;
+		}
 	}
 }
 
@@ -312,6 +338,12 @@ input, select, textarea {
 		background-image: url('../images/login_button_over.png');
 		background-position: 0px 0px;
 	}
+}
+
+/* USE HEADER
+-----------------------------------------------------------*/
+#userMenu {
+	display: none;
 }
 
 
@@ -500,8 +532,8 @@ input, select, textarea {
 		#panel4 {
 			display: none;
 		}
-		#panel5 {
-			display: none;
+		#gridViewMenu {
+			visibility: hidden;
 		}
 	}
 
@@ -553,12 +585,8 @@ input, select, textarea {
 			width: 78%;
 		}
 
-		#panel5 {
-			margin: 0 300px;
-			position: fixed;
-			top: -8px;
-			width: 800px;
-			z-index: 9999;
+		#gridViewMenu {
+			visibility: visible;
 		}
 	}
 }
@@ -611,6 +639,12 @@ input, select, textarea {
 
 /* COMPONENT STYLES
 -----------------------------------------------------------*/
+
+.no-results {
+	strong {
+		color: #1D9400;
+	}
+}
 
 #accountManagement-modal {
 
@@ -722,6 +756,7 @@ input, select, textarea {
 }
 
 #videoListContainer {
+	position: relative;
 	width: 100%;
 	height: 84px;
 	overflow: hidden;
@@ -732,8 +767,8 @@ input, select, textarea {
 #videoList {
 	list-style-type: none;
 	position: relative;
-	width: 9999px;
-	left: -32px;
+	width: 776px;
+	left: -26px;
 
 	.videoItem {
 		float: left;
@@ -758,12 +793,62 @@ input, select, textarea {
 	}
 }
 
+#videoListNavigation {
+
+	position: absolute;
+	left: 786px;
+	top: 37px;
+
+	.navigateLeft {
+		position: absolute;
+		background-image:  url('../images/navigate_left.png');
+		background-repeat: repeat;
+		cursor: pointer;
+		width: 32px;
+		height: 35px;
+
+		&:hover {
+			background-image:  url('../images/navigate_left_over.png');
+		}
+		&:active {
+			background-image:  url('../images/navigate_left.png');
+		}
+	}
+
+	.navigateRight {
+		position: absolute;
+		background-image:  url('../images/navigate_right.png');
+		background-repeat: repeat;
+		cursor: pointer;
+		width: 33px;
+		height: 35px;
+		left: 32px;
+
+		&:hover {
+			background-image:  url('../images/navigate_right_over.png');
+		}
+		&:active {
+			background-image:  url('../images/navigate_right.png');
+		}
+	}
+
+	.pageNumber {
+		color: #AAA9A8;
+		font-weight: 600;
+		position: absolute;
+		width: 70px;
+		height: 20px;
+		top: -23px;
+		left: 3px;
+	}
+}
+
 /* RESET PASSWORD MODAL
 -----------------------------------------------------------*/
 #resetpassword-modal {
+
 	.alert {
 		display: none;
-		margin-bottom: 0;
 	}
 }
 .updatePasswordForm {
@@ -1213,16 +1298,6 @@ input, select, textarea {
 
 #itemResults {
 
-	.display-0 tr {
-		&:hover
-			.quickAttributes {
-				display: none;
-			}
-			.deleteItem_btn {
-				display: none;
-			}
-		}
-
 	tr {
 		cursor: pointer;
 		&:hover {
@@ -1230,7 +1305,7 @@ input, select, textarea {
 				display: block;
 			}
 			.deleteItem_btn {
-				display: block;
+				visibility: visible;
 			}
 		}
 	}
@@ -1295,9 +1370,7 @@ input, select, textarea {
 		}
 	}
 	.deleteItem_btn {
-		display: none;
-		padding-top: 9px;
-		height: 20px;
+		visibility: hidden;
 	}
 
 	/* LIST VIEW */
@@ -1317,12 +1390,6 @@ input, select, textarea {
 		}
 		.extraData {
 			min-width: 150px;
-		}
-		.quickAttributes {
-			display: none;
-		}
-		.deleteItem_btn {
-			display: none;
 		}
 	}
 
@@ -1450,7 +1517,8 @@ input, select, textarea {
 }
 
 #gridViewMenu {
-	margin-bottom: 8px;
+
+	margin-left: 146px;
 
 	.navbar-inner {
 		padding-left: 4px;
@@ -1481,12 +1549,6 @@ input, select, textarea {
 		padding-left: 0px;
 		padding-right: 0px;
 		margin-bottom: 0;
-	}
-}
-
-#gridViewOptions {
-	.optionsGroup {
-		margin-top: 8px;
 	}
 }
 

@@ -106,7 +106,7 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				login_result(data);
+				login_result(data, email);
 				onSuccess(data, email);
 			},
 			error: function(data) {

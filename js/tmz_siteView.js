@@ -22,6 +22,7 @@
 		// header
 		$infoHeader = $('#infoHeader'),
 		$header = $('#header'),
+		$userMenu = $('#userMenu'),
 		$logoutButton = $('#logoutButton'),
 		$loggedInButton = $('#loggedInButton'),
 
@@ -354,8 +355,6 @@
 			// all ajax requests returned
 			function() {
 
-
-
 				// list result
 				TagView.getTags_result(listReturnedData);
 
@@ -408,7 +407,6 @@
 
 		// success
 		if (data.status === 'success') {
-
 
 			setupRememberMe();
 
@@ -591,6 +589,9 @@
 
 		// set user button
 		$loggedInButton.find('.userEmail').text(email);
+
+		// show user menu
+		$userMenu.show();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

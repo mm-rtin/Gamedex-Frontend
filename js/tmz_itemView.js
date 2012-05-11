@@ -38,6 +38,7 @@
 		filterHasBeenApplied = false,
 		queueDisplayRefresh = false,
 		filterType = null,
+		itemMenuOpen = false,
 
 		// element cache
 		$itemResults = $('#itemResults'),
@@ -48,6 +49,7 @@
 		$viewList = $('#viewList'),
 		$viewName = $viewList.find('.viewName'),
 
+		$itemViewMenu = $('#itemViewMenu'),
 		$editMenu = $('#editMenu'),
 
 		// sort elements
@@ -106,6 +108,20 @@
 	* createEventHandlers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemView.createEventHandlers = function() {
+
+		// itemViewMenu .dropdown: hover
+		$itemViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
+
+			var that = this;
+
+			// if dropdown open trigger click on .dropdown
+			$itemViewMenu.find('.dropdown').each(function() {
+
+				if ($(this).hasClass('open') && $(this).find('.dropdown-toggle').get(0) !== $(that).get(0)) {
+					$(that).trigger('click');
+				}
+			});
+		});
 
 		// viewList: click
 		$viewList.find('ul').on('click', 'a', function(e) {
@@ -655,7 +671,7 @@
 		ItemCache.deleteCachedTag(tagID);
 
 		// update List
-		TagView.getList(function(data) {
+		TagView.getTags(function(data) {
 
 			TagView.getTags_result(data);
 		});
@@ -675,7 +691,7 @@
 		});
 
 		// update List
-		TagView.getList(function(data) {
+		TagView.getTags(function(data) {
 
 			TagView.getTags_result(data);
 		});

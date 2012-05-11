@@ -28,6 +28,7 @@
 		saveInProgress = false,
 		currentTab = TAB_IDS[0],
 		currentID = null,
+		currentItemHasVideo = false,
 		itemType = ITEM_TYPES['new'],
 
 		// timeout
@@ -132,7 +133,13 @@
 		// itemDetailThumbnail: click
 		$itemDetailThumbnail.click(function(e) {
 
-			VideoPanel.showVideoPanel();
+			if (currentItemHasVideo) {
+				VideoPanel.showVideoPanel();
+
+			// show no video message
+			} else {
+
+			}
 		});
 
 		// saveItem_btn: click
@@ -612,7 +619,12 @@
 		$giantBombPage.find('a').attr('href', itemDetail.site_detail_url);
 
 		// render video results
-		VideoPanel.renderVideoModal(itemDetail.videos);
+		if (itemDetail.videos.length !== 0) {
+			VideoPanel.renderVideoModal(itemDetail.videos);
+			currentItemHasVideo = true;
+		} else {
+			currentItemHasVideo = false;
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

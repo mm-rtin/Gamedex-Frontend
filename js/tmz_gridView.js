@@ -24,18 +24,18 @@
 		$gridViewContainer = $('#gridViewContainer'),
 		$gridList = $('#gridList'),
 		$viewName = $gridList.find('.viewName'),
-		$gridViewOptions = $('#gridViewOptions'),
+		$gridViewMenu = $('#gridViewMenu'),
 
 		// display options
-		$displayOptions = $gridViewOptions.find('.displayOptions'),
+		$displayOptions = $gridViewMenu.find('.displayOptions'),
 		$displayTypeField = $displayOptions.find('.displayType'),
 
 		// sort options
-		$sortOptions = $gridViewOptions.find('.sortOptions'),
+		$sortOptions = $gridViewMenu.find('.sortOptions'),
 		$sortTypeField = $sortOptions.find('.sortType'),
 
 		// filter options
-		$filterOptions = $gridViewOptions.find('.filterOptions'),
+		$filterOptions = $gridViewMenu.find('.filterOptions'),
 		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
 		$filterTypeField = $filterOptions.find('.filterType'),
 		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
@@ -75,6 +75,20 @@
 	* createEventHandlers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var createEventHandlers = function(item) {
+
+		// gridViewMenu .dropdown: hover
+		$gridViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
+
+			var that = this;
+
+			// if dropdown open trigger click on .dropdown
+			$gridViewMenu.find('.dropdown').each(function() {
+
+				if ($(this).hasClass('open') && $(this).find('.dropdown-toggle').get(0) !== $(that).get(0)) {
+					$(that).trigger('click');
+				}
+			});
+		});
 
 		// exit grid view button: click
 		$('#exitGridView_btn').click(function(e) {
