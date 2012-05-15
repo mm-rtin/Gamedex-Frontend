@@ -16,11 +16,14 @@
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
 		TIME_TO_SUBMIT_QUERY = 250,	// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
-		PANEL_HEIGHT_OFFSET = 225,
+		PANEL_HEIGHT_OFFSET_USE = 225,
+		PANEL_HEIGHT_OFFSET_INFO = 460,
 		PANEL_HEIGHT_PADDING = 40,
 
-		// search field timeout
-		timeout = null,
+		// timeout
+		searchFieldTimeout = null,
+		legacySubNavHideTimeout = null,
+		legacySubNavShowTimeout = null,
 
 		// data
 		searchTerms = 'skyrim',
@@ -35,16 +38,20 @@
 		listPlatform = null,
 		searchDisplayType = DISPLAY_TYPE.Icons,
 		listDisplayType = DISPLAY_TYPE.Icons,
+		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 
 		// node cache
 		$searchContainer = $('#searchContainer'),
 
+		$searchViewMenu = $('#searchViewMenu'),
 		$searchProvider = $('#searchProvider'),
 		$listProvider = $('#listProvider'),
 		$searchProviderName = $searchProvider.find('.providerName'),
 		$listProviderName = $listProvider.find('.providerName'),
 
 		$searchPlatforms = $('#searchPlatforms'),
+		$legacySubNav = $('#legacySubNav'),
+		$platformSelectButton = $('#platformSelect_btn'),
 		$listPlatforms = $('#listPlatforms'),
 		$searchPlatformsName = $searchPlatforms.find('.platformName'),
 		$listPlatformsName = $listPlatforms.find('.platformName'),
@@ -133,6 +140,20 @@
 			searchProviderChanged();
 		});
 
+		// searchViewMenu .dropdown: hover
+		$searchViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
+
+			var that = this;
+
+			// if dropdown open trigger click on .dropdown
+			$searchViewMenu.find('.dropdown').each(function() {
+
+				if ($(this).hasClass('open') && $(this).find('.dropdown-toggle').get(0) !== $(that).get(0)) {
+					$(that).trigger('click');
+				}
+			});
+		});
+
 		// listProvider: change
 		$listProvider.find('li a').click(function(e) {
 			e.preventDefault();
@@ -148,9 +169,69 @@
 		});
 
 		// searchPlatforms: change
-		$searchPlatforms.find('li a').click(function(e) {
+		$searchPlatforms.find('li:not(.dropdown-sub) a').click(function(e) {
 			e.preventDefault();
 			changeSearchPlatform($(this).attr('data-content'), $(this).text());
+		});
+
+		// searchPlatforms root items: hover
+		$searchPlatforms.find('li:not(.dropdown-sub li) a').hover(function(e) {
+
+			// cancel show
+			clearTimeout(legacySubNavShowTimeout);
+			legacySubNavShowTimeout = null;
+
+			// create timeout if not already defined
+			if (!legacySubNavHideTimeout) {
+
+				// delay before hiding subnav
+				legacySubNavHideTimeout = setTimeout(function() {
+					$legacySubNav.removeClass('active');
+				}, 500);
+			}
+		});
+
+		// legacySubNav: hover
+		$legacySubNav.hover(function(e) {
+
+			// cancel hide
+			clearTimeout(legacySubNavHideTimeout);
+			legacySubNavHideTimeout = null;
+
+			// create timeout if not already defined
+			if (!legacySubNavShowTimeout) {
+				// delay before showing subnav
+				legacySubNavShowTimeout = setTimeout(function() {
+					$legacySubNav.addClass('active');
+				}, 500);
+			}
+		});
+
+		// legacySubNav: click
+		$legacySubNav.click(function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			$legacySubNav.addClass('active');
+		});
+
+		// legacySubNav items: hover
+		$legacySubNav.find('li a').hover(function(e) {
+
+			// cancel hide
+			clearTimeout(legacySubNavHideTimeout);
+			legacySubNavHideTimeout = null;
+		});
+
+		// legacySubNav items: click
+		$legacySubNav.find('li a').click(function(e) {
+			$searchPlatforms.removeClass('open');
+		});
+
+
+		// platformSelectButton: click
+		$platformSelectButton.click(function(e) {
+			$legacySubNav.removeClass('active');
 		});
 
 		// search results: click
@@ -322,10 +403,22 @@
 
 		var windowHeight = $(window).height();
 
-		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
+		if (resultsHeight < windowHeight - panelHeightOffset) {
 			$container.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
 		} else {
-			$container.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
+			$container.css({'height': windowHeight - panelHeightOffset});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loggedInView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.loggedInView = function(isLoggedIn) {
+
+		if (isLoggedIn) {
+			panelHeightOffset = PANEL_HEIGHT_OFFSET_USE;
+		} else {
+			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
 	};
 
@@ -686,11 +779,11 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchFieldTimeOut
+	* searchFieldTrigger
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchFieldTimeOut = function() {
+	var searchFieldTrigger = function() {
 
-		clearTimeout(timeout);
+		clearTimeout(searchFieldTimeout);
 		SearchView.search(searchTerms);
 	};
 
@@ -708,8 +801,8 @@
 			toggleClearSearchButton(true);
 		}
 
-		if (timeout) {
-			clearTimeout(timeout);
+		if (searchFieldTimeout) {
+			clearTimeout(searchFieldTimeout);
 		}
 
 		// enter key, run query immediately
@@ -719,7 +812,7 @@
 		// start search timer
 		} else {
 
-			timeout = setTimeout(searchFieldTimeOut, TIME_TO_SUBMIT_QUERY);
+			searchFieldTimeout = setTimeout(searchFieldTrigger, TIME_TO_SUBMIT_QUERY);
 		}
     };
 

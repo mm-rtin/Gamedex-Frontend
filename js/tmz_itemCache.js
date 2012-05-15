@@ -79,6 +79,18 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateCacheItemByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateCacheItemByTag = function(tagID, item) {
+
+		// update cache
+		itemsCacheByTag[tagID][item.itemID] = item;
+
+		// update local storage
+		storeItemByTag(tagID, item, true);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getStoredItemDirectory -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getStoredItemDirectory = function() {
@@ -97,12 +109,10 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* storeItemByTag -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var storeItemByTag = function(tagID, item) {
-
-
+	var storeItemByTag = function(tagID, item, updateStorage) {
 
 		// skip storage if itemID was retrieved from local storage
-		if (typeof storedItems[tagID + '_' + item.itemID] === 'undefined') {
+		if (typeof storedItems[tagID + '_' + item.itemID] === 'undefined' || updateStorage) {
 
 			// get stored items by tag
 			var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
@@ -134,8 +144,6 @@
 
 			// store user object as string back into userID key
 			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
-
-
 		}
 	};
 
@@ -180,11 +188,6 @@
 	var deleteStoredItem = function(itemID, tagID) {
 
 		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-
-
-
-
-
 		delete storedItemsCacheByTag[tagID][itemID];
 
 		Storage.set('itemsCacheByTag', storedItemsCacheByTag);
@@ -210,9 +213,6 @@
 				_.each(storedTag, function(item, key) {
 					storedItems[tagID + '_' + key] = true;
 				});
-
-
-
 			}
 		}
 
@@ -245,6 +245,7 @@
 		'getCachedItemsByTag': getCachedItemsByTag,
 		'cacheItemsByTag': cacheItemsByTag,
 		'cacheItemByTag': cacheItemByTag,
+		'updateCacheItemByTag': updateCacheItemByTag,
 		'getStoredItemDirectory': getStoredItemDirectory,
 		'storeItemDirectory': storeItemDirectory,
 		'deleteCachedItem': deleteCachedItem,

@@ -19,7 +19,8 @@
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
 		SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4},
-		PANEL_HEIGHT_OFFSET = 200,
+		PANEL_HEIGHT_OFFSET_USE = 200,
+		PANEL_HEIGHT_OFFSET_INFO = 420,
 		PANEL_HEIGHT_PADDING = 40,
 		VIEW_ALL_TAG_ID = '0',
 		VIEW_ALL_TAG_NAME = 'View All',
@@ -39,12 +40,14 @@
 		queueDisplayRefresh = false,
 		filterType = null,
 		itemMenuOpen = false,
+		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 
 		// element cache
 		$itemResults = $('#itemResults'),
 		$viewItemsContainer = $('#viewItemsContainer'),
 		$itemResultsContainer = $('#itemResultsContainer'),
 		$displayOptions = $viewItemsContainer.find('.displayOptions'),
+		$gridViewButton = $('#gridView_btn'),
 
 		$viewList = $('#viewList'),
 		$viewName = $viewList.find('.viewName'),
@@ -186,9 +189,11 @@
 
 		// deleteListConfirm_btn: click
 		$deleteListConfirmBtn.click(function(e) {
+			e.preventDefault();
+
+			$deleteListConfirmModal.modal('hide');
 			// delete currently viewing list
 			deleteTag(currentViewTagID);
-			$deleteListConfirmModal.modal('hide');
 		});
 
 		// updateListModal: form submit
@@ -258,7 +263,7 @@
 		});
 
 		// show grid view button: click
-		$('#gridView_btn').click(function(e) {
+		$gridViewButton.click(function(e) {
 			e.preventDefault();
 			showGridView();
 		});
@@ -321,7 +326,6 @@
 		}
 	};
 
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -346,10 +350,24 @@
 		var windowHeight = $(window).height();
 		var resultsHeight = $itemResults.height();
 
-		if (resultsHeight < windowHeight - PANEL_HEIGHT_OFFSET) {
+		// check for infoHeader
+
+		if (resultsHeight < windowHeight - panelHeightOffset) {
 			$itemResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
 		} else {
-			$itemResultsContainer.css({'height': windowHeight - PANEL_HEIGHT_OFFSET});
+			$itemResultsContainer.css({'height': windowHeight - panelHeightOffset});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loggedInView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.loggedInView = function(isLoggedIn) {
+
+		if (isLoggedIn) {
+			panelHeightOffset = PANEL_HEIGHT_OFFSET_USE;
+		} else {
+			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
 	};
 
@@ -374,6 +392,9 @@
 
 			// ItemData items result
 			ItemData.itemsAndDirectoryLoaded(items);
+
+			// select 'view all' tag
+			changeViewList(VIEW_ALL_TAG_ID);
 
 			// render view with returned items data
 			render(items);
@@ -538,7 +559,7 @@
 		});
 
 		// get updated metascore
-		Metacritic.getMetascore(item.standardName, item, displayMetascore);
+		Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -782,7 +803,7 @@
 		}
 
 		// update remote data
-		ItemData.updateItem(item, function(item, data) {
+		ItemData.updateUserItem(item, function(item, data) {
 			// update item detail view
 			DetailView.viewItemDetail(item);
 		});

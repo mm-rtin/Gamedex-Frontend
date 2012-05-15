@@ -1,20 +1,22 @@
 // VideoPanel
-(function(VideoPanel, tmz, $, _, moment) {
+(function(VideoPanel, _V_, tmz, $, _, moment) {
 	"use strict";
 
 	// constants
 	var GIANT_BOMB_VIDEO_PATH = 'http://media.giantbomb.com/video/',
 		VIDEO_PLAYER_ID = 'videoPlayer',
-		VIDEO_SET_HEIGHT = 84,
+		VIDEO_SET_HEIGHT = 90,
 		VIDEOS_PER_SET = 5,
 
 		// properties
 		currentVideoSet = 0,
 		currentMaxVideoSet = null,
 		currentVideoCount = 0,
+		currentVideoIndex = 0,
+		previousVideoIndex = 0,
 
 		// data
-		videoResults = [],		// current item videos
+		currentVideos = [],		// current item videos
 
 		// objects
 		videoJSPLayer = null,
@@ -37,10 +39,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	VideoPanel.init = function() {
 
+		// init video js
+		videoJSPLayer = _V_(VIDEO_PLAYER_ID);
+
 		// create event handlers
 		VideoPanel.createEventHandlers();
-
-		videoJSPLayer = _V_(VIDEO_PLAYER_ID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,8 +55,8 @@
 		$videoList.on('click', 'li', function(e) {
 			e.preventDefault();
 
-			var url = $(this).attr('data-url');
-			changeVideoSource(url);
+			var id = $(this).attr('data-id');
+			changeVideoSource(Number(id));
 
 			playCurrentVideo();
 		});
@@ -66,6 +69,14 @@
 		$navigateRight.click(function(e) {
 			nextVideoSet();
 		});
+
+		// videoModal: hidden
+		$videoModal.on('hidden', function () {
+			pauseCurrentVideo();
+		});
+
+		// video js: video ended
+		videoJSPLayer.addEvent("ended", playNextVideo);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,47 +95,115 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	VideoPanel.renderVideoModal = function(videoResults) {
 
-		if (videoResults.length !== 0) {
+		currentVideos = $.extend(true, [], videoResults);
+
+		if (currentVideos.length !== 0) {
 
 			// get video count
-			currentVideoCount = videoResults.length;
+			currentVideoCount = currentVideos.length;
 
-			// reset max
+			// reset max, videoIndex
 			currentMaxVideoSet = null;
+			currentVideoIndex = 0;
+
+			// format data
+			formatVideoData(currentVideos);
 
 			// get model data
-			var templateData = {'videoResults': videoResults};
+			var templateData = {'videoResults': currentVideos};
 
 			// render video list
 			$videoList.html(videoResultsTemplate(templateData));
 
-			// update video source with first video url
-			var videoItem = videoResults[0];
-
 			// update video source
-			changeVideoSource(videoItem.url);
+			changeVideoSource(0);
 
 			// change videoSet to default
 			currentVideoSet = 0;
 			changeVideoSet(0);
 
+			// init popover
+			$videoList.find('a').popover({'placement': 'top', 'animation': true});
+
 			showVideoListNavigation();
 		}
 
-		if (videoResults.length <= VIDEOS_PER_SET) {
+		if (currentVideos.length <= VIDEOS_PER_SET) {
 			hideVideoListNavigation();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* formatVideoData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var formatVideoData = function(videoArray) {
+
+		// iterate videoArray and add new attributes
+		for (var i = 0, len = videoArray.length; i < len; i++) {
+
+			// format publish date
+			videoArray[i].publishDate = moment(videoArray[i].publish_date, "YYYY-MM-DD").calendar();
+			delete videoArray[i].publish_date;
+
+			// format video length
+			var minutes = Math.floor(videoArray[i].length_seconds / 60);
+			var seconds = (videoArray[i].length_seconds % 60).toString();
+			if (seconds.length === 1) {
+				seconds = '0' + seconds;
+			}
+			delete videoArray[i].length_seconds;
+
+
+			videoArray[i].runningTime = minutes + ':' + seconds;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* playNextVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var playNextVideo = function() {
+
+		if (currentVideoIndex === currentVideoCount - 1) {
+			currentVideoIndex = 0;
+		} else {
+			currentVideoIndex++;
+		}
+
+		// play next
+		changeVideoSource(currentVideoIndex);
+
+		// change video set
+		if (currentVideoIndex % VIDEOS_PER_SET === 0) {
+
+			var set = Math.floor(currentVideoIndex / VIDEOS_PER_SET);
+			changeVideoSet(set);
+		}
+
+		playCurrentVideo();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeVideoSource -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeVideoSource = function(url) {
+	var changeVideoSource = function(index) {
+
+		currentVideoIndex = index;
+
+		// get video url
+		var url = currentVideos[index].url;
+
+		// add 'playing' class to videoList item
+		var $currentVideoItem = $videoList.find('li[data-id="' + index + '"]');
+		var $previousVideoItem = $videoList.find('li[data-id="' + previousVideoIndex + '"]');
+		$previousVideoItem.removeClass('playing');
+		$currentVideoItem.addClass('playing');
 
 		// update videoPlayer source
 		var videoURLParts = url.split('.');
 		var videoURL = GIANT_BOMB_VIDEO_PATH + videoURLParts[0] + '_3500.' + videoURLParts[1];
 		videoJSPLayer.src(videoURL);
+
+		previousVideoIndex = index;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,6 +212,14 @@
 	var playCurrentVideo = function() {
 
 		videoJSPLayer.play();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* pauseCurrentVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var pauseCurrentVideo = function() {
+
+		videoJSPLayer.pause();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,13 +245,10 @@
 		var maxVideoSet = getMaxVideoSet();
 
 		if (currentVideoSet > 0) {
-			currentVideoSet--;
-
-			changeVideoSet(currentVideoSet);
+			changeVideoSet(--currentVideoSet);
 		// reached min > loop to max
 		} else {
-			currentVideoSet = maxVideoSet;
-			changeVideoSet(currentVideoSet);
+			changeVideoSet(maxVideoSet);
 		}
 	};
 
@@ -177,14 +261,11 @@
 		var maxVideoSet = getMaxVideoSet();
 
 		if (currentVideoSet < maxVideoSet) {
-			currentVideoSet++;
-
-			changeVideoSet(currentVideoSet);
+			changeVideoSet(++currentVideoSet);
 
 		// reached max > loop to 0
 		} else {
-			currentVideoSet = 0;
-			changeVideoSet(currentVideoSet);
+			changeVideoSet(0);
 		}
 	};
 
@@ -206,6 +287,7 @@
 	var changeVideoSet = function(set) {
 
 		var position = -(set * VIDEO_SET_HEIGHT);
+		currentVideoSet = set;
 
 		// animate position
 		$videoList.stop().animate({top: position}, 250, function() {
@@ -217,5 +299,5 @@
 	};
 
 
-})(tmz.module('videoPanel'), tmz, jQuery, _);
+})(tmz.module('videoPanel'), _V_, tmz, jQuery, _, moment);
 

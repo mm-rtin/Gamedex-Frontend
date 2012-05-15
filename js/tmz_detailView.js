@@ -132,6 +132,7 @@
 
 		// itemDetailThumbnail: click
 		$itemDetailThumbnail.click(function(e) {
+			e.preventDefault();
 
 			if (currentItemHasVideo) {
 				VideoPanel.showVideoPanel();
@@ -261,7 +262,7 @@
 
 			// get wikipedia / metacritic data
 			Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
-			getMetascore(firstItem.standardName, firstItem);
+			getMetascore(firstItem.standardName, firstItem, true);
 
 			// call main view detail method
 			viewSearchDetail(firstItem, currentProvider, 0);
@@ -272,8 +273,6 @@
 	* viewItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewItemDetail = function(item) {
-
-		console.info('viewitemDetail');
 
 		// hide information until update query returns
 		hideAsynchronousDetailAttributes();
@@ -317,7 +316,7 @@
 
 		// get wikipedia / metacritic data
 		Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
-		getMetascore(firstItem.standardName, firstItem, item);
+		getMetascore(firstItem.standardName, firstItem, false);
 
 		// finish tasks for viewing items
 		completeViewItemDetail(firstItem, currentProvider, 0, item);
@@ -447,7 +446,7 @@
 
 		// render detail
 		$tab.find('.itemDetailTitle h3').text(itemData.name);
-		$itemDetailThumbnail.find('img').attr('src', itemData.largeImage);
+		$tab.find('img').attr('src', itemData.largeImage);
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -514,13 +513,13 @@
 
 		// clear detail
 		$tab.find('.itemDetailTitle h3').text('No Match found');
-		$itemDetailThumbnail.find('img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
+		$tab.find('img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMetascore = function(title, item, sourceItem) {
+	var getMetascore = function(title, item, fromSearch) {
 
 		var metascoreSelector = '';
 
@@ -532,7 +531,7 @@
 		}
 
 		// fetch metascore
-		Metacritic.getMetascore(title, item, function(item) {
+		Metacritic.getMetascore(title, item, fromSearch, function(item) {
 
 			// ignore results which do not match currently viewing item
 			if (currentID === item.id) {
@@ -915,7 +914,7 @@
 		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
 
 			// update item
-			ItemData.updateItem(item, updateItem_result);
+			ItemData.updateUserItem(item, updateItem_result);
 		}
 
 		// update save item button

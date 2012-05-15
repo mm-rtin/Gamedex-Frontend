@@ -7,6 +7,7 @@
 		ItemData = tmz.module('itemData'),
 		TagView = tmz.module('tagView'),
 		ItemView = tmz.module('itemView'),
+		SearchView = tmz.module('searchView'),
 		Storage = tmz.module('storage'),
 
 		// constants
@@ -396,8 +397,11 @@
 
 		resetLoginForm();
 
-		// create user
-		User.createUser(email, password, signup_result);
+		// validate
+		if (email !== '' && password !== '') {
+			// create user
+			User.createUser(email, password, signup_result);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -411,7 +415,7 @@
 			setupRememberMe();
 
 			// show logged in view
-			showLoggedInView(email);
+			showUseView(email);
 
 			// start user app
 			startApp();
@@ -579,9 +583,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* showLoggedInView -
+	* showUseView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showLoggedInView = function(email) {
+	var showUseView = function(email) {
 
 		// set new body class
 		$('body').removeClass('infoHeader');
@@ -589,6 +593,10 @@
 
 		// set user button
 		$loggedInButton.find('.userEmail').text(email);
+
+		// notify views
+		ItemView.loggedInView(true);
+		SearchView.loggedInView(true);
 
 		// show user menu
 		$userMenu.show();
@@ -602,6 +610,13 @@
 		// set new body class
 		$('body').removeClass('useHeader');
 		$('body').addClass('infoHeader');
+
+		// notify views
+		ItemView.loggedInView(false);
+		SearchView.loggedInView(false);
+
+		// hide user menu
+		$userMenu.hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

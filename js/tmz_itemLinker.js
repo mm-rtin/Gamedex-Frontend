@@ -79,10 +79,9 @@
 			if (sourceItem.releaseDate === searchItem.releaseDate) {
 				score += 10;
 
-
 			// fuzzy release date check
 			} else {
-				var diff =  Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+				var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
 
 				// don't subtract score if search result date is unknown/unreleased
 				if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
@@ -94,7 +93,11 @@
 		// platform match
 		if (typeof searchItem.platform !== 'undefined') {
 			// get standard platform name from platform
-			var standardPlatform = Utilities.getStandardPlatform(searchItem.platform);
+			var standardPlatform = Utilities.matchPlatformToIndex(searchItem.platform).name;
+
+			if (sourceItem.platform === standardPlatform) {
+				score += 20;
+			}
 		}
 
 		return score;
@@ -199,6 +202,8 @@
 	ItemLinker.getLinkedItemData = function(item, provider, onSuccess) {
 
 		switch (provider) {
+
+			// amazon is provider > fetch from giantbomb
 			case Utilities.getProviders().Amazon:
 
 				// get item from giantbomb
@@ -207,6 +212,7 @@
 				});
 				break;
 
+			// giantbomb is provider > fetch from amazon
 			case Utilities.getProviders().GiantBomb:
 
 				// get item from amazon

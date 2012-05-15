@@ -8,13 +8,14 @@
 		TAG_UPDATE_URL = tmz.api + 'tag/update/',
 		TAG_DELETE_URL = tmz.api + 'tag/delete/',
 
-
 		// Dependencies
 		User = tmz.module('user'),
 		Storage = tmz.module('storage'),
+		ItemData = tmz.module('itemData'),
+		ItemCache = tmz.module('itemCache'),
 
 		// local represenation of localStorage data model
-		storedList = {};
+		storedTags = {};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getters
@@ -34,12 +35,12 @@
 		};
 
 		// check local storage
-		storedList = Storage.get('list');
+		storedTags = Storage.get('tag');
 
-		if (storedList) {
+		if (storedTags) {
 
 			if (onSuccess) {
-				onSuccess(storedList);
+				onSuccess(storedTags);
 			}
 
 		// download directory data
@@ -53,8 +54,8 @@
 				cache: true,
 				success: function(data) {
 
-					// store list data
-					storedList = Storage.set('list', data.list);
+					// store tag data
+					storedTags = Storage.set('tag', data.list);
 
 					onSuccess(data.list);
 				},
@@ -87,11 +88,11 @@
 			cache: true,
 			success: function(data) {
 
-				// add response to stored list internal model
-				storedList.push({'listName': data.listName.toLowerCase(), 'listID': data.listID});
+				// add response to stored tag internal model
+				storedTags.push({'listName': data.listName.toLowerCase(), 'listID': data.listID});
 
-				// update local storage with store list model
-				Storage.set('list', storedList);
+				// update local storage with store tag model
+				Storage.set('tag', storedTags);
 
 				onSuccess(data);
 			},
@@ -128,15 +129,15 @@
 			error: onError
 		});
 
-		// update list in storedList model
-		for (var i = 0, len = storedList.length; i < len; i++) {
-			if (storedList[i].listID === tagID) {
+		// update tag in storedTags model
+		for (var i = 0, len = storedTags.length; i < len; i++) {
+			if (storedTags[i].listID === tagID) {
 
 				// update name
-				storedList[i].listName = listName;
+				storedTags[i].listName = listName;
 
-				// update local storage with stored list model
-				Storage.set('list', storedList);
+				// update local storage with stored tag model
+				Storage.set('tag', storedTags);
 			}
 		}
 
@@ -147,11 +148,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.deleteTag = function(tagID, onSuccess, onError) {
 
-
-
 		var userData = User.getUserData();
 
-		// delete list
+		// delete tag
 		var requestData = {
 			'user_id': userData.user_id,
 			'uk': userData.secret_key,
@@ -169,14 +168,22 @@
 			error: onError
 		});
 
-		// delete list item from storedList model
-		for (var i = 0, len = storedList.length; i < len; i++) {
-			if (storedList[i].listID === tagID) {
+		// get all items by tagID
+		var tagItems = ItemCache.getCachedItemsByTag(tagID);
 
-				storedList.splice(i, 1);
+		// each item in tag: delete client item
+		_.each(tagItems, function(item) {
+			ItemData.deleteClientItem(tagID, item.itemID);
+		});
 
-				// update local storage with stored list model
-				Storage.set('list', storedList);
+		// delete tag item from storedTags model
+		for (var i = 0, len = storedTags.length; i < len; i++) {
+			if (storedTags[i].listID === tagID) {
+
+				storedTags.splice(i, 1);
+
+				// update local storage with stored tag model
+				Storage.set('tag', storedTags);
 			}
 		}
 	};

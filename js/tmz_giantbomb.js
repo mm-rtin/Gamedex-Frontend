@@ -11,9 +11,11 @@
 
 		// data
 		giantBombDataCache = {},
-		giantBombItemCache = {};
+		giantBombItemCache = {},
 
-		// templates
+		// request queue
+		getGiantBombItemDataQueue = {},
+		getGiantBombItemDetailQueue = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchGiantBomb -
@@ -130,16 +132,36 @@
 		// download gb data
 		} else {
 
-			// download data
-			var fieldList = ['description', 'site_detail_url', 'videos'];
-			getGiantBombItem(gbombID, fieldList, function(data) {
+			// add to queue
+			if (!_.has(getGiantBombItemDataQueue, gbombID)) {
+				getGiantBombItemDataQueue[gbombID] = [];
+			}
+			getGiantBombItemDataQueue[gbombID].push(onSuccess);
 
-				// cache result
-				giantBombDataCache[gbombID] = data.results;
+			// run for first call only
+			if (getGiantBombItemDataQueue[gbombID].length === 1) {
 
-				onSuccess(data.results);
+				// download data
+				var fieldList = ['description', 'site_detail_url', 'videos'];
 
-			}, onError);
+				// giantbomb item request
+				getGiantBombItem(gbombID, fieldList, function(data) {
+
+					// iterate queued return methods
+					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
+
+						// cache result
+						giantBombDataCache[gbombID] = data.results;
+
+						// return data
+						successMethod(data.results);
+					});
+
+					// empty queue
+					getGiantBombItemDataQueue[gbombID] = [];
+
+				}, onError);
+			}
 		}
 	};
 
@@ -157,19 +179,39 @@
 			// return updated source item
 			onSuccess(cachedItem);
 
-
 		// download gb item
 		} else {
 
-			// download data
-			var fieldList = ['id', 'name', 'original_release_date', 'image'];
-			getGiantBombItem(gbombID, fieldList, function(data) {
+			// add to queue
+			if (!_.has(getGiantBombItemDetailQueue, gbombID)) {
+				getGiantBombItemDetailQueue[gbombID] = [];
+			}
+			getGiantBombItemDetailQueue[gbombID].push(onSuccess);
 
-				// cache result
-				giantBombItemCache[gbombID] = data.results;
-				onSuccess(data.results);
+			// run for first call only
+			if (getGiantBombItemDetailQueue[gbombID].length === 1) {
 
-			}, onError);
+				// download data
+				var fieldList = ['id', 'name', 'original_release_date', 'image'];
+
+				// giantbomb item request
+				getGiantBombItem(gbombID, fieldList, function(data) {
+
+					// iterate queued return methods
+					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
+
+						// cache result
+						giantBombItemCache[gbombID] = data.results;
+
+						// return data
+						successMethod(data.results);
+					});
+
+					// empty queue
+					getGiantBombItemDetailQueue[gbombID] = [];
+
+				}, onError);
+			}
 		}
 	};
 

@@ -290,8 +290,6 @@
 
 		var templateData = {'items': items};
 
-		console.info(templateData);
-
 		// set html from items data
 		$gridViewContainer.html(gridResultsTemplate(templateData));
 

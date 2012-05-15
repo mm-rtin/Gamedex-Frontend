@@ -12,11 +12,11 @@
 		ITEM_DIRECTORY_URL = tmz.api + 'item/directory/',
 		ITEM_URL = tmz.api + 'item/',
 		ITEM_ADD_URL = tmz.api + 'item/add/',
-		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch',
+		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch/',
 		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
+		ITEM_UPDATE_USER_URL = tmz.api + 'item/update/user/',
 		ITEM_UPDATE_URL = tmz.api + 'item/update/',
 		UPDATE_METACRITIC_URL = tmz.api + 'item/update/metacritic/';
-
 
 		// constants
 	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
@@ -341,7 +341,7 @@
 		for (var i = 0, len = deletedIDs.length; i < len; i++) {
 
 			// delete item for tag
-			deleteClientItem(deletedIDs[i], deletedTagIDs[i], itemID);
+			deleteClientItem(deletedTagIDs[i], itemID);
 		}
 	};
 
@@ -374,7 +374,7 @@
 		});
 
 		// delete client item
-		deleteClientItem(id, tagID, itemID);
+		deleteClientItem(tagID, itemID);
 
 		onSuccess(id, tagID);
 
@@ -385,6 +385,9 @@
 	* updateItem
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateItem = function(currentItem, onSuccess, onError) {
+
+		// get tags for itemID
+		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
 
 		var userData = User.getUserData(true);
 
@@ -397,22 +400,13 @@
 			'ts': userData.timestamp,
 
 			'id': item.itemID,
-			'n': item.name,
-			'rd': item.releaseDate,
 			'aid': item.asin,
 			'gid': item.gbombID,
-			'ip': item.initialProvider,
-			'p': item.platform,
+
+			'rd': item.releaseDate,
 			'si': item.smallImage,
 			'ti': item.thumbnailImage,
-			'li': item.largeImage,
-
-			'mp': item.metascorePage,
-			'ms': item.metascore,
-
-			'gs': item.gameStatus,
-			'ps': item.playStatus,
-			'ur': item.userRating
+			'li': item.largeImage
 		};
 
 		$.ajax({
@@ -423,7 +417,43 @@
 			cache: true,
 			success: function(data) {
 
-				updateItemData(item);
+				updateItemData(item, itemTags);
+				onSuccess(item, data);
+			},
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateUserItem
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateUserItem = function(currentItem, onSuccess, onError) {
+
+		var userData = User.getUserData(true);
+
+		// clone currentItem as new object
+		var item = $.extend(true, {}, currentItem);
+
+		var requestData = {
+			'uid': userData.user_id,
+			'uk': userData.secret_key,
+			'ts': userData.timestamp,
+
+			'id': item.itemID,
+			'gs': item.gameStatus,
+			'ps': item.playStatus,
+			'ur': item.userRating
+		};
+
+		$.ajax({
+			url: ITEM_UPDATE_USER_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+
+				updateUserItemData(item);
 				onSuccess(item, data);
 			},
 			error: onError
@@ -434,6 +464,9 @@
 	* updateMetacritic
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
+
+		// get tags for itemID
+		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
 
 		var userData = User.getUserData(true);
 
@@ -457,6 +490,8 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
+
+				updateItemData(item, itemTags);
 
 				if(onSuccess) {
 					onSuccess(item, data);
@@ -505,8 +540,6 @@
 		// add last item to 'view all' list (id: 0) cache if exists and itemID does not exist in all items cache
 		viewAllCachedItems = ItemCache.getCachedItemsByTag(VIEW_ALL_TAG_ID);
 
-
-
 		var itemIDExists = false;
 		_.each(viewAllCachedItems, function(item, key) {
 			if (item.itemID === newItem.itemID) {
@@ -526,7 +559,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* deleteClientItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteClientItem = function(id, tagID, itemID) {
+	var deleteClientItem = function(tagID, itemID) {
 
 		// delete item by id from cache by tagID
 		ItemCache.deleteCachedItem(itemID, tagID);
@@ -558,13 +591,13 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateItemData - also updates 3rd party directories
+	* updateUserItemData - also updates 3rd party directories
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateItemData = function(item) {
+	var updateUserItemData = function(item) {
 
 		var directoryItem = itemDataDirectory[item.itemID];
 
-		// update properties
+		// update directoryItem properties
 		directoryItem.gameStatus = item.gameStatus;
 		directoryItem.playStatus = item.playStatus;
 		directoryItem.userRating = item.userRating;
@@ -572,6 +605,22 @@
 		// update itemDirectory local storage
 		ItemCache.storeItemDirectory(itemDataDirectory);
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateItemData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateItemData = function(item, itemTags) {
+
+		// update itemCache and item local storage for each tag
+		_.each(itemTags, function(id, tagID) {
+
+			ItemCache.updateCacheItemByTag(tagID, item);
+		});
+
+		// update 'view all' tag cache
+		ItemCache.updateCacheItemByTag(0, item);
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemDataToDirectory - also updates 3rd party directories
@@ -727,11 +776,12 @@
 		'getItem': getItem,
 		'downloadItemDirectory': downloadItemDirectory,
 		'addItemToTags': addItemToTags,
-		'updateItem': updateItem,
+		'updateUserItem': updateUserItem,
 		'updateMetacritic': updateMetacritic,
 		'deleteTagsForItem': deleteTagsForItem,
 		'deleteSingleTagForItem': deleteSingleTagForItem,
-		'deleteTagFromDirectory': deleteTagFromDirectory
+		'deleteTagFromDirectory': deleteTagFromDirectory,
+		'deleteClientItem': deleteClientItem
 	};
 
 	$.extend(ItemData, publicMethods);

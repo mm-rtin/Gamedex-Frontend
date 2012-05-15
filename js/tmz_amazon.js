@@ -40,10 +40,19 @@
 		AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/',
 
 		// data
-		amazonOffersCache = {};
+		amazonOffersCache = {},
+		amazonItemCache = {},
+
+		// request queues
+		getAmazonItemOffersQueue = {},
+		getAmazonItemDetailQueue = {},
+
+		// ajax requests
+		searchAmazonRequest = null,
+		searchAmazonID = 0;
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchAmazon
+	* searchAmazon - search amazon, prevent all but latest from completing and returning onSuccess method
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
 
@@ -58,13 +67,29 @@
 			'page': 1
 		};
 
-		$.ajax({
+		// abort previous request
+		if (searchAmazonRequest) {
+			searchAmazonRequest.abort();
+		}
+
+		// increment searchAmazonID and assign to local id
+		var id = ++searchAmazonID;
+
+		searchAmazonRequest = $.ajax({
 			url: AMAZON_SEARCH_URL,
 			type: 'GET',
 			data: requestData,
 			dataType: 'xml',
 			cache: true,
-			success: onSuccess,
+			success: function(data) {
+
+
+				// only allow latest request from returning onSuccess
+				if (id === searchAmazonID) {
+					searchAmazonRequest = null;
+					onSuccess(data);
+				}
+			},
 			error: onError
 		});
 	};
@@ -121,21 +146,58 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.getAmazonItemDetail = function(asin, onSuccess, onError) {
 
-		// browse node, search terms and response group in url
-		var requestData = {
-			'asin': asin,
-			'response_group': 'Medium'
-		};
+		// find in giant bomb data cache first
+		var cachedItem = getCachedItem(asin);
 
-		$.ajax({
-			url: AMAZON_DETAIL_URL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'xml',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
+		// load cached gb data
+		if (cachedItem) {
+
+			// return updated source item
+			onSuccess(cachedItem);
+
+		// download amazon item
+		} else {
+
+			// add to queue
+			if (!_.has(getAmazonItemDetailQueue, asin)) {
+				getAmazonItemDetailQueue[asin] = [];
+			}
+			getAmazonItemDetailQueue[asin].push(onSuccess);
+
+			// run for first call only
+			if (getAmazonItemDetailQueue[asin].length === 1) {
+
+				// browse node, search terms and response group in url
+				var requestData = {
+					'asin': asin,
+					'response_group': 'Medium'
+				};
+
+				$.ajax({
+					url: AMAZON_DETAIL_URL,
+					type: 'GET',
+					data: requestData,
+					dataType: 'xml',
+					cache: true,
+					success: function(data) {
+
+						// iterate queued return methods
+						_.each(getAmazonItemDetailQueue[asin], function(successMethod) {
+
+							// cache result
+							amazonItemCache[asin] = data;
+
+							// return data
+							successMethod(data);
+						});
+
+						// empty queue
+						getAmazonItemDetailQueue[asin] = [];
+					},
+					error: onError
+				});
+			}
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,7 +206,7 @@
 	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
 
 		// find in amazon offer cache first
-		var cachedOffer = getCachedData(sourceItem.id);
+		var cachedOffer = getCachedOffer(asin);
 		// load cached amazon offer
 		if (cachedOffer) {
 			// add score data to source item
@@ -156,23 +218,48 @@
 		// get new offer data
 		} else {
 
-			// OfferSummary, OfferListings, Offers, OfferFull
-			var requestData = {
-				'asin': asin,
-				'response_group': 'OfferFull'
-			};
+			// add to queue
+			if (!_.has(getAmazonItemOffersQueue, asin)) {
+				getAmazonItemOffersQueue[asin] = [];
+			}
+			getAmazonItemOffersQueue[asin].push(onSuccess);
 
-			$.ajax({
-				url: AMAZON_DETAIL_URL,
-				type: 'GET',
-				data: requestData,
-				dataType: 'xml',
-				cache: true,
-				success: function(data) {
-					parseAmazonOffers(data, sourceItem, onSuccess);
-				},
-				error: onError
-			});
+			// run for first call only
+			if (getAmazonItemOffersQueue[asin].length === 1) {
+
+				// OfferSummary, OfferListings, Offers, OfferFull
+				var requestData = {
+					'asin': asin,
+					'response_group': 'OfferFull'
+				};
+
+				$.ajax({
+					url: AMAZON_DETAIL_URL,
+					type: 'GET',
+					data: requestData,
+					dataType: 'xml',
+					cache: true,
+					success: function(data) {
+
+						// iterate queued return methods
+						_.each(getAmazonItemOffersQueue[asin], function(successMethod) {
+
+							// parse
+							var offerItem = parseAmazonOffers(data, sourceItem);
+
+							// cache result
+							amazonOffersCache[asin] = offerItem;
+
+							// return data
+							successMethod(offerItem);
+						});
+
+						// empty queue
+						getAmazonItemOffersQueue[asin] = [];
+					},
+					error: onError
+				});
+			}
 		}
 	};
 
@@ -209,23 +296,37 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
+	* getCachedOffer -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(id) {
+	var getCachedOffer = function(asin) {
 
 		var amazonOfferItem = null;
 
-		if (typeof amazonOffersCache[id] !== 'undefined') {
-			amazonOfferItem = amazonOffersCache[id];
+		if (typeof amazonOffersCache[asin] !== 'undefined') {
+			amazonOfferItem = amazonOffersCache[asin];
 		}
 
 		return amazonOfferItem;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedItem = function(id) {
+
+		var amazonItem = null;
+
+		if (typeof amazonItemCache[id] !== 'undefined') {
+			amazonItem = amazonItemCache[id];
+		}
+
+		return amazonItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonOffers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonOffers = function(data, sourceItem, onSuccess) {
+	var parseAmazonOffers = function(data, sourceItem) {
 
 		var offerItem = {};
 
@@ -239,18 +340,13 @@
 		// add offerItem to item model
 		sourceItem.offers = offerItem;
 
-		// add to amazonOffersCache
-		amazonOffersCache[sourceItem.id] = offerItem;
-
-
-		onSuccess(offerItem);
+		return offerItem;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonOfferItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseAmazonOfferItem = function($resultItem) {
-
 
 		var offerItem = {};
 		var offer = {};

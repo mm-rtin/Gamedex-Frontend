@@ -15,20 +15,20 @@
 		metacriticDomain = 'metacritic.com',
 
 		// data
-		metascoreCache = {};
+		metascoreCache = {},
+
+		// request queues
+		getMetascoreQueue = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Metacritic.getMetascore = function(searchTerms, sourceItem, onSuccess) {
-
-
+	Metacritic.getMetascore = function(searchTerms, sourceItem, fromSearch, onSuccess) {
 
 		// find in cache first
-		var cachedScore = getCachedData(sourceItem.asin, sourceItem.gbombID);
+		var cachedScore = getCachedMetascore(sourceItem.asin, sourceItem.gbombID, sourceItem.platform);
 
 		if (cachedScore) {
-
 
 			// add score data to source item
 			sourceItem.metascore = cachedScore.metascore;
@@ -39,30 +39,58 @@
 
 		// fetch score data
 		} else {
-			var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
 
-			var requestData = {
-				'keywords': encodeURI(cleanedSearchTerms)
-			};
+			// add to queue
+			var queueKey = searchTerms + '_' + sourceItem.platform;
 
-			$.ajax({
-				url: METACRITIC_SEARCH_URL,
-				type: 'GET',
-				data: requestData,
-				cache: true,
-				success: function(data) {
+			if (!_.has(getMetascoreQueue, queueKey)) {
+				getMetascoreQueue[queueKey] = [];
+			}
+			getMetascoreQueue[queueKey].push(onSuccess);
 
+			// run for first call only
+			if (getMetascoreQueue[queueKey].length === 1) {
 
+				var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
 
-					// parse result
-					parseMetascoreResults(cleanedSearchTerms, data, sourceItem, function(data) {
+				var requestData = {
+					'keywords': encodeURI(cleanedSearchTerms),
+					'platform': encodeURI(sourceItem.platform)
+				};
 
-						// local cache
-						addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, data);
-						onSuccess(data);
-					});
-				}
-			});
+				$.ajax({
+					url: METACRITIC_SEARCH_URL,
+					type: 'GET',
+					data: requestData,
+					cache: true,
+					success: function(data) {
+
+						// save values before updated with current info
+						var previousMetascore = sourceItem.metascore;
+
+						// parse result > modify sourceItem
+						parseMetascoreResults(cleanedSearchTerms, data, sourceItem);
+
+						// check if source item score or page differs from return score/page
+						if (!fromSearch && sourceItem.metascore != previousMetascore) {
+
+							// update metacritic data for source item record
+							ItemData.updateMetacritic(sourceItem);
+						}
+
+						// iterate queued return methods
+						_.each(getMetascoreQueue[queueKey], function(successMethod) {
+							// add to local cache
+							addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, sourceItem.platform, sourceItem);
+							// return data
+							successMethod(sourceItem);
+						});
+
+						// empty queue
+						getMetascoreQueue[queueKey] = [];
+					}
+				});
+			}
 		}
 	};
 
@@ -120,19 +148,19 @@
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
+	* getCachedMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(asin, gbombID) {
+	var getCachedMetascore = function(asin, gbombID, platform) {
 
 		var metascoreItem = null;
 
 		// amazon id
-		if (typeof metascoreCache[asin] !== 'undefined') {
-			metascoreItem = metascoreCache[asin];
+		if (typeof metascoreCache[asin + '_' + platform] !== 'undefined') {
+			metascoreItem = metascoreCache[asin + '_' + platform];
 
 		// giant bomb id
-		} else if (typeof metascoreCache[gbombID] !== 'undefined') {
-			metascoreItem = metascoreCache[gbombID];
+		} else if (typeof metascoreCache[gbombID + '_' + platform] !== 'undefined') {
+			metascoreItem = metascoreCache[gbombID + '_' + platform];
 		}
 
 		return metascoreItem;
@@ -141,28 +169,24 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addToMetascoreCache -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToMetascoreCache = function(asin, gbombID, metacriticItem) {
+	var addToMetascoreCache = function(asin, gbombID, platform, sourceItem) {
 
 		// add to metascoreCache linked by asin
 		if (asin != '0') {
-			metascoreCache[asin] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
+			metascoreCache[asin + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
 		}
 		// add to metascoreCache linked by gbombID
 		if (gbombID != '0') {
-			metascoreCache[gbombID] = {metascorePage: metacriticItem.metascorePage, metascore: metacriticItem.metascore};
+			metascoreCache[gbombID + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseMetascoreResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseMetascoreResults = function(keywords, data, sourceItem, onSuccess) {
+	var parseMetascoreResults = function(keywords, data, sourceItem) {
 
 		var result = null;
-
-		// save values before updated with current info
-		var previousMetascore = sourceItem.metascore;
-		var previousMetascorePage = sourceItem.metascorePage;
 
 		// parse raw result
 		if (typeof data.metascore === 'undefined') {
@@ -172,7 +196,7 @@
 
 			// send matched result to be cached on server
 			if (result) {
-				addToServerCache(keywords, result.metascore, result.metascorePage);
+				addToServerCache(keywords, sourceItem.platform, result.metascore, result.metascorePage);
 			}
 
 		// parse cached result
@@ -195,32 +219,19 @@
 			sourceItem.displayMetascore = 'n/a';
 			sourceItem.metascorePage = '';
 		}
-
-
-
-		// check if source item score or page differs from return score/page
-		if (previousMetascore && sourceItem.metascore != previousMetascore) {
-
-
-			// update metacritic data for source item record
-			ItemData.updateMetacritic(sourceItem);
-		}
-
-		onSuccess(sourceItem);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addToServerCache -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToServerCache = function(keywords, metascore, metascorePage) {
+	var addToServerCache = function(keywords, platform, metascore, metascorePage) {
 
 		var requestData = {
 			'keywords': encodeURI(keywords),
+			'platform': encodeURI(platform),
 			'metascore': encodeURI(metascore),
 			'metascorePage': encodeURI(metascorePage)
 		};
-
-
 
 		$.ajax({
 			url: METACRITIC_CACHE_URL,
@@ -280,8 +291,6 @@
 
 		return bestMatch;
 	};
-
-
 
 })(tmz.module('metacritic'), tmz, jQuery, _);
 
