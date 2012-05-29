@@ -28,8 +28,8 @@
 		// list
 		itemList = null,
 		listOptions = {
-		valueNames: ['itemName', 'metascore', 'releaseDate', 'platform', 'gameStatus', 'playStatus', 'userRating'],
-		item: 'list-item'
+			valueNames: ['itemName', 'metascore', 'releaseDate', 'platform', 'gameStatus', 'playStatus', 'userRating'],
+			item: 'list-item'
 		},
 
 		// properties
@@ -77,6 +77,8 @@
 		$tagNameField = $('#tagNameField'),
 		$updateListBtn = $('#updateListConfirm_btn'),
 		$editListBtn = $('#editList_btn'),
+
+		$loadingStatus = $itemResultsContainer.find('.loadingStatus'),
 
 		// jquery objects
 		currentHoverItem = null,
@@ -339,7 +341,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.clearItemView = function() {
 
-		render({});
+		$itemResults.html('');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -350,7 +352,10 @@
 		var windowHeight = $(window).height();
 		var resultsHeight = $itemResults.height();
 
-		// check for infoHeader
+		// add loading status height if visible
+		if ($loadingStatus.is(':visible')) {
+			resultsHeight += $loadingStatus.height();
+		}
 
 		if (resultsHeight < windowHeight - panelHeightOffset) {
 			$itemResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});

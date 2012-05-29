@@ -44,6 +44,9 @@
 
 		// create event handlers
 		VideoPanel.createEventHandlers();
+
+		// show video modal
+		$videoModal.modal({backdrop: true, show: false});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,6 +86,8 @@
     * showVideoPanel -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.showVideoPanel = function() {
+
+		$('html, body').scrollTop(0);
 
 		// show video modal
 		$videoModal.modal('show');

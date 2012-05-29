@@ -33,6 +33,7 @@
 
 		// timeout
 		autoFillTimeOut = null,
+		itemDetailInfoTimeOut = null,
 
 		// data
 		initialItemTags = {},	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
@@ -43,15 +44,16 @@
 		itemAttributes = {},	// current item attributes
 
 		// node cache
-		$amazonDescriptionModal = $('#amazonDescription-modal'),
-		$giantBombDescriptionModal = $('#giantBombDescription-modal'),
-
 		$detailTabContent = $('#detailTabContent'),
 		$amazonTab = $('#amazonTab'),
 		$giantBombTab = $('#giantBombTab'),
 		$amazonTabLink = $('#amazonTabLink'),
 		$giantBombTabLink = $('#giantBombTabLink'),
-		$itemDetailThumbnail = $detailTabContent.find('.itemDetailThumbnail'),
+		$amazonItemDetailThumbnail = $amazonTab.find('.itemDetailThumbnail'),
+		$giantbombItemDetailThumbnail = $giantBombTab.find('.itemDetailThumbnail'),
+		$amazonItemDetailInfo = $amazonItemDetailThumbnail.find('.itemDetailInfo'),
+		$giantbombItemDetailInfo = $giantbombItemDetailThumbnail.find('.itemDetailInfo'),
+		$showVideoButton = $detailTabContent.find('.showVideo_btn'),
 
 		$addListContainer = $('#addListContainer'),
 		$addList = $('#addList'),
@@ -68,9 +70,9 @@
 		$giantBombPage = $('#giantBombPage'),
 		$metacriticPage = $('#metacriticPage'),
 
-		$amazonPriceHeader = $('#amazonPriceHeader'),
-		$amazonPriceNew = $('#amazonPriceNew'),
-		$amazonPriceUsed = $('#amazonPriceUsed'),
+		$amazonPriceHeader = $itemAttributes.find('#amazonPriceHeader'),
+		$amazonPriceNew = $itemAttributes.find('#amazonPriceNew'),
+		$amazonPriceUsed = $itemAttributes.find('#amazonPriceUsed'),
 
 		// node cache: custom attributes
 		$gameStatus = $('#gameStatus'),
@@ -130,8 +132,8 @@
 			}
 		});
 
-		// itemDetailThumbnail: click
-		$itemDetailThumbnail.click(function(e) {
+		// amazonItemDetailThumbnail: click
+		$amazonItemDetailThumbnail.click(function(e) {
 			e.preventDefault();
 
 			if (currentItemHasVideo) {
@@ -141,6 +143,63 @@
 			} else {
 
 			}
+		});
+
+		// giantbombItemDetailThumbnail: click
+		$giantbombItemDetailThumbnail.click(function(e) {
+			e.preventDefault();
+
+			if (currentItemHasVideo) {
+				VideoPanel.showVideoPanel();
+
+			// show no video message
+			} else {
+
+			}
+		});
+
+		// amazonItemDetailThumbnail: mouseover
+		$amazonItemDetailThumbnail.mouseenter(function(e) {
+
+			if (itemDetailInfoTimeOut) {
+				clearTimeout(itemDetailInfoTimeOut);
+			}
+
+			itemDetailInfoTimeOut = setTimeout(function() {
+				$amazonItemDetailInfo.stop().fadeIn();
+			}, 250);
+		});
+
+		// amazonItemDetailThumbnail: mouseout
+		$amazonItemDetailThumbnail.mouseleave(function(e) {
+
+			if (itemDetailInfoTimeOut) {
+				clearTimeout(itemDetailInfoTimeOut);
+			}
+
+			$amazonItemDetailInfo.stop().fadeOut();
+		});
+
+		// giantbombItemDetailThumbnail: mouseover
+		$giantbombItemDetailThumbnail.mouseenter(function(e) {
+
+			if (itemDetailInfoTimeOut) {
+				clearTimeout(itemDetailInfoTimeOut);
+			}
+
+			itemDetailInfoTimeOut = setTimeout(function() {
+				$giantbombItemDetailInfo.stop().fadeIn();
+			}, 250);
+		});
+
+		// giantbombItemDetailThumbnail: mouseout
+		$giantbombItemDetailThumbnail.mouseleave(function(e) {
+
+			if (itemDetailInfoTimeOut) {
+				clearTimeout(itemDetailInfoTimeOut);
+			}
+
+			$giantbombItemDetailInfo.stop().fadeOut();
 		});
 
 		// saveItem_btn: click
@@ -159,11 +218,6 @@
 		$saveAttributesButton.click(function(e) {
 			e.preventDefault();
 			saveItemChanges(firstItem);
-		});
-
-		// viewDescription: click
-		$detailTabContent.on('click', '.viewDescription_btn', function() {
-			viewDescriptionForTab(currentTab);
 		});
 
 		// tabs: shown
@@ -617,26 +671,29 @@
 		$giantBombPage.show();
 		$giantBombPage.find('a').attr('href', itemDetail.site_detail_url);
 
-		// render video results
-		if (itemDetail.videos.length !== 0) {
-			VideoPanel.renderVideoModal(itemDetail.videos);
-			currentItemHasVideo = true;
-		} else {
-			currentItemHasVideo = false;
-		}
+		// video config
+		configureVideos(itemDetail.videos);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* viewDescriptionForTab -
+	* configureVideos -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewDescriptionForTab = function(currentTab) {
+	var configureVideos = function(giantbombVideos) {
 
-		// for current tab load its description modal
-		if (currentTab === '#amazonTab') {
-			$amazonDescriptionModal.modal('show');
+		// has giantbombVideos
+		if (giantbombVideos.length !== 0) {
+			// render video results
+			VideoPanel.renderVideoModal(giantbombVideos);
 
-		} else if (currentTab === '#giantBombTab') {
-			$giantBombDescriptionModal.modal('show');
+			currentItemHasVideo = true;
+			$showVideoButton.removeClass('btn-danger').addClass('btn-primary');
+			$showVideoButton.find('span').text('Show Videos');
+
+		// no giantbombVideos
+		} else {
+			currentItemHasVideo = false;
+			$showVideoButton.removeClass('btn-primary').addClass('btn-danger');
+			$showVideoButton.find('span').text('No Videos');
 		}
 	};
 

@@ -71,7 +71,10 @@
 
 		$sendResetCodeButton = $('#sendResetCode_btn'),
 		$submitResetCodeButton = $('#submitResetCode_btn'),
-		$updatePasswordButton = $('#updatePassword_btn');
+		$updatePasswordButton = $('#updatePassword_btn'),
+
+		// loading status
+		$loadingStatus = $('#itemResultsContainer').find('.loadingStatus');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -322,6 +325,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var startApp = function() {
 
+		// show loading status
+		$loadingStatus.fadeIn();
+
 		// clear view and item data
 		ItemView.clearItemView();
 		ItemData.resetItemData();
@@ -347,7 +353,6 @@
 
 		}, function() {
 
-
 		});
 
 		// deferreds: wait for itemsRequest and directoryRequest
@@ -361,6 +366,9 @@
 
 				// itemView result
 				ItemView.initializeUserItems_result(itemsReturnedData);
+
+				// hide loading status
+				$loadingStatus.hide();
 			},
 			function() {
 

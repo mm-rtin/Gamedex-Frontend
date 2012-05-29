@@ -78,6 +78,8 @@
 		$searchDisplayOptions = $searchContainer.find('.searchDisplayOptions'),
 		$listDisplayOptions = $searchContainer.find('.listDisplayOptions'),
 
+		$loadingStatus = $searchResultsContainer.find('.loadingStatus'),
+
 		// templates
 		searchResultsTemplate = _.template($('#search-results-template').html()),
 		listResultsTemplate = _.template($('#list-results-template').html()),
@@ -284,6 +286,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderSearchResults = function(items) {
 
+		// hide loading status
+		$loadingStatus.hide();
+
 		var sortedSearchResults = [];
 
 		// generate sorted items array
@@ -332,6 +337,10 @@
 
 		// don't search previous search terms
 		if (keywords !== previousSearchTerms) {
+
+			// show loading status
+			$searchResultsContainer.find('.noResults').hide();
+			$loadingStatus.fadeIn();
 
 			previousSearchTerms = keywords;
 

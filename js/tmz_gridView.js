@@ -229,6 +229,12 @@
 		$('#wrapper').removeClass('standardView');
 		$('#wrapper').addClass('gridView');
 
+		// filters cleared
+		setClearFiltersButton(false);
+		// reset filter/sort text
+		$sortTypeField.text('Alphabetical');
+		$filterTypeField.text('None');
+
 		// select gridList tagID
 		TagView.selectGridTag(tagID);
 
@@ -251,7 +257,6 @@
 	* changeGridList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeGridList = function(tagName, tagID) {
-
 
 		// set view name
 		$viewName.text(tagName);
@@ -293,6 +298,8 @@
 		// set html from items data
 		$gridViewContainer.html(gridResultsTemplate(templateData));
 
+		initializeIsotope();
+
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
 
@@ -324,7 +331,9 @@
 
 			// starting sort
 			sortBy : 'itemName',
-			sortAscending : true
+			sortAscending : true,
+
+			transformsEnabled: false
 		});
 	};
 
@@ -357,6 +366,7 @@
 			// upcoming
 			case 1:
 				FilterPanel.upcomingQuickFilter();
+				$sortTypeField.text('Release Date');
 				currentSortType = 'releaseDate';
 				currentSortAsc = true;
 				break;
@@ -364,6 +374,7 @@
 			// new releases
 			case 2:
 				FilterPanel.newReleasesQuickFilter();
+				$sortTypeField.text('Release Date');
 				currentSortType = 'releaseDate';
 				currentSortAsc = false;
 				break;
@@ -371,6 +382,7 @@
 			// never played
 			case 3:
 				FilterPanel.neverPlayedQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -378,6 +390,7 @@
 			// games playing
 			case 4:
 				FilterPanel.gamesPlayingQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -385,6 +398,7 @@
 			// games played
 			case 5:
 				FilterPanel.gamesPlayedQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -392,6 +406,7 @@
 			// finished games
 			case 6:
 				FilterPanel.finishedGamesQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -399,6 +414,7 @@
 			// owned games
 			case 7:
 				FilterPanel.ownedGamesQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -406,6 +422,7 @@
 			// wanted games
 			case 8:
 				FilterPanel.wantedGamesQuickFilter();
+				$sortTypeField.text('Review Score');
 				currentSortType = 'metacriticScore';
 				currentSortAsc = false;
 				break;
@@ -573,7 +590,7 @@
 			displayType = currentDisplayType;
 
 			// re-layout isotope
-			$gridViewContainer.isotope( 'reLayout', function() {
+			$gridViewContainer.isotope('reLayout', function() {
 
 			});
 		}
