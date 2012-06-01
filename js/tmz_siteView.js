@@ -29,8 +29,11 @@
 
 		// login/signup
 		$loginForm = $('#loginForm'),
+		$buttonContainer = $('#buttonContainer'),
 		$loginButton = $('#loginButton'),
+		$loginHitArea = $('#loginHitArea'),
 		$signupButton = $('#signupButton'),
+		$signupHitArea = $('#signupHitArea'),
 		$loginSubmitButton = $('#loginSubmitButton'),
 		$signupSubmitButton = $('#signupSubmitButton'),
 		$backButton = $('#backButton'),
@@ -138,20 +141,39 @@
 			deleteAccount();
 		});
 
-		// login button: click
-		$loginButton.click(function(e) {
+		// login hit area button: click
+		$loginHitArea.click(function(e) {
 			e.preventDefault();
 			// login form
 			showLoginForm();
 		});
 
-		// signup button: click
-		$signupButton.click(function(e) {
+		// signup hit area button: click
+		$signupHitArea.click(function(e) {
 			e.preventDefault();
 			// signup form
 			showSignupForm();
 		});
 
+		// login hit area button: mouseover
+		$loginHitArea.mouseover(function(e) {
+			$loginButton.addClass('hover');
+		});
+
+		// signup hit area button: mouseover
+		$signupHitArea.mouseover(function(e) {
+			$signupButton.addClass('hover');
+		});
+
+		// login hit area button: mouseout
+		$loginHitArea.mouseout(function(e) {
+			$loginButton.removeClass('hover');
+		});
+
+		// signup hit area button: mouseout
+		$signupHitArea.mouseout(function(e) {
+			$signupButton.removeClass('hover');
+		});
 
 		// login submit button: click
 		$loginSubmitButton.click(function(e) {
@@ -692,10 +714,8 @@
 			$email.focus();
 		}
 
-
 		// hide main form navigation
-		$loginButton.hide();
-		$signupButton.hide();
+		$buttonContainer.hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -712,8 +732,7 @@
 		$backButton.hide();
 
 		// show main form navigation
-		$loginButton.show();
-		$signupButton.show();
+		$buttonContainer.show();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

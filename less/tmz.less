@@ -438,41 +438,64 @@ input, select, textarea {
 	}
 }
 
-#signupButton {
+
+#buttonContainer {
+	position: relative;
+	width: 332px;
+	height: 101px;
+	top: -226px;
+	left: 45px;
+}
+
+#loginHitArea {
+	position: absolute;
 	cursor: pointer;
+	width: 117px;
+	height: 39px;
+	top: 32px;
+	left: 172px;
+	z-index: 10;
+}
+
+#signupHitArea {
+	position: absolute;
+	cursor: pointer;
+	width: 136px;
+	height: 41px;
+	top: 31px;
+	left: 25px;
+	z-index: 10;
+}
+
+#signupButton {
 	background-image: url('../images/signup_button.png');
 	position: absolute;
-	width: 165px;
-	height: 68px;
-	top: 115px;
-	left: 46px;
+	width: 186px;
+	height: 86px;
+	top: 10px;
+	left: 0px;
 	background-position: 23px 22px;
 	background-repeat: no-repeat;
 
-	&:hover {
+	&.hover {
 		background-image: url('../images/signup_button_over.png');
-		background-position: 0px 0px;
-		width: 186px;
-		height: 86px;
+		background-position: -3px 0;
 	}
 }
 
 #loginButton {
-	cursor: pointer;
 	background-image: url('../images/login_button.png');
 	position: absolute;
-	width: 153px;
-	height: 71px;
-	top: 115px;
-	left: 191px;
+	width: 167px;
+	height: 86px;
+	top: 10px;
+	left: 147px;
 	background-position: 23px 22px;
 	background-repeat: no-repeat;
 
-	&:hover {
+	&.hover {
 		background-image: url('../images/login_button_over.png');
-		background-position: 0px 0px;
-		width: 167px;
-		height: 86px;
+		background-position: -3px 0;
 	}
 }
 
@@ -484,7 +507,7 @@ input, select, textarea {
 
 	.userEmail {
 		display: inline-block;
-		width: 150px;
+		max-width: 150px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -525,39 +548,40 @@ input, select, textarea {
 
 #signupSubmitButton {
 	display: none;
-	.opacity(.8);
 	cursor: pointer;
 	background-image:  url('../images/signup_button_small.png');
 	position: absolute;
 	width: 100px;
-	height: 35px;
+	height: 37px;
 	top: 78px;
 	left: 208px;
 
 	&:hover {
-		.opacity(1);
+		background-image:  url('../images/signup_button_small_over.png');
+		background-repeat: no-repeat;
+		background-position: 3px 2px;
 	}
 }
 
 #loginSubmitButton {
 	display: none;
-	.opacity(.8);
 	cursor: pointer;
 	background-image:  url('../images/login_button_small.png');
 	position: absolute;
-	width: 80px;
-	height: 35px;
+	width: 89px;
+	height: 41px;
 	top: 78px;
-	left: 228px;
+	left: 221px;
 
 	&:hover {
-		.opacity(1);
+		background-image:  url('../images/login_button_small_over.png');
+		background-repeat: no-repeat;
+		background-position: 2px 2px;
 	}
 }
 
 #backButton {
 	display: none;
-	.opacity(.5);
 	cursor: pointer;
 	background-image:  url('../images/back_button.png');
 	position: absolute;
@@ -566,14 +590,16 @@ input, select, textarea {
 	top: 78px;
 
 	&.login {
-		left: 191px;
+		left: 188px;
 	}
 	&.signup {
-		left: 172px;
+		left: 175px;
 	}
 
 	&:hover {
-		.opacity(1);
+		background-image:  url('../images/back_button_over.png');
+		background-repeat: no-repeat;
+		background-position: 3px 2px;
 	}
 }
 
@@ -628,7 +654,7 @@ input, select, textarea {
 	background-image: url('../images/invalid_login_tag.png');
 	position: absolute;
 	width: 115px;
-	height: 31px;
+	height: 28px;
 	top: 82px;
 	left: 309px;
 }
@@ -638,7 +664,7 @@ input, select, textarea {
 	background-image: url('../images/account_exists_tag.png');
 	position: absolute;
 	width: 130px;
-	height: 31px;
+	height: 28px;
 	top: 82px;
 	left: 309px;
 
@@ -791,6 +817,14 @@ input, select, textarea {
 /* COMPONENT STYLES
 -----------------------------------------------------------*/
 
+.button {
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+	cursor: pointer;
+	position: relative;
+	top: -2px;
+}
+
 .loadingStatus {
 	display: none;
 	background-image:  url('../images/loading_bar.gif');
@@ -937,6 +971,8 @@ input, select, textarea {
 		float: left;
 		margin: 0px 3px 3px 0px;
 		border: 2px solid #000;
+		width: 150px;
+		height: 84px;
 
 		&:hover {
 			border: 2px solid #fff;
@@ -1083,7 +1119,7 @@ input, select, textarea {
 #searchField {
 	float: left;
 	margin-bottom: 20px;
-	margin-right: 10px;
+	margin-right: 2px;
 
 	.add-on {
 		border: 1px solid #999999;
@@ -1113,6 +1149,14 @@ input, select, textarea {
 
 #search_btn {
 	float: left;
+	background-image: url('../images/search_button.png');
+	width: 93px;
+	height: 37px;
+
+	&:hover {
+		background-image:  url('../images/search_button_over.png');
+		background-position: 3px 4px;
+	}
 }
 
 #clearSearch_btn {
@@ -1410,7 +1454,7 @@ input, select, textarea {
 
 #addListContainer {
 	float: left;
-	margin: 0px 10px 10px 0px;
+	margin: 0px 4px 4px 0px;
 
 	.search-field input {
 		font-family: 'Open Sans', sans-serif;
@@ -1471,6 +1515,31 @@ input, select, textarea {
 		margin-top: 6px;
 	}
 }
+
+#addItem_btn {
+	float: left;
+	background-image: url('../images/add_button.png');
+	width: 74px;
+	height: 37px;
+
+	&:hover {
+		background-image:  url('../images/add_button_over.png');
+		background-position: 3px 4px;
+	}
+}
+
+#saveItem_btn {
+	float: left;
+	background-image: url('../images/save_button.png');
+	width: 93px;
+	height: 37px;
+
+	&:hover {
+		background-image:  url('../images/save_button_over.png');
+		background-position: 3px 4px;
+	}
+}
+
 
 /* ITEM VIEW PANEL
 -----------------------------------------------------------*/
@@ -1654,6 +1723,18 @@ input, select, textarea {
 		.extraData {
 			display: none;
 		}
+	}
+}
+
+#gridView_btn {
+	float: left;
+	background-image: url('../images/grid_view_button.png');
+	width: 114px;
+	height: 37px;
+
+	&:hover {
+		background-image:  url('../images/grid_view_button_over.png');
+		background-position: 3px 4px;
 	}
 }
 

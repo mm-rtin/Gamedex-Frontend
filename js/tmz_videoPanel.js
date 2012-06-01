@@ -5,7 +5,7 @@
 	// constants
 	var GIANT_BOMB_VIDEO_PATH = 'http://media.giantbomb.com/video/',
 		VIDEO_PLAYER_ID = 'videoPlayer',
-		VIDEO_SET_HEIGHT = 90,
+		VIDEO_SET_HEIGHT = 91,
 		VIDEOS_PER_SET = 5,
 
 		// properties
