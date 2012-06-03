@@ -21,6 +21,7 @@
 		filterType = null,
 
 		// node cache
+		$wrapper = $('#wrapper'),
 		$gridViewContainer = $('#gridViewContainer'),
 		$gridList = $('#gridList'),
 		$viewName = $gridList.find('.viewName'),
@@ -63,7 +64,7 @@
 
 		// init tooltips
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-		$displayOptions.find('button').each(function(key, button) {
+		$displayOptions.find('div').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
@@ -226,8 +227,8 @@
 		// switch content display to gridView
 
 		// modify styles
-		$('#wrapper').removeClass('standardView');
-		$('#wrapper').addClass('gridView');
+		$wrapper.removeClass('standardView');
+		$wrapper.addClass('gridView');
 
 		// filters cleared
 		setClearFiltersButton(false);
@@ -249,8 +250,8 @@
 
 		// switch content display to standardView
 		// modify styles
-		$('#wrapper').removeClass('gridView');
-		$('#wrapper').addClass('standardView');
+		$wrapper.removeClass('gridView');
+		$wrapper.addClass('standardView');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

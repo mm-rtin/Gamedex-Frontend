@@ -43,6 +43,7 @@
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 
 		// element cache
+		$wrapper = $('#wrapper'),
 		$itemResults = $('#itemResults'),
 		$viewItemsContainer = $('#viewItemsContainer'),
 		$itemResultsContainer = $('#itemResultsContainer'),
@@ -96,8 +97,8 @@
 
 		// init tooltips
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
-		$displayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}});
+		$displayOptions.find('div').each(function(key, button) {
+			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
 		// update nano scroller sizes periodically
@@ -138,9 +139,11 @@
 		$applyFiltersButton.click(function(e) {
 			e.preventDefault();
 
-			// show clear filters button
-			setClearFiltersButton(true);
-			applyFilters();
+			if (!$wrapper.hasClass('gridView')) {
+				// show clear filters button
+				setClearFiltersButton(true);
+				applyFilters();
+			}
 		});
 
 		// clearFiltersBtn: click
@@ -230,7 +233,7 @@
 		});
 
 		// displayType toggle
-		$displayOptions.find('button').click(function(e) {
+		$displayOptions.find('div').click(function(e) {
 			e.preventDefault();
 			changeDisplayType(this);
 		});

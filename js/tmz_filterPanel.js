@@ -49,8 +49,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.getFilters = function() {
 
-
-
 		var filters = {};
 		filters.releaseDateFilters = [];
 		filters.metascoreFilters = [];
@@ -113,6 +111,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.applyListJSFiltering = function(list) {
 
+		console.info('applyListJSFiltering');
+
 		// get filters
 		var filters = FilterPanel.getFilters();
 		var filtered = false;
@@ -146,8 +146,6 @@
 
 		var filters = FilterPanel.getFilters();
 		var filtered = false;
-
-
 
 		// get selected items
 		var selectedItems = $('.gridItem').filter(function(index){
@@ -195,7 +193,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* resetFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	FilterPanel.resetFilters = function(item) {
+	FilterPanel.resetFilters = function() {
 
 		// iterate all release date filter options
 		$releaseDateFilter.find('button').each(function() {

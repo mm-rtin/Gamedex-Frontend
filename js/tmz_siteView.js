@@ -299,8 +299,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var setupRememberMe = function() {
 
-
-
 		if (rememberMe) {
 			Storage.setGlobal('email', $email.val());
 		} else {
@@ -701,6 +699,8 @@
 	* showForms -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showForms = function() {
+
+		resetLoginForm();
 
 		// show input form
 		$loginForm.show();

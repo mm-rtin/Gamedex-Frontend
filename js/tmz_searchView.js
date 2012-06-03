@@ -102,11 +102,11 @@
 		toggleClearSearchButton(false);
 
 		// init tooltips
-		$listDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}});
+		$listDisplayOptions.find('div').each(function(key, button) {
+			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
-		$searchDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}});
+		$searchDisplayOptions.find('div').each(function(key, button) {
+			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
 		// set nanoscroll
@@ -249,12 +249,12 @@
 		});
 
 		// searchDisplayType toggle
-		$searchDisplayOptions.on('click', 'button', function(e) {
+		$searchDisplayOptions.on('click', 'div', function(e) {
 			e.preventDefault();
 			changeDisplayType($(this).attr('data-content'));
 		});
 		// listDisplayType toggle
-		$listDisplayOptions.on('click', 'button', function(e) {
+		$listDisplayOptions.on('click', 'div', function(e) {
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (IGN - upcoming games)
