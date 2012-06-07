@@ -19,8 +19,8 @@
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
 		SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4},
-		PANEL_HEIGHT_OFFSET_USE = 200,
-		PANEL_HEIGHT_OFFSET_INFO = 420,
+		PANEL_HEIGHT_OFFSET_USE = 230,
+		PANEL_HEIGHT_OFFSET_INFO = 450,
 		PANEL_HEIGHT_PADDING = 40,
 		VIEW_ALL_TAG_ID = '0',
 		VIEW_ALL_TAG_NAME = 'View All',
@@ -62,6 +62,7 @@
 
 		// filter elements
 		$filterOptions = $viewItemsContainer.find('.filterOptions'),
+		$platformFilterSubNav = $('#platformFilterSubNav'),
 		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
 		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
 		$filterTypeField = $filterOptions.find('.filterType'),
@@ -108,6 +109,9 @@
 
 		// set initial filtered status
 		setClearFiltersButton(false);
+
+		// init BDSM (bootstrap dropdown sub menu)
+		$platformFilterSubNav.BootstrapDropdownSubMenu({'$mainNav': $filterOptions});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,25 +236,25 @@
 			$tagNameField.focus().select();
 		});
 
-		// displayType toggle
+		// displayType: toggle
 		$displayOptions.find('div').click(function(e) {
 			e.preventDefault();
 			changeDisplayType(this);
 		});
 
-		// sortOptions select
+		// sortOptions: select
 		$sortOptions.find('li a').click(function(e) {
 			e.preventDefault();
 			sortList(parseInt($(this).attr('data-content'), 10));
 		});
 
-		// filterOptions select
-		$filterOptions.find('li a').click(function(e) {
+		// filterOptions: select
+		$filterOptions.find('li:not(.dropdown-sub) a').click(function(e) {
 			e.preventDefault();
 
 			// custom filter
-			filterType = parseInt($(this).attr('data-content'), 10);
-			if (filterType === 0) {
+			filterType = $(this).attr('data-content');
+			if (filterType == '0') {
 				FilterPanel.showFilterPanel();
 
 			// quick filter
@@ -834,73 +838,81 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var quickFilter = function(filterType) {
 
-		var quickFilter = filterType;
+		var quickFilter = parseInt(filterType, 10);
 
 		// reset filters
 		FilterPanel.resetFilters();
 
-		switch (quickFilter) {
+		// filter is not a number - run platform quick filter
+		if (isNaN(filterType)) {
+			FilterPanel.platformQuickFilter(filterType);
 
-			// upcoming
-			case 1:
-				// sort and apply filter
-				sortList(SORT_TYPES.releaseDate);
-				// set current filter text on filters button
-				// set filter panel option
-				FilterPanel.upcomingQuickFilter(itemList);
-				break;
+		// standard quick filters
+		} else {
 
-			// new releases
-			case 2:
-				sortList(SORT_TYPES.releaseDate);
-				FilterPanel.newReleasesQuickFilter(itemList);
-				break;
+			switch (quickFilter) {
 
-			// never played
-			case 3:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.neverPlayedQuickFilter(itemList);
-				break;
+				// upcoming
+				case 1:
+					// sort and apply filter
+					sortList(SORT_TYPES.releaseDate);
+					// set current filter text on filters button
+					// set filter panel option
+					FilterPanel.upcomingQuickFilter(itemList);
+					break;
 
-			// games playing
-			case 4:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.gamesPlayingQuickFilter(itemList);
-				break;
+				// new releases
+				case 2:
+					sortList(SORT_TYPES.releaseDate);
+					FilterPanel.newReleasesQuickFilter(itemList);
+					break;
 
-			// games played
-			case 5:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.gamesPlayedQuickFilter(itemList);
-				break;
+				// never played
+				case 3:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.neverPlayedQuickFilter(itemList);
+					break;
 
-			// finished games
-			case 6:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.finishedGamesQuickFilter(itemList);
-				break;
+				// games playing
+				case 4:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.gamesPlayingQuickFilter(itemList);
+					break;
 
-			// owned games
-			case 7:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.ownedGamesQuickFilter(itemList);
-				break;
+				// games played
+				case 5:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.gamesPlayedQuickFilter(itemList);
+					break;
 
-			// wanted games
-			case 8:
-				sortList(SORT_TYPES.metascore);
-				FilterPanel.wantedGamesQuickFilter(itemList);
-				break;
+				// finished games
+				case 6:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.finishedGamesQuickFilter(itemList);
+					break;
+
+				// owned games
+				case 7:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.ownedGamesQuickFilter(itemList);
+					break;
+
+				// wanted games
+				case 8:
+					sortList(SORT_TYPES.metascore);
+					FilterPanel.wantedGamesQuickFilter(itemList);
+					break;
+			}
 		}
 
 		// apply filters and toggle filter status
-		applyFilters();
+		applyFilters(quickFilter);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* applyFilters -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var applyFilters = function() {
+	var applyFilters = function(filterType) {
 
 		// check if custom filter type
 		if (filterType === 0) {

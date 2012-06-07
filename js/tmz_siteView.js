@@ -89,10 +89,30 @@
 		// init login form
 		initLoginForm();
 
+		// setup password reset modal
 		$resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
-		// start demo app
-		startDemo();
+		// get url path parts
+		var urlPathParts = window.location.pathname.split( '/' );
+		var action = urlPathParts[1];
+		var userName = urlPathParts[2];
+
+		// view public user
+		if (action == 'user' && userName !== '') {
+
+			// validate user
+			User.validateUser(userName, function(data) {
+
+				// start app with user info
+				if (data.status === 'success') {
+					viewUser();
+				}
+			});
+
+		// demo app
+		} else {
+			startDemo();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -337,6 +357,15 @@
 		User.demoLogin();
 
 		// start user app
+		startApp();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewUser -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var viewUser = function() {
+
+		// start app with viewing user data
 		startApp();
 	};
 
@@ -799,7 +828,7 @@
 					$successAlert.fadeIn().find('.alertText').text('Account updated');
 
 				// password incorrect error
-				} else if (data.status === 'incorrect password') {
+				} else if (data.status === 'incorrect_password') {
 
 					$existingPasswordGroup.addClass('error');
 					$errorAlert.fadeIn().find('.alertText').text('Incorrect password');

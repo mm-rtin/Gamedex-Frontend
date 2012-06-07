@@ -80,11 +80,11 @@ tmz.initializeLibraries = function() {
 
 	// moment.js calendar config
 	moment.calendar = {
-		lastDay : '[Yesterday]',
-		sameDay : '[Today]',
-		nextDay : '[Tomorrow]',
-		lastWeek : '[last] dddd',
-		nextWeek : 'dddd',
+		lastDay : 'LL', //'[Yesterday]',
+		sameDay : 'LL', //'[Today]',
+		nextDay : 'LL', //'[Tomorrow]',
+		lastWeek : 'LL', //'[last] dddd',
+		nextWeek : 'LL', //'dddd',
 		sameElse : 'LL'
 	};
 

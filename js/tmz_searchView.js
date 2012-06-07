@@ -16,14 +16,12 @@
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
 		TIME_TO_SUBMIT_QUERY = 250,	// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
-		PANEL_HEIGHT_OFFSET_USE = 225,
-		PANEL_HEIGHT_OFFSET_INFO = 460,
+		PANEL_HEIGHT_OFFSET_USE = 258,
+		PANEL_HEIGHT_OFFSET_INFO = 493,
 		PANEL_HEIGHT_PADDING = 40,
 
 		// timeout
 		searchFieldTimeout = null,
-		legacySubNavHideTimeout = null,
-		legacySubNavShowTimeout = null,
 
 		// data
 		searchTerms = 'skyrim',
@@ -114,6 +112,9 @@
 			$searchResultsContainer.nanoScroller();
 			$listResultsContainer.nanoScroller();
 		}, 1500);
+
+		// init BDSM (bootstrap dropdown sub menu)
+		$legacySubNav.BootstrapDropdownSubMenu({'$mainNav': $searchPlatforms});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,66 +175,6 @@
 		$searchPlatforms.find('li:not(.dropdown-sub) a').click(function(e) {
 			e.preventDefault();
 			changeSearchPlatform($(this).attr('data-content'), $(this).text());
-		});
-
-		// searchPlatforms root items: hover
-		$searchPlatforms.find('li:not(.dropdown-sub li) a').hover(function(e) {
-
-			// cancel show
-			clearTimeout(legacySubNavShowTimeout);
-			legacySubNavShowTimeout = null;
-
-			// create timeout if not already defined
-			if (!legacySubNavHideTimeout) {
-
-				// delay before hiding subnav
-				legacySubNavHideTimeout = setTimeout(function() {
-					$legacySubNav.removeClass('active');
-				}, 500);
-			}
-		});
-
-		// legacySubNav: hover
-		$legacySubNav.hover(function(e) {
-
-			// cancel hide
-			clearTimeout(legacySubNavHideTimeout);
-			legacySubNavHideTimeout = null;
-
-			// create timeout if not already defined
-			if (!legacySubNavShowTimeout) {
-				// delay before showing subnav
-				legacySubNavShowTimeout = setTimeout(function() {
-					$legacySubNav.addClass('active');
-				}, 500);
-			}
-		});
-
-		// legacySubNav: click
-		$legacySubNav.click(function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-
-			$legacySubNav.addClass('active');
-		});
-
-		// legacySubNav items: hover
-		$legacySubNav.find('li a').hover(function(e) {
-
-			// cancel hide
-			clearTimeout(legacySubNavHideTimeout);
-			legacySubNavHideTimeout = null;
-		});
-
-		// legacySubNav items: click
-		$legacySubNav.find('li a').click(function(e) {
-			$searchPlatforms.removeClass('open');
-		});
-
-
-		// platformSelectButton: click
-		$platformSelectButton.click(function(e) {
-			$legacySubNav.removeClass('active');
 		});
 
 		// search results: click

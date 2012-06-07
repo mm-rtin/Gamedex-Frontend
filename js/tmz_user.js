@@ -10,6 +10,7 @@
 
 		// constants
 		USER_LOGIN_URL = tmz.api + 'login/',
+		USER_VIEW_URL = tmz.api + 'user/',
 		USER_CREATE_URL = tmz.api + 'createuser/',
 		USER_UPDATE_URL = tmz.api + 'updateuser/',
 		USER_SEND_RESET_CODE_URL = tmz.api + 'sendresetcode/',
@@ -17,15 +18,23 @@
 		USER_UPDATE_PASSWORD_URL = tmz.api + 'updatepassword/',
 
 		// data
-		userData = {'user_id': '', 'secret_key': ''},
+		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
 
 		// demo account
 		demoUser = {'user_id': '1', 'secret_key': '1'};
 
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getUserData
+	* getUserData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.getUserData = function(setTimestamp) {
+	User.getUserData = function(item) {
+		return userData;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getUserCredentials
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.getUserCredentials = function(setTimestamp) {
 
 		// default argument
 		setTimestamp = typeof setTimestamp !== 'undefined' ? setTimestamp : false;
@@ -33,12 +42,32 @@
 		// set new timestamp - milliseconds since 1 Jan 1970
 		userData.timestamp = new Date().getTime();
 
-		// save local storage timestamp
+		// if setTimestamp: save local storage timestamp
 		if (setTimestamp) {
 			Storage.set('timestamp', userData.timestamp);
 		}
 
-		return userData;
+		// viewing user credentials
+		if (userData.viewUser) {
+			return {'user_name': userData.viewUser};
+
+		// logged in user credentials
+		} else {
+
+			if (setTimestamp) {
+				return {'uid': userData.user_id, 'uk': userData.secret_key, 'ts': userData.timestamp};
+			} else {
+				return {'uid': userData.user_id, 'uk': userData.secret_key};
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getUserID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.getUserID = function() {
+
+		return userData.user_id;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,6 +108,32 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* validateUser
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.validateUser = function(userName, onSuccess) {
+
+		var requestData = {
+			user_name: userName
+		};
+
+		// login request
+		$.ajax({
+			url: USER_VIEW_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				validateUser_result(data);
+				onSuccess(data);
+			},
+			error: function(data) {
+
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.logout = function(email, password, onSuccess) {
@@ -86,6 +141,9 @@
 		// clear user data (session)
 		userData.user_id = null;
 		userData.secret_key = null;
+		userData.userName = null;
+		userData.email = null;
+		userData.viewUser = null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,7 +181,10 @@
 		// only update if existing password provided
 		if (password !== '') {
 
-			var requestData = {'user_id': userData.user_id, 'user_password': password};
+			var requestData = {
+				'uid': userData.user_id,
+				'user_password': password
+			};
 
 			if (userName !== userData.userName) {
 				requestData.user_name = userName;
@@ -228,6 +289,17 @@
 
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* isViewUser -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.isViewUser = function() {
+
+		if (userData.viewUser) {
+			return true;
+		}
+		return false;
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateUser_result -
@@ -256,15 +328,32 @@
 			userData.secret_key = data.secretKey;
 			userData.userName = data.userName;
 			userData.email = email;
+			userData.viewUser = null;
 
 			// compare timestamps - if different form localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
-			if (data.timestamp != localTimestamp) {
+			// if no localtimestamp in storage set new timestamp from data
+			if (!localTimestamp) {
+				Storage.set('timestamp', data.timestamp);
 
-
+			// compare timestamps
+			} else if (data.timestamp != localTimestamp) {
 				ItemCache.clearStoredData();
 			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* validateUser_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var validateUser_result = function(data) {
+
+		if (data.status === 'success') {
+			// save user data (session)
+			userData.viewUser = data.userName;
+			userData.user_id = data.userName;
+			userData.secret_key = 0;
 		}
 	};
 

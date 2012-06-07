@@ -235,7 +235,7 @@
 
 		Storage.remove('itemsCacheByTag');
 		Storage.remove('itemDataDirectory');
-		Storage.remove('list');
+		Storage.remove('tag');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

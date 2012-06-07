@@ -111,8 +111,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.applyListJSFiltering = function(list) {
 
-		console.info('applyListJSFiltering');
-
 		// get filters
 		var filters = FilterPanel.getFilters();
 		var filtered = false;
@@ -276,6 +274,20 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.wantedGamesQuickFilter = function(list) {
 		$gameStatusFilter.find('button[data-content="3"]').addClass('active');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* platformQuickFilter -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	FilterPanel.platformQuickFilter = function(platform) {
+
+		// get option node
+		var $option = $platformFilter.find('option[value="' + platform + '"]');
+
+		// select option
+		$option.attr('selected', '');
+
+		$platformFilter.trigger("liszt:updated");
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

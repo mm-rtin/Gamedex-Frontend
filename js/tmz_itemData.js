@@ -49,7 +49,7 @@
 	var downloadItemDirectory = function(onSuccess, onError) {
 
 		var ajax = null;
-		var userData = User.getUserData();
+		var userData = User.getUserCredentials();
 
 		// check local storage
 		var itemDirectory = ItemCache.getStoredItemDirectory();
@@ -64,10 +64,8 @@
 		// download directory data
 		} else {
 
-			var requestData = {
-				user_id: userData.user_id,
-				uk: userData.secret_key
-			};
+			var requestData = {};
+			$.extend(true, requestData, userData);
 
 			ajax = $.ajax({
 				url: ITEM_DIRECTORY_URL,
@@ -170,13 +168,12 @@
 		// get new items data
 		} else {
 
-			var userData = User.getUserData();
-
 			var requestData = {
-				user_id: userData.user_id,
-				uk: userData.secret_key,
 				list_id: tagID
 			};
+
+			var userData = User.getUserCredentials();
+			$.extend(true, requestData, userData);
 
 			ajax = $.ajax({
 				url: ITEM_URL,
@@ -256,15 +253,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
-			'uid': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
 			'lids': tagIDs,
 
 			'n': item.name,
@@ -284,6 +278,7 @@
 			'ps': item.playStatus,
 			'ur': item.userRating
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: ITEM_ADD_URL,
@@ -305,14 +300,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTagsForItem = function(deletedIDs, deletedTagIDs, currentItem, onSuccess, onError) {
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'user_id': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
 			'ids': deletedIDs
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: ITEM_BATCH_DELETE_URL,
@@ -353,14 +346,12 @@
 		// get itemTagID
 		var id = getDirectoryItemByItemID(itemID).tags[tagID];
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'user_id': userData.user_id,
-			'ts': userData.timestamp,
-			'uk': userData.secret_key,
 			'id': id
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: ITEM_SINGLE_DELETE_URL,
@@ -389,16 +380,12 @@
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
-			'uid': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
-
 			'id': item.itemID,
 			'aid': item.asin,
 			'gid': item.gbombID,
@@ -408,6 +395,7 @@
 			'ti': item.thumbnailImage,
 			'li': item.largeImage
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: ITEM_UPDATE_URL,
@@ -429,21 +417,18 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateUserItem = function(currentItem, onSuccess, onError) {
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
-			'uid': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
-
 			'id': item.itemID,
 			'gs': item.gameStatus,
 			'ps': item.playStatus,
 			'ur': item.userRating
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: ITEM_UPDATE_USER_URL,
@@ -468,20 +453,17 @@
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
 
-		var userData = User.getUserData(true);
+		var userData = User.getUserCredentials(true);
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
-			'uid': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
-
 			'id': item.itemID,
 			'mp': item.metascorePage,
 			'ms': item.metascore
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: UPDATE_METACRITIC_URL,

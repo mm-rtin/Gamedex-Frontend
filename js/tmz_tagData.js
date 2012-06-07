@@ -27,12 +27,10 @@
 	TagData.getTags = function(onSuccess, onError) {
 
 		var ajax = null;
-		var userData = User.getUserData();
+		var userData = User.getUserCredentials();
 
-		var requestData = {
-			user_id: userData.user_id,
-			uk: userData.secret_key
-		};
+		var requestData = {};
+		$.extend(true, requestData, userData);
 
 		// check local storage
 		storedTags = Storage.get('tag');
@@ -71,14 +69,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.addTag = function(listName, onSuccess, onError) {
 
-		var userData = User.getUserData();
+		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'user_id': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
 			'tag_name': listName
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: TAG_ADD_URL,
@@ -106,15 +102,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.updateTag = function(listName, tagID, onSuccess, onError) {
 
-		var userData = User.getUserData();
+		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'user_id': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
 			'tag_name': listName,
 			'tag_id': tagID
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: TAG_UPDATE_URL,
@@ -148,15 +142,13 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.deleteTag = function(tagID, onSuccess, onError) {
 
-		var userData = User.getUserData();
+		var userData = User.getUserCredentials(true);
 
 		// delete tag
 		var requestData = {
-			'user_id': userData.user_id,
-			'uk': userData.secret_key,
-			'ts': userData.timestamp,
 			'id': tagID
 		};
+		$.extend(true, requestData, userData);
 
 		$.ajax({
 			url: TAG_DELETE_URL,

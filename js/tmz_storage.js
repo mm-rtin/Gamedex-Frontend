@@ -10,7 +10,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Storage.get = function(key) {
 
-		var userID = User.getUserData().user_id;
+		var userID = User.getUserID();
 
 		// get local storage object for userID_key
 		var serializedObject = localStorage.getItem(userID + '_' + key);
@@ -29,13 +29,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Storage.set = function(key, object) {
 
-		var userID = User.getUserData().user_id;
+		// do not store view user data
+		if (!User.isViewUser()) {
 
-		// store object as string back into userID_key
-		localStorage.setItem(userID + '_' + key, JSON.stringify(object));
+			var userID = User.getUserID();
 
-		if (!object) {
-			object = {};
+			// store object as string back into userID_key
+			localStorage.setItem(userID + '_' + key, JSON.stringify(object));
+
+			if (!object) {
+				object = {};
+			}
 		}
 
 		return object;
@@ -46,7 +50,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Storage.remove = function(key) {
 
-		var userID = User.getUserData().user_id;
+		var userID = User.getUserID();
 
 		// remove item from localstorage
 		localStorage.removeItem(userID + '_' + key);
