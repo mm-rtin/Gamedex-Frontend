@@ -31,7 +31,11 @@
 	-webkit-border-radius: @radius;
 	border-radius: @radius;
 }
-
+.borderRadius4(@radius1, @radius2, @radius3, @radius4) {
+	-moz-border-radius: @radius1 @radius2 @radius3 @radius4;
+	-webkit-border-radius: @radius1 @radius2 @radius3 @radius4;
+	border-radius: @radius1 @radius2 @radius3 @radius4;
+}
 .transition(@duration) {
 	-webkit-transition: all @duration ease-out;
 	-moz-transition: all @duration ease-out;
@@ -92,6 +96,46 @@
 -----------------------------------------------------------*/
 html {
 
+	/* CHOSEN OVERRIDES
+	----------------------------------------------------------*/
+
+	.select2-container .select2-results .select2-highlighted {
+		background-color: #667677;
+		background-image: none;
+	}
+	.select2-container-multi .select2-choices {
+		.borderRadius(3px);
+		border: 1px solid #999;
+	}
+
+	.select2-container-multi.select2-container-active .select2-choices {
+		.borderRadius(3px);
+		border: 1px solid #999;
+		-webkit-box-shadow: none;
+		-moz-box-shadow: none;
+		-o-box-shadow: none;
+	}
+
+	.select2-container .select2-drop {
+		background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0.85, white), color-stop(0.99, #EEE));
+		.borderRadius4(0px, 0px, 3px, 3px);
+	}
+
+	#platform_filter .select2-container .select2-results {
+		max-height: 200px;
+	}
+
+	.select2-container .select2-results {
+		max-height: 300px;
+	}
+	.select2-container-multi .select2-results {
+		margin: 0px;
+	}
+
+	.select2-container-multi .select2-choices .select2-search-field input {
+		font-family: 'Open Sans', sans-serif;
+	}
+
 	/* BOOTSTRAP OVERRIDES
 	-----------------------------------------------------------*/
 
@@ -129,6 +173,12 @@ html {
 	}
 	.btn-primary:active {
 		.btn-template-active(@btnPrimaryTop_active, @btnPrimaryBottom_active);
+	}
+
+	.btn.active {
+		color: #fff;
+		text-shadow: none;
+		.btn-template-hover(@btnPrimary_hover);
 	}
 
 	/* BTN DANGER
@@ -442,7 +492,7 @@ input, select, textarea {
 #siteDescription {
 	background-image: url('../images/site_description.png');
 	position: relative;
-	width: 515px;
+	width: 525px;
 	height: 67px;
 	top: -48px;
 	left: 39%;
@@ -569,7 +619,8 @@ input, select, textarea {
 	position: relative;
 	top: -218px;
 	left: 37px;
-	height: 84px;
+	height: 75px;
+	width: 315px;
 	display: none;
 
 	input {
@@ -1326,6 +1377,7 @@ input, select, textarea {
 }
 
 #finderTabLinks {
+	height: 35px;
 	margin-bottom: -6px;
 }
 
@@ -1524,7 +1576,7 @@ input, select, textarea {
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			top: -3px;
-			width: 87%;
+			width: 85%;
 			height: 36px;
 		}
 
@@ -1570,7 +1622,7 @@ input, select, textarea {
 
 	.itemDetailInfo {
 		.boxShadow(.2);
-		background-color: rgba(25, 25, 25, 0.75);
+		background-color: rgba(255, 255, 255, 0.75);
 		display: none;
 		position: absolute;
 		top: 0px;
@@ -1579,8 +1631,22 @@ input, select, textarea {
 		height: 47px;
 	}
 	.showVideo_btn {
+		.videos_button();
 		position: relative;
-		margin: 10px 0px 0px 10px;
+		left: 6px;
+		top: 5px;
+		width: 95px;
+		height: 37px;
+
+		&:hover {
+			.videos_button_over();
+		}
+
+		&.noVideos {
+			.no_videos_button();
+			width: 118px;
+			height: 37px;
+		}
 	}
 }
 
@@ -1691,6 +1757,37 @@ input, select, textarea {
 	.navigationBar {
 		width: 94%;
 	}
+
+	.nav {
+		width: 100%;
+	}
+
+	.filterOptions {
+		max-width: 38%;
+	}
+
+	.sortOptions {
+		max-width: 33%;
+	}
+
+	.dropdown-toggle {
+		display: inline-block;
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+#viewList {
+	max-width: 29%;
+
+	.dropdown-menu {
+		overflow-x: hidden;
+		overflow-y: auto;
+		padding-right: 17px;
+		max-height: 420px;
+	}
 }
 
 #itemResultsContainer {
@@ -1700,6 +1797,29 @@ input, select, textarea {
 
 #editMenu {
 	display: none;
+	float: left;
+
+	.dropdown-menu {
+		left: 4px;
+		top: 30px;
+	}
+
+	&.open {
+		.edit_btn {
+			.edit_button_over();
+		}
+	}
+}
+
+.edit_btn {
+	.edit_button();
+	float: left;
+	width: 72px;
+	height: 37px;
+
+	&:hover {
+		.edit_button_over();
+	}
 }
 
 #itemResults {
@@ -1964,10 +2084,6 @@ input, select, textarea {
 	}
 }
 
-#viewList {
-
-}
-
 
 /* GRID VIEW PANEL
 -----------------------------------------------------------*/
@@ -2078,3 +2194,8 @@ input, select, textarea {
 #exitGridView_btn {
 	float: right;
 }
+
+@import	'select2';
+@import	'nanoscroller';
+@import	'jquery.ui.stars.min';
+@import	'isotope';

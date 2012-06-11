@@ -15,7 +15,7 @@
 		$metascoreFilter = $('#metascore_filter'),
 		$platformFilter = $('#platformFilterList');
 
-	// data
+		// data
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
@@ -23,6 +23,12 @@
 	FilterPanel.init = function() {
 
 		FilterPanel.createEventHandlers();
+
+		// init select2
+		$platformFilter.select2({
+			placeholder: "Select platform",
+			allowClear: true
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,11 +103,16 @@
 		});
 
 		// iterate platform filter options
-		var platformFilters = $platformFilter.val() || [];
+		var filtersString = $platformFilter.val();
+		var platformFilters = [];
 
-		for (var i = 0, len = platformFilters.length; i < len; i++) {
-			filters.platformFilters[i] = Utilities.getStandardPlatform(platformFilters[i]);
+		if (filtersString && filtersString !== '') {
+			platformFilters = filtersString.split(',');
 		}
+
+		_.each(platformFilters, function(filter, index) {
+			filters.platformFilters[index] = Utilities.getStandardPlatform(filter);
+		});
 
 		return filters;
 	};
@@ -214,80 +225,39 @@
 		});
 
 		// iterate all platform options, deselect
-		$platformFilter.find('option').each(function(key, item) {
-			$(this).removeAttr('selected');
-		});
-		$platformFilter.trigger("liszt:updated");
+		$platformFilter.val(['']).trigger('change');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* upcomingQuickFilter -
+	* quick filters
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.upcomingQuickFilter = function(list) {
 		// activate filter panel option
 		$releaseDateFilter.find('button[data-content="0"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* newReleasesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.newReleasesQuickFilter = function(list) {
 		$releaseDateFilter.find('button[data-content="1"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* neverPlayedQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.neverPlayedQuickFilter = function(list) {
 		$playStatusFilter.find('button[data-content="0"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gamesPlayingQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.gamesPlayingQuickFilter = function(list) {
 		$playStatusFilter.find('button[data-content="1"]').addClass('active');
 	};
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* gamesPlayedQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.gamesPlayedQuickFilter = function(list) {
 		$playStatusFilter.find('button[data-content="2"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* finishedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.finishedGamesQuickFilter = function(list) {
 		$playStatusFilter.find('button[data-content="3"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* ownedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.ownedGamesQuickFilter = function(list) {
 		$gameStatusFilter.find('button[data-content="1"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* wantedGamesQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.wantedGamesQuickFilter = function(list) {
 		$gameStatusFilter.find('button[data-content="3"]').addClass('active');
 	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* platformQuickFilter -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	FilterPanel.platformQuickFilter = function(platform) {
-
-		// get option node
-		var $option = $platformFilter.find('option[value="' + platform + '"]');
-
-		// select option
-		$option.attr('selected', '');
-
-		$platformFilter.trigger("liszt:updated");
+		$platformFilter.val(platform).trigger('change');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

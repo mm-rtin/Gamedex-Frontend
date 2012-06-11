@@ -33,11 +33,30 @@
 		viewListTemplate = _.template($('#view-list-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* init
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.init = function() {
+
+		List.createEventHandlers();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.createEventHandlers = function() {
 
+		// addList: change
+		$addList.change(function(e) {
 
+			// get last tag
+			var tags = $addList.val().split(',');
+			var lastTag = tags[tags.length - 1];
+
+			// create new list if not empty string
+			if (lastTag !== '') {
+				List.addTag(lastTag);
+			}
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,30 +95,28 @@
 
 		// reset sorted lists
 		sortedAddList = [];
+		var addListTags = [];
 
 		// generate sorted add list
 		_.each(addList, function(item, key) {
 			sortedAddList.push(item);
+			addListTags.push(item.name);
 		});
 
 		// sort lists
 		sortedAddList.sort(sortListItemByName);
 
-		// create template data structure
-		var addListTemplateData = {'orderedList': sortedAddList};
-
-		// output template to list containers
-		$addList.html(addListTemplate(addListTemplateData));
+		// render addList
+		$addList.select2({
+			tags:addListTags,
+			placeholder: "Type a tag name",
+			allowClear: true
+		});
 
 		// reselected currently selected tags
 		if (selectedTags.length !== 0) {
 			reselectTags();
-
-			$addList.trigger('change');
 		}
-
-		// send event to update chzn dropdown
-		$addList.trigger('liszt:updated');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,8 +148,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.getTags_result = function(data) {
 
-
-
 		// populate active tags
 		populateActiveTags();
 
@@ -153,6 +168,32 @@
 
 			TagData.addTag(listName, addTag_result);
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getSelectedTagIDs -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	List.getSelectedTagIDs = function() {
+
+		// get tag name array
+		var currentTagString = $addList.val();
+		var tagIDs = [];
+
+		if (currentTagString !== '') {
+
+			// get id for each tag name
+			_.each(currentTagString.split(','), function(tag) {
+
+				if (!_.isUndefined(addList[tag])) {
+					tagIDs.push(addList[tag].id);
+				} else {
+					tagIDs.push(tag);
+				}
+
+			});
+		}
+
+		return tagIDs;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,15 +232,24 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* selectAddListTag -
+	* selectAddListTags -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	List.selectAddListTag = function(tagID) {
+	List.selectAddListTags = function(tagList) {
 
-		// get option node
-		var $option = $addList.find('option[value="' + tagID + '"]');
+		var newTags = [];
 
-		// select option
-		$option.attr('selected', '');
+		// iterate tagList
+		_.each(tagList, function(id, tagID) {
+
+			// get tagName
+			var tagName = List.getListName(tagID);
+			newTags.push(tagName);
+		});
+
+		$addList.val(newTags).trigger({
+			type: 'change',
+			reset: false
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -207,10 +257,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	List.resetAddList = function() {
 
-		// reset tags
-		$addList.find('option').each(function() {
-			// remove selected attribute
-			$(this).removeAttr('selected');
+		$addList.val(['']).trigger({
+			type:'change',
+			reset:true
 		});
 	};
 
@@ -231,14 +280,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var reselectTags = function() {
 
-		for (var i = 0, len = selectedTags.length; i < len; i++) {
-
-			// get option node
-			var $option = $addList.find('option[value="' + selectedTags[i] + '"]');
-
-			// select option
-			$option.attr('selected', '');
-		}
+		$addList.val(selectedTags).trigger({
+			type: 'change',
+			reset: false
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -317,10 +362,10 @@
 		listIndex[listItem.id] = listItem.name;
 
 		// save currently selected tags
-		selectedTags = $addList.val() || [];
+		selectedTags = $addList.val().split(',') || [];
 
 		// add new tag to selectedTags
-		selectedTags.push(listItem.id);
+		selectedTags.push(listItem.name);
 
 		List.renderAddLists();
 		List.renderViewLists();

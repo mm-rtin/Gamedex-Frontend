@@ -10,6 +10,7 @@
 
 		// constants
 		USER_LOGIN_URL = tmz.api + 'login/',
+		USER_LOGOUT_URL = tmz.api + 'logout/',
 		USER_VIEW_URL = tmz.api + 'user/',
 		USER_CREATE_URL = tmz.api + 'createuser/',
 		USER_UPDATE_URL = tmz.api + 'updateuser/',
@@ -137,6 +138,26 @@
 	* logout
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.logout = function(email, password, onSuccess) {
+
+		var requestData = {
+			uid: userData.user_id,
+			uk: userData.secret_key
+		};
+
+		// login request
+		$.ajax({
+			url: USER_LOGOUT_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+
+			},
+			error: function(data) {
+
+			}
+		});
 
 		// clear user data (session)
 		userData.user_id = null;

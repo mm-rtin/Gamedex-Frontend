@@ -12,13 +12,16 @@
 
 		var userID = User.getUserID();
 
-		// get local storage object for userID_key
+		// get local storage object for userID_key - returns string 'undefined' if not found
 		var serializedObject = localStorage.getItem(userID + '_' + key);
 		var object = null;
 
-		// retrieve and parse object
-		if (serializedObject) {
-			object = JSON.parse(serializedObject);
+		// check local object found
+		if (serializedObject !== 'undefined') {
+			// retrieve and parse object
+			if (serializedObject) {
+				object = JSON.parse(serializedObject);
+			}
 		}
 
 		return object;

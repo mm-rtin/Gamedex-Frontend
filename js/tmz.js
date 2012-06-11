@@ -75,9 +75,6 @@ tmz.initialize = function() {
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 tmz.initializeLibraries = function() {
 
-	// chosen list: add to list
-	$(".chzn-select").chosen({no_results_text: "<strong>Press ENTER to create:<br/><br/></strong>"});
-
 	// moment.js calendar config
 	moment.calendar = {
 		lastDay : 'LL', //'[Yesterday]',
@@ -110,6 +107,9 @@ tmz.initializeModules = function() {
 
 	// ITEM PANEL
 	tmz.itemView.init();
+
+	// TAG VIEW
+	tmz.tagView.init();
 
 	// GRID VIEW
 	tmz.gridView.init();

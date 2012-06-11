@@ -228,7 +228,7 @@
 	SearchView.renderSearchResults = function(items) {
 
 		// hide loading status
-		$loadingStatus.hide();
+		$loadingStatus.stop().hide();
 
 		var sortedSearchResults = [];
 
@@ -267,6 +267,12 @@
 	* @param {string} keywords
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
+
+		if (keywords === '') {
+			toggleClearSearchButton(false);
+		} else {
+			toggleClearSearchButton(true);
+		}
 
 		// change finder tab to search if not on search tab
 		if (currentTab !== TAB_IDS['#searchTab']) {
@@ -744,12 +750,6 @@
 
 		// get search value
 		searchTerms = $inputField.val();
-
-		if (searchTerms === '') {
-			toggleClearSearchButton(false);
-		} else {
-			toggleClearSearchButton(true);
-		}
 
 		if (searchFieldTimeout) {
 			clearTimeout(searchFieldTimeout);

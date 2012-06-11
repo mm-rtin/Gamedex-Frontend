@@ -146,7 +146,7 @@
 			if (!$wrapper.hasClass('gridView')) {
 				// show clear filters button
 				setClearFiltersButton(true);
-				applyFilters();
+				applyFilters(0);
 			}
 		});
 

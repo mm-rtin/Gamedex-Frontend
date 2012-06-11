@@ -32,7 +32,6 @@
 		itemType = ITEM_TYPES['new'],
 
 		// timeout
-		autoFillTimeOut = null,
 		itemDetailInfoTimeOut = null,
 
 		// data
@@ -109,12 +108,6 @@
 
 				// save changes
 				saveItemChanges(firstItem);
-
-/*				if (isAttributesDirty()) {
-					$saveAttributesContainer.fadeIn();
-				} else {
-					$saveAttributesContainer.fadeOut();
-				}*/
 			}
 		});
 	};
@@ -123,14 +116,6 @@
 	* createEventHandlers
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     DetailView.createEventHandlers = function() {
-
-		// addToList: keypress
-		$addListContainer.find('input').live({
-			// keypress event
-			keydown: function(event){
-				addList_keydown(event);
-			}
-		});
 
 		// amazonItemDetailThumbnail: click
 		$amazonItemDetailThumbnail.click(function(e) {
@@ -226,7 +211,7 @@
 		});
 
 		// addList: change
-		$addList.chosen().change(addListChanged);
+		$addList.change(addListChanged);
 
 		// gameStatus: select
 		$gameStatus.find('li a').click(function(e) {
@@ -238,14 +223,8 @@
 
 			// save changes
 			saveItemChanges(firstItem);
-
-			// show save button if attributes changed
-/*			if (isAttributesDirty()) {
-				$saveAttributesContainer.fadeIn();
-			} else {
-				$saveAttributesContainer.fadeOut();
-			}*/
 		});
+
 		// playStatus: select
 		$playStatus.find('li a').click(function(e) {
 			e.preventDefault();
@@ -256,13 +235,6 @@
 
 			// save changes
 			saveItemChanges(firstItem);
-
-			// show save button if attributes changed
-/*			if (isAttributesDirty()) {
-				$saveAttributesContainer.fadeIn();
-			} else {
-				$saveAttributesContainer.fadeOut();
-			}*/
 		});
     };
 
@@ -406,10 +378,7 @@
 
 			delete initialItemTags[tagID];
 
-			// remove selected attribute from option
-			$addList.find('option[value="' + tagID + '"]').removeAttr('selected');
-
-			$addList.trigger("liszt:updated");
+			TagView.selectAddListTags(initialItemTags);
 		}
 	};
 
@@ -686,13 +655,13 @@
 			VideoPanel.renderVideoModal(giantbombVideos);
 
 			currentItemHasVideo = true;
-			$showVideoButton.removeClass('btn-danger').addClass('btn-primary');
+			$showVideoButton.removeClass('noVideos');
 			$showVideoButton.find('span').text('Show Videos');
 
 		// no giantbombVideos
 		} else {
 			currentItemHasVideo = false;
-			$showVideoButton.removeClass('btn-primary').addClass('btn-danger');
+			$showVideoButton.addClass('noVideos');
 			$showVideoButton.find('span').text('No Videos');
 		}
 	};
@@ -811,7 +780,6 @@
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
-			TagView.resetAddList();
 			setUserTags(userSetTags);
 		}
 	};
@@ -823,19 +791,15 @@
 
 		var option = null;
 
-		// clear selected attributes from all options
-		TagView.resetAddList();
-
+		// populate intialItemTags
 		_.each(tagList, function(id, tagID) {
-
-			// select addList tag
-			TagView.selectAddListTag(tagID);
 
 			// create associate of tags with item ids
 			initialItemTags[tagID] = id;
 		});
 
-		$addList.trigger("liszt:updated");
+		// select initial tags
+		TagView.selectAddListTags(tagList);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -843,15 +807,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var setUserTags = function(tagList) {
 
+		console.info(tagList);
+
 		if (tagList) {
-
-			for (var i = 0, len = tagList.length; i < len; i++) {
-
-				// select addList tag
-				TagView.selectAddListTag(tagList[i]);
-			}
-
-			$addList.trigger("liszt:updated");
+			// select addList tag
+			TagView.selectAddListTags(tagList);
 		}
 	};
 
@@ -910,7 +870,7 @@
 		var tagsToAdd = [];
 		var idsToDelete = [];
 		var tagsToDelete = [];
-		var currentTags = getAddListIDs() || [];
+		var currentTags = TagView.getSelectedTagIDs();
 		var tagID = '';
 
 		// iterate current tags - find tags to add
@@ -1047,26 +1007,27 @@
 		return false;
 	};
 
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAddListIDs
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getAddListIDs = function() {
-		return $addList.val();
-	};
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addListChanged
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addListChanged = function(e) {
 
-		if (hasRendered) {
+		// do not check for changes if event triggered from "reset" list
+		if (hasRendered && !e.reset) {
 
 			// save userSetTags
 			if (itemType === ITEM_TYPES['new']) {
-				userSetTags = $addList.val();
+
+				var tagIDs = TagView.getSelectedTagIDs();
+				userSetTags = {};
+
+				// create object use tagID as key
+				_.each(tagIDs, function(tagID) {
+					userSetTags[tagID] = '';
+				});
 			}
 
+			// update button
 			updateSaveItemButton();
 		}
 	};
@@ -1078,9 +1039,9 @@
 
 		// if addList changed and existing item
 		if (itemType === ITEM_TYPES.existing && isAddListChanged()) {
-			$saveItemButton.fadeIn();
+			$saveItemButton.stop().fadeIn();
 		} else {
-			$saveItemButton.fadeOut();
+			$saveItemButton.stop().fadeOut();
 		}
 	};
 
@@ -1091,7 +1052,7 @@
 
 		var userTags = {};
 		var addListChanged = false;
-		var currentTags = $addList.val();
+		var currentTags = TagView.getSelectedTagIDs();
 
 		// iterate currentTags
 		_.each(currentTags, function(item) {
@@ -1114,37 +1075,6 @@
 		});
 
 		return addListChanged;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addList_keydown
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addList_keydown = function(event, container){
-
-		if (autoFillTimeOut) {
-			clearTimeout(autoFillTimeOut);
-		}
-
-		// enter key
-		if (event.which == 13) {
-
-			// get input value
-			var listName = $.trim($addListContainer.find('input').val().toLowerCase());
-
-			// create new list if not empty string
-			if (listName !== '') {
-				TagView.addTag(listName);
-			}
-
-		// entering text event, exclude backspace so text may be erased without autofilling
-		} else if (event.which != 8 && event.which != 38 && event.which != 40 && event.which != 37 && event.which != 39) {
-
-			// autofill input box with active-result highlighted
-			// wait until chosen has a chance to update css classes
-			autoFillTimeOut = setTimeout(function(){
-				Utilities.autofillHighlightedElements($addListContainer, autoFillTimeOut);
-			}, 250);
-		}
 	};
 
 })(tmz.module('detailView'), tmz, jQuery, _, moment);
