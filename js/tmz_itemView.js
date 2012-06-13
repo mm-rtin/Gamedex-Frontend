@@ -41,6 +41,7 @@
 		filterType = null,
 		itemMenuOpen = false,
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
+		isFiltered = false,
 
 		// element cache
 		$wrapper = $('#wrapper'),
@@ -73,6 +74,9 @@
 		$deleteListConfirmBtn = $('#deleteListConfirm_btn'),
 		$deleteListBtn = $('#deleteList_btn'),
 		$deleteListName = $deleteListBtn.find('.listName'),
+
+		// error modal
+		$errorModal = $('#error-modal'),
 
 		// update list modal
 		$updateListModal = $('#updateList-modal'),
@@ -193,7 +197,15 @@
 		// deleteList_btn: click
 		$deleteListBtn.click(function(e) {
 			e.preventDefault();
-			$deleteListConfirmModal.modal('show');
+
+			// check how many tags left
+			if (TagView.getTagCount() > 1) {
+				$deleteListConfirmModal.modal('show');
+			} else {
+				$errorModal.find('.alertTitle').text('Tag Delete Error');
+				$errorModal.find('.alertText').text('Cannot delete last tag');
+				$errorModal.modal('show');
+			}
 		});
 
 		// deleteListConfirm_btn: click
@@ -215,7 +227,6 @@
 
 		// updateListBtn: click
 		$updateListBtn.click(function(e) {
-
 			// update tag name
 			updateTag(currentViewTagID, $tagNameField.val());
 			$updateListModal.modal('hide');
@@ -225,10 +236,10 @@
 		$editListBtn.click(function(e) {
 			e.preventDefault();
 
-			var currentListName = TagView.getListName(currentViewTagID);
+			var currentTagName = TagView.getTagName(currentViewTagID);
 
 			// set field name
-			$tagNameField.val(currentListName);
+			$tagNameField.val(currentTagName);
 
 			$updateListModal.modal('show');
 
@@ -400,17 +411,16 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.initializeUserItems_result = function(items) {
 
+		// ItemData items result
+		ItemData.itemsAndDirectoryLoaded(items);
+
+		// select 'view all' tag
+		changeViewList(VIEW_ALL_TAG_ID);
+
+		// render view with returned items data
+		render(items);
+
 		if (!$.isEmptyObject(items)) {
-
-			// ItemData items result
-			ItemData.itemsAndDirectoryLoaded(items);
-
-			// select 'view all' tag
-			changeViewList(VIEW_ALL_TAG_ID);
-
-			// render view with returned items data
-			render(items);
-
 			// view random item
 			viewRandomItem();
 
@@ -462,7 +472,7 @@
 		// viewing user list
 		if (currentViewTagID !== VIEW_ALL_TAG_ID) {
 
-			// iterate added listIDs - render if viewing list where item was added
+			// iterate added tagIDs - render if viewing list where item was added
 			for (var i = 0, len = data.tagIDsAdded.length; i < len; i++) {
 
 				if (data.tagIDsAdded[i] == currentViewTagID) {
@@ -492,12 +502,25 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showListView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.showListView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
+		
+		filterType = newFilterType;
+
+		changeViewList(tagID);
+
+		$filterTypeField.text(filterTypeFieldText);
+		setClearFiltersButton(isFiltered);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showGridView = function() {
 
 		// show grid for current tag
-		GridView.showGridView(currentViewTagID);
+		GridView.showGridView(currentViewTagID, filterType, $filterTypeField.text(), isFiltered);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -510,7 +533,7 @@
 		// show edit menu
 		if (tagID !== VIEW_ALL_TAG_ID) {
 
-			tagName = TagView.getListName(tagID);
+			tagName = TagView.getTagName(tagID);
 
 			// change edit menu delete list name
 			$deleteListName.text(tagName);
@@ -661,8 +684,8 @@
 		// delete item from server
 		var itemID = ItemData.deleteSingleTagForItem(id, currentViewTagID, deleteItem_result);
 
-		// remove tag from detail view
-		DetailView.removeTagForItemID(itemID, currentViewTagID);
+		// remove tag from add list (Detail View)
+		TagView.removeTagFromAddList(currentViewTagID);
 
 		// remove element from html
 		$('#' + id).remove();
@@ -680,34 +703,16 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var deleteTag = function(tagID) {
 
-		// delete database data
-		TagData.deleteTag(tagID, function() {
-			deleteList_result(tagID);
+		// delete tag
+		TagView.deleteTag(tagID, function() {
+			deleteTag_result();
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteList_result -
+	* deleteTag_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteList_result = function(tagID) {
-
-		// iterate cached tag items
-		var tagItems = ItemCache.getCachedItemsByTag(tagID);
-
-		// iterate itemIDs and delete tag from item data directory
-		_.each(tagItems, function(item, key) {
-
-			ItemData.deleteTagFromDirectory(key, tagID);
-		});
-
-		// delete cached tag
-		ItemCache.deleteCachedTag(tagID);
-
-		// update List
-		TagView.getTags(function(data) {
-
-			TagView.getTags_result(data);
-		});
+	var deleteTag_result = function() {
 
 		// default back to 'view all' list
 		changeViewList(VIEW_ALL_TAG_ID);
@@ -718,25 +723,23 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateTag = function(tagID, tagName) {
 
-
 		// delete database data
 		TagData.updateTag(tagName, tagID, function(data) {
 		});
 
 		// update List
 		TagView.getTags(function(data) {
-
 			TagView.getTags_result(data);
 		});
 
-		// update list name
-		updateListName(tagName, tagID);
+		// update tag name
+		updateTagName(tagName, tagID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateListName -
+	* updateTagName -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateListName = function(tagName, tagID) {
+	var updateTagName = function(tagName, tagID) {
 
 		// update update tag input field and current viewing tag name
 		$viewName.text(tagName);
@@ -943,6 +946,8 @@
 	* setClearFiltersButton -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var setClearFiltersButton = function(filtered) {
+
+		isFiltered = filtered;
 
 		// check if filtered - show clearFiltersBtn button
 		if (filtered) {

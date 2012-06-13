@@ -76,6 +76,8 @@
 		$submitResetCodeButton = $('#submitResetCode_btn'),
 		$updatePasswordButton = $('#updatePassword_btn'),
 
+		$searchInput = $('#searchField input'),
+
 		// loading status
 		$loadingStatus = $('#itemResultsContainer').find('.loadingStatus');
 
@@ -377,6 +379,9 @@
 		// show loading status
 		$loadingStatus.fadeIn();
 
+		// focus search input field
+		$searchInput.focus();
+
 		// clear view and item data
 		ItemView.clearItemView();
 		ItemData.resetItemData();
@@ -397,7 +402,7 @@
 		});
 
 		// get user tags
-		var listRequest = TagView.getTags(function(data) {
+		var tagRequest = TagView.getTags(function(data) {
 			listReturnedData = data;
 
 		}, function() {
@@ -405,7 +410,7 @@
 		});
 
 		// deferreds: wait for itemsRequest and directoryRequest
-		$.when(itemsRequest, directoryRequest, listRequest).then(
+		$.when(itemsRequest, directoryRequest, tagRequest).then(
 
 			// all ajax requests returned
 			function() {
@@ -439,6 +444,9 @@
 
 		// reset item data
 		ItemData.resetItemData();
+
+		// reset tag data
+		TagView.resetTagData();
 
 		// clear user data
 		User.logout();

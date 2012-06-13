@@ -823,8 +823,6 @@
 			$clearSearchIcon.hide();
 			$clearSearchButton.removeClass('hover');
 		}
-
     };
-
 
 })(tmz.module('searchView'), tmz, jQuery, _);

@@ -5,6 +5,7 @@
     // module references
     var DetailView = tmz.module('detailView'),
 		ItemData = tmz.module('itemData'),
+		ItemView = tmz.module('itemView'),
 		TagView = tmz.module('tagView'),
 		Amazon = tmz.module('amazon'),
 		Utilities = tmz.module('utilities'),
@@ -15,10 +16,12 @@
 		SORT_TYPES = {'itemName': 0, 'metacriticScore': 1, 'releaseDate': 2, 'platform': 3, 'rawPrice': 4},
 
 		// properties
+		currentTagID = null,
 		currentSortIndex = 0,
 		currentSortType = null,
 		currentSortAsc = true,
 		filterType = null,
+		isFiltered = false,
 
 		// node cache
 		$wrapper = $('#wrapper'),
@@ -94,7 +97,7 @@
 		// exit grid view button: click
 		$('#exitGridView_btn').click(function(e) {
 			e.preventDefault();
-			exitGridView();
+			showListView();
 		});
 
 		// listFilters_btn: click
@@ -222,7 +225,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GridView.showGridView = function(tagID) {
+	GridView.showGridView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
 
 		// switch content display to gridView
 
@@ -230,34 +233,39 @@
 		$wrapper.removeClass('standardView');
 		$wrapper.addClass('gridView');
 
-		// filters cleared
-		setClearFiltersButton(false);
 		// reset filter/sort text
-		$sortTypeField.text('Alphabetical');
-		$filterTypeField.text('None');
+		filterType = newFilterType;
 
 		// select gridList tagID
 		TagView.selectGridTag(tagID);
 
 		// load grid
 		loadGridData(tagID);
+
+		$filterTypeField.text(filterTypeFieldText);
+		setClearFiltersButton(isFiltered);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* exitGridView -
+	* showListView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var exitGridView = function() {
+	var showListView = function() {
 
 		// switch content display to standardView
 		// modify styles
 		$wrapper.removeClass('gridView');
 		$wrapper.addClass('standardView');
+
+		// sync ItemView with gridView tagID list
+		ItemView.showListView(currentTagID, filterType, $filterTypeField.text(), isFiltered);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeGridList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeGridList = function(tagName, tagID) {
+
+		currentTagID = tagID;
 
 		// set view name
 		$viewName.text(tagName);
@@ -270,6 +278,8 @@
 	* loadGridData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadGridData = function(tagID) {
+
+		currentTagID = tagID;
 
 		$gridViewContainer.hide();
 		// reset isotop
@@ -307,6 +317,8 @@
 			// show gridViewContainer
 			$gridViewContainer.show();
 			initializeIsotope();
+
+			applyFilters();
 		});
 	};
 
@@ -360,7 +372,6 @@
 
 		var quickFilter = parseInt(filterType, 10);
 		FilterPanel.resetFilters();
-
 
 		switch (quickFilter) {
 
@@ -560,6 +571,8 @@
 	* setClearFiltersButton -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var setClearFiltersButton = function(filtered) {
+
+		isFiltered = filtered;
 
 		// check if filtered - show clearFiltersBtn button
 		if (filtered) {

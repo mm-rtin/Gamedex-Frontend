@@ -1,4 +1,6 @@
-// TagData
+/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* TAG DATA - methods for interacting with server side tag data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 (function(TagData, tmz, $, _) {
 	"use strict";
 
@@ -12,17 +14,12 @@
 		User = tmz.module('user'),
 		Storage = tmz.module('storage'),
 		ItemData = tmz.module('itemData'),
-		ItemCache = tmz.module('itemCache'),
 
 		// local represenation of localStorage data model
 		storedTags = {};
 
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getters
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getTags
+	* getTags - return tags for user
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.getTags = function(onSuccess, onError) {
 
@@ -54,7 +51,6 @@
 
 					// store tag data
 					storedTags = Storage.set('tag', data.list);
-
 					onSuccess(data.list);
 				},
 				error: onError
@@ -65,14 +61,14 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addTag
+	* addTag - create new tag for user
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	TagData.addTag = function(listName, onSuccess, onError) {
+	TagData.addTag = function(tagName, onSuccess, onError) {
 
 		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'tag_name': listName
+			'tag_name': tagName
 		};
 		$.extend(true, requestData, userData);
 
@@ -85,27 +81,25 @@
 			success: function(data) {
 
 				// add response to stored tag internal model
-				storedTags.push({'listName': data.listName.toLowerCase(), 'listID': data.listID});
+				storedTags.push({'tagName': data.tagName.toLowerCase(), 'tagID': data.tagID});
 
 				// update local storage with store tag model
 				Storage.set('tag', storedTags);
-
 				onSuccess(data);
 			},
 			error: onError
 		});
-
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateTag
+	* updateTag - update tag name for user
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	TagData.updateTag = function(listName, tagID, onSuccess, onError) {
+	TagData.updateTag = function(tagName, tagID, onSuccess, onError) {
 
 		var userData = User.getUserCredentials(true);
 
 		var requestData = {
-			'tag_name': listName,
+			'tag_name': tagName,
 			'tag_id': tagID
 		};
 		$.extend(true, requestData, userData);
@@ -125,20 +119,19 @@
 
 		// update tag in storedTags model
 		for (var i = 0, len = storedTags.length; i < len; i++) {
-			if (storedTags[i].listID === tagID) {
+			if (storedTags[i].tagID === tagID) {
 
 				// update name
-				storedTags[i].listName = listName;
+				storedTags[i].tagName = tagName;
 
 				// update local storage with stored tag model
 				Storage.set('tag', storedTags);
 			}
 		}
-
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteTag -
+	* deleteTag - delete users tag
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	TagData.deleteTag = function(tagID, onSuccess, onError) {
 
@@ -160,22 +153,16 @@
 			error: onError
 		});
 
-		// get all items by tagID
-		var tagItems = ItemCache.getCachedItemsByTag(tagID);
-
-		// each item in tag: delete client item
-		_.each(tagItems, function(item) {
-			ItemData.deleteClientItem(tagID, item.itemID);
-		});
-
 		// delete tag item from storedTags model
 		for (var i = 0, len = storedTags.length; i < len; i++) {
-			if (storedTags[i].listID === tagID) {
+			if (storedTags[i].tagID === tagID) {
 
 				storedTags.splice(i, 1);
 
 				// update local storage with stored tag model
 				Storage.set('tag', storedTags);
+
+				break;
 			}
 		}
 	};

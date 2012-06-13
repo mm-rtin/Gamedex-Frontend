@@ -177,9 +177,12 @@
 	var deleteStoredTag = function(tagID) {
 
 		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-		delete storedItemsCacheByTag[tagID];
 
-		Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		// found stored item: delete tagID in item cache
+		if (storedItemsCacheByTag) {
+			delete storedItemsCacheByTag[tagID];
+			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,9 +191,12 @@
 	var deleteStoredItem = function(itemID, tagID) {
 
 		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-		delete storedItemsCacheByTag[tagID][itemID];
 
-		Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		// found stored item: delete tagID, itemID in item cache
+		if (storedItemsCacheByTag) {
+			delete storedItemsCacheByTag[tagID][itemID];
+			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

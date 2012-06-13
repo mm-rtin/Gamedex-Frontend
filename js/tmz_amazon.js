@@ -112,7 +112,6 @@
 		// result has been filtered
 		if (re.test(itemData.name) || itemData.platform === '') {
 
-			// // console.error('amazon item filtered: ', itemData.name, itemData.platform);
 			itemData.isFiltered = true;
 
 		// not filtered > add more properties to itemData
@@ -371,7 +370,6 @@
 
 		// iterate offers
 		$('Offer', $resultItem).each(function() {
-
 
 			offer = {};
 

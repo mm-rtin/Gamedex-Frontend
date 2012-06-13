@@ -14,9 +14,9 @@
 		ITEM_ADD_URL = tmz.api + 'item/add/',
 		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch/',
 		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
-		ITEM_UPDATE_USER_URL = tmz.api + 'item/update/user/',
-		ITEM_UPDATE_URL = tmz.api + 'item/update/',
-		UPDATE_METACRITIC_URL = tmz.api + 'item/update/metacritic/';
+		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
+		ITEM_SHARED_UPDATE = tmz.api + 'item/shared/update/',
+		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update';
 
 		// constants
 	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
@@ -84,7 +84,8 @@
 						onSuccess(data);
 					}
 				},
-				error: onError
+				error: function(data) {
+				}
 			});
 		}
 
@@ -398,7 +399,7 @@
 		$.extend(true, requestData, userData);
 
 		$.ajax({
-			url: ITEM_UPDATE_URL,
+			url: ITEM_SHARED_UPDATE,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -431,7 +432,7 @@
 		$.extend(true, requestData, userData);
 
 		$.ajax({
-			url: ITEM_UPDATE_USER_URL,
+			url: ITEM_USER_UPDATE,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -739,7 +740,6 @@
 
 		// get random number between 0 and idList.length
 		var randomIndex = Math.floor(Math.random() * idList.length);
-
 
 		return idList[randomIndex];
 	};

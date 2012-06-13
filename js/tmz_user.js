@@ -9,14 +9,14 @@
 		ItemCache = tmz.module('itemCache'),
 
 		// constants
-		USER_LOGIN_URL = tmz.api + 'login/',
-		USER_LOGOUT_URL = tmz.api + 'logout/',
+		USER_LOGIN_URL = tmz.api + 'user/login/',
+		USER_LOGOUT_URL = tmz.api + 'user/logout/',
 		USER_VIEW_URL = tmz.api + 'user/',
-		USER_CREATE_URL = tmz.api + 'createuser/',
-		USER_UPDATE_URL = tmz.api + 'updateuser/',
-		USER_SEND_RESET_CODE_URL = tmz.api + 'sendresetcode/',
-		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'submitresetcode/',
-		USER_UPDATE_PASSWORD_URL = tmz.api + 'updatepassword/',
+		USER_CREATE_URL = tmz.api + 'user/create/',
+		USER_UPDATE_URL = tmz.api + 'user/update/',
+		USER_SEND_RESET_CODE_URL = tmz.api + 'user/resetcode/send/',
+		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'user/resetcode/submit/',
+		USER_UPDATE_PASSWORD_URL = tmz.api + 'user/password/update/',
 
 		// data
 		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
@@ -74,7 +74,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* login
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.login = function(email, password, onSuccess) {
+	User.login = function(email, password, onSuccess, onError) {
 
 		var requestData = {
 			user_email: email,
@@ -89,12 +89,10 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				login_result(data, email);
+				login_success(data, email);
 				onSuccess(data, email);
 			},
-			error: function(data) {
-
-			}
+			error: onError
 		});
 	};
 
@@ -170,7 +168,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createUser -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.createUser = function(email, password, onSuccess) {
+	User.createUser = function(email, password, onSuccess, onError) {
 
 		// get parameters
 		var requestData = {
@@ -185,12 +183,10 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				login_result(data, email);
+				login_success(data, email);
 				onSuccess(data, email);
 			},
-			error: function(data) {
-
-			}
+			error: onError
 		});
 	};
 
@@ -338,9 +334,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* login_result
+	* login_success
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var login_result = function(data, email) {
+	var login_success = function(data, email) {
 
 		if (data.userID) {
 

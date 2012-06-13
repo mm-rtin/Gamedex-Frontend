@@ -35,9 +35,6 @@
 		itemDetailInfoTimeOut = null,
 
 		// data
-		initialItemTags = {},	// state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
-		currentItemTags = {},	// current selected tags, key = tagID, value = true
-		userSetTags = {},		// tags set by user for adding new items to list
 		firstItem = {},			// current item data (first)
 		secondItem = {},		// current item data (second)
 		itemAttributes = {},	// current item attributes
@@ -303,9 +300,6 @@
 		// hide information until update query returns
 		hideAsynchronousDetailAttributes();
 
-		// reset initial tags
-		initialItemTags = {};
-
 		// existing item - list add button renamed to ITEM_TYPES['existing']
 		setItemType(ITEM_TYPES['existing']);
 
@@ -335,7 +329,7 @@
 		ItemLinker.getLinkedItemData(firstItem, currentProvider, DetailView.viewSecondItemDetail);
 
 		// load tags
-		selectTagsFromDirectory(itemAttributes.tags);
+		TagView.selectTagsFromDirectory(itemAttributes.tags);
 
 		// display attributes
 		loadAndDisplayUserAttributes(firstItem, itemAttributes);
@@ -369,37 +363,14 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* removeTagForItemID - if tags for item removed outside, call to update currently viewing item
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	DetailView.removeTagForItemID = function(itemID, tagID) {
-
-		// check if tagID applies for currently viewing item
-		if (itemID === firstItem.itemID) {
-
-			delete initialItemTags[tagID];
-
-			TagView.selectAddListTags(initialItemTags);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* resetDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.resetDetail = function(item) {
 
-		initialItemTags = {};
-		currentItemTags = {};
-		userSetTags = {};
-		firstItem = {};
-		secondItem = {};
-		itemAttributes = {};
+		// reset add list
+		TagView.resetAddList();
 
-		$('#dataTab').hide();
-		$('.detailTitleBar').hide();
-		hasRendered = false;
-
-		clearDetail($giantBombTab);
-		clearDetail($amazonTab);
+		setItemType(ITEM_TYPES['new']);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -760,9 +731,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadAndDisplayTags = function(sourceItem, itemData) {
 
-		// reset initial tags, set initial provider
-		initialItemTags = {};
-
 		// exisiting item with tags
 		if (itemData && itemData.tagCount > 0) {
 
@@ -772,7 +740,7 @@
 			sourceItem.itemID = itemData.itemID;
 
 			// load tags
-			selectTagsFromDirectory(itemData.tags);
+			TagView.selectTagsFromDirectory(itemData.tags);
 
 		// new item - set user tags
 		} else {
@@ -780,38 +748,7 @@
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
-			setUserTags(userSetTags);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* selectTagsFromDirectory - set tags in tagList as selected in addList
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var selectTagsFromDirectory = function(tagList) {
-
-		var option = null;
-
-		// populate intialItemTags
-		_.each(tagList, function(id, tagID) {
-
-			// create associate of tags with item ids
-			initialItemTags[tagID] = id;
-		});
-
-		// select initial tags
-		TagView.selectAddListTags(tagList);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* setUserTags - tags user defined for adding new items to tag(s)
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var setUserTags = function(tagList) {
-
-		console.info(tagList);
-
-		if (tagList) {
-			// select addList tag
-			TagView.selectAddListTags(tagList);
+			TagView.selectUserTags();
 		}
 	};
 
@@ -822,14 +759,12 @@
 
 		// set item attributes into firstItem
 		if (itemData) {
-
 			sourceItem.gameStatus = itemData.gameStatus;
 			sourceItem.playStatus = itemData.playStatus;
 			sourceItem.userRating = itemData.userRating;
 
 		// set default attributes
 		} else {
-
 			sourceItem.gameStatus = '0';
 			sourceItem.playStatus = '0';
 			sourceItem.userRating = '0';
@@ -863,54 +798,23 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var saveItemChanges = function(item) {
 
-		// reset current item tags
-		currentItemTags = {};
+		// find tags to add
+		var tagsToAdd = TagView.getTagsToAdd();
 
-		// data
-		var tagsToAdd = [];
-		var idsToDelete = [];
-		var tagsToDelete = [];
-		var currentTags = TagView.getSelectedTagIDs();
-		var tagID = '';
-
-		// iterate current tags - find tags to add
-		for (var i = 0, len = currentTags.length; i < len; i++) {
-
-			tagID = currentTags[i];
-			// save current tag into currentItemTags object for quick reference by loop to find tags to delete
-			currentItemTags[tagID] = true;
-
-			// current tags NOT in initial
-			if (!initialItemTags[tagID]) {
-
-				// set new initial state with placeholder
-				initialItemTags[tagID] = 1;
-
-				// add to list for batch insert
-				tagsToAdd.push(tagID);
-			}
-		}
-
-		// iterate initial tags - find tags to delete
-		$.each(initialItemTags, function(key, id){
-
-			if (!currentItemTags[key]) {
-
-				// remove tag from initial state
-				delete initialItemTags[key];
-
-				// add item/tag keys to lists for batch delete
-				idsToDelete.push(id);
-				tagsToDelete.push(key);
-			}
-		});
+		// find tags to delete
+		var idsTagsToDelete = TagView.getTagsToDelete();
+		var idsToDelete = idsTagsToDelete.idsToDelete;
+		var tagsToDelete = idsTagsToDelete.tagsToDelete;
 
 		// check for tags to add - then run delete tags in serial
 		if (tagsToAdd.length > 0) {
+
+			// add item to tags
 			ItemData.addItemToTags(tagsToAdd, item, function(data) {
 
 				addItemToTags_result(data);
 
+				// check for tags to delete after tags added and response returned
 				deleteTagsForItem();
 			});
 
@@ -919,6 +823,7 @@
 			deleteTagsForItem();
 		}
 
+		// delete tags local method
 		function deleteTagsForItem() {
 			// check for tags to delete
 			if (idsToDelete.length > 0) {
@@ -971,6 +876,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags_result = function(data, addedItems) {
 
+		// get initialItemTags from TagView
+		var initialItemTags = TagView.getInitialItemTags();
+
 		if (itemType !== ITEM_TYPES['existing']) {
 			setItemType(ITEM_TYPES['existing']);
 		}
@@ -980,6 +888,8 @@
 
 		// update initial tags with ids
 		for (var i = 0, len = data.idsAdded.length; i < len; i++) {
+
+			// add tag to initialItemTags
 			initialItemTags[data.tagIDsAdded[i]] = data.idsAdded[i];
 		}
 
@@ -1018,13 +928,8 @@
 			// save userSetTags
 			if (itemType === ITEM_TYPES['new']) {
 
-				var tagIDs = TagView.getSelectedTagIDs();
-				userSetTags = {};
-
-				// create object use tagID as key
-				_.each(tagIDs, function(tagID) {
-					userSetTags[tagID] = '';
-				});
+				// populate user set tags from current tag selection
+				TagView.populateUserTags();
 			}
 
 			// update button
@@ -1038,43 +943,11 @@
 	var updateSaveItemButton = function(item) {
 
 		// if addList changed and existing item
-		if (itemType === ITEM_TYPES.existing && isAddListChanged()) {
-			$saveItemButton.stop().fadeIn();
+		if (itemType === ITEM_TYPES.existing && TagView.isAddListChanged()) {
+			$saveItemButton.fadeIn();
 		} else {
-			$saveItemButton.stop().fadeOut();
+			$saveItemButton.fadeOut();
 		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* isAddListChanged -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var isAddListChanged = function() {
-
-		var userTags = {};
-		var addListChanged = false;
-		var currentTags = TagView.getSelectedTagIDs();
-
-		// iterate currentTags
-		_.each(currentTags, function(item) {
-
-			userTags[item] = true;
-
-			// match with initial tags
-			if (typeof initialItemTags[item] === 'undefined') {
-				addListChanged = true;
-			}
-		});
-
-		// iterate initialItemTags
-		_.each(initialItemTags, function(item, key) {
-
-			// match with user userSetTags
-			if (typeof userTags[key] === 'undefined') {
-				addListChanged = true;
-			}
-		});
-
-		return addListChanged;
 	};
 
 })(tmz.module('detailView'), tmz, jQuery, _, moment);
