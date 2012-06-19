@@ -1,6 +1,5 @@
 // ITEM VIEW
 (function(ItemView, tmz, $, _, ListJS) {
-	"use strict";
 
     // modules references
     var User = tmz.module('user'),
@@ -46,10 +45,12 @@
 		// element cache
 		$wrapper = $('#wrapper'),
 		$itemResults = $('#itemResults'),
+		$resizeContainer = $('#resizeContainer'),
 		$viewItemsContainer = $('#viewItemsContainer'),
 		$itemResultsContainer = $('#itemResultsContainer'),
 		$displayOptions = $viewItemsContainer.find('.displayOptions'),
 		$gridViewButton = $('#gridView_btn'),
+		$showCollectionButton = $('#showCollection_btn'),
 
 		$viewList = $('#viewList'),
 		$viewName = $viewList.find('.viewName'),
@@ -168,6 +169,7 @@
 
 		// item record: click
 		$viewItemsContainer.on('click', '#itemResults tr', function(e) {
+
 			// view item
 			viewItem($(this).attr('id'));
 		});
@@ -288,8 +290,14 @@
 			showGridView();
 		});
 
+		// show collection button: click
+		$showCollectionButton.click(function(e) {
+			e.preventDefault();
+			ItemView.changeItemViewMode('collection');
+		});
+
 		// window, itemResults: resized
-		$itemResults.resize(ItemView.resizePanel);
+		$resizeContainer.resize(ItemView.resizePanel);
 		$(window).resize(ItemView.resizePanel);
 	};
 
@@ -367,8 +375,11 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.resizePanel = function() {
 
+
 		var windowHeight = $(window).height();
-		var resultsHeight = $itemResults.height();
+		var resultsHeight = $resizeContainer.height();
+
+		console.info(resultsHeight);
 
 		// add loading status height if visible
 		if ($loadingStatus.is(':visible')) {
@@ -505,13 +516,21 @@
 	* showListView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.showListView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
-		
+
 		filterType = newFilterType;
 
 		changeViewList(tagID);
 
 		$filterTypeField.text(filterTypeFieldText);
 		setClearFiltersButton(isFiltered);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* changeItemViewMode -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.changeItemViewMode = function(mode) {
+
+		$viewItemsContainer.removeClass().addClass(mode);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

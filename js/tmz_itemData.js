@@ -16,7 +16,7 @@
 		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
 		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
 		ITEM_SHARED_UPDATE = tmz.api + 'item/shared/update/',
-		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update';
+		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/';
 
 		// constants
 	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),

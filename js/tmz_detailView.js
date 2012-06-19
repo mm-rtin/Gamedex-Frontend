@@ -1,6 +1,5 @@
 // DETAIL VIEW
 (function(DetailView, tmz, $, _, moment) {
-	"use strict";
 
     // module references
     var User = tmz.module('user'),
@@ -50,6 +49,9 @@
 		$amazonItemDetailInfo = $amazonItemDetailThumbnail.find('.itemDetailInfo'),
 		$giantbombItemDetailInfo = $giantbombItemDetailThumbnail.find('.itemDetailInfo'),
 		$showVideoButton = $detailTabContent.find('.showVideo_btn'),
+		$showDiscussionButton = $detailTabContent.find('.showDiscussion_btn'),
+
+		$detailContainer = $('#detailContainer'),
 
 		$addListContainer = $('#addListContainer'),
 		$addList = $('#addList'),
@@ -114,8 +116,24 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     DetailView.createEventHandlers = function() {
 
-		// amazonItemDetailThumbnail: click
-		$amazonItemDetailThumbnail.click(function(e) {
+		// amazonTabLink: click
+		$amazonTabLink.click(function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			showTab(Utilities.getProviders().Amazon);
+		});
+
+		// giantBombTabLink: click
+		$giantBombTabLink.click(function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			showTab(Utilities.getProviders().GiantBomb);
+		});
+
+		// showVideoButton: click
+		$showVideoButton.click(function(e) {
 			e.preventDefault();
 
 			if (currentItemHasVideo) {
@@ -127,17 +145,22 @@
 			}
 		});
 
-		// giantbombItemDetailThumbnail: click
-		$giantbombItemDetailThumbnail.click(function(e) {
+		// showDiscussionButton: click
+		$showDiscussionButton.click(function(e) {
 			e.preventDefault();
 
-			if (currentItemHasVideo) {
-				VideoPanel.showVideoPanel();
+			// load disqus for item
+			showDiscussion();
+		});
 
-			// show no video message
-			} else {
+		// amazonItemDetailThumbnail: click
+		$amazonItemDetailThumbnail.click(function(e) {
 
-			}
+		});
+
+		// giantbombItemDetailThumbnail: click
+		$giantbombItemDetailThumbnail.click(function(e) {
+
 		});
 
 		// amazonItemDetailThumbnail: mouseover
@@ -443,6 +466,25 @@
 		$tab.find('img').attr('src', itemData.largeImage);
     };
 
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showDiscussion -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showDiscussion = function() {
+
+		// change item panel view mode to discussion
+		ItemView.changeItemViewMode('discussion');
+
+		var identifier = firstItem.standardName;
+
+		DISQUS.reset({
+			reload: true,
+			config: function () {
+			this.page.identifier = identifier;
+			this.page.url = 'http://www.gamedex.net/#!' + identifier;
+			}
+		});
+    };
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateDataPanel -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -644,10 +686,14 @@
 
 		switch (provider) {
 			case Utilities.getProviders().Amazon:
+				// attach detailContainer to item detail info
+				$amazonItemDetailInfo.append($detailContainer);
 				$amazonTabLink.tab('show');
 				break;
 
 			case Utilities.getProviders().GiantBomb:
+				// attach detailContainer to item detail info
+				$giantbombItemDetailInfo.append($detailContainer);
 				$giantBombTabLink.tab('show');
 				break;
 		}

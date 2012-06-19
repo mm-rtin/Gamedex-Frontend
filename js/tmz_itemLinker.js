@@ -298,7 +298,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findAmazonMatch
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonMatch = function(data, sourceItem, onSuccess, final) {
+	var findAmazonMatch = function(data, sourceItem, onSuccess, lastSearch) {
 
 		var resultLength = ($('Item', data).length);
 		var searchItem = {};
@@ -343,7 +343,7 @@
 			onSuccess(bestMatch);
 
 		// re-run search without platform filter - only if this hasn't been run before
-		} else if (!final) {
+		} else if (!lastSearch) {
 			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
 				findAmazonMatch(data, sourceItem, onSuccess, true);
 			});
@@ -392,4 +392,3 @@
 	};
 
 })(tmz.module('itemLinker'), tmz, jQuery, _);
-
