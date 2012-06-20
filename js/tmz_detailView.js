@@ -472,7 +472,7 @@
     var showDiscussion = function() {
 
 		// change item panel view mode to discussion
-		ItemView.changeItemViewMode('discussion');
+		ItemView.viewDiscussion();
 
 		var identifier = firstItem.standardName;
 
@@ -790,7 +790,7 @@
 
 		// new item - set user tags
 		} else {
-
+			console.info('new item');
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
@@ -851,6 +851,10 @@
 		var idsTagsToDelete = TagView.getTagsToDelete();
 		var idsToDelete = idsTagsToDelete.idsToDelete;
 		var tagsToDelete = idsTagsToDelete.tagsToDelete;
+
+		console.info(tagsToAdd);
+		console.info(tagsToDelete);
+		console.info(idsToDelete);
 
 		// check for tags to add - then run delete tags in serial
 		if (tagsToAdd.length > 0) {

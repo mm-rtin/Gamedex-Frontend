@@ -2,7 +2,6 @@
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 (function(TagView, tmz, $, _) {
-    "use strict";
 
     // dependecies
     var User = tmz.module('user'),
@@ -25,7 +24,7 @@
 
         // reference data: tag name by tagID
         tagIndex = {},
-        
+
         // reference data: holds tags with assigned items
         activeTags = {},
 
@@ -72,7 +71,8 @@
     * getInitialItemTags -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getInitialItemTags = function() {
-       return initialItemTags;
+        console.info(initialItemTags);
+        return initialItemTags;
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,13 +134,13 @@
     * resetTagData - reset all tag data
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var resetTagData = function() {
-        
+
         activeAddTags = {};
         activeViewTags = {};
 
         emptyViewTags = {};
         tagIndex = {};
-        
+
         activeTags = {};
     };
 
@@ -225,7 +225,7 @@
     * deleteTag - delete tag by tagID
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var deleteTag = function(tagID, onSuccess) {
-        
+
         // get all items by tagID
         var tagItems = ItemCache.getCachedItemsByTag(tagID);
 
@@ -256,12 +256,14 @@
     * removeTagFromAddList - remove tagID from addList select2 list
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var removeTagFromAddList = function(tagID) {
-        
+
         // remove tag from initialItemTags
         delete initialItemTags[tagID];
 
         // reselect form new initialItemTags
         TagView.selectAddListTags(initialItemTags);
+
+        console.info(initialItemTags);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,7 +285,6 @@
                 } else {
                     tagIDs.push(tag);
                 }
-
             });
         }
         return tagIDs;
@@ -340,6 +341,8 @@
             initialItemTags[tagID] = 1;
         });
 
+        console.info(initialItemTags);
+
         // select initial tags
         TagView.selectAddListTags(tagList);
     };
@@ -348,7 +351,9 @@
     * selectUserTags -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var selectUserTags = function() {
-    
+
+        initialItemTags = {};
+
         selectAddListTags(userSetTags);
     };
 
@@ -386,6 +391,8 @@
             type:'change',
             reset:true
         });
+
+        console.info(initialItemTags);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -404,12 +411,12 @@
     * getTagCount - return number of tags
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getTagCount = function() {
-    
+
         var tagCount = 0;
         _.each(activeAddTags, function(tag) {
             tagCount++;
         });
-    
+
         return tagCount;
     };
 
@@ -510,6 +517,8 @@
             }
         });
 
+        console.info(initialItemTags);
+
         return addListChanged;
     };
 
@@ -517,7 +526,7 @@
     * getTagsToAdd -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getTagsToAdd = function() {
-    
+
         // reset currentItem Tags
         currentItemTags = {};
 
@@ -532,6 +541,7 @@
             // save current tag into currentItemTags object for quick reference by loop to find tags to delete
             currentItemTags[tagID] = true;
 
+
             // current tags NOT in initial
             if (!initialItemTags[tagID]) {
 
@@ -542,7 +552,9 @@
                 tagsToAdd.push(tagID);
             }
         }
-    
+
+        console.info(initialItemTags);
+
         return tagsToAdd;
     };
 
@@ -550,7 +562,7 @@
     * getTagsToDelete -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getTagsToDelete = function() {
-    
+
         var idsToDelete = [];
         var tagsToDelete = [];
 
@@ -566,10 +578,12 @@
                 tagsToDelete.push(key);
             }
         });
-    
+
+        console.info(initialItemTags);
+
         return {'idsToDelete': idsToDelete, 'tagsToDelete': tagsToDelete};
     };
-    
+
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * populateUserTags -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -583,7 +597,7 @@
             userSetTags[tagID] = '';
         });
     };
-    
+
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * PUBLIC METHODS -

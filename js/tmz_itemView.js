@@ -1,5 +1,6 @@
 // ITEM VIEW
 (function(ItemView, tmz, $, _, ListJS) {
+	"use strict";
 
     // modules references
     var User = tmz.module('user'),
@@ -17,10 +18,14 @@
 
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
+		VIEW_MODES = {'collection': 'collection', 'discussion': 'discussion'},
 		SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4},
-		PANEL_HEIGHT_OFFSET_USE = 230,
-		PANEL_HEIGHT_OFFSET_INFO = 450,
-		PANEL_HEIGHT_PADDING = 40,
+		PANEL_HEIGHT_OFFSET_USE = 230,					// height offset when logged in
+		PANEL_HEIGHT_OFFSET_INFO = 450,					// height offset when logged out
+		PANEL_HEIGHT_PADDING_DISCUSSION_MAX = 10,		// padding for discussion content (panel no scrolling)
+		PANEL_HEIGHT_PADDING_DISCUSSION_SCROLL = 50,	// padding for discussion content (panel requires scrolling)
+		PANEL_HEIGHT_PADDING_COLLECTION_MAX = 20,		// padding for collection content (panel no scrolling)
+		PANEL_HEIGHT_PADDING_COLLECTION_SCROLL = 10,	// padding for collection content (panel requires scrolling)
 		VIEW_ALL_TAG_ID = '0',
 		VIEW_ALL_TAG_NAME = 'View All',
 
@@ -41,6 +46,7 @@
 		itemMenuOpen = false,
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 		isFiltered = false,
+		itemViewMode = VIEW_MODES.collection,
 
 		// element cache
 		$wrapper = $('#wrapper'),
@@ -293,7 +299,7 @@
 		// show collection button: click
 		$showCollectionButton.click(function(e) {
 			e.preventDefault();
-			ItemView.changeItemViewMode('collection');
+			ItemView.viewCollection();
 		});
 
 		// window, itemResults: resized
@@ -375,21 +381,30 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.resizePanel = function() {
 
-
 		var windowHeight = $(window).height();
 		var resultsHeight = $resizeContainer.height();
-
-		console.info(resultsHeight);
+		var discussionPaddingScroll = 0;
+		var discussionPaddingMax = 0;
 
 		// add loading status height if visible
 		if ($loadingStatus.is(':visible')) {
 			resultsHeight += $loadingStatus.height();
 		}
 
-		if (resultsHeight < windowHeight - panelHeightOffset) {
-			$itemResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
+		// if viewing collection: add additional height padding
+		if (itemViewMode === VIEW_MODES.discussion) {
+			discussionPaddingScroll = PANEL_HEIGHT_PADDING_DISCUSSION_SCROLL;
+			discussionPaddingMax = PANEL_HEIGHT_PADDING_DISCUSSION_MAX;
+		}
+
+		// panel does not require shrinking
+		if (resultsHeight - discussionPaddingScroll < windowHeight - panelHeightOffset) {
+			$itemResultsContainer.css({'height': resultsHeight + PANEL_HEIGHT_PADDING_COLLECTION_MAX + discussionPaddingMax});
+
+		// shrink panel to match window height
 		} else {
-			$itemResultsContainer.css({'height': windowHeight - panelHeightOffset});
+			var constrainedHeight = windowHeight - panelHeightOffset;
+			$itemResultsContainer.css({'height': constrainedHeight + PANEL_HEIGHT_PADDING_COLLECTION_SCROLL + discussionPaddingScroll});
 		}
 	};
 
@@ -526,11 +541,22 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeItemViewMode -
+	* viewDiscussion -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemView.changeItemViewMode = function(mode) {
+	ItemView.viewDiscussion = function() {
+		itemViewMode = VIEW_MODES.discussion;
 
-		$viewItemsContainer.removeClass().addClass(mode);
+		console.info(itemViewMode);
+		$viewItemsContainer.removeClass().addClass(itemViewMode);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* viewCollection -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.viewCollection = function() {
+		itemViewMode = VIEW_MODES.collection;
+		console.info(itemViewMode);
+		$viewItemsContainer.removeClass().addClass(itemViewMode);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -18,7 +18,8 @@
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 493,
-		PANEL_HEIGHT_PADDING = 40,
+		PANEL_HEIGHT_PADDING_MAX = 40,
+		PANEL_HEIGHT_PADDING_SCROLL = 13,
 
 		// timeout
 		searchFieldTimeout = null,
@@ -359,10 +360,14 @@
 
 		var windowHeight = $(window).height();
 
+		// panel does not require shrinking
 		if (resultsHeight < windowHeight - panelHeightOffset) {
-			$container.css({'height': resultsHeight + PANEL_HEIGHT_PADDING});
+			$container.css({'height': resultsHeight + PANEL_HEIGHT_PADDING_MAX});
+
+		// shrink panel to match window height
 		} else {
-			$container.css({'height': windowHeight - panelHeightOffset});
+			var constrainedHeight = windowHeight - panelHeightOffset;
+			$container.css({'height': constrainedHeight + PANEL_HEIGHT_PADDING_SCROLL});
 		}
 	};
 
