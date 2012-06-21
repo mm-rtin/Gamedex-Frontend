@@ -57,8 +57,6 @@
 		$addList = $('#addList'),
 		$saveItemButton = $('#saveItem_btn'),
 		$addItemButton = $('#addItem_btn'),
-		$saveAttributesContainer = $('#saveAttributesContainer'),
-		$saveAttributesButton = $('#saveAttributes_btn'),
 
 		// node cache: data fields
 		$itemAttributes = $('#itemAttributes'),
@@ -106,7 +104,7 @@
 				firstItem.userRating = value;
 
 				// save changes
-				saveItemChanges(firstItem);
+				saveAttributes(firstItem);
 			}
 		});
 	};
@@ -219,20 +217,6 @@
 			saveItemChanges(firstItem);
 		});
 
-		// saveAttributes_btn: click
-		$saveAttributesButton.click(function(e) {
-			e.preventDefault();
-			saveItemChanges(firstItem);
-		});
-
-		// tabs: shown
-		$('#detailTab a[data-toggle="tab"]').on('shown', function (e) {
-			currentTab = $(e.target).attr('href');
-		});
-
-		// addList: change
-		$addList.change(addListChanged);
-
 		// gameStatus: select
 		$gameStatus.find('li a').click(function(e) {
 			e.preventDefault();
@@ -242,7 +226,7 @@
 			$gameStatus.find('.currentSelection').text(GAME_STATUS[firstItem.gameStatus]);
 
 			// save changes
-			saveItemChanges(firstItem);
+			saveAttributes(firstItem);
 		});
 
 		// playStatus: select
@@ -254,8 +238,16 @@
 			$playStatus.find('.currentSelection').text(PLAY_STATUS[firstItem.playStatus]);
 
 			// save changes
-			saveItemChanges(firstItem);
+			saveAttributes(firstItem);
 		});
+
+		// tabs: shown
+		$('#detailTab a[data-toggle="tab"]').on('shown', function (e) {
+			currentTab = $(e.target).attr('href');
+		});
+
+		// addList: change
+		$addList.change(addListChanged);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -394,6 +386,14 @@
 		TagView.resetAddList();
 
 		setItemType(ITEM_TYPES['new']);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getViewingItemID -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	DetailView.getViewingItemID = function() {
+
+		return firstItem.id;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -711,9 +711,6 @@
 		$amazonPriceHeader.hide();
 		$amazonPriceNew.hide();
 		$amazonPriceUsed.hide();
-
-		// hide save item button
-		$saveAttributesContainer.hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -790,7 +787,6 @@
 
 		// new item - set user tags
 		} else {
-			console.info('new item');
 			setItemType(ITEM_TYPES['new']);
 
 			// set user saved tags for new items
@@ -852,45 +848,29 @@
 		var idsToDelete = idsTagsToDelete.idsToDelete;
 		var tagsToDelete = idsTagsToDelete.tagsToDelete;
 
-		console.info(tagsToAdd);
-		console.info(tagsToDelete);
-		console.info(idsToDelete);
-
-		// check for tags to add - then run delete tags in serial
+		// add tags
 		if (tagsToAdd.length > 0) {
-
-			// add item to tags
-			ItemData.addItemToTags(tagsToAdd, item, function(data) {
-
-				addItemToTags_result(data);
-
-				// check for tags to delete after tags added and response returned
-				deleteTagsForItem();
-			});
-
-		// no tags to add - check tags to delete
-		} else {
-			deleteTagsForItem();
+			ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
 		}
 
-		// delete tags local method
-		function deleteTagsForItem() {
-			// check for tags to delete
-			if (idsToDelete.length > 0) {
-				ItemData.deleteTagsForItem(idsToDelete, tagsToDelete, item, deleteTagsForItem_result);
-			}
-		}
-
-		// 1 or more attributes changed - only change for existing items
-		// for new items, attributes are added through add item method
-		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
-
-			// update item
-			ItemData.updateUserItem(item, updateItem_result);
+		// delete tags
+		if (idsToDelete.length > 0) {
+			ItemData.deleteTagsForItem(idsToDelete, tagsToDelete, item, deleteTagsForItem_result);
 		}
 
 		// update save item button
 		updateSaveItemButton();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* saveAttributes -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var saveAttributes = function(item) {
+
+		// if attributes changed: update user item
+		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
+			ItemData.updateUserItem(item, updateItem_result);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -904,12 +884,30 @@
 			// reset initial attribute status
 			displayAttributes(item);
 
-			// hide save button
-			$saveAttributesContainer.fadeOut();
-
 			// update list view
 			ItemView.updateListAttributesChanged(item);
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addItemToTags_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addItemToTags_result = function(data, addedItems) {
+
+		// update tagView initialItemTags
+		var initialItemTags = TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
+
+		// if new item - set to existing item
+		if (itemType !== ITEM_TYPES['existing']) {
+			setItemType(ITEM_TYPES['existing']);
+		}
+
+		// update firstItem with returned data
+		firstItem.id = data.itemID;
+		firstItem.itemID = data.itemID;
+
+		// update list view model with new item
+		ItemView.updateListAdditions(data, addedItems);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -919,32 +917,6 @@
 
 		// update list view model
 		ItemView.updateListDeletions(itemID, deletedTagIDs);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addItemToTags_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemToTags_result = function(data, addedItems) {
-
-		// get initialItemTags from TagView
-		var initialItemTags = TagView.getInitialItemTags();
-
-		if (itemType !== ITEM_TYPES['existing']) {
-			setItemType(ITEM_TYPES['existing']);
-		}
-
-		// update firstItem with returned data
-		firstItem.itemID = data.itemID;
-
-		// update initial tags with ids
-		for (var i = 0, len = data.idsAdded.length; i < len; i++) {
-
-			// add tag to initialItemTags
-			initialItemTags[data.tagIDsAdded[i]] = data.idsAdded[i];
-		}
-
-		// update list view model with new item
-		ItemView.updateListAdditions(data, addedItems);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -990,7 +962,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateSaveItemButton -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateSaveItemButton = function(item) {
+	var updateSaveItemButton = function() {
 
 		// if addList changed and existing item
 		if (itemType === ITEM_TYPES.existing && TagView.isAddListChanged()) {

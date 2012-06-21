@@ -2,6 +2,7 @@
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 (function(TagView, tmz, $, _) {
+    "use strict";
 
     // dependecies
     var User = tmz.module('user'),
@@ -28,14 +29,11 @@
         // reference data: holds tags with assigned items
         activeTags = {},
 
-        // current selected tags, key = tagID, value = true
-        currentItemTags = {},
-
         // state of tag IDs at item detail load, key = tagID, value = item key id for item/tag entry
         initialItemTags = {},
 
         // tags set by user for adding new items to list
-        userSetTags = {},
+        userSetTags = [],
 
         // templates
         viewListTemplate = _.template($('#view-list-template').html());
@@ -65,14 +63,6 @@
                 addTag(lastTag);
             }
         });
-    };
-
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * getInitialItemTags -
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var getInitialItemTags = function() {
-        console.info(initialItemTags);
-        return initialItemTags;
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,9 +104,9 @@
         var addListTags = [];
 
         // generate sorted add tag
-        _.each(activeAddTags, function(item, key) {
-            sortedAddTag.push(item);
-            addListTags.push(item.name);
+        _.each(activeAddTags, function(tag, key) {
+            sortedAddTag.push(tag);
+            addListTags.push(tag.name);
         });
 
         // sort lists
@@ -141,6 +131,9 @@
         emptyViewTags = {};
         tagIndex = {};
 
+        initialItemTags = {};
+        userSetTags = [];
+
         activeTags = {};
     };
 
@@ -159,9 +152,8 @@
 
         var ajax = null;
 
-        // empty tag data
-        activeViewTags = {};
-        activeAddTags = {};
+        // reset tag data
+        resetTagData();
 
         ajax = TagData.getTags(onSuccess, onFail);
 
@@ -172,8 +164,6 @@
     * getTags_result - parse tag data response - used in defered so is made public
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getTags_result = function(data) {
-
-        resetTagData();
 
         // find active tags
         populateActiveTags();
@@ -192,7 +182,7 @@
     var addTag = function(tagName) {
 
         // check if tag name exists
-        if (typeof activeAddTags[tagName] === 'undefined') {
+        if (!_.has(activeAddTags, tagName)) {
 
             // create new tag
             TagData.addTag(tagName, addTag_result);
@@ -219,6 +209,19 @@
 
         // reselect input field since after init .select2 field focus is lost
         $addListContainer.find('.select2-search-field input').focus();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * updateInitialItemTags -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var updateInitialItemTags = function(tagIDsAdded, idsAdded) {
+
+        // update initial tags with ids
+        for (var i = 0, len = idsAdded.length; i < len; i++) {
+
+            // add tag to initialItemTags
+            initialItemTags[tagIDsAdded[i]] = idsAdded[i];
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -262,8 +265,6 @@
 
         // reselect form new initialItemTags
         TagView.selectAddListTags(initialItemTags);
-
-        console.info(initialItemTags);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,7 +281,7 @@
             // get id for each tag name
             _.each(currentTagString.split(','), function(tag) {
 
-                if (!_.isUndefined(activeAddTags[tag])) {
+                if (_.has(activeAddTags, tag)) {
                     tagIDs.push(activeAddTags[tag].id);
                 } else {
                     tagIDs.push(tag);
@@ -338,10 +339,9 @@
         _.each(tagList, function(id, tagID) {
 
             // create associate of tags with item ids
-            initialItemTags[tagID] = 1;
+            initialItemTags[tagID] = id;
         });
 
-        console.info(initialItemTags);
 
         // select initial tags
         TagView.selectAddListTags(tagList);
@@ -354,7 +354,10 @@
 
         initialItemTags = {};
 
-        selectAddListTags(userSetTags);
+        $addList.val(userSetTags).trigger({
+            type: 'change',
+            reset: false
+        });
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -384,15 +387,13 @@
 
         // reset initial/current item tags
         initialItemTags = {};
-        currentItemTags = {};
-        userSetTags = {};
+        userSetTags = [];
 
         $addList.val(['']).trigger({
             type:'change',
             reset:true
         });
 
-        console.info(initialItemTags);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -493,31 +494,26 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var isAddListChanged = function() {
 
-        var userTags = {};
         var addListChanged = false;
         var currentTags = TagView.getSelectedTagIDs();
 
-        // iterate currentTags
-        _.each(currentTags, function(item) {
-
-            userTags[item] = true;
+        // tags added
+        _.each(currentTags, function(tagID) {
 
             // match with initial tags
-            if (typeof initialItemTags[item] === 'undefined') {
+            if (!_.has(initialItemTags, tagID)) {
                 addListChanged = true;
             }
         });
 
-        // iterate initialItemTags
-        _.each(initialItemTags, function(item, key) {
+        // tags deleted
+        _.each(initialItemTags, function(id, tagID) {
 
-            // match with user userSetTags
-            if (typeof userTags[key] === 'undefined') {
+            // match with user currentTags
+            if (_.indexOf(currentTags, tagID) === -1) {
                 addListChanged = true;
             }
         });
-
-        console.info(initialItemTags);
 
         return addListChanged;
     };
@@ -527,33 +523,22 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var getTagsToAdd = function() {
 
-        // reset currentItem Tags
-        currentItemTags = {};
-
         var tagsToAdd = [];
         var currentTags = getSelectedTagIDs();
-        var tagID = '';
 
         // iterate current tags - find tags to add
-        for (var i = 0, len = currentTags.length; i < len; i++) {
-
-            tagID = currentTags[i];
-            // save current tag into currentItemTags object for quick reference by loop to find tags to delete
-            currentItemTags[tagID] = true;
-
+        _.each(currentTags, function(tagID) {
 
             // current tags NOT in initial
-            if (!initialItemTags[tagID]) {
+            if (!_.has(initialItemTags, tagID)) {
 
-                // set new initial state with placeholder
-                initialItemTags[tagID] = 1;
+                // add placeholder for initialItemTags - allows for instant save button update
+                initialItemTags[tagID] = 'placeholder';
 
                 // add to list for batch insert
                 tagsToAdd.push(tagID);
             }
-        }
-
-        console.info(initialItemTags);
+        });
 
         return tagsToAdd;
     };
@@ -565,22 +550,24 @@
 
         var idsToDelete = [];
         var tagsToDelete = [];
+        var currentTags = getSelectedTagIDs();
 
-        $.each(initialItemTags, function(key, id){
+        // iterate initialItemTags
+        _.each(initialItemTags, function(id, tagID) {
 
-            if (!currentItemTags[key]) {
+            // if initial tagID not found in currentTags array, it has been deleted
+            if (_.indexOf(currentTags, tagID) === -1) {
 
                 // remove tag from initial state
-                delete initialItemTags[key];
+                delete initialItemTags[tagID];
 
-                // add item/tag keys to lists for batch delete
+                // add item/tag tagIDs to lists for batch delete
+                tagsToDelete.push(tagID);
                 idsToDelete.push(id);
-                tagsToDelete.push(key);
             }
         });
 
-        console.info(initialItemTags);
-
+        // return object of tagIDs and ids
         return {'idsToDelete': idsToDelete, 'tagsToDelete': tagsToDelete};
     };
 
@@ -589,25 +576,17 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var populateUserTags = function() {
 
-        var tagIDs = TagView.getSelectedTagIDs();
-        userSetTags = {};
-
-        // create object use tagID as key
-        _.each(tagIDs, function(tagID) {
-            userSetTags[tagID] = '';
-        });
+        userSetTags = $addList.val().split(',');
     };
-
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * PUBLIC METHODS -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var publicMethods = {
         'init': init,
-        'getInitialItemTags': getInitialItemTags,
         'renderViewLists': renderViewLists,
+        'updateInitialItemTags': updateInitialItemTags,
         'renderAddLists': renderAddLists,
-        'resetTagData': resetTagData,
         'getTagName': getTagName,
         'getTags': getTags,
         'getTags_result': getTags_result,

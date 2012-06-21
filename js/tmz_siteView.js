@@ -442,13 +442,7 @@
 		// clear view
 		ItemView.clearItemView();
 
-		// reset item data
-		ItemData.resetItemData();
-
-		// reset tag data
-		TagView.resetTagData();
-
-		// clear user data
+		// logout user
 		User.logout();
 
 		// start demo app

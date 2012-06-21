@@ -545,8 +545,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.viewDiscussion = function() {
 		itemViewMode = VIEW_MODES.discussion;
-
-		console.info(itemViewMode);
 		$viewItemsContainer.removeClass().addClass(itemViewMode);
 	};
 
@@ -555,7 +553,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.viewCollection = function() {
 		itemViewMode = VIEW_MODES.collection;
-		console.info(itemViewMode);
 		$viewItemsContainer.removeClass().addClass(itemViewMode);
 	};
 
@@ -729,8 +726,10 @@
 		// delete item from server
 		var itemID = ItemData.deleteSingleTagForItem(id, currentViewTagID, deleteItem_result);
 
-		// remove tag from add list (Detail View)
-		TagView.removeTagFromAddList(currentViewTagID);
+		// remove tag from add list (Detail View) - only if currently viewing item matches deleted item
+		if (DetailView.getViewingItemID() === id) {
+			TagView.removeTagFromAddList(currentViewTagID);
+		}
 
 		// remove element from html
 		$('#' + id).remove();
