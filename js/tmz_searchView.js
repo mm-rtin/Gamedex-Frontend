@@ -14,7 +14,7 @@
 		// constants
 		LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
-		TIME_TO_SUBMIT_QUERY = 250,	// the number of miliseconds to wait before submiting search query
+		TIME_TO_SUBMIT_QUERY = 250,								// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 493,
@@ -30,7 +30,7 @@
 		searchResults = {},
 
 		// properties
-		searchProvider = Utilities.getProviders().Amazon,
+		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon,
 		listProvider = LIST_PROVIDERS.IGN,
 		currentTab = TAB_IDS['#searchTab'],
 		searchPlatform = null,
@@ -77,7 +77,8 @@
 		$searchDisplayOptions = $searchContainer.find('.searchDisplayOptions'),
 		$listDisplayOptions = $searchContainer.find('.listDisplayOptions'),
 
-		$loadingStatus = $searchResultsContainer.find('.loadingStatus'),
+		$searchLoadingStatus = $searchResultsContainer.find('.loadingStatus'),
+		$listLoadingStatus = $listResultsContainer.find('.loadingStatus'),
 
 		// templates
 		searchResultsTemplate = _.template($('#search-results-template').html()),
@@ -92,19 +93,19 @@
 		SearchView.createEventHandlers();
 
 		// set default platform
-		searchPlatform = Utilities.getPlatformIndex()[0];
+		searchPlatform = Utilities.PLATFORM_INDEX[0];
 		listPlatform = Utilities.getStandardPlatform('');
 
 		// set default search provider
-		searchProvider = Utilities.getProviders().Amazon;
+		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
 
 		toggleClearSearchButton(false);
 
 		// init tooltips
-		$listDisplayOptions.find('div').each(function(key, button) {
+		$listDisplayOptions.find('a').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
-		$searchDisplayOptions.find('div').each(function(key, button) {
+		$searchDisplayOptions.find('a').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
@@ -191,12 +192,12 @@
 		});
 
 		// searchDisplayType toggle
-		$searchDisplayOptions.on('click', 'div', function(e) {
+		$searchDisplayOptions.on('click', 'a', function(e) {
 			e.preventDefault();
 			changeDisplayType($(this).attr('data-content'));
 		});
 		// listDisplayType toggle
-		$listDisplayOptions.on('click', 'div', function(e) {
+		$listDisplayOptions.on('click', 'a', function(e) {
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (IGN - upcoming games)
@@ -207,6 +208,8 @@
 
 		// search button: click
 		$searchButton.click(function(e) {
+			e.preventDefault();
+
 			SearchView.search(searchTerms);
 		});
 
@@ -229,7 +232,7 @@
 	SearchView.renderSearchResults = function(items) {
 
 		// hide loading status
-		$loadingStatus.stop().hide();
+		$searchLoadingStatus.stop().hide();
 
 		var sortedSearchResults = [];
 
@@ -255,6 +258,9 @@
 	* renderListResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderListResults = function(items) {
+
+		// hide loading status
+		$listLoadingStatus.stop().hide();
 
 		// get model data
 		var templateData = {'listResults': items};
@@ -288,7 +294,7 @@
 
 			// show loading status
 			$searchResultsContainer.find('.noResults').hide();
-			$loadingStatus.fadeIn();
+			$searchLoadingStatus.fadeIn();
 
 			previousSearchTerms = keywords;
 
@@ -296,12 +302,12 @@
 			switch (searchProvider) {
 
 				// amazon
-				case Utilities.getProviders().Amazon:
+				case Utilities.SEARCH_PROVIDERS.Amazon:
 					Amazon.searchAmazon(keywords, searchPlatform.amazon, searchAmazon_result);
 					break;
 
 				// giantbomb
-				case Utilities.getProviders().GiantBomb:
+				case Utilities.SEARCH_PROVIDERS.GiantBomb:
 					GiantBomb.searchGiantBomb(keywords, searchGiantBomb_result);
 					break;
 			}
@@ -312,6 +318,8 @@
 	* getGamestatsPopularityListByPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
+
+		$listLoadingStatus.fadeIn();
 
 		// clear listTable
 		$listTable.empty();
@@ -324,6 +332,8 @@
 	* getIGNUpcomingListByPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getIGNUpcomingListByPlatform = function(platform) {
+
+		$listLoadingStatus.fadeIn();
 
 		// clear listTable
 		$listTable.empty();
@@ -347,13 +357,24 @@
 		var resultsHeight = null;
 		var $container = null;
 
+
 		switch(currentTab) {
 			case 0:
 				resultsHeight = $searchResults.height();
 				$container = $searchResultsContainer;
+
+				// add loading status height if visible
+				if ($searchLoadingStatus.is(':visible')) {
+					resultsHeight += $searchLoadingStatus.height();
+				}
 				break;
 			case 1:
 				resultsHeight = $listResults.height();
+
+				// add loading status height if visible
+				if ($listLoadingStatus.is(':visible')) {
+					resultsHeight += $listLoadingStatus.height();
+				}
 				$container = $listResultsContainer;
 				break;
 		}
@@ -555,14 +576,14 @@
 
 		switch(providerID) {
 			case '0':
-				searchProvider = Utilities.getProviders().Amazon;
+				searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
 				// set title
 				$searchProviderName.text('Amazon');
 				// show platform list
 				$searchPlatforms.show();
 				break;
 			case '1':
-				searchProvider = Utilities.getProviders().GiantBomb;
+				searchProvider = Utilities.SEARCH_PROVIDERS.GiantBomb;
 				// set title
 				$searchProviderName.text('GiantBomb');
 				// show platform list
@@ -761,12 +782,11 @@
 		}
 
 		// enter key, run query immediately
-		if(event.which == 13) {
+		if (event.which == 13) {
 			SearchView.search(searchTerms);
 
-		// start search timer
+		// start search timer - only if key not delete or backspace
 		} else {
-
 			searchFieldTimeout = setTimeout(searchFieldTrigger, TIME_TO_SUBMIT_QUERY);
 		}
     };

@@ -109,7 +109,7 @@
 
 		// init tooltips
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
-		$displayOptions.find('div').each(function(key, button) {
+		$displayOptions.find('a').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
@@ -256,7 +256,7 @@
 		});
 
 		// displayType: toggle
-		$displayOptions.find('div').click(function(e) {
+		$displayOptions.find('a').click(function(e) {
 			e.preventDefault();
 			changeDisplayType(this);
 		});
@@ -314,6 +314,7 @@
 
 		// item length
 		var length = 0;
+
 		// add user attributes to model
 		_.each(items, function(item, key) {
 			addUserAttributes(item);
@@ -433,7 +434,7 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* initializeUserItems_result -
+	* initializeUserItems_result - called upon result of initializeUserItems and other dependencies
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemView.initializeUserItems_result = function(items) {
 
@@ -442,9 +443,6 @@
 
 		// select 'view all' tag
 		changeViewList(VIEW_ALL_TAG_ID);
-
-		// render view with returned items data
-		render(items);
 
 		if (!$.isEmptyObject(items)) {
 			// view random item
@@ -557,6 +555,15 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* refreshView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemView.refreshView = function() {
+
+		viewItems(currentViewTagID);
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showGridView = function() {
@@ -585,7 +592,6 @@
 
 		// hide edit menu
 		} else {
-
 			tagName = VIEW_ALL_TAG_NAME;
 			$editMenu.hide();
 		}
@@ -593,14 +599,14 @@
 		// set view name
 		$viewName.text(tagName);
 
-		// load items
-		getItems(tagID);
+		// view items
+		viewItems(tagID);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getItems -
+	* viewItems -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getItems = function(tagID, onSuccess) {
+	var viewItems = function(tagID, onSuccess) {
 
 		// save tagID
 		currentViewTagID = tagID;
@@ -635,8 +641,11 @@
 			amazonPrice_result(item.id, offers);
 		});
 
-		// get updated metascore
-		Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
+		// get updated metascore - if metascore or metascore page not in item data
+		if (item.metascore === null || item.metascorePage === null) {
+			// get updated score
+			Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -681,7 +690,6 @@
 		} else {
 			item.displayMetascore = item.metascore;
 		}
-		item.metascorePage = '';
 
 		displayMetascore(item);
 	};
@@ -1086,8 +1094,6 @@
 		if ($element2.length > 0) {
 			price2 = parseFloat($element2.attr('data-price'));
 		}
-
-
 
 		if (price1 < price2) {
 			return -1;

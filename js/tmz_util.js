@@ -1,6 +1,7 @@
 
 // UTILITIES
 (function(Utilities, tmz, $, _) {
+	"use strict";
 
 	// Dependencies
 	var User = tmz.module('user'),
@@ -38,14 +39,16 @@
 
 		// constants
 		SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1},
-		VIEW_ALL_TAG_ID = '0';
+		VIEW_ALL_TAG_ID = '0',
 
-		// properties
+		// 3RD PARTY IMAGE PREFIX
+		AMAZON_IMAGE = {'URL': 'http://ecx.images-amazon.com/images', 'RE': /http:\/\/ecx\.images-amazon\.com\/images/gi, 'TOKEN': '~1~'},
+		GIANTBOMB_IMAGE = {'URL': 'http://media.giantbomb.com/uploads', 'RE': /http:\/\/media\.giantbomb\.com\/uploads/gi, 'TOKEN': '~1~'};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getStandardPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.getStandardPlatform = function(platformName) {
+	var getStandardPlatform = function(platformName) {
 
 		var re = new RegExp(platformName, 'gi');
 
@@ -60,7 +63,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* matchPlatformToIndex -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.matchPlatformToIndex = function(platformName) {
+	var matchPlatformToIndex = function(platformName) {
 
 		var re = null;
 		var aliasArray = [];
@@ -98,108 +101,20 @@
 		return PLATFORM_INDEX[0];
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getPlatformIndex -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.getPlatformIndex = function() {
-		return PLATFORM_INDEX;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getViewAllTagID -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.getViewAllTagID = function() {
-		return VIEW_ALL_TAG_ID;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getProviders
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.getProviders = function() {
-
-		return SEARCH_PROVIDERS;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* selectFieldSubstring
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.selectFieldSubstring = function(field, start, end) {
-
-		if(field.createTextRange) {
-			var selRange = field.createTextRange();
-			selRange.collapse(true);
-			selRange.moveStart('character', start);
-			selRange.moveEnd('character', end);
-			selRange.select();
-		} else if(field.setSelectionRange) {
-			field.setSelectionRange(start, end);
-		} else if(field.selectionStart) {
-			field.selectionStart = start;
-			field.selectionEnd = end;
-		}
-	};
-
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* autofillHighlightedElements -
-	* autofills search box with first found item, highlights autofilled portion of text
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Utilities.autofillHighlightedElements = function($container, autoFillTimeOut) {
+    * PUBLIC -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var publicMethods = {
+        'PLATFORM_INDEX': PLATFORM_INDEX,
+        'SEARCH_PROVIDERS': SEARCH_PROVIDERS,
+        'VIEW_ALL_TAG_ID': VIEW_ALL_TAG_ID,
+        'AMAZON_IMAGE': AMAZON_IMAGE,
+        'GIANTBOMB_IMAGE': GIANTBOMB_IMAGE,
+        'getStandardPlatform': getStandardPlatform,
+        'matchPlatformToIndex': matchPlatformToIndex
+    };
 
-		clearTimeout(autoFillTimeOut);
-
-		var highlightedText = '';
-		var currentInputText = '';
-		var concatText = '';
-		var inputField = null;
-
-		$container.find('.highlighted').each(function(){
-
-			highlightedText = $container.find('.highlighted').contents().filter(function() {
-				return this.nodeType == Node.TEXT_NODE;
-			}).text();
-
-			$container.find('input').each(function(){
-
-				inputField = $(this)[0];
-
-				// current input text
-				currentInputText = $(this).val();
-
-				// set input field text
-				concatText = currentInputText + highlightedText;
-
-				// set input text
-				$(this).val(concatText);
-
-				// re-scale
-				var dropdown = $container.find('div.chzn-drop').first();
-				var style_block = "position:absolute; left: -1000px; top: -1000px; display:none;";
-				var styles = ['font-size', 'font-style', 'font-weight', 'font-family', 'line-height', 'text-transform', 'letter-spacing'];
-				for (_i = 0, _len = styles.length; _i < _len; _i++) {
-					style = styles[_i];
-					style_block += style + ":" + $(this).css(style) + ";";
-				}
-				div = $('<div />', {
-					'style': style_block
-				});
-				div.text($(this).val());
-				$('body').append(div);
-				w = div.width() + 25;
-				div.remove();
-				$(this).css({
-					'width': w + 'px'
-				});
-				var dd_top = $container.height() - 5;
-				$(dropdown).css({
-					"top": dd_top + "px"
-				});
-
-				// highlight autofilled portion
-				Utilities.selectFieldSubstring(inputField, currentInputText.length, concatText.length);
-			});
-		});
-	};
-
+    $.extend(Utilities, publicMethods);
 
 })(tmz.module('utilities'), tmz, jQuery, _);
 

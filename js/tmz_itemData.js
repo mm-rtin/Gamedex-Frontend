@@ -16,10 +16,10 @@
 		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
 		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
 		ITEM_SHARED_UPDATE = tmz.api + 'item/shared/update/',
-		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/';
+		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/',
 
 		// constants
-	var VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
+		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
 
 		// full item detail results for last viewed tag:
 		// alias of itemsCacheByTag[tagID]
@@ -40,6 +40,7 @@
 	* itemsAndDirectoryLoaded -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var itemsAndDirectoryLoaded = function(items) {
+
 		ItemCache.cacheItemsByTag(items, itemDataDirectory);
 	};
 
@@ -214,6 +215,14 @@
 
 			item = {};
 
+			var initialProvider = itemResults.items[i].ip;
+			var imageBaseURL = itemResults.items[i].ib || '';
+
+			// add image base url and add media provider url prefix
+			var smallImage = addImageURLPrefix(itemResults.items[i].si, imageBaseURL, initialProvider);
+			var thumbnailImage = addImageURLPrefix(itemResults.items[i].ti, imageBaseURL, initialProvider);
+			var largeImage = addImageURLPrefix(itemResults.items[i].li, imageBaseURL, initialProvider);
+
 			// get attributes
 			item.id = itemResults.items[i].iid;
 			item.initialProvider = itemResults.items[i].ip;
@@ -224,10 +233,11 @@
 			item.name = itemResults.items[i].n;
 			item.releaseDate = itemResults.items[i].rd;
 			item.platform = itemResults.items[i].p;
-			item.smallImage = itemResults.items[i].si;
-			item.thumbnailImage = itemResults.items[i].ti;
-			item.largeImage = itemResults.items[i].li;
+			item.smallImage = smallImage;
+			item.thumbnailImage = thumbnailImage;
+			item.largeImage = largeImage;
 			item.metascore = itemResults.items[i].ms;
+			item.metascorePage = itemResults.items[i].mp;
 			item.offers = {};
 
 			item.description = '';
@@ -254,11 +264,32 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
 
+		var ajax = null;
+
 		var userData = User.getUserCredentials(true);
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
 
+		// shorten image url
+		var smallImage = getShortImageURL(item.smallImage, item.initialProvider);
+		var thumbnailImage = getShortImageURL(item.thumbnailImage, item.initialProvider);
+		var largeImage = getShortImageURL(item.largeImage, item.initialProvider);
+
+		var s1 = smallImage.split('');
+		var s2 = thumbnailImage.split('');
+		var s3 = largeImage.split('');
+
+		// get base url for all 3 images (common starting substring)
+		var lastCommonIndex = findCommonSubstringIndex(s1, s2, s3);
+
+		// remove common substring from images
+		var imageBaseURL = s1.slice(0, lastCommonIndex).join('');
+		smallImage = s1.slice(lastCommonIndex).join('');
+		thumbnailImage = s2.slice(lastCommonIndex).join('');
+		largeImage = s3.slice(lastCommonIndex).join('');
+
+		// request data
 		var requestData = {
 			'lids': tagIDs,
 
@@ -268,9 +299,11 @@
 			'gid': item.gbombID,
 			'ip': item.initialProvider,
 			'p': item.platform,
-			'si': item.smallImage,
-			'ti': item.thumbnailImage,
-			'li': item.largeImage,
+
+			'ib': imageBaseURL,
+			'si': smallImage,
+			'ti': thumbnailImage,
+			'li': largeImage,
 
 			'mp': item.metascorePage,
 			'ms': item.metascore,
@@ -281,19 +314,88 @@
 		};
 		$.extend(true, requestData, userData);
 
-		$.ajax({
-			url: ITEM_ADD_URL,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
+		ajax = $.ajax({
+					url: ITEM_ADD_URL,
+					type: 'POST',
+					data: requestData,
+					dataType: 'json',
+					cache: true,
+					success: function(data) {
 
-				var addedItems = addClientItem(item, data);
-				onSuccess(data, addedItems);
-			},
-			error: onError
-		});
+						var addedItems = addClientItem(item, data);
+						onSuccess(data, addedItems);
+					},
+					error: onError
+				});
+
+		return ajax;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findCommonSubstringIndex -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findCommonSubstringIndex = function(s1, s2, s3) {
+
+		var lastCommonIndex = 0;
+		var commonString = '';
+
+		// step through each index of 3 string arrays
+		for (var i = 0, len = s1.length; i < len; i++) {
+
+			if (s1[i] === s2[i] && s1[i] === s3[i]) {
+				lastCommonIndex = i;
+			} else {
+				break;
+			}
+		}
+
+		return lastCommonIndex + 1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getShortImageURL - shortens media url for common amazon or giantbomb image urls
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getShortImageURL = function(url, initialProvider) {
+
+		var outURL = url;
+
+		// find common prefix and return shortened version
+		// amazon media url
+		if (initialProvider === Utilities.SEARCH_PROVIDERS.Amazon) {
+			outURL = url.replace(Utilities.AMAZON_IMAGE.RE, Utilities.AMAZON_IMAGE.TOKEN);
+
+		// giantbomb media url
+		} else if (initialProvider === Utilities.SEARCH_PROVIDERS.GiantBomb) {
+			outURL = url.replace(Utilities.GIANTBOMB_IMAGE.RE, Utilities.GIANTBOMB_IMAGE.TOKEN);
+		}
+
+		return outURL;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addImageURLPrefix - add provider specific prefix to image url
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addImageURLPrefix = function(url, imageBaseURL, initialProvider) {
+
+		var outURL = url;
+		var re = null;
+
+		// prepend image base url
+		url = imageBaseURL + url;
+
+		// find common prefix and return shortened version
+		// amazon media url
+		if (initialProvider == Utilities.SEARCH_PROVIDERS.Amazon) {
+			re = new RegExp(Utilities.AMAZON_IMAGE.TOKEN, 'g');
+			outURL = url.replace(re, Utilities.AMAZON_IMAGE.URL);
+
+		// giantbomb media url
+		} else if (initialProvider == Utilities.SEARCH_PROVIDERS.GiantBomb) {
+			re = new RegExp(Utilities.GIANTBOMB_IMAGE.TOKEN, 'g');
+			outURL = url.replace(re, Utilities.GIANTBOMB_IMAGE.URL);
+		}
+
+		return outURL;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -466,6 +568,9 @@
 		};
 		$.extend(true, requestData, userData);
 
+		// push update to item cache
+		updateItemData(item, itemTags);
+
 		$.ajax({
 			url: UPDATE_METACRITIC_URL,
 			type: 'POST',
@@ -473,8 +578,6 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-
-				updateItemData(item, itemTags);
 
 				if(onSuccess) {
 					onSuccess(item, data);

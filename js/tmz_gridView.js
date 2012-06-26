@@ -31,7 +31,7 @@
 		$gridViewMenu = $('#gridViewMenu'),
 
 		// display options
-		$displayOptions = $gridViewMenu.find('.displayOptions'),
+		$displayOptions = $gridViewMenu.find('.grid_displayOptions'),
 		$displayTypeField = $displayOptions.find('.displayType'),
 
 		// sort options
@@ -131,7 +131,7 @@
 		// gridList: click
 		$gridList.find('ul').on('click', 'a', function(e) {
 			e.preventDefault();
-			changeGridList($(this).text(), $(this).attr('data-content'));
+			changeGridList($(this).attr('data-content'));
 		});
 
 		// gridItem: click
@@ -237,7 +237,7 @@
 		filterType = newFilterType;
 
 		// select gridList tagID
-		TagView.selectGridTag(tagID);
+		selectGridTag(tagID);
 
 		// load grid
 		loadGridData(tagID);
@@ -245,6 +245,18 @@
 		$filterTypeField.text(filterTypeFieldText);
 		setClearFiltersButton(isFiltered);
 	};
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * selectGridTag -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var selectGridTag = function(tagID) {
+
+        // get option node
+        var $listItem = $gridList.find('a[data-content="' + tagID + '"]');
+
+        // set gridList name as listItem name
+        $gridList.find('.viewName').text($listItem.text());
+    };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showListView -
@@ -263,12 +275,12 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeGridList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeGridList = function(tagName, tagID) {
+	var changeGridList = function(tagID) {
 
 		currentTagID = tagID;
 
-		// set view name
-		$viewName.text(tagName);
+		// select grid tag
+		selectGridTag(tagID);
 
 		// load items
 		loadGridData(tagID);

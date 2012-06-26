@@ -76,6 +76,12 @@
 		$submitResetCodeButton = $('#submitResetCode_btn'),
 		$updatePasswordButton = $('#updatePassword_btn'),
 
+		// site guide
+		$guideHitArea = $('#guideHitArea'),
+		$guideButton = $('#guideButton'),
+		$siteGuide = $('#siteGuide'),
+		$siteGuideBackdrop = $('#siteGuideBackdrop'),
+
 		$searchInput = $('#searchField input'),
 
 		// loading status
@@ -90,6 +96,8 @@
 
 		// init login form
 		initLoginForm();
+
+		showSiteGuide();
 
 		// setup password reset modal
 		$resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
@@ -163,38 +171,57 @@
 			deleteAccount();
 		});
 
-		// login hit area button: click
-		$loginHitArea.click(function(e) {
-			e.preventDefault();
-			// login form
-			showLoginForm();
-		});
-
-		// signup hit area button: click
+		// signupHitArea
 		$signupHitArea.click(function(e) {
 			e.preventDefault();
-			// signup form
 			showSignupForm();
 		});
-
-		// login hit area button: mouseover
-		$loginHitArea.mouseover(function(e) {
-			$loginButton.addClass('hover');
-		});
-
-		// signup hit area button: mouseover
 		$signupHitArea.mouseover(function(e) {
 			$signupButton.addClass('hover');
 		});
-
-		// login hit area button: mouseout
-		$loginHitArea.mouseout(function(e) {
-			$loginButton.removeClass('hover');
+		$signupHitArea.mouseout(function(e) {
+			$signupButton.removeClass();
+		});
+		$signupHitArea.mousedown(function(e) {
+			$signupButton.addClass('active');
+		});
+		$signupHitArea.mouseup(function(e) {
+			$signupButton.removeClass('active');
 		});
 
-		// signup hit area button: mouseout
-		$signupHitArea.mouseout(function(e) {
-			$signupButton.removeClass('hover');
+		// loginHitArea
+		$loginHitArea.click(function(e) {
+			e.preventDefault();
+			showLoginForm();
+		});
+		$loginHitArea.mouseover(function(e) {
+			$loginButton.addClass('hover');
+		});
+		$loginHitArea.mouseout(function(e) {
+			$loginButton.removeClass();
+		});
+		$loginHitArea.mousedown(function(e) {
+			$loginButton.addClass('active');
+		});
+		$loginHitArea.mouseup(function(e) {
+			$loginButton.removeClass('active');
+		});
+
+		// guideHitArea
+		$guideHitArea.click(function(e) {
+			showSiteGuide();
+		});
+		$guideHitArea.mouseover(function(e) {
+			$guideButton.addClass('hover');
+		});
+		$guideHitArea.mouseout(function(e) {
+			$guideButton.removeClass();
+		});
+		$guideHitArea.mousedown(function(e) {
+			$guideButton.addClass('active');
+		});
+		$guideHitArea.mouseup(function(e) {
+			$guideButton.removeClass('active');
 		});
 
 		// login submit button: click
@@ -297,6 +324,11 @@
 				updatePassword($resetPasswordEmailField.val(), $resetPasswordCodeField.val(), $resetPasswordPasswordField.val());
 			}
 		});
+
+		// siteGuideBackdrop: click
+		$siteGuide.click(function(e) {
+			hideSiteGuide();
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -378,6 +410,9 @@
 
 		// show loading status
 		$loadingStatus.fadeIn();
+
+		// hide site guide
+		hideSiteGuide();
 
 		// focus search input field
 		$searchInput.focus();
@@ -504,6 +539,24 @@
 
 			// login new user
 			login_result(data, email);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* showSiteGuide -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var showSiteGuide = function() {
+
+		$siteGuide.show();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* hideSiteGuide -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var hideSiteGuide = function(item) {
+
+		if ($siteGuide.is(':visible')) {
+			$siteGuide.hide();
 		}
 	};
 

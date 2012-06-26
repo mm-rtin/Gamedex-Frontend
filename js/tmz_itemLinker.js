@@ -1,4 +1,4 @@
-// ItemLinker$
+// ItemLinker
 (function(ItemLinker, tmz, $, _) {
 	"use strict";
 
@@ -165,7 +165,7 @@
 	ItemLinker.findItemOnAlternateProvider = function(item, provider, onSuccess) {
 
 		switch (provider) {
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 
 				var searchName = item.standardName;
 
@@ -175,7 +175,7 @@
 				});
 				break;
 
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 
 
 				var browseNode = 0;
@@ -204,7 +204,7 @@
 		switch (provider) {
 
 			// amazon is provider > fetch from giantbomb
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 
 				// get item from giantbomb
 				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
@@ -213,7 +213,7 @@
 				break;
 
 			// giantbomb is provider > fetch from amazon
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 
 				// get item from amazon
 				Amazon.getAmazonItemDetail(item.asin, function(data) {

@@ -1559,17 +1559,6 @@ table .span24{
     background-position:-192px 0
 }
 
-.icon-th-large{
-    background-position:-216px 0
-}
-
-.icon-th{
-    background-position:-240px 0
-}
-
-.icon-th-list{
-    background-position:-264px 0
-}
 
 .icon-ok{
     background-position:-288px 0
@@ -1813,10 +1802,6 @@ table .span24{
 
 .icon-pause{
     background-position:-288px -72px
-}
-
-.icon-stop{
-    background-position:-312px -72px
 }
 
 .icon-forward{
@@ -4289,60 +4274,60 @@ a.label:hover,a.badge:hover{
     from{
         background-position:40px 0
     }
-    
+
     to{
         background-position:0 0
     }
-    
-    
+
+
 }
 
 @-moz-keyframes progress-bar-stripes{
     from{
         background-position:40px 0
     }
-    
+
     to{
         background-position:0 0
     }
-    
-    
+
+
 }
 
 @-ms-keyframes progress-bar-stripes{
     from{
         background-position:40px 0
     }
-    
+
     to{
         background-position:0 0
     }
-    
-    
+
+
 }
 
 @-o-keyframes progress-bar-stripes{
     from{
         background-position:0 0
     }
-    
+
     to{
         background-position:40px 0
     }
-    
-    
+
+
 }
 
 @keyframes progress-bar-stripes{
     from{
         background-position:40px 0
     }
-    
+
     to{
         background-position:0 0
     }
-    
-    
+
+
 }
 
 .progress{

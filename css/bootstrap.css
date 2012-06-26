@@ -265,3 +265,19 @@ audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([contr
 .popover-content p,.popover-content ul,.popover-content ol{
     margin-bottom:0
 }
+
+.icon-th-large{
+    background-position:-216px 0
+}
+
+.icon-th{
+    background-position:-240px 0
+}
+
+.icon-th-list{
+    background-position:-264px 0
+}
+
+.icon-stop{
+    background-position:-312px -72px
+}

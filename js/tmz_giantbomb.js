@@ -173,7 +173,7 @@
 		// find in giant bomb data cache first
 		var cachedItem = getCachedItem(gbombID);
 
-		// load cached gb data
+		// load cached gb data1
 		if (cachedItem) {
 
 			// return updated source item

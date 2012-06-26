@@ -461,6 +461,64 @@ input, select, textarea {
 	font-weight: 600;
 }
 
+
+/* COMPONENTS
+-----------------------------------------------------------*/
+
+/* SITE GUIDE
+-----------------------------------------------------------*/
+#siteGuide {
+	padding-left: 9px;
+	margin: 0 auto;
+	display: none;
+}
+
+#siteGuideContainer {
+	min-width: 974px;
+	max-width: 1518px;
+	margin: 0 .4166666666666667%;
+	z-index: 1040;
+	position: absolute;
+	width: 96%;
+	height: 500px;
+
+	.guide {
+		position: absolute;
+	}
+}
+#siteGuideBackdrop {
+	.opacity(.7);
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 1038;
+	background-color: #000000;
+}
+
+#guide1 {
+	background-image:  url('http://static.gamedex.net/images/guide1.png');
+	width: 240px;
+	height: 319px;
+	top: 79px;
+	left: 0%;
+}
+#guide2 {
+	background-image:  url('http://static.gamedex.net/images/guide2.png');
+	width: 197px;
+	height: 445px;
+	top: 38px;
+	left: 31%;
+}
+#guide3 {
+	background-image:  url('http://static.gamedex.net/images/guide3.png');
+	width: 265px;
+	height: 357px;
+	top: 39px;
+	left: 57%;
+}
+
 /* INFO HEADER
 -----------------------------------------------------------*/
 #infoHeader {
@@ -470,10 +528,13 @@ input, select, textarea {
 	height: 277px;
 	width: 100%;
 	margin-bottom: 8px;
+	position: relative;
+	z-index: 1039;
 
 	.infoHeaderContent {
 		margin: 0 auto;
 		max-width: 1647px;
+		height: 100%;
 	}
 }
 
@@ -547,16 +608,6 @@ input, select, textarea {
 	left: 45px;
 }
 
-#loginHitArea {
-	position: absolute;
-	cursor: pointer;
-	width: 117px;
-	height: 39px;
-	top: 32px;
-	left: 172px;
-	z-index: 10;
-}
-
 #signupHitArea {
 	position: absolute;
 	cursor: pointer;
@@ -566,7 +617,6 @@ input, select, textarea {
 	left: 25px;
 	z-index: 10;
 }
-
 #signupButton {
 	.signup_button();
 	position: absolute;
@@ -578,8 +628,20 @@ input, select, textarea {
 	&.hover {
 		.signup_button_over();
 	}
+	&.active {
+		.signup_button_down();
+	}
 }
 
+#loginHitArea {
+	position: absolute;
+	cursor: pointer;
+	width: 117px;
+	height: 39px;
+	top: 32px;
+	left: 172px;
+	z-index: 10;
+}
 #loginButton {
 	.login_button();
 	position: absolute;
@@ -590,6 +652,34 @@ input, select, textarea {
 
 	&.hover {
 		.login_button_over();
+	}
+	&.active {
+		.login_button_down();
+	}
+}
+
+#guideHitArea {
+	position: absolute;
+	cursor: pointer;
+	width: 120px;
+	height: 39px;
+	top: 81px;
+	left: 42px;
+	z-index: 10;
+}
+#guideButton {
+	.guide_button();
+	position: absolute;
+	width: 169px;
+	height: 86px;
+	top: 56px;
+	left: 17px;
+
+	&.hover {
+		.guide_button_over();
+	}
+	&.active {
+		.guide_button_down();
 	}
 }
 
@@ -916,7 +1006,7 @@ input, select, textarea {
 .loadingStatus {
 	display: none;
 	background-image:  url('http://d2sifwlm28j6up.cloudfront.net/loading_bar.gif');
-	margin: 0px auto;
+	margin: 5px auto;
 	width: 48px;
 	height: 48px;
 }
@@ -1019,10 +1109,15 @@ input, select, textarea {
 	text-align: center;
 }
 
-.nano .content      { padding: 10px; }
-.nano .pane         { background: #444; }
-.nano .pane .slider { background: #111; }
-
+.nano .content {
+	padding: 0px 10px 0px 0px;
+}
+.nano .pane {
+	background: #444;
+}
+.nano .pane .slider {
+	background: #111;
+}
 
 /* VIDEO MODAL
 -----------------------------------------------------------*/
@@ -1210,7 +1305,7 @@ input, select, textarea {
 	margin-right: -8px;
 	position: relative;
 
-	div {
+	a {
 		cursor: pointer;
 		display: inline-block;
 		position: relative;
@@ -1220,7 +1315,6 @@ input, select, textarea {
 		&:hover {
 			background-position: 3px 4px;
 		}
-
 		&.active {
 			background-position: 0px 0px;
 		}
@@ -1231,6 +1325,9 @@ input, select, textarea {
 		left: 0px;
 
 		&:hover {
+			.display_1_button_active2();
+		}
+		&:active {
 			.display_1_button_hover();
 		}
 		&.active {
@@ -1241,6 +1338,9 @@ input, select, textarea {
 		.display_2_button();
 		left: -9px;
 		&:hover {
+			.display_2_button_active2();
+		}
+		&:active {
 			.display_2_button_hover();
 		}
 		&.active {
@@ -1251,6 +1351,9 @@ input, select, textarea {
 		.display_3_button();
 		left: -18px;
 		&:hover {
+			.display_3_button_active2();
+		}
+		&:active {
 			.display_3_button_hover();
 		}
 		&.active {
@@ -1313,6 +1416,9 @@ input, select, textarea {
 	height: 37px;
 
 	&:hover {
+		.search_button_active();
+	}
+	&:active {
 		.search_button_over();
 	}
 }
@@ -1613,7 +1719,7 @@ input, select, textarea {
 
 	.itemDetailThumbnail {
 		margin: 5px 2px 10px 2px;
-		min-height: 320px;
+		min-height: 335px;
 		position: relative;
 
 		img {
@@ -1625,6 +1731,7 @@ input, select, textarea {
 	.itemDetailInfo {
 		.boxShadow(.2);
 		.borderRadius(4px);
+		background-color: #ffffff;
 		background-color: rgba(255, 255, 255, 0.96);
 		display: none;
 		position: absolute;
@@ -1643,6 +1750,9 @@ input, select, textarea {
 		height: 37px;
 
 		&:hover {
+			.videos_button_active();
+		}
+		&:active {
 			.videos_button_over();
 		}
 
@@ -1663,6 +1773,9 @@ input, select, textarea {
 		height: 37px;
 
 		&:hover {
+			.discussion_button_active();
+		}
+		&:active {
 			.discussion_button_over();
 		}
 
@@ -1728,15 +1841,21 @@ input, select, textarea {
 	}
 
 	.form-horizontal .control-label {
-		width: 33%;
+		width: 27%;
 	}
 	.form-horizontal .controls {
-		margin-left: 38%;
+		margin-left: 32%;
 	}
 	.form-horizontal .form-actions {
 		padding-left: 100px;
 	}
 
+	#playStatus {
+		height: 28px;
+	}
+	#gameStatus {
+		height: 28px;
+	}
 	#userRating {
 		float: left;
 		margin-right: 10px;
@@ -1755,6 +1874,9 @@ input, select, textarea {
 	height: 37px;
 
 	&:hover {
+		.add_button_active();
+	}
+	&:active {
 		.add_button_over();
 	}
 }
@@ -1766,6 +1888,9 @@ input, select, textarea {
 	height: 37px;
 
 	&:hover {
+		.save_button_active();
+	}
+	&:active {
 		.save_button_over();
 	}
 }
@@ -1868,6 +1993,9 @@ input, select, textarea {
 	height: 37px;
 
 	&:hover {
+		.edit_button_active();
+	}
+	&:active {
 		.edit_button_over();
 	}
 }
@@ -1882,7 +2010,6 @@ input, select, textarea {
 			}
 			.deleteItem_btn {
 				visibility: visible;
-				.opacity(1);
 			}
 		}
 	}
@@ -1968,59 +2095,63 @@ input, select, textarea {
 			display: inline-block;
 		}
 		a {
-			.opacity(.6);
 			display: inline-block;
 			width: 31px;
 			height: 29px;
 			background-position: -3px;
 			margin-right: -3px;
-
-			&:hover {
-				.opacity(1);
-			}
 		}
 
 		/* quick icon buttons */
 		.attrPlaying {
 			.quick_playing_button();
+			&:hover {
+				.quick_playing_button_over();
+			}
 		}
 		.attrPlayed {
 			.quick_played_button();
+			&:hover {
+				.quick_played_button_over();
+			}
 		}
 		.attrFinished {
 			.quick_finished_button();
+			&:hover {
+				.quick_finished_button_over();
+			}
 		}
 		.attrFavorite {
 			.quick_heart_button();
+			&:hover {
+				.quick_heart_button_over();
+			}
 		}
 		.attrOwned {
 			.quick_owned_button();
+			&:hover {
+				.quick_owned_button_over();
+			}
 		}
 
 		/* quick icon buttons: selected*/
 		.playStatus-1 .attrPlaying {
-			.opacity(1);
 			.quick_playing_button_active();
 		}
 		.playStatus-2 .attrPlayed {
-			.opacity(1);
 			.quick_played_button_active();
 		}
 		.playStatus-3 .attrFinished {
-			.opacity(1);
 			.quick_finished_button_active();
 		}
 		.rating-10 .attrFavorite {
-			.opacity(1);
 			.quick_heart_button_active();
 		}
 		.gameStatus-1 .attrOwned {
-			.opacity(1);
 			.quick_owned_button_active();
 		}
 	}
 	.deleteItem_btn {
-		.opacity(0);
 		.delete_button();
 		display: inline-block;
 		visibility: hidden;
@@ -2130,18 +2261,23 @@ input, select, textarea {
 	height: 37px;
 
 	&:hover {
+		.grid_view_button_active();
+	}
+	&:active {
 		.grid_view_button_over();
 	}
 }
 
 #showCollection_btn {
-	float: left;
-	.back_button2();
+	.back_button_alt();
 	width: 81px;
 	height: 37px;
 
 	&:hover {
-		.back_button2_over();
+		.back_button_alt_active();
+	}
+	&:active {
+		.back_button_alt_over();
 	}
 }
 

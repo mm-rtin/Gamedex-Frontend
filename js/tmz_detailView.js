@@ -19,7 +19,7 @@
 		TAB_IDS = ['#amazonTab', '#giantBombTab'],
 		GAME_STATUS = {0: 'None', 1: 'Own', 2: 'Sold', 3: 'Wanted'},
 		PLAY_STATUS = {0: 'Not Started', 1: 'Playing', 2: 'Played', 3: 'Finished'},
-		ITEM_TYPES = {'new': 0, 'existing': 1},
+		ITEM_TYPES = {'NEW': 0, 'EXISTING': 1},
 
 		// properties
 		hasRendered = false,
@@ -28,7 +28,7 @@
 		currentTab = TAB_IDS[0],
 		currentID = null,
 		currentItemHasVideo = false,
-		itemType = ITEM_TYPES['new'],
+		itemType = ITEM_TYPES.NEW,
 
 		// timeout
 		itemDetailInfoTimeOut = null,
@@ -37,6 +37,10 @@
 		firstItem = {},			// current item data (first)
 		secondItem = {},		// current item data (second)
 		itemAttributes = {},	// current item attributes
+
+		// ajax requests
+		metascoreRequest = null,
+		addItemToTagRequest = null,
 
 		// node cache
 		$detailTabContent = $('#detailTabContent'),
@@ -119,7 +123,7 @@
 			e.preventDefault();
 			e.stopPropagation();
 
-			showTab(Utilities.getProviders().Amazon);
+			showTab(Utilities.SEARCH_PROVIDERS.Amazon);
 		});
 
 		// giantBombTabLink: click
@@ -127,7 +131,7 @@
 			e.preventDefault();
 			e.stopPropagation();
 
-			showTab(Utilities.getProviders().GiantBomb);
+			showTab(Utilities.SEARCH_PROVIDERS.GiantBomb);
 		});
 
 		// showVideoButton: click
@@ -315,8 +319,8 @@
 		// hide information until update query returns
 		hideAsynchronousDetailAttributes();
 
-		// existing item - list add button renamed to ITEM_TYPES['existing']
-		setItemType(ITEM_TYPES['existing']);
+		// existing item - list add button renamed to ITEM_TYPES.EXISTING
+		setItemType(ITEM_TYPES.EXISTING);
 
 		// clone object as firstItem
 		firstItem = $.extend(true, {}, item);
@@ -385,7 +389,7 @@
 		// reset add list
 		TagView.resetAddList();
 
-		setItemType(ITEM_TYPES['new']);
+		setItemType(ITEM_TYPES.NEW);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -412,11 +416,11 @@
 
 			// extend firstItem with second provider 3rd party id
 			switch (provider) {
-				case Utilities.getProviders().Amazon:
+				case Utilities.SEARCH_PROVIDERS.Amazon:
 					firstItem.asin = secondItem.asin;
 					break;
 
-				case Utilities.getProviders().GiantBomb:
+				case Utilities.SEARCH_PROVIDERS.GiantBomb:
 					firstItem.gbombID = secondItem.gbombID;
 					break;
 			}
@@ -530,12 +534,12 @@
 		}
 
 		switch (provider) {
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 
 				renderTabDetail(item, $amazonTab);
 				break;
 
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 
 				renderTabDetail(item, $giantBombTab);
 				break;
@@ -567,10 +571,13 @@
 		}
 
 		// fetch metascore
-		Metacritic.getMetascore(title, item, fromSearch, function(item) {
+		metascoreRequest = Metacritic.getMetascore(title, item, fromSearch, getMetascore_result);
+
+		// get metascore result
+		function getMetascore_result(item) {
 
 			// ignore results which do not match currently viewing item
-			if (currentID === item.id) {
+			if (currentID === item.id || currentID === item.asin || currentID === item.gbombID) {
 
 				// show metascore on each tab
 				for (var i = 0, len = TAB_IDS.length; i < len; i++) {
@@ -585,7 +592,7 @@
 					$metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
 				}
 			}
-		});
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -604,12 +611,12 @@
 
 		switch (provider) {
 			// amazon price details
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 				Amazon.getAmazonItemOffers(item.asin, item, amazonItemOffers_result);
 				break;
 
 			// giantbomb detail
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 				GiantBomb.getGiantBombItemData(item.gbombID, giantBombItemData_result);
 				break;
 		}
@@ -685,13 +692,13 @@
 	var showTab = function(provider) {
 
 		switch (provider) {
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 				// attach detailContainer to item detail info
 				$amazonItemDetailInfo.append($detailContainer);
 				$amazonTabLink.tab('show');
 				break;
 
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 				// attach detailContainer to item detail info
 				$giantbombItemDetailInfo.append($detailContainer);
 				$giantBombTabLink.tab('show');
@@ -719,11 +726,11 @@
 	var clearSecondItemModel = function(provider) {
 
 		switch (provider) {
-			case Utilities.getProviders().Amazon:
+			case Utilities.SEARCH_PROVIDERS.Amazon:
 				clearDetail($giantBombTab);
 				break;
 
-			case Utilities.getProviders().GiantBomb:
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 				clearDetail($amazonTab);
 				break;
 		}
@@ -738,11 +745,11 @@
 
 		// amazon data found
 		if (asin !== 0) {
-			provider = Utilities.getProviders().Amazon;
+			provider = Utilities.SEARCH_PROVIDERS.Amazon;
 
 		// giantbomb data found
 		} else if (gbombID !== 0) {
-			provider = Utilities.getProviders().GiantBomb;
+			provider = Utilities.SEARCH_PROVIDERS.GiantBomb;
 		}
 
 		return provider;
@@ -754,16 +761,16 @@
 	var setItemType = function(type) {
 
 		// item exists with tags
-		if (type === ITEM_TYPES['existing']) {
+		if (type === ITEM_TYPES.EXISTING) {
 
-			itemType = ITEM_TYPES['existing'];
+			itemType = ITEM_TYPES.EXISTING;
 			$addItemButton.hide();
 			$saveItemButton.hide();
 
 		// new item with no current tags
-		} else if (type === ITEM_TYPES['new']) {
+		} else if (type === ITEM_TYPES.NEW) {
 
-			itemType = ITEM_TYPES['new'];
+			itemType = ITEM_TYPES.NEW;
 			$saveItemButton.hide();
 			$addItemButton.show();
 		}
@@ -777,7 +784,7 @@
 		// exisiting item with tags
 		if (itemData && itemData.tagCount > 0) {
 
-			setItemType(ITEM_TYPES['existing']);
+			setItemType(ITEM_TYPES.EXISTING);
 
 			// update itemID
 			sourceItem.itemID = itemData.itemID;
@@ -787,7 +794,7 @@
 
 		// new item - set user tags
 		} else {
-			setItemType(ITEM_TYPES['new']);
+			setItemType(ITEM_TYPES.NEW);
 
 			// set user saved tags for new items
 			TagView.selectUserTags();
@@ -850,7 +857,7 @@
 
 		// add tags
 		if (tagsToAdd.length > 0) {
-			ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
+			addItemToTagRequest = ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
 		}
 
 		// delete tags
@@ -858,8 +865,47 @@
 			ItemData.deleteTagsForItem(idsToDelete, tagsToDelete, item, deleteTagsForItem_result);
 		}
 
+		// check if saving without async data (metacritic, linked item) - if so, update
+		updateAsyncData(item);
+
 		// update save item button
 		updateSaveItemButton();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateAsyncData - update item with data loaded asynchronously if not available at time of item save
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateAsyncData = function(item) {
+
+		// check for metascore data
+		if (_.isUndefined(item.metascore) || item.metascore === null) {
+
+			// deferreds: wait for metascore and add item to tag requests
+			$.when(metascoreRequest, addItemToTagRequest).then(
+
+				// all ajax requests returned
+				function() {
+
+					// update metacritic data for item
+					ItemData.updateMetacritic(firstItem);
+
+					// refresh itemView
+					ItemView.refreshView();
+				},
+				function() {
+
+				}
+			);
+		}
+
+		// amazon provider - giantbomb not linked
+		if (currentProvider === Utilities.SEARCH_PROVIDERS.Amazon && item.gbombID === 0) {
+			console.info('giantbomb not linked');
+
+		// giantbomb provider - amazon not linked
+		} else if (currentProvider === Utilities.SEARCH_PROVIDERS.Amazon && item.asin === 0) {
+			console.info('amazon not linked');
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -868,7 +914,7 @@
 	var saveAttributes = function(item) {
 
 		// if attributes changed: update user item
-		if (isAttributesDirty() && itemType === ITEM_TYPES['existing']) {
+		if (isAttributesDirty() && itemType === ITEM_TYPES.EXISTING) {
 			ItemData.updateUserItem(item, updateItem_result);
 		}
 	};
@@ -898,8 +944,8 @@
 		var initialItemTags = TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
 
 		// if new item - set to existing item
-		if (itemType !== ITEM_TYPES['existing']) {
-			setItemType(ITEM_TYPES['existing']);
+		if (itemType !== ITEM_TYPES.EXISTING) {
+			setItemType(ITEM_TYPES.EXISTING);
 		}
 
 		// update firstItem with returned data
@@ -948,10 +994,10 @@
 		if (hasRendered && !e.reset) {
 
 			// save userSetTags
-			if (itemType === ITEM_TYPES['new']) {
+			if (itemType === ITEM_TYPES.NEW) {
 
 				// populate user set tags from current tag selection
-				TagView.populateUserTags();
+				TagView.updateUserTags();
 			}
 
 			// update button
@@ -965,7 +1011,7 @@
 	var updateSaveItemButton = function() {
 
 		// if addList changed and existing item
-		if (itemType === ITEM_TYPES.existing && TagView.isAddListChanged()) {
+		if (itemType === ITEM_TYPES.EXISTING && TagView.isAddListChanged()) {
 			$saveItemButton.fadeIn();
 		} else {
 			$saveItemButton.fadeOut();

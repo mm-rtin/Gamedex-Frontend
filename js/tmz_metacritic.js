@@ -25,6 +25,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metacritic.getMetascore = function(searchTerms, sourceItem, fromSearch, onSuccess) {
 
+		var ajax = null;
+
 		// find in cache first
 		var cachedScore = getCachedMetascore(sourceItem.asin, sourceItem.gbombID, sourceItem.platform);
 
@@ -58,40 +60,44 @@
 					'platform': encodeURI(sourceItem.platform)
 				};
 
-				$.ajax({
-					url: METACRITIC_SEARCH_URL,
-					type: 'GET',
-					data: requestData,
-					cache: true,
-					success: function(data) {
+				ajax = $.ajax({
+						url: METACRITIC_SEARCH_URL,
+						type: 'GET',
+						data: requestData,
+						cache: true,
+						success: function(data) {
 
-						// save values before updated with current info
-						var previousMetascore = sourceItem.metascore;
+							// save values before updated with current info
+							var previousMetascore = sourceItem.metascore;
 
-						// parse result > modify sourceItem
-						parseMetascoreResults(cleanedSearchTerms, data, sourceItem);
+							// parse result > modify sourceItem
+							var result = parseMetascoreResults(cleanedSearchTerms, data, sourceItem);
 
-						// check if source item score or page differs from return score/page
-						if (!fromSearch && sourceItem.metascore != previousMetascore) {
+							// add results to sourceItem
+							addMetascoreDatatoItem(result, sourceItem);
 
-							// update metacritic data for source item record
-							ItemData.updateMetacritic(sourceItem);
+							// check if source item score or page differs from return score/page
+							if (!fromSearch && sourceItem.metascore != previousMetascore) {
+								// update metacritic data for source item record
+								ItemData.updateMetacritic(sourceItem);
+							}
+
+							// iterate queued return methods
+							_.each(getMetascoreQueue[queueKey], function(successMethod) {
+								// add to local cache
+								addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, sourceItem.platform, sourceItem);
+								// return data
+								successMethod(sourceItem);
+							});
+
+							// empty queue
+							getMetascoreQueue[queueKey] = [];
 						}
-
-						// iterate queued return methods
-						_.each(getMetascoreQueue[queueKey], function(successMethod) {
-							// add to local cache
-							addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, sourceItem.platform, sourceItem);
-							// return data
-							successMethod(sourceItem);
-						});
-
-						// empty queue
-						getMetascoreQueue[queueKey] = [];
-					}
-				});
+					});
 			}
 		}
+
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,7 +134,6 @@
 		// activate tooltip
 		$metascoreContainer.tooltip({placement: 'left'});
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* cleanupMetacriticSearchTerms -
@@ -204,6 +209,14 @@
 
 			result = data;
 		}
+
+		return result;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addMetascoreDatatoItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addMetascoreDatatoItem = function(result, sourceItem) {
 
 		// add/update metascore data to sourceItem
 		if (result && result.metascore !== '') {

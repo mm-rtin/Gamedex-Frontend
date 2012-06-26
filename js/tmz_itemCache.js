@@ -8,7 +8,7 @@
 		Utilities = tmz.module('utilities'),
 
 		// constants
-		VIEW_ALL_TAG_ID = Utilities.getViewAllTagID(),
+		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
 
 		// data
 
@@ -33,6 +33,7 @@
 		} else {
 			cachedItems = getStoredItemsByTag(tagID);
 		}
+
 		return cachedItems;
 	};
 
