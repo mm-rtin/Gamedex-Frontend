@@ -12,7 +12,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	ItemLinker.standardizeTitle = function(title) {
 
-		var sanitizedName = '';
+		var sanitizedName = title;
 		var re = null;
 		var reRoman = null;
 
@@ -23,17 +23,18 @@
 		var num = 0;
 		var arr = null;
 
-		// remove word that appears before 'edition'
-		sanitizedName = title.replace(/\S+ edition$/gi, '');
-		// remove brackets and parenthesis
-		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
-
 		// remove words appearing after '-' unless it is less than 4 chars
 		re = new RegExp('\\s*-.*', 'gi');
 		match = re.exec(sanitizedName);
+
 		if (match && match[0].length > 3) {
 			sanitizedName = sanitizedName.replace(re, '');
 		}
+
+		// remove word that appears before 'edition'
+		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
+		// remove brackets and parenthesis
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
 
 		// remove words appearing after 'with'
 		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
@@ -76,6 +77,7 @@
 
 		// exact release date check
 		if (typeof searchItem.releaseDate !== 'undefined') {
+
 			if (sourceItem.releaseDate === searchItem.releaseDate) {
 				score += 10;
 

@@ -23,45 +23,11 @@ var tmz = {
 // set application properties
 tmz.api = '/';
 
-/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * DOCUMENT READY
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-$(document).ready(function() {
-
-	// intialize app
-	tmz.initialize();
-});
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initialize
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 tmz.initialize = function() {
-
-	// module references
-	tmz.util = tmz.module('utilities');
-	tmz.filterPanel = tmz.module('filterPanel');
-	tmz.storage = tmz.module('storage');
-
-	// models
-	tmz.user = tmz.module('user');
-	tmz.tagView = tmz.module('tagView');
-
-	// data interfaces
-	tmz.itemData = tmz.module('itemData');
-	tmz.tagData = tmz.module('tagData');
-	tmz.Amazon = tmz.module('amazon');
-
-	// views
-	tmz.searchView = tmz.module('searchView');
-	tmz.siteView = tmz.module('siteView');
-	tmz.detailView = tmz.module('detailView');
-	tmz.itemView = tmz.module('itemView');
-	tmz.gridView = tmz.module('gridView');
-
-	tmz.videoPanel = tmz.module('videoPanel');
-
-	// linkers
-	tmz.itemLinker = tmz.module('itemLinker');
 
 	// 3rd party libaries
 	tmz.initializeLibraries();
@@ -99,27 +65,23 @@ tmz.initializeLibraries = function() {
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 tmz.initializeModules = function() {
 
-	// SEARCH PANEL
-	tmz.searchView.init();
+	// module references
+	var searchView = tmz.module('searchView'),
+		detailView = tmz.module('detailView'),
+		itemView = tmz.module('itemView'),
+		tagView = tmz.module('tagView'),
+		gridView = tmz.module('gridView'),
+		filterPanel = tmz.module('filterPanel'),
+		videoPanel = tmz.module('videoPanel'),
+		siteView = tmz.module('siteView');
 
-	// DETAILS PANEL
-	tmz.detailView.init();
-
-	// ITEM PANEL
-	tmz.itemView.init();
-
-	// TAG VIEW
-	tmz.tagView.init();
-
-	// GRID VIEW
-	tmz.gridView.init();
-
-	// FILTER PANEL
-	tmz.filterPanel.init();
-
-	// VIDEO PANEL
-	tmz.videoPanel.init();
-
-	// SITE VIEW
-	tmz.siteView.init();
+	// initialize modules
+	searchView.init();
+	detailView.init();
+	itemView.init();
+	tagView.init();
+	gridView.init();
+	filterPanel.init();
+	videoPanel.init();
+	siteView.init();
 };

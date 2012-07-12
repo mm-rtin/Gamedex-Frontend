@@ -13,6 +13,7 @@
 		Metacritic = tmz.module('metacritic'),
 		GiantBomb = tmz.module('giantbomb'),
 		Wikipedia = tmz.module('wikipedia'),
+		GameTrailers = tmz.module('gameTrailers'),
 		VideoPanel = tmz.module('videoPanel'),
 
 		// constants
@@ -24,7 +25,6 @@
 		// properties
 		hasRendered = false,
 		currentProvider = null,
-		saveInProgress = false,
 		currentTab = TAB_IDS[0],
 		currentID = null,
 		currentItemHasVideo = false,
@@ -67,6 +67,7 @@
 		$platform = $('#platform'),
 		$releaseDate = $('#releaseDate'),
 		$wikipediaPage = $('#wikipediaPage'),
+		$gametrailersPage = $('#gametrailersPage'),
 		$giantBombPage = $('#giantBombPage'),
 		$metacriticPage = $('#metacriticPage'),
 
@@ -262,6 +263,9 @@
 		// only view item detail if new item or platform for item has changed
 		if (searchItem.id !== firstItem.id || searchItem.platform !== firstItem.platform) {
 
+			// reset videos
+			resetVideos();
+
 			// hide information until update query returns
 			hideAsynchronousDetailAttributes();
 
@@ -302,12 +306,11 @@
 			// load user attributes
 			loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
-			// get wikipedia / metacritic data
-			Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
-			getMetascore(firstItem.standardName, firstItem, true);
+			// load third party data
+			loadThirdPartyData(firstItem);
 
 			// call main view detail method
-			viewSearchDetail(firstItem, currentProvider, 0);
+			completeSearchItemDetail(firstItem, currentProvider, 0);
 		}
     };
 
@@ -315,6 +318,9 @@
 	* viewItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	DetailView.viewItemDetail = function(item) {
+
+		// reset videos
+		resetVideos();
 
 		// hide information until update query returns
 		hideAsynchronousDetailAttributes();
@@ -353,9 +359,8 @@
 		// display attributes
 		loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
-		// get wikipedia / metacritic data
-		Wikipedia.getWikipediaPage(firstItem.standardName, firstItem, displayWikipediaAttribute);
-		getMetascore(firstItem.standardName, firstItem, false);
+		// load third party data
+		loadThirdPartyData(firstItem);
 
 		// finish tasks for viewing items
 		completeViewItemDetail(firstItem, currentProvider, 0, item);
@@ -401,6 +406,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loadThirdPartyData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var loadThirdPartyData = function(item) {
+	
+		// get wikipedia page
+		Wikipedia.getWikipediaPage(item.standardName, item, displayWikipediaPage);
+
+		// get metascore
+		getMetascore(item.standardName, item, false);
+
+		// get gametrailers page
+		GameTrailers.getGametrailersPage(item.standardName, item, displayGametrailersPage);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewSecondSearchItemDetail -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var viewSecondSearchItemDetail = function(searchItem, linkedID) {
@@ -426,14 +446,14 @@
 			}
 
 			// call main view detail method
-			viewSearchDetail(secondItem, provider, 1);
+			completeSearchItemDetail(secondItem, provider, 1);
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* viewSearchDetail
+	* completeSearchItemDetail
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewSearchDetail = function(item, provider, detailPhase) {
+	var completeSearchItemDetail = function(item, provider, detailPhase) {
 
 		// update model item for provider
 		renderDetail(provider, item);
@@ -533,14 +553,13 @@
 			hasRendered = true;
 		}
 
+		// render tab based on current provider
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
-
 				renderTabDetail(item, $amazonTab);
 				break;
 
 			case Utilities.SEARCH_PROVIDERS.GiantBomb:
-
 				renderTabDetail(item, $giantBombTab);
 				break;
 		}
@@ -553,7 +572,7 @@
 
 		// clear detail
 		$tab.find('.itemDetailTitle h3').text('No Match found');
-		$tab.find('img').attr('src', 'http://static.t-minuszero.com/images/no_selection_placeholder.png');
+		$tab.find('img').attr('src', 'http://d2sifwlm28j6up.cloudfront.net/no_selection_placeholder.png');
     };
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -596,12 +615,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayWikipediaAttribute -
+	* displayWikipediaPage -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var displayWikipediaAttribute = function(wikipediaURL) {
+	var displayWikipediaPage = function(wikipediaURL) {
 
 		$wikipediaPage.show();
 		$wikipediaPage.find('a').attr('href', wikipediaURL);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* displayGametrailersPage -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var displayGametrailersPage = function(gametrailersURL) {
+
+		$gametrailersPage.show();
+		$gametrailersPage.find('a').attr('href', gametrailersURL);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -661,29 +689,33 @@
 		$giantBombPage.find('a').attr('href', itemDetail.site_detail_url);
 
 		// video config
-		configureVideos(itemDetail.videos);
+		configureVideos(itemDetail.videos, firstItem.name);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* configureVideos -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var configureVideos = function(giantbombVideos) {
+	var configureVideos = function(giantbombVideos, itemName) {
 
 		// has giantbombVideos
 		if (giantbombVideos.length !== 0) {
 			// render video results
-			VideoPanel.renderVideoModal(giantbombVideos);
+			VideoPanel.renderVideoModal(giantbombVideos, itemName);
 
 			currentItemHasVideo = true;
 			$showVideoButton.removeClass('noVideos');
 			$showVideoButton.find('span').text('Show Videos');
-
-		// no giantbombVideos
-		} else {
-			currentItemHasVideo = false;
-			$showVideoButton.addClass('noVideos');
-			$showVideoButton.find('span').text('No Videos');
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* resetVideos -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var resetVideos = function(item) {
+		
+		currentItemHasVideo = false;
+		$showVideoButton.addClass('noVideos');
+		$showVideoButton.find('span').text('No Videos');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -900,11 +932,11 @@
 
 		// amazon provider - giantbomb not linked
 		if (currentProvider === Utilities.SEARCH_PROVIDERS.Amazon && item.gbombID === 0) {
-			console.info('giantbomb not linked');
+
 
 		// giantbomb provider - amazon not linked
 		} else if (currentProvider === Utilities.SEARCH_PROVIDERS.Amazon && item.asin === 0) {
-			console.info('amazon not linked');
+
 		}
 	};
 

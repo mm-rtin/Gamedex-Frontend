@@ -26,6 +26,7 @@
 		$videoListContainer = $('#videoListContainer'),
 		$videoList = $('#videoList'),
 		$videoPlayer = $('#videoPlayer'),
+		$videoModalTitle = $('#videoModalTitle'),
 		$videoListNavigation = $('#videoListNavigation'),
 		$navigateLeft = $videoListNavigation.find('.navigateLeft'),
 		$navigateRight = $videoListNavigation.find('.navigateRight'),
@@ -98,7 +99,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* renderVideoModal -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	VideoPanel.renderVideoModal = function(videoResults) {
+	VideoPanel.renderVideoModal = function(videoResults, itemName) {
 
 		currentVideos = $.extend(true, [], videoResults);
 
@@ -119,6 +120,9 @@
 
 			// render video list
 			$videoList.html(videoResultsTemplate(templateData));
+
+			// set video game name
+			$videoModalTitle.text(itemName);
 
 			// update video source
 			changeVideoSource(0);

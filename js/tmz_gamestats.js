@@ -7,7 +7,7 @@
 	// properties
 
 	// REST URL
-	var POPULAR_LIST_URL = tmz.api + 'popularlist/',
+	var POPULAR_LIST_URL = tmz.api + 'list/popular/',
 
 		// data
 		gameStatsListCache = {};

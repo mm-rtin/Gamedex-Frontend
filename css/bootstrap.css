@@ -281,3 +281,10 @@ audio,canvas,video{display:inline-block;*display:inline;*zoom:1}audio:not([contr
 .icon-stop{
     background-position:-312px -72px
 }
+.icon-leaf{
+    background-position:-48px -120px
+}
+
+.icon-film{
+    background-position:-192px 0
+}

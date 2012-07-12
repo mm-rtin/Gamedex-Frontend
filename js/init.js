@@ -1,0 +1,2 @@
+	// intialize app
+	tmz.initialize();

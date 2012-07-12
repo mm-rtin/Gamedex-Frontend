@@ -1,5 +1,5 @@
 // SEARCH VIEW
-(function(SearchView, tmz, $, _) {
+(function(SearchView, tmz, $, _, moment, ListJS) {
 	"use strict";
 
 	// module references
@@ -9,16 +9,17 @@
 		Utilities = tmz.module('utilities'),
 		GameStats = tmz.module('gameStats'),
 		IGN = tmz.module('ign'),
+		ReleasedList = tmz.module('releasedList'),
 		ItemLinker = tmz.module('itemLinker'),
 
 		// constants
-		LIST_PROVIDERS = {'Gamestats': 0, 'IGN': 1},
+		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
 		TIME_TO_SUBMIT_QUERY = 250,								// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 493,
-		PANEL_HEIGHT_PADDING_MAX = 40,
+		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
 
 		// timeout
@@ -31,22 +32,32 @@
 
 		// properties
 		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon,
-		listProvider = LIST_PROVIDERS.IGN,
+		listType = null,
 		currentTab = TAB_IDS['#searchTab'],
+		searchTabScrollPosition = 0,
+		listTabScrollPosition = 0,
 		searchPlatform = null,
 		listPlatform = null,
 		searchDisplayType = DISPLAY_TYPE.Icons,
 		listDisplayType = DISPLAY_TYPE.Icons,
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
+		scrollSaved = false,
+
+		// list
+		itemList = null,
+		listOptions = {
+			valueNames: ['itemName', 'releaseDate'],
+			item: 'list-item'
+		},
 
 		// node cache
 		$searchContainer = $('#searchContainer'),
 
 		$searchViewMenu = $('#searchViewMenu'),
 		$searchProvider = $('#searchProvider'),
-		$listProvider = $('#listProvider'),
+		$listType = $('#listType'),
 		$searchProviderName = $searchProvider.find('.providerName'),
-		$listProviderName = $listProvider.find('.providerName'),
+		$listTypeName = $listType.find('.listTypeName'),
 
 		$searchPlatforms = $('#searchPlatforms'),
 		$legacySubNav = $('#legacySubNav'),
@@ -67,10 +78,13 @@
 		$clearSearchButton = $('#clearSearch_btn'),
 		$clearSearchIcon = $clearSearchButton.find('i'),
 		$searchResultsContainer = $('#searchResultsContainer'),
+		$searchResultsContent = $searchResultsContainer.find('.content'),
+
 		$searchResults = $('#searchResults'),
 		$inputField = $search.find('input'),
 
 		$listResultsContainer = $('#listResultsContainer'),
+		$listResultsContent = $listResultsContainer.find('.content'),
 		$listResults = $('#listResults'),
 		$listTable = $listResults.find('.list'),
 
@@ -109,8 +123,20 @@
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
-		// set nanoscroll
+		// initialize nanoscroll
+		var nanoScrollOptions = {
+			sliderMinHeight: 20,
+			iOSNativeScrolling: true,
+			preventPageScrolling: true
+		};
+		$searchResultsContainer.nanoScroller(nanoScrollOptions);
+		$listResultsContainer.nanoScroller(nanoScrollOptions);
+
+		// update nanoscroll periodically
 		setInterval(function() {
+
+			saveNanoscrollPositions();
+
 			$searchResultsContainer.nanoScroller();
 			$listResultsContainer.nanoScroller();
 		}, 1500);
@@ -159,12 +185,12 @@
 			});
 		});
 
-		// listProvider: change
-		$listProvider.find('li a').click(function(e) {
+		// listType: change
+		$listType.find('li a').click(function(e) {
 			e.preventDefault();
 			// set attribute
-			$listProvider.attr('data-content', $(this).attr('data-content'));
-			listProviderChanged();
+			$listType.attr('data-content', $(this).attr('data-content'));
+			listTypeChanged();
 		});
 
 		// listPlatforms: change
@@ -200,8 +226,8 @@
 		$listDisplayOptions.on('click', 'a', function(e) {
 			e.preventDefault();
 
-			// only allow changes for provider which has multiple views (IGN - upcoming games)
-			if (listProvider == LIST_PROVIDERS.IGN) {
+			// only allow changes for provider which has multiple views (upcoming/released games)
+			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED) {
 				changeDisplayType($(this).attr('data-content'));
 			}
 		});
@@ -257,7 +283,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* renderListResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.renderListResults = function(items) {
+	SearchView.renderListResults = function(items, order) {
 
 		// hide loading status
 		$listLoadingStatus.stop().hide();
@@ -267,6 +293,16 @@
 
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
+
+		// update list.js for item list
+		itemList = new ListJS('listResultsContainer', listOptions);
+
+		// sort using current sort method
+		if (order === 'asc') {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortAsc});
+		} else {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -325,7 +361,7 @@
 		$listTable.empty();
 
 		// get popular games
-		GameStats.getPopularGamesListByPlatform(platform.gamestats, getGamestatsPopularityList_result);
+		GameStats.getPopularGamesListByPlatform(platform.gamestats, getList_result);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -339,14 +375,43 @@
 		$listTable.empty();
 
 		// get upcoming games (page 1)
-		IGN.getUpcomingGames(platform.ign, 0, function(data) {
+		IGN.getUpcomingGames(platform.ign, 0, listResult);
 
-			// parse page 0 result
-			getIGNUpcomingList_result(data);
+		// get upcoming games (page 2)
+		IGN.getUpcomingGames(platform.ign, 1, listResult);
 
-			// get upcoming games (page 2)
-			IGN.getUpcomingGames(platform.ign, 1, getIGNUpcomingList_result);
-		});
+		function listResult(data) {
+			getList_result(data, 'asc', LIST_TYPE.UPCOMING);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getReleasedList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.getReleasedList = function(platform) {
+
+		var numberOfWeeks = 12;
+
+		$listLoadingStatus.fadeIn();
+
+		// clear listTable
+		$listTable.empty();
+
+		// get current date (start of week)
+		var startWeek = moment().day(0);
+
+		// get released games
+		// get up to numberOfWeeks previous releases
+		var previousWeek = startWeek;
+		for (var i = 0, len = numberOfWeeks; i < len; i++) {
+
+			ReleasedList.getReleasedGames(platform.gt, previousWeek.year(), previousWeek.month() + 1, previousWeek.date(), listResult);
+			previousWeek = previousWeek.subtract('weeks', 1);
+		}
+
+		function listResult(data) {
+			getList_result(data, 'desc', LIST_TYPE.RELEASED);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -359,7 +424,8 @@
 
 
 		switch(currentTab) {
-			case 0:
+			case TAB_IDS['#searchTab']:
+
 				resultsHeight = $searchResults.height();
 				$container = $searchResultsContainer;
 
@@ -368,7 +434,9 @@
 					resultsHeight += $searchLoadingStatus.height();
 				}
 				break;
-			case 1:
+
+			case TAB_IDS['#listTab']:
+
 				resultsHeight = $listResults.height();
 
 				// add loading status height if visible
@@ -405,21 +473,15 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGamestatsPopularityList_result -
+	* getList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGamestatsPopularityList_result = function(data) {
+	var getList_result = function(data, order, sourceListType) {
 
-		// renderSearchResults list
-		SearchView.renderListResults(data);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getIGNUpcomingList_result -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getIGNUpcomingList_result = function(data) {
-
-		// renderSearchResults list
-		SearchView.renderListResults(data);
+		// if current listType does not match source - skip render
+		if (sourceListType === listType) {
+			// render list
+			SearchView.renderListResults(data, order);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -553,6 +615,10 @@
 
 			// search tab
 			case 0:
+
+				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
+				$searchResultsContainer.nanoScroller({scrollTop:searchTabScrollPosition - 1});
+
 				showSearchOptions(true);
 				showListOptions(false);
 				searchProviderChanged();
@@ -560,9 +626,13 @@
 
 			// list tab
 			case 1:
+
+				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
+				$listResultsContainer.nanoScroller({scrollTop:parseInt(listTabScrollPosition - 1, 10)});
+
 				showListOptions(true);
 				showSearchOptions(false);
-				listProviderChanged();
+				listTypeChanged();
 				break;
 		}
 	};
@@ -596,46 +666,64 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* listProviderChanged
+	* listTypeChanged
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var listProviderChanged = function() {
+	var listTypeChanged = function() {
 
-		var providerID = $listProvider.attr('data-content');
+		var typeID = parseInt($listType.attr('data-content'), 10);
 
-		switch(providerID) {
+		// update list if provider changed
+		if (typeID !== listType) {
 
-			// popular games
-			case '0':
-				// disable display options and set to list
+			switch(typeID) {
 
-				// EXCEPTION:
-				// do not update listDisplayType as popular list cannot have any other view
-				changeDisplayType(0, true);
-				$listDisplayOptions.fadeTo(100, 0.35);
+				// popular games
+				case 0:
+					// disable display options and set to list
 
-				// set title
-				$listProviderName.text('Popular');
+					// EXCEPTION:
+					// do not update listDisplayType as popular list cannot have any other view
+					changeDisplayType(0, true);
+					$listDisplayOptions.fadeTo(100, 0.35);
 
-				listProvider = LIST_PROVIDERS.Gamestats;
-				break;
+					// set title
+					$listTypeName.text('Popular');
 
-			// upcoming games
-			case '1':
+					listType = LIST_TYPE.POPULAR;
+					break;
 
-				// set toggle button and enable display options
-				changeDisplayType(listDisplayType);
-				$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
-				$listDisplayOptions.fadeTo(100, 1);
+				// upcoming games
+				case 1:
 
-				// set title
-				$listProviderName.text('Upcoming');
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
 
-				listProvider = LIST_PROVIDERS.IGN;
-				break;
+					// set title
+					$listTypeName.text('Upcoming');
+
+					listType = LIST_TYPE.UPCOMING;
+					break;
+
+				// released games
+				case 2:
+
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
+
+					// set title
+					$listTypeName.text('Released');
+
+					listType = LIST_TYPE.RELEASED;
+					break;
+			}
+
+			// update list for new
+			getList(listType);
 		}
-
-		// update list for new
-		getList(listProvider);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -650,7 +738,7 @@
 		listPlatform = Utilities.getStandardPlatform(platform);
 
 		// get game lists
-		getList(listProvider);
+		getList(listType);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -689,15 +777,19 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getList = function(listProvider) {
+	var getList = function(listType) {
 
-		switch (listProvider) {
-			case LIST_PROVIDERS.Gamestats:
+		switch (listType) {
+			case LIST_TYPE.POPULAR:
 				SearchView.getGamestatsPopularityListByPlatform(listPlatform);
 				break;
 
-			case LIST_PROVIDERS.IGN:
+			case LIST_TYPE.UPCOMING:
 				SearchView.getIGNUpcomingListByPlatform(listPlatform);
+				break;
+
+			case LIST_TYPE.RELEASED:
+				SearchView.getReleasedList(listPlatform);
 				break;
 		}
 	};
@@ -727,12 +819,12 @@
 		if (show) {
 			$listDisplayOptions.show();
 			$listPlatforms.show();
-			$listProvider.show();
+			$listType.show();
 
 		} else {
 			$listDisplayOptions.hide();
 			$listPlatforms.hide();
-			$listProvider.hide();
+			$listType.hide();
 		}
 	};
 
@@ -755,9 +847,6 @@
 			}
 			$listResults.find('tbody').removeClass().addClass('display-' + displayType);
 		}
-
-		// set nanoscroll
-		$('#itemResultsContainer.nano').nanoScroller();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -807,6 +896,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var listResultItem_onClick = function() {
 
+		// save scroll position for active tab
+		saveNanoscrollPositions();
+
 		// get search text and standardize
 		searchTerms = ItemLinker.standardizeTitle($(this).find('.itemName').text());
 
@@ -850,4 +942,46 @@
 		}
     };
 
-})(tmz.module('searchView'), tmz, jQuery, _);
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * saveNanoscrollPositions -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var saveNanoscrollPositions = function() {
+
+		// save scroll position for active tab
+		if (currentTab === TAB_IDS['#searchTab']) {
+			// never save 0 as location - since we are always -1 from final scrollTo value
+			searchTabScrollPosition = $searchResultsContent.scrollTop() || 1;
+		} else if (currentTab === TAB_IDS['#listTab']) {
+			listTabScrollPosition = $listResultsContent.scrollTop() || 1;
+		}
+    };
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* releaseDateSortAsc -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var releaseDateSortAsc = function(firstItem, secondItem) {
+
+		var $element1 = $(firstItem.elm).find('.releaseDate');
+		var $element2 = $(secondItem.elm).find('.releaseDate');
+
+		var date1 = Date.parse($element1.text());
+		var date2 = Date.parse($element2.text());
+
+		return date1 - date2;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* releaseDateSortDesc -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var releaseDateSortDesc = function(firstItem, secondItem) {
+
+		var $element1 = $(firstItem.elm).find('.releaseDate');
+		var $element2 = $(secondItem.elm).find('.releaseDate');
+
+		var date1 = Date.parse($element1.text());
+		var date2 = Date.parse($element2.text());
+
+		return date2 - date1;
+	};
+
+})(tmz.module('searchView'), tmz, jQuery, _, moment, List);

@@ -24,7 +24,7 @@
 		PANEL_HEIGHT_OFFSET_INFO = 450,					// height offset when logged out
 		PANEL_HEIGHT_PADDING_DISCUSSION_MAX = 10,		// padding for discussion content (panel no scrolling)
 		PANEL_HEIGHT_PADDING_DISCUSSION_SCROLL = 50,	// padding for discussion content (panel requires scrolling)
-		PANEL_HEIGHT_PADDING_COLLECTION_MAX = 20,		// padding for collection content (panel no scrolling)
+		PANEL_HEIGHT_PADDING_COLLECTION_MAX = 5,		// padding for collection content (panel no scrolling)
 		PANEL_HEIGHT_PADDING_COLLECTION_SCROLL = 10,	// padding for collection content (panel requires scrolling)
 		VIEW_ALL_TAG_ID = '0',
 		VIEW_ALL_TAG_NAME = 'View All',
@@ -112,6 +112,16 @@
 		$displayOptions.find('a').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
+
+		// initialize nanoscroll
+		var nanoScrollOptions = {
+			sliderMinHeight: 20,
+			iOSNativeScrolling: true,
+			preventPageScrolling: true,
+			flash: true,
+			flashDelay: 1500
+		};
+		$itemResultsContainer.nanoScroller(nanoScrollOptions);
 
 		// update nano scroller sizes periodically
 		setInterval(function() {
@@ -561,7 +571,6 @@
 
 		viewItems(currentViewTagID);
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -

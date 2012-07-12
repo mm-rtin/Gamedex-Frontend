@@ -6,7 +6,7 @@
 	// properties
 
 	// REST URL
-	var UPCOMING_LIST_URL = tmz.api + 'upcominglist/',
+	var UPCOMING_LIST_URL = tmz.api + 'list/upcoming/',
 
 		// data
 		IGNUpcomingListCache = {};
