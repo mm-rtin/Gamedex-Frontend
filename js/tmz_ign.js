@@ -70,8 +70,5 @@
 
 	};
 
-
-
-
 })(tmz.module('ign'), tmz, jQuery, _);
 

@@ -1,6 +1,8 @@
 /*global module:false*/
 module.exports = function(grunt) {
 
+	grunt.loadNpmTasks('grunt-less');
+
 	// Project configuration.
 	grunt.initConfig({
 		meta: {
@@ -14,9 +16,9 @@ module.exports = function(grunt) {
 
 		// source files
 		src: {
-			files: [
 
-				// libraries
+			// libraries
+			lib: [
 				'lib/underscore-min.js',
 				'lib/jquery-ui.min.js',
 				'lib/jquery.ui.stars.min.js',
@@ -34,9 +36,11 @@ module.exports = function(grunt) {
 				'lib/list.min.js',
 				'lib/video.min.js',
 				'lib/moment.js',
-				'lib/select2.min.js',
+				'lib/select2.min.js'
+			],
 
-				// gamedex source (order matters)
+			// gamedex source (order matters)
+			gamedex: [
 				'js/jquery.bootstrap-dropdown-sub-menu.js',
 				'js/tmz.js',
 				'js/tmz_util.js',
@@ -63,14 +67,17 @@ module.exports = function(grunt) {
 				'js/tmz_releasedList.js',
 				'js/tmz_itemLinker.js',
 				'js/init.js'
+			],
+
+			// less
+			less: [
+				'less/*.less'
 			]
 		},
 		// concat
 		concat: {
 			dist: {
-				src: [
-					'<config:src.files>'
-				],
+				src: ['<config:src.gamedex>'],
 				dest: 'dist/scripts.min.js'
 			}
 		},
@@ -81,16 +88,27 @@ module.exports = function(grunt) {
 				dest: 'dist/scripts.min.js'
 			}
 		},
-		// watch
+		// less
+		less: {
+			all: {
+				src: 'less/tmz.less',
+				dest: 'css/tmz.css',
+				options: {
+					compress: true
+				}
+			}
+		},
+		// watch js
 		watch: {
-			files: '<config:src.files>',
-			tasks: 'concat'
+			files: ['<config:src.gamedex>', '<config:src.less>'],
+			tasks: 'concat less'
 		},
 
 		uglify: {}
+
 	});
 
 	// Default task.
-	grunt.registerTask('default', 'concat');
+	grunt.registerTask('default', 'concatlib');
 
 };
