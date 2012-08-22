@@ -972,17 +972,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags_result = function(data, addedItems) {
 
-		// update tagView initialItemTags
-		var initialItemTags = TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
-
 		// if new item - set to existing item
 		if (itemType !== ITEM_TYPES.EXISTING) {
 			setItemType(ITEM_TYPES.EXISTING);
 		}
-
-		// update firstItem with returned data
-		firstItem.id = data.itemID;
-		firstItem.itemID = data.itemID;
 
 		// update list view model with new item
 		ItemView.updateListAdditions(data, addedItems);

@@ -6,7 +6,8 @@
     var User = tmz.module('user'),
 		Utilities = tmz.module('utilities'),
 		ItemData = tmz.module('itemData'),
-		TagData = tmz.module('tagData'),
+		TagView = tmz.module('tagView'),
+		ItemView = tmz.module('itemView'),
 		Amazon = tmz.module('amazon'),
 		Metacritic = tmz.module('metacritic'),
 		ItemLinker = tmz.module('itemLinker'),
@@ -18,15 +19,18 @@
 
 		// properties
 		currentSourceID = null,
+		sourceImportStarted = {},
 
 		// data
 		importedGames = [],
 
 		// element cache
+		$importContainer = $('#importContainer'),
 		$importResults = $('#importResults'),
 		$importResultsBody = $('#importResults tbody'),
 		$startImportBtn = $('#startImport_btn'),
 		$confirmImportBtn = $('#confirmImport_btn'),
+		$cancelImportBtn = $('#cancelImport_btn'),
 		$sourceUser = $('#sourceUser'),
 
 		$importSourceID = $('#importSourceID'),
@@ -35,6 +39,8 @@
 		// modal
 		$importConfigModal = $('#importConfig-modal'),
 		$importModal = $('#import-modal'),
+
+		$loadingStatus = $importContainer.find('.loadingStatus'),
 
 		// templates
 		importResultsTemplate = _.template($('#import-results-template').html());
@@ -81,6 +87,13 @@
 			// begin adding games to list
 			addImportedGames();
 		});
+
+		// cancel import button: click
+		$cancelImportBtn.click(function(e) {
+			e.preventDefault();
+
+			cancelImport();
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,15 +121,21 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var startImport = function(sourceID) {
 
-		// reset data
-		importedGames = [];
 		currentSourceID = sourceID;
 
-		// clear import list
-		$importResultsBody.empty();
+		// previous import not complete and requested same source import, resume import
+		if (_.has(sourceImportStarted, sourceID)) {
 
-		// show source config
-		showImportConfigModal();
+			// hide config and show import modal
+			$importConfigModal.modal('hide');
+			$importModal.modal('show');
+
+		// start new import
+		} else {
+
+			// show source config
+			showImportConfigModal();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,9 +159,27 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var importSource = function(sourceUser) {
 
+		// started source import
+		sourceImportStarted[currentSourceID] = true;
+
+		// reset data
+		importedGames = [];
+
+		// clear import list
+		$importResultsBody.empty();
+
+		// hide loading status
+		$loadingStatus.stop().hide();
+
+		// remove ready status from modal
+		$importModal.removeClass('ready');
+
 		// hide config and show import modal
 		$importConfigModal.modal('hide');
 		$importModal.modal('show');
+
+		// show loading status
+		$loadingStatus.fadeIn();
 
 		// import games
 		ItemData.importGames(currentSourceID, sourceUser, function(importedTitles) {
@@ -150,6 +187,18 @@
 			// parse imported titles
 			parseImportList(importedTitles);
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cancelImport -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cancelImport = function() {
+
+		delete sourceImportStarted[currentSourceID];
+
+		// show config and hide import modal
+		showImportConfigModal();
+		$importModal.modal('hide');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,8 +225,6 @@
 
 				// extend searchItem with returned item data
 				$.extend(true, searchItem, item);
-
-				console.info(searchItem);
 
 				// get platform information for each item by gbombID
 				GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
@@ -234,11 +281,12 @@
 						if (linkedCount === importCount - 1) {
 
 							// import has completed > allow user to add games
-							allowImport();
+							finalizeImport();
 						}
+
+					// request failed, increment count anyway
 					}, function() {
 						linkedCount++;
-						console.info('failure');
 					});
 				});
 
@@ -247,11 +295,13 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* allowImport -
+	* finalizeImport - all items imported and linked
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var allowImport = function() {
+	var finalizeImport = function() {
 
-
+		// hide loading and show confirm import button
+		$loadingStatus.stop().fadeOut();
+		$importModal.addClass('ready');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -262,8 +312,11 @@
 		// get tag name
 		var tagName = INPUT_SOURCES[currentSourceID].toLowerCase() + ' import';
 
+		var importTotal = importedGames.length;
+		var importCount = 0;
+
 		// create tag
-		TagData.addTag(tagName, function(tag) {
+		TagView.addTag(tagName, function(tag) {
 
 			// tag created > add importedGames to tag list
 			var tagsToAdd = [tag.tagID];
@@ -271,12 +324,40 @@
 			// for each imported game > add to tag
 			_.each(importedGames, function(item) {
 
+				// add game to tag
 				ItemData.addItemToTags(tagsToAdd, item, function(data) {
 
-					console.info(data);
+					importCount++;
+
+					// all items added > run final step
+					if (importCount === importTotal) {
+						finalizeAdditions(tagsToAdd);
+					}
 				});
 			});
 		});
+
+		// import complete, reset source id
+		delete sourceImportStarted[currentSourceID];
+		currentSourceID = null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* finalizeAdditions - all items added to tag list
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var finalizeAdditions = function(tagIDsAdded) {
+
+		// hide modal
+		$importModal.modal('hide');
+
+		// refresh item view
+		ItemView.refreshView();
+
+		// update tag view list
+		TagView.updateViewList(tagIDsAdded);
+
+		// select random item
+		ItemView.viewRandomItem();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

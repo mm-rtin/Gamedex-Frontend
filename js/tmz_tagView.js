@@ -219,13 +219,29 @@
     * addTag - create new tag
     * @param tagName - string
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var addTag = function(tagName) {
+    var addTag = function(tagName, onSuccess) {
 
         // check if tag name exists
         if (!_.has(activeAddTags, tagName)) {
 
             // create new tag
-            TagData.addTag(tagName, _addTag_result);
+            TagData.addTag(tagName, function(tag) {
+
+                _addTag_result(tag);
+
+                if (onSuccess) {
+                    onSuccess(tag);
+                }
+            });
+
+        // tag exists > return tag data immediately
+        } else {
+
+            if (onSuccess) {
+                // rename object properties to match what TagData returns
+                var tag = {'tagID': activeAddTags[tagName].id, 'tagName': activeAddTags[tagName].name};
+                onSuccess(tag);
+            }
         }
     };
 

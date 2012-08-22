@@ -469,7 +469,7 @@
 
 		if (!$.isEmptyObject(items)) {
 			// view random item
-			viewRandomItem();
+			ItemView.viewRandomItem();
 
 		} else {
 			DetailView.resetDetail();
@@ -729,7 +729,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewRandomItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewRandomItem = function() {
+	ItemView.viewRandomItem = function() {
 
 		// get random id and view item for id
 		var id = ItemData.getRandomItemID();

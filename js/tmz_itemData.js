@@ -6,6 +6,7 @@
 	var User = tmz.module('user'),
 		ItemLinker = tmz.module('itemLinker'),
 		ItemCache = tmz.module('itemCache'),
+		TagView = tmz.module('tagView'),
 		Utilities = tmz.module('utilities'),
 
 		// REST URLS
@@ -265,14 +266,14 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemToTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
+	var addItemToTags = function(tagIDs, sourceItem, onSuccess, onError) {
 
 		var ajax = null;
 
 		var userData = User.getUserCredentials(true);
 
-		// clone currentItem as new object
-		var item = $.extend(true, {}, currentItem);
+		// clone sourceItem as new object
+		var item = $.extend(true, {}, sourceItem);
 
 		// shorten image url
 		var smallImage = getShortImageURL(item.smallImage, item.initialProvider);
@@ -325,7 +326,17 @@
 					cache: true,
 					success: function(data) {
 
+						// add client item
 						var addedItems = addClientItem(item, data);
+
+						// update tagView initialItemTags
+						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
+
+						// update sourceItem with returned data
+						sourceItem.id = data.itemID;
+						sourceItem.itemID = data.itemID;
+
+						// callback
 						onSuccess(data, addedItems);
 					},
 					error: onError

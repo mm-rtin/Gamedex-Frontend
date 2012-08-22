@@ -1199,6 +1199,19 @@ input, select, textarea {
 
 /* IMPORT MODAL
 -----------------------------------------------------------*/
+#import-modal {
+
+	#confirmImport_btn {
+		display: none;
+	}
+
+	&.ready {
+		#confirmImport_btn {
+			display: inline-block;
+		}
+	}
+}
+
 #importResults {
 	.mediumImage {
 		min-width: 100px;

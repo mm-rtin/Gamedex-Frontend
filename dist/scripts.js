@@ -822,6 +822,7 @@ tmz.initializeModules = function() {
 	var User = tmz.module('user'),
 		ItemLinker = tmz.module('itemLinker'),
 		ItemCache = tmz.module('itemCache'),
+		TagView = tmz.module('tagView'),
 		Utilities = tmz.module('utilities'),
 
 		// REST URLS
@@ -1081,14 +1082,14 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* addItemToTags
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addItemToTags = function(tagIDs, currentItem, onSuccess, onError) {
+	var addItemToTags = function(tagIDs, sourceItem, onSuccess, onError) {
 
 		var ajax = null;
 
 		var userData = User.getUserCredentials(true);
 
-		// clone currentItem as new object
-		var item = $.extend(true, {}, currentItem);
+		// clone sourceItem as new object
+		var item = $.extend(true, {}, sourceItem);
 
 		// shorten image url
 		var smallImage = getShortImageURL(item.smallImage, item.initialProvider);
@@ -1141,7 +1142,17 @@ tmz.initializeModules = function() {
 					cache: true,
 					success: function(data) {
 
+						// add client item
 						var addedItems = addClientItem(item, data);
+
+						// update tagView initialItemTags
+						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
+
+						// update sourceItem with returned data
+						sourceItem.id = data.itemID;
+						sourceItem.itemID = data.itemID;
+
+						// callback
 						onSuccess(data, addedItems);
 					},
 					error: onError
@@ -5061,17 +5072,10 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addItemToTags_result = function(data, addedItems) {
 
-		// update tagView initialItemTags
-		var initialItemTags = TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
-
 		// if new item - set to existing item
 		if (itemType !== ITEM_TYPES.EXISTING) {
 			setItemType(ITEM_TYPES.EXISTING);
 		}
-
-		// update firstItem with returned data
-		firstItem.id = data.itemID;
-		firstItem.itemID = data.itemID;
 
 		// update list view model with new item
 		ItemView.updateListAdditions(data, addedItems);
@@ -5612,7 +5616,7 @@ tmz.initializeModules = function() {
 
 		if (!$.isEmptyObject(items)) {
 			// view random item
-			viewRandomItem();
+			ItemView.viewRandomItem();
 
 		} else {
 			DetailView.resetDetail();
@@ -5872,7 +5876,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* viewRandomItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var viewRandomItem = function() {
+	ItemView.viewRandomItem = function() {
 
 		// get random id and view item for id
 		var id = ItemData.getRandomItemID();
@@ -7161,13 +7165,29 @@ tmz.initializeModules = function() {
     * addTag - create new tag
     * @param tagName - string
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var addTag = function(tagName) {
+    var addTag = function(tagName, onSuccess) {
 
         // check if tag name exists
         if (!_.has(activeAddTags, tagName)) {
 
             // create new tag
-            TagData.addTag(tagName, _addTag_result);
+            TagData.addTag(tagName, function(tag) {
+
+                _addTag_result(tag);
+
+                if (onSuccess) {
+                    onSuccess(tag);
+                }
+            });
+
+        // tag exists > return tag data immediately
+        } else {
+
+            if (onSuccess) {
+                // rename object properties to match what TagData returns
+                var tag = {'tagID': activeAddTags[tagName].id, 'tagName': activeAddTags[tagName].name};
+                onSuccess(tag);
+            }
         }
     };
 
@@ -10271,7 +10291,8 @@ tmz.initializeModules = function() {
     var User = tmz.module('user'),
 		Utilities = tmz.module('utilities'),
 		ItemData = tmz.module('itemData'),
-		TagData = tmz.module('tagData'),
+		TagView = tmz.module('tagView'),
+		ItemView = tmz.module('itemView'),
 		Amazon = tmz.module('amazon'),
 		Metacritic = tmz.module('metacritic'),
 		ItemLinker = tmz.module('itemLinker'),
@@ -10283,15 +10304,18 @@ tmz.initializeModules = function() {
 
 		// properties
 		currentSourceID = null,
+		sourceImportStarted = {},
 
 		// data
 		importedGames = [],
 
 		// element cache
+		$importContainer = $('#importContainer'),
 		$importResults = $('#importResults'),
 		$importResultsBody = $('#importResults tbody'),
 		$startImportBtn = $('#startImport_btn'),
 		$confirmImportBtn = $('#confirmImport_btn'),
+		$cancelImportBtn = $('#cancelImport_btn'),
 		$sourceUser = $('#sourceUser'),
 
 		$importSourceID = $('#importSourceID'),
@@ -10300,6 +10324,8 @@ tmz.initializeModules = function() {
 		// modal
 		$importConfigModal = $('#importConfig-modal'),
 		$importModal = $('#import-modal'),
+
+		$loadingStatus = $importContainer.find('.loadingStatus'),
 
 		// templates
 		importResultsTemplate = _.template($('#import-results-template').html());
@@ -10346,6 +10372,13 @@ tmz.initializeModules = function() {
 			// begin adding games to list
 			addImportedGames();
 		});
+
+		// cancel import button: click
+		$cancelImportBtn.click(function(e) {
+			e.preventDefault();
+
+			cancelImport();
+		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10373,15 +10406,21 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var startImport = function(sourceID) {
 
-		// reset data
-		importedGames = [];
 		currentSourceID = sourceID;
 
-		// clear import list
-		$importResultsBody.empty();
+		// previous import not complete and requested same source import, resume import
+		if (_.has(sourceImportStarted, sourceID)) {
 
-		// show source config
-		showImportConfigModal();
+			// hide config and show import modal
+			$importConfigModal.modal('hide');
+			$importModal.modal('show');
+
+		// start new import
+		} else {
+
+			// show source config
+			showImportConfigModal();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10405,9 +10444,27 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var importSource = function(sourceUser) {
 
+		// started source import
+		sourceImportStarted[currentSourceID] = true;
+
+		// reset data
+		importedGames = [];
+
+		// clear import list
+		$importResultsBody.empty();
+
+		// hide loading status
+		$loadingStatus.stop().hide();
+
+		// remove ready status from modal
+		$importModal.removeClass('ready');
+
 		// hide config and show import modal
 		$importConfigModal.modal('hide');
 		$importModal.modal('show');
+
+		// show loading status
+		$loadingStatus.fadeIn();
 
 		// import games
 		ItemData.importGames(currentSourceID, sourceUser, function(importedTitles) {
@@ -10415,6 +10472,18 @@ tmz.initializeModules = function() {
 			// parse imported titles
 			parseImportList(importedTitles);
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cancelImport -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cancelImport = function() {
+
+		delete sourceImportStarted[currentSourceID];
+
+		// show config and hide import modal
+		showImportConfigModal();
+		$importModal.modal('hide');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10441,8 +10510,6 @@ tmz.initializeModules = function() {
 
 				// extend searchItem with returned item data
 				$.extend(true, searchItem, item);
-
-				console.info(searchItem);
 
 				// get platform information for each item by gbombID
 				GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
@@ -10499,11 +10566,12 @@ tmz.initializeModules = function() {
 						if (linkedCount === importCount - 1) {
 
 							// import has completed > allow user to add games
-							allowImport();
+							finalizeImport();
 						}
+
+					// request failed, increment count anyway
 					}, function() {
 						linkedCount++;
-						console.info('failure');
 					});
 				});
 
@@ -10512,11 +10580,13 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* allowImport -
+	* finalizeImport - all items imported and linked
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var allowImport = function() {
+	var finalizeImport = function() {
 
-
+		// hide loading and show confirm import button
+		$loadingStatus.stop().fadeOut();
+		$importModal.addClass('ready');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10527,8 +10597,11 @@ tmz.initializeModules = function() {
 		// get tag name
 		var tagName = INPUT_SOURCES[currentSourceID].toLowerCase() + ' import';
 
+		var importTotal = importedGames.length;
+		var importCount = 0;
+
 		// create tag
-		TagData.addTag(tagName, function(tag) {
+		TagView.addTag(tagName, function(tag) {
 
 			// tag created > add importedGames to tag list
 			var tagsToAdd = [tag.tagID];
@@ -10536,12 +10609,40 @@ tmz.initializeModules = function() {
 			// for each imported game > add to tag
 			_.each(importedGames, function(item) {
 
+				// add game to tag
 				ItemData.addItemToTags(tagsToAdd, item, function(data) {
 
-					console.info(data);
+					importCount++;
+
+					// all items added > run final step
+					if (importCount === importTotal) {
+						finalizeAdditions(tagsToAdd);
+					}
 				});
 			});
 		});
+
+		// import complete, reset source id
+		delete sourceImportStarted[currentSourceID];
+		currentSourceID = null;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* finalizeAdditions - all items added to tag list
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var finalizeAdditions = function(tagIDsAdded) {
+
+		// hide modal
+		$importModal.modal('hide');
+
+		// refresh item view
+		ItemView.refreshView();
+
+		// update tag view list
+		TagView.updateViewList(tagIDsAdded);
+
+		// select random item
+		ItemView.viewRandomItem();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
