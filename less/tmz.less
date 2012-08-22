@@ -129,7 +129,7 @@ html {
 	.select2-container-multi .select2-results {
 		margin: 0px;
 	}
-	.select-drop {
+	.select2-drop {
 		margin-top: -2px;
 	}
 
@@ -158,14 +158,20 @@ html {
 		.btn-template-active(@btnSuccessTop_active, @btnSuccessBottom_active);
 	}
 
+	.btn-group {
+		.btn.active {
+			background-color: #8CA3AF;
+		}
+	}
+
 	/* BUTTON PRIMARY
 	-----------------------------------------------------------*/
-	@btnPrimaryTop: #0085cc;
-	@btnPrimaryBottom: #0058cc;
+	@btnPrimaryTop: #8CA3AF;
+	@btnPrimaryBottom: #556C79;
 	@btnPrimaryTop_active: darken(@btnPrimaryBottom, 10%);
 	@btnPrimaryBottom_active: @btnPrimaryTop;
 	@btnPrimary_hover: darken(@btnPrimaryTop, 10%);
-	@btnPrimary_shadowColor: #0083cc;
+	@btnPrimary_shadowColor: #8CA3AF;
 	.btn-primary {
 		.btn-template(@btnPrimaryTop, @btnPrimaryBottom, @btnPrimary_shadowColor, .6);
 	}
@@ -334,7 +340,7 @@ html {
 
 	/* DROPDOWNS
 	-----------------------------------------------------------*/
-	.nav .dropdown-menu {
+	.btn-group .dropdown-menu, .nav .dropdown-menu {
 		-moz-border-radius: 2px;
 		-webkit-border-radius: 2px;
 		border-radius: 2px;
@@ -359,7 +365,7 @@ html {
 			color: #BDBDBD;
 		}
 		li > a:hover, .active > a, .active > a:hover {
-			background-color: #8B9B9C;
+			background-color: #BBC6C6;
 			color: #000000;
 		}
 		i {
@@ -465,6 +471,28 @@ html {
 	.popover-content {
 		background: rgba(255, 255, 255, .85);
 		color: #18330F;
+	}
+
+	/* MODAL
+	-----------------------------------------------------------*/
+	.modal  {
+		background-color: rgba(136, 160, 172, 0.75);
+
+		.modal-header {
+			padding: 6px 15px;
+
+			h3 {
+				font-size: 16px;
+				color: #ffffff;
+			}
+		}
+		.modal-body {
+			background-color: whiteSmoke;
+		}
+	}
+
+	.modal-backdrop {
+		background-color: #061113;
 	}
 }
 
@@ -1169,6 +1197,16 @@ input, select, textarea {
 	background: #111;
 }
 
+/* IMPORT MODAL
+-----------------------------------------------------------*/
+#importResults {
+	.mediumImage {
+		min-width: 100px;
+		max-width: 119px;
+		width: 19%;
+	}
+}
+
 /* VIDEO MODAL
 -----------------------------------------------------------*/
 #video-modal {
@@ -1181,6 +1219,7 @@ input, select, textarea {
 
 	.modal-body {
 		max-height: 800px;
+		background-color: transparent;
 	}
 	.modal-footer {
 		text-align: center;
@@ -1742,7 +1781,7 @@ input, select, textarea {
 
 	.itemDetailTitle {
 
-		width: 79%;
+		width: 78%;
 		float: left;
 
 		h3 {
@@ -2072,6 +2111,35 @@ input, select, textarea {
 	}
 	&:active {
 		.edit_button_over();
+	}
+}
+
+#importMenu {
+	float: left;
+
+	.dropdown-menu {
+		left: 4px;
+		top: 30px;
+	}
+
+	&.open {
+		.import_btn {
+			.import_button_over();
+		}
+	}
+}
+
+.import_btn {
+	.import_button();
+	float: left;
+	width: 93px;
+	height: 37px;
+
+	&:hover {
+		.import_button_active();
+	}
+	&:active {
+		.import_button_over();
 	}
 }
 

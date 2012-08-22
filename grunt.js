@@ -66,6 +66,7 @@ module.exports = function(grunt) {
 				'js/tmz_ign.js',
 				'js/tmz_releasedList.js',
 				'js/tmz_itemLinker.js',
+				'js/tmz_importView.js',
 				'js/init.js'
 			],
 
@@ -78,7 +79,7 @@ module.exports = function(grunt) {
 		concat: {
 			dist: {
 				src: ['<config:src.gamedex>'],
-				dest: 'dist/scripts.min.js'
+				dest: 'dist/scripts.js'
 			}
 		},
 		// minify
@@ -101,7 +102,7 @@ module.exports = function(grunt) {
 		// watch js
 		watch: {
 			files: ['<config:src.gamedex>', '<config:src.less>'],
-			tasks: 'concat less'
+			tasks: 'concat min less'
 		},
 
 		uglify: {}

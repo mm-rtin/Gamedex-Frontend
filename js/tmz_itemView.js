@@ -7,6 +7,7 @@
 		TagView = tmz.module('tagView'),
 		Utilities = tmz.module('utilities'),
 		DetailView = tmz.module('detailView'),
+		ImportView = tmz.module('importView'),
 		GridView = tmz.module('gridView'),
 		ItemData = tmz.module('itemData'),
 		ItemCache = tmz.module('itemCache'),
@@ -15,6 +16,7 @@
 		Metacritic = tmz.module('metacritic'),
 		ItemLinker = tmz.module('itemLinker'),
 		FilterPanel = tmz.module('filterPanel'),
+		GiantBomb = tmz.module('giantbomb'),
 
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
@@ -81,6 +83,9 @@
 		$deleteListConfirmBtn = $('#deleteListConfirm_btn'),
 		$deleteListBtn = $('#deleteList_btn'),
 		$deleteListName = $deleteListBtn.find('.listName'),
+
+		// import menu
+		$importMenu = $('#importMenu'),
 
 		// error modal
 		$errorModal = $('#error-modal'),
@@ -263,6 +268,14 @@
 
 			// select field text
 			$tagNameField.focus().select();
+		});
+
+		// import menu buttons: click
+		$importMenu.find('li').click(function(e) {
+			e.preventDefault();
+
+			// import games from source
+			ImportView.startImport(parseInt($(this).attr('data-importSource'), 10));
 		});
 
 		// displayType: toggle

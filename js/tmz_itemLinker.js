@@ -31,9 +31,11 @@
 			sanitizedName = sanitizedName.replace(re, '');
 		}
 
+		// remove the word: trophies
+		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
 		// remove word that appears before 'edition'
 		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
-		// remove brackets and parenthesis
+		// remove brackets and parenthesis and content inside
 		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
 
 		// remove words appearing after 'with'
@@ -164,7 +166,9 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findItemOnAlternateProvider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.findItemOnAlternateProvider = function(item, provider, onSuccess) {
+	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess) {
+
+		var searchRequest = null;
 
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
@@ -172,30 +176,28 @@
 				var searchName = item.standardName;
 
 				// run search for giantbomb
-				GiantBomb.searchGiantBomb(searchName, function(data) {
+				searchRequest = GiantBomb.searchGiantBomb(searchName, function(data) {
 					findGiantbombMatch(data, item, onSuccess);
 				});
 				break;
 
 			case Utilities.SEARCH_PROVIDERS.GiantBomb:
 
-
 				var browseNode = 0;
 
 				// run same platform search
 				if (item.platform !== 'n/a') {
-
-
-
 					browseNode = Utilities.getStandardPlatform(item.platform).amazon;
 				}
 
 				// run search for amazon
-				Amazon.searchAmazon(item.name, browseNode, function(data) {
+				searchRequest = Amazon.searchAmazon(item.name, browseNode, function(data) {
 					findAmazonMatch(data, item, onSuccess, false);
-				});
+				}, null, preventMultipleRequests);
 				break;
 		}
+
+		return searchRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

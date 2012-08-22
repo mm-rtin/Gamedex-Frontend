@@ -17,6 +17,7 @@
 		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
 		ITEM_SHARED_UPDATE = tmz.api + 'item/shared/update/',
 		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/',
+		IMPORT_GAMES_URL = tmz.api + 'import/',
 
 		// constants
 		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
@@ -35,6 +36,21 @@
 		amazonDirectory = {},
 		giantBombDirectory = {};
 
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* init -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var init = function() {
+
+		$(document).keypress(function(e) {
+			if (e.which == 96) {
+				console.warn('------------ itemDataDirectory: -------', itemDataDirectory);
+				console.warn('------------ amazonDirectory: -------', amazonDirectory);
+				console.warn('------------ giantBombDirectory: -------', giantBombDirectory);
+				console.warn('------------ items: -------------------', items);
+			}
+		});
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* itemsAndDirectoryLoaded -
@@ -139,19 +155,6 @@
 	* getItems
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getItems = function(tagID, onSuccess, onError) {
-
-		// DEBUG
-		if (typeof $(document).data('events').keypress === 'undefined') {
-
-			$(document).keypress(function(e) {
-				if (e.which == 96) {
-					console.warn('------------ itemDataDirectory: -------', itemDataDirectory);
-					console.warn('------------ amazonDirectory: -------', amazonDirectory);
-					console.warn('------------ giantBombDirectory: -------', giantBombDirectory);
-					console.warn('------------ items: -------------------', items);
-				}
-			});
-		}
 
 		var ajax = null;
 
@@ -848,9 +851,37 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* importGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var importGames = function(source, sourceUser, onSuccess) {
+
+		var userData = User.getUserCredentials(true);
+
+		var requestData = {
+			'source': source,
+			'source_user': sourceUser
+		};
+		$.extend(true, requestData, userData);
+
+		$.ajax({
+			url: IMPORT_GAMES_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: onSuccess,
+			error: function(data) {
+
+			}
+		});
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* PUBLIC METHODS -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var publicMethods = {
+		'init': init,
 		'itemsAndDirectoryLoaded': itemsAndDirectoryLoaded,
 		'getItemDirectory': getItemDirectory,
 		'getDirectoryItemByItemID': getDirectoryItemByItemID,
@@ -866,7 +897,8 @@
 		'deleteTagsForItem': deleteTagsForItem,
 		'deleteSingleTagForItem': deleteSingleTagForItem,
 		'deleteTagFromDirectory': deleteTagFromDirectory,
-		'deleteClientItem': deleteClientItem
+		'deleteClientItem': deleteClientItem,
+		'importGames': importGames
 	};
 
 	$.extend(ItemData, publicMethods);

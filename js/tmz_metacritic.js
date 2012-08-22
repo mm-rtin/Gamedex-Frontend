@@ -32,6 +32,8 @@
 
 		if (cachedScore) {
 
+			ajax = cachedScore;
+
 			// add score data to source item
 			sourceItem.metascore = cachedScore.metascore;
 			sourceItem.metascorePage = cachedScore.metascorePage;

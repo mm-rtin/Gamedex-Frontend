@@ -294,11 +294,11 @@
 			showTab(currentProvider);
 
 			// find item on alernate provider and view item as second search item
-			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, function(id) {
+			ItemLinker.findItemOnAlternateProvider(firstItem, currentProvider, true, function(id) {
 				return function(item) {
 					viewSecondSearchItemDetail(item, id);
 				};
-			}(currentID));
+			}(currentID), true);
 
 			// display tags
 			loadAndDisplayTags(firstItem, itemAttributes);
@@ -409,7 +409,7 @@
 	* loadThirdPartyData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadThirdPartyData = function(item) {
-	
+
 		// get wikipedia page
 		Wikipedia.getWikipediaPage(item.standardName, item, displayWikipediaPage);
 
@@ -712,7 +712,7 @@
 	* resetVideos -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var resetVideos = function(item) {
-		
+
 		currentItemHasVideo = false;
 		$showVideoButton.addClass('noVideos');
 		$showVideoButton.find('span').text('No Videos');

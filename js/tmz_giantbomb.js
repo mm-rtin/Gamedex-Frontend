@@ -33,7 +33,7 @@
 			'page': 0
 		};
 
-		$.ajax({
+		var searchRequest = $.ajax({
 			url: GIANTBOMB_SEARCH_URL,
 			type: 'GET',
 			data: requestData,
@@ -42,6 +42,8 @@
 			success: onSuccess,
 			error: onError
 		});
+
+		return searchRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

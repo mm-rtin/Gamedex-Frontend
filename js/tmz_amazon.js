@@ -48,13 +48,15 @@
 		getAmazonItemDetailQueue = {},
 
 		// ajax requests
-		searchAmazonRequest = null,
+		searchRequest = null,
 		searchAmazonID = 0;
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchAmazon - search amazon, prevent all but latest from completing and returning onSuccess method
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError) {
+	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError, preventMultipleRequests) {
+
+		preventMultipleRequests = typeof preventMultipleRequests !== 'undefined' ? preventMultipleRequests : false;
 
 		var searchTerms = encodeURIComponent(keywords);
 
@@ -68,14 +70,14 @@
 		};
 
 		// abort previous request
-		if (searchAmazonRequest) {
-			searchAmazonRequest.abort();
+		if (searchRequest && preventMultipleRequests) {
+			searchRequest.abort();
 		}
 
 		// increment searchAmazonID and assign to local id
 		var id = ++searchAmazonID;
 
-		searchAmazonRequest = $.ajax({
+		searchRequest = $.ajax({
 			url: AMAZON_SEARCH_URL,
 			type: 'GET',
 			data: requestData,
@@ -83,15 +85,16 @@
 			cache: true,
 			success: function(data) {
 
-
 				// only allow latest request from returning onSuccess
-				if (id === searchAmazonID) {
-					searchAmazonRequest = null;
+				if (id === searchAmazonID || !preventMultipleRequests) {
+					searchRequest = null;
 					onSuccess(data);
 				}
 			},
 			error: onError
 		});
+
+		return searchRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

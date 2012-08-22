@@ -66,22 +66,26 @@ tmz.initializeLibraries = function() {
 tmz.initializeModules = function() {
 
 	// module references
-	var searchView = tmz.module('searchView'),
+    var itemData = tmz.module('itemData'),
+        searchView = tmz.module('searchView'),
 		detailView = tmz.module('detailView'),
 		itemView = tmz.module('itemView'),
 		tagView = tmz.module('tagView'),
 		gridView = tmz.module('gridView'),
 		filterPanel = tmz.module('filterPanel'),
-		videoPanel = tmz.module('videoPanel'),
+        videoPanel = tmz.module('videoPanel'),
+		importView = tmz.module('importView'),
 		siteView = tmz.module('siteView');
 
 	// initialize modules
+    itemData.init();
 	searchView.init();
 	detailView.init();
 	itemView.init();
 	tagView.init();
 	gridView.init();
 	filterPanel.init();
-	videoPanel.init();
+    videoPanel.init();
+	importView.init();
 	siteView.init();
 };
