@@ -16,10 +16,14 @@
 		// properties
 		formType = FORM_TYPES.login,
 		rememberMe = false,
+		siteGuideCurrentStep = 1,
 
 		// data
 
 		// jquery cache
+		// container
+		$content = $('#content'),
+
 		// header
 		$infoHeader = $('#infoHeader'),
 		$header = $('#header'),
@@ -81,6 +85,9 @@
 		$guideButton = $('#guideButton'),
 		$siteGuide = $('#siteGuide'),
 		$siteGuideBackdrop = $('#siteGuideBackdrop'),
+		$siteGuideExitButton = $siteGuide.find('.siteGuideExit_btn'),
+		$siteGuidePreviousButton = $siteGuide.find('.siteGuidePrevious_btn'),
+		$siteGuideNextButton = $siteGuide.find('.siteGuideNext_btn'),
 
 		$searchInput = $('#searchField input'),
 
@@ -90,14 +97,12 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SiteView.init = function() {
+	var init = function() {
 
-		SiteView.createEventHandlers();
+		createEventHandlers();
 
 		// init login form
 		initLoginForm();
-
-		showSiteGuide();
 
 		// setup password reset modal
 		$resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
@@ -128,7 +133,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SiteView.createEventHandlers = function() {
+	var createEventHandlers = function() {
 
 		// managementButton: click
 		$managementButton.click(function(e) {
@@ -327,6 +332,37 @@
 
 		// siteGuideBackdrop: click
 		$siteGuide.click(function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		// siteGuideNextButton: click
+		$siteGuideNextButton.click(function(e) {
+			e.preventDefault();
+
+			// next step
+			showSiteGuide(++siteGuideCurrentStep);
+		});
+
+
+		// siteGuidePreviousButton: click
+		$siteGuidePreviousButton.click(function(e) {
+			e.preventDefault();
+
+			// next step
+			showSiteGuide(--siteGuideCurrentStep);
+		});
+
+
+		// siteGuideExitButton: click
+		$siteGuideExitButton.click(function(e) {
+			e.preventDefault();
+
+			// reset step
+			siteGuideCurrentStep = 1;
+
+			showSiteGuide(siteGuideCurrentStep);
+
 			hideSiteGuide();
 		});
 	};
@@ -410,9 +446,6 @@
 
 		// show loading status
 		$loadingStatus.fadeIn();
-
-		// hide site guide
-		hideSiteGuide();
 
 		// focus search input field
 		$searchInput.focus();
@@ -545,15 +578,26 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showSiteGuide -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showSiteGuide = function() {
+	var showSiteGuide = function(step) {
 
-		$siteGuide.show();
+		if (step) {
+			// remove all classes
+			$content.removeClass();
+
+			// add step1 class
+			$content.addClass('step' + step);
+		}
+
+		// show site guide overlay
+		if (!$siteGuide.is(':visible')) {
+			$siteGuide.show();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* hideSiteGuide -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var hideSiteGuide = function(item) {
+	var hideSiteGuide = function() {
 
 		if ($siteGuide.is(':visible')) {
 			$siteGuide.hide();
@@ -930,6 +974,15 @@
 		$emailGroup.removeClass('error');
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* PUBLIC METHODS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var publicMethods = {
+		'init': init,
+		'hideSiteGuide': hideSiteGuide
+	};
+
+	$.extend(SiteView, publicMethods);
 
 })(tmz.module('siteView'), tmz, jQuery, _);
 

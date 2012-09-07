@@ -326,15 +326,15 @@
 					cache: true,
 					success: function(data) {
 
-						// add client item
-						var addedItems = addClientItem(item, data);
-
-						// update tagView initialItemTags
-						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
-
 						// update sourceItem with returned data
 						sourceItem.id = data.itemID;
 						sourceItem.itemID = data.itemID;
+
+						// add client item
+						var addedItems = addClientItem(sourceItem, data);
+
+						// update tagView initialItemTags
+						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
 
 						// callback
 						onSuccess(data, addedItems);
@@ -566,6 +566,8 @@
 	* updateMetacritic
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
+
+		console.info(currentItem);
 
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];

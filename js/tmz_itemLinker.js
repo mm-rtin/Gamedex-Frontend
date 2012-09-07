@@ -23,6 +23,19 @@
 		var num = 0;
 		var arr = null;
 
+		// remove brackets and parenthesis and content inside
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
+
+		// remove the word: trophies
+		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
+		// remove word that appears before 'edition'
+		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
+		// remove words appearing after 'with'
+		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
+
+		// remove 'the ' if at the start of title
+		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
+
 		// remove words appearing after '-' unless it is less than 4 chars
 		re = new RegExp('\\s*-.*', 'gi');
 		match = re.exec(sanitizedName);
@@ -30,19 +43,6 @@
 		if (match && match[0].length > 3) {
 			sanitizedName = sanitizedName.replace(re, '');
 		}
-
-		// remove the word: trophies
-		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
-		// remove word that appears before 'edition'
-		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
-		// remove brackets and parenthesis and content inside
-		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
-
-		// remove words appearing after 'with'
-		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
-
-		// remove 'the ' if at the start of title
-		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
 		return sanitizedName.toLowerCase();
 	};

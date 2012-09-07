@@ -20,6 +20,8 @@ module.exports = function(grunt) {
 			// libraries
 			lib: [
 				'lib/underscore-min.js',
+				'lib/sugar-core.js',
+				'lib/sugar-function.js',
 				'lib/jquery-ui.min.js',
 				'lib/jquery.ui.stars.min.js',
 				'lib/jquery.ba-resize.js',
@@ -87,6 +89,21 @@ module.exports = function(grunt) {
 			dist: {
 				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
 				dest: 'dist/scripts.min.js'
+			}
+		},
+
+		// concat lib
+		concat2: {
+			dist: {
+				src: ['<config:src.lib>'],
+				dest: 'dist/lib.js'
+			}
+		},
+		// minify lib
+		min2: {
+			dist: {
+				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
+				dest: 'dist/lib.min.js'
 			}
 		},
 		// less

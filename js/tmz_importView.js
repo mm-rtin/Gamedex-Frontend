@@ -206,8 +206,28 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseImportList = function(importedTitles) {
 
-		var importCount = 0;
-		var linkedCount = 0;
+		var importRequests = [];
+
+		var findItemOnAlternateProviderLimited = function(searchItem, onSuccess) {
+
+			// find alternate amazon item
+			var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+
+				// add asin to search item
+				searchItem.asin = item.asin;
+
+				onSuccess(searchItem);
+			});
+
+			// add alternate request to importRequests array
+			//importRequests.push(alternateRequest);
+
+		}.lazy(500);
+
+		var alternateComplete = function(searchItem) {
+
+			console.info(searchItem);
+		};
 
 		// for each imported game - search giantbomb and add
 		_.each(importedTitles, function(title) {
@@ -220,8 +240,6 @@
 
 			// search giantbomb
 			ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.Amazon, false, function (item) {
-
-				importCount++;
 
 				// extend searchItem with returned item data
 				$.extend(true, searchItem, item);
@@ -247,49 +265,35 @@
 						}
 					});
 
-					// find alternate amazon item
-					var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+					var alternateRequest;
 
-						//console.info(searchResult.results[0].name, 'alternate');
-						//console.info(item.asin);
-						// add asin to search item
-						searchItem.asin = item.asin;
-
-					});
+					findItemOnAlternateProviderLimited(searchItem, alternateComplete);
 
 					// get metascore
 					var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, function(data) {
-						//console.info(searchResult.results[0].name, 'metascore');
+
 						// score retrieved and properties added to searchItem
 					});
 
-					// when both requests complete >
-					$.when(metascoreRequest, alternateRequest).then(function() {
-						//console.info(searchResult.results[0].name, 'done');
-						//console.info(searchItem.asin, searchItem.metascorePage);
+					// add metascore request to importRequests array
+					importRequests.push(metascoreRequest);
+
+					// when requests complete
+					$.when(metascoreRequest).then(function() {
 
 						// add to importedGames
 						importedGames.push(searchItem);
 
 						// append item to importResults
 						appendResults(searchItem);
-
-						//console.info(searchItem);
-
-						// when linkedCount == importCount > import has completed
-						linkedCount++;
-						if (linkedCount === importCount - 1) {
-
-							// import has completed > allow user to add games
-							finalizeImport();
-						}
-
-					// request failed, increment count anyway
-					}, function() {
-						linkedCount++;
 					});
 				});
+			});
 
+
+			// when all requests complete
+			$.when.apply($, importRequests).then(function() {
+				finalizeImport();
 			});
 		});
 	};

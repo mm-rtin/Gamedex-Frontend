@@ -1142,15 +1142,15 @@ tmz.initializeModules = function() {
 					cache: true,
 					success: function(data) {
 
-						// add client item
-						var addedItems = addClientItem(item, data);
-
-						// update tagView initialItemTags
-						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
-
 						// update sourceItem with returned data
 						sourceItem.id = data.itemID;
 						sourceItem.itemID = data.itemID;
+
+						// add client item
+						var addedItems = addClientItem(sourceItem, data);
+
+						// update tagView initialItemTags
+						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
 
 						// callback
 						onSuccess(data, addedItems);
@@ -1382,6 +1382,8 @@ tmz.initializeModules = function() {
 	* updateMetacritic
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
+
+		console.info(currentItem);
 
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
@@ -2192,10 +2194,14 @@ tmz.initializeModules = function() {
 		// properties
 		formType = FORM_TYPES.login,
 		rememberMe = false,
+		siteGuideCurrentStep = 1,
 
 		// data
 
 		// jquery cache
+		// container
+		$content = $('#content'),
+
 		// header
 		$infoHeader = $('#infoHeader'),
 		$header = $('#header'),
@@ -2257,6 +2263,9 @@ tmz.initializeModules = function() {
 		$guideButton = $('#guideButton'),
 		$siteGuide = $('#siteGuide'),
 		$siteGuideBackdrop = $('#siteGuideBackdrop'),
+		$siteGuideExitButton = $siteGuide.find('.siteGuideExit_btn'),
+		$siteGuidePreviousButton = $siteGuide.find('.siteGuidePrevious_btn'),
+		$siteGuideNextButton = $siteGuide.find('.siteGuideNext_btn'),
 
 		$searchInput = $('#searchField input'),
 
@@ -2266,14 +2275,12 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SiteView.init = function() {
+	var init = function() {
 
-		SiteView.createEventHandlers();
+		createEventHandlers();
 
 		// init login form
 		initLoginForm();
-
-		showSiteGuide();
 
 		// setup password reset modal
 		$resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
@@ -2304,7 +2311,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* createEventHandlers -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SiteView.createEventHandlers = function() {
+	var createEventHandlers = function() {
 
 		// managementButton: click
 		$managementButton.click(function(e) {
@@ -2503,6 +2510,37 @@ tmz.initializeModules = function() {
 
 		// siteGuideBackdrop: click
 		$siteGuide.click(function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		// siteGuideNextButton: click
+		$siteGuideNextButton.click(function(e) {
+			e.preventDefault();
+
+			// next step
+			showSiteGuide(++siteGuideCurrentStep);
+		});
+
+
+		// siteGuidePreviousButton: click
+		$siteGuidePreviousButton.click(function(e) {
+			e.preventDefault();
+
+			// next step
+			showSiteGuide(--siteGuideCurrentStep);
+		});
+
+
+		// siteGuideExitButton: click
+		$siteGuideExitButton.click(function(e) {
+			e.preventDefault();
+
+			// reset step
+			siteGuideCurrentStep = 1;
+
+			showSiteGuide(siteGuideCurrentStep);
+
 			hideSiteGuide();
 		});
 	};
@@ -2586,9 +2624,6 @@ tmz.initializeModules = function() {
 
 		// show loading status
 		$loadingStatus.fadeIn();
-
-		// hide site guide
-		hideSiteGuide();
 
 		// focus search input field
 		$searchInput.focus();
@@ -2721,15 +2756,26 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showSiteGuide -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showSiteGuide = function() {
+	var showSiteGuide = function(step) {
 
-		$siteGuide.show();
+		if (step) {
+			// remove all classes
+			$content.removeClass();
+
+			// add step1 class
+			$content.addClass('step' + step);
+		}
+
+		// show site guide overlay
+		if (!$siteGuide.is(':visible')) {
+			$siteGuide.show();
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* hideSiteGuide -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var hideSiteGuide = function(item) {
+	var hideSiteGuide = function() {
 
 		if ($siteGuide.is(':visible')) {
 			$siteGuide.hide();
@@ -3106,6 +3152,15 @@ tmz.initializeModules = function() {
 		$emailGroup.removeClass('error');
 	};
 
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* PUBLIC METHODS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var publicMethods = {
+		'init': init,
+		'hideSiteGuide': hideSiteGuide
+	};
+
+	$.extend(SiteView, publicMethods);
 
 })(tmz.module('siteView'), tmz, jQuery, _);
 
@@ -4407,7 +4462,7 @@ tmz.initializeModules = function() {
 			loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
 			// load third party data
-			loadThirdPartyData(firstItem);
+			loadThirdPartyData(firstItem, true);
 
 			// call main view detail method
 			completeSearchItemDetail(firstItem, currentProvider, 0);
@@ -4460,7 +4515,7 @@ tmz.initializeModules = function() {
 		loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
 		// load third party data
-		loadThirdPartyData(firstItem);
+		loadThirdPartyData(firstItem, false);
 
 		// finish tasks for viewing items
 		completeViewItemDetail(firstItem, currentProvider, 0, item);
@@ -4508,13 +4563,13 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* loadThirdPartyData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var loadThirdPartyData = function(item) {
+	var loadThirdPartyData = function(item, fromSearch) {
 
 		// get wikipedia page
 		Wikipedia.getWikipediaPage(item.standardName, item, displayWikipediaPage);
 
 		// get metascore
-		getMetascore(item.standardName, item, false);
+		getMetascore(item.standardName, item, fromSearch);
 
 		// get gametrailers page
 		GameTrailers.getGametrailersPage(item.standardName, item, displayGametrailersPage);
@@ -5151,6 +5206,7 @@ tmz.initializeModules = function() {
 
     // modules references
     var User = tmz.module('user'),
+		SiteView = tmz.module('siteView'),
 		TagView = tmz.module('tagView'),
 		Utilities = tmz.module('utilities'),
 		DetailView = tmz.module('detailView'),
@@ -5368,6 +5424,8 @@ tmz.initializeModules = function() {
 		$deleteListBtn.click(function(e) {
 			e.preventDefault();
 
+			SiteView.hideSiteGuide();
+
 			// check how many tags left
 			if (TagView.getTagCount() > 1) {
 				$deleteListConfirmModal.modal('show');
@@ -5406,6 +5464,8 @@ tmz.initializeModules = function() {
 		$editListBtn.click(function(e) {
 			e.preventDefault();
 
+			SiteView.hideSiteGuide();
+
 			var currentTagName = TagView.getTagName(currentViewTagID);
 
 			// set field name
@@ -5420,6 +5480,8 @@ tmz.initializeModules = function() {
 		// import menu buttons: click
 		$importMenu.find('li').click(function(e) {
 			e.preventDefault();
+
+			SiteView.hideSiteGuide();
 
 			// import games from source
 			ImportView.startImport(parseInt($(this).attr('data-importSource'), 10));
@@ -5444,6 +5506,8 @@ tmz.initializeModules = function() {
 			// custom filter
 			filterType = $(this).attr('data-content');
 			if (filterType == '0') {
+
+				SiteView.hideSiteGuide();
 				FilterPanel.showFilterPanel();
 
 			// quick filter
@@ -5463,6 +5527,8 @@ tmz.initializeModules = function() {
 		// show grid view button: click
 		$gridViewButton.click(function(e) {
 			e.preventDefault();
+
+			SiteView.hideSiteGuide();
 			showGridView();
 		});
 
@@ -5805,10 +5871,20 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadThirdPartyData = function(item) {
 
-		// get amazon price data
-		Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
-			amazonPrice_result(item.id, offers);
-		});
+		// initialize limited function as static property of function loadThirdPartyData
+		if (typeof loadThirdPartyData.getAmazonItemOffersLimited == 'undefined') {
+
+			// get amazon price data
+			loadThirdPartyData.getAmazonItemOffersLimited = function(item) {
+
+				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
+					amazonPrice_result(item.id, offers);
+				});
+
+			}.lazy(250);
+		}
+
+		loadThirdPartyData.getAmazonItemOffersLimited(item);
 
 		// get updated metascore - if metascore or metascore page not in item data
 		if (item.metascore === null || item.metascorePage === null) {
@@ -9909,6 +9985,19 @@ tmz.initializeModules = function() {
 		var num = 0;
 		var arr = null;
 
+		// remove brackets and parenthesis and content inside
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
+
+		// remove the word: trophies
+		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
+		// remove word that appears before 'edition'
+		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
+		// remove words appearing after 'with'
+		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
+
+		// remove 'the ' if at the start of title
+		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
+
 		// remove words appearing after '-' unless it is less than 4 chars
 		re = new RegExp('\\s*-.*', 'gi');
 		match = re.exec(sanitizedName);
@@ -9916,19 +10005,6 @@ tmz.initializeModules = function() {
 		if (match && match[0].length > 3) {
 			sanitizedName = sanitizedName.replace(re, '');
 		}
-
-		// remove the word: trophies
-		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
-		// remove word that appears before 'edition'
-		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
-		// remove brackets and parenthesis and content inside
-		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
-
-		// remove words appearing after 'with'
-		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
-
-		// remove 'the ' if at the start of title
-		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
 		return sanitizedName.toLowerCase();
 	};
@@ -10491,8 +10567,28 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseImportList = function(importedTitles) {
 
-		var importCount = 0;
-		var linkedCount = 0;
+		var importRequests = [];
+
+		var findItemOnAlternateProviderLimited = function(searchItem, onSuccess) {
+
+			// find alternate amazon item
+			var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+
+				// add asin to search item
+				searchItem.asin = item.asin;
+
+				onSuccess(searchItem);
+			});
+
+			// add alternate request to importRequests array
+			//importRequests.push(alternateRequest);
+
+		}.lazy(500);
+
+		var alternateComplete = function(searchItem) {
+
+			console.info(searchItem);
+		};
 
 		// for each imported game - search giantbomb and add
 		_.each(importedTitles, function(title) {
@@ -10505,8 +10601,6 @@ tmz.initializeModules = function() {
 
 			// search giantbomb
 			ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.Amazon, false, function (item) {
-
-				importCount++;
 
 				// extend searchItem with returned item data
 				$.extend(true, searchItem, item);
@@ -10532,49 +10626,35 @@ tmz.initializeModules = function() {
 						}
 					});
 
-					// find alternate amazon item
-					var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+					var alternateRequest;
 
-						//console.info(searchResult.results[0].name, 'alternate');
-						//console.info(item.asin);
-						// add asin to search item
-						searchItem.asin = item.asin;
-
-					});
+					findItemOnAlternateProviderLimited(searchItem, alternateComplete);
 
 					// get metascore
 					var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, function(data) {
-						//console.info(searchResult.results[0].name, 'metascore');
+
 						// score retrieved and properties added to searchItem
 					});
 
-					// when both requests complete >
-					$.when(metascoreRequest, alternateRequest).then(function() {
-						//console.info(searchResult.results[0].name, 'done');
-						//console.info(searchItem.asin, searchItem.metascorePage);
+					// add metascore request to importRequests array
+					importRequests.push(metascoreRequest);
+
+					// when requests complete
+					$.when(metascoreRequest).then(function() {
 
 						// add to importedGames
 						importedGames.push(searchItem);
 
 						// append item to importResults
 						appendResults(searchItem);
-
-						//console.info(searchItem);
-
-						// when linkedCount == importCount > import has completed
-						linkedCount++;
-						if (linkedCount === importCount - 1) {
-
-							// import has completed > allow user to add games
-							finalizeImport();
-						}
-
-					// request failed, increment count anyway
-					}, function() {
-						linkedCount++;
 					});
 				});
+			});
 
+
+			// when all requests complete
+			$.when.apply($, importRequests).then(function() {
+				finalizeImport();
 			});
 		});
 	};

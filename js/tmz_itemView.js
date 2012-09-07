@@ -4,6 +4,7 @@
 
     // modules references
     var User = tmz.module('user'),
+		SiteView = tmz.module('siteView'),
 		TagView = tmz.module('tagView'),
 		Utilities = tmz.module('utilities'),
 		DetailView = tmz.module('detailView'),
@@ -221,6 +222,8 @@
 		$deleteListBtn.click(function(e) {
 			e.preventDefault();
 
+			SiteView.hideSiteGuide();
+
 			// check how many tags left
 			if (TagView.getTagCount() > 1) {
 				$deleteListConfirmModal.modal('show');
@@ -259,6 +262,8 @@
 		$editListBtn.click(function(e) {
 			e.preventDefault();
 
+			SiteView.hideSiteGuide();
+
 			var currentTagName = TagView.getTagName(currentViewTagID);
 
 			// set field name
@@ -273,6 +278,8 @@
 		// import menu buttons: click
 		$importMenu.find('li').click(function(e) {
 			e.preventDefault();
+
+			SiteView.hideSiteGuide();
 
 			// import games from source
 			ImportView.startImport(parseInt($(this).attr('data-importSource'), 10));
@@ -297,6 +304,8 @@
 			// custom filter
 			filterType = $(this).attr('data-content');
 			if (filterType == '0') {
+
+				SiteView.hideSiteGuide();
 				FilterPanel.showFilterPanel();
 
 			// quick filter
@@ -316,6 +325,8 @@
 		// show grid view button: click
 		$gridViewButton.click(function(e) {
 			e.preventDefault();
+
+			SiteView.hideSiteGuide();
 			showGridView();
 		});
 
@@ -658,10 +669,20 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var loadThirdPartyData = function(item) {
 
-		// get amazon price data
-		Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
-			amazonPrice_result(item.id, offers);
-		});
+		// initialize limited function as static property of function loadThirdPartyData
+		if (typeof loadThirdPartyData.getAmazonItemOffersLimited == 'undefined') {
+
+			// get amazon price data
+			loadThirdPartyData.getAmazonItemOffersLimited = function(item) {
+
+				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
+					amazonPrice_result(item.id, offers);
+				});
+
+			}.lazy(250);
+		}
+
+		loadThirdPartyData.getAmazonItemOffersLimited(item);
 
 		// get updated metascore - if metascore or metascore page not in item data
 		if (item.metascore === null || item.metascorePage === null) {

@@ -30,6 +30,560 @@ u(b)+"),'"}).replace(d.interpolate||t,function(a,b){return"',"+u(b)+",'"}).repla
 function(){var a=i.call(arguments);H.call(a,this._wrapped);return v(c.apply(b,a),this._chain)}};b.mixin(b);j("pop,push,reverse,shift,sort,splice,unshift".split(","),function(a){var b=k[a];m.prototype[a]=function(){var d=this._wrapped;b.apply(d,arguments);var e=d.length;(a=="shift"||a=="splice")&&e===0&&delete d[0];return v(d,this._chain)}});j(["concat","join","slice"],function(a){var b=k[a];m.prototype[a]=function(){return v(b.apply(this._wrapped,arguments),this._chain)}});m.prototype.chain=function(){this._chain=
 true;return this};m.prototype.value=function(){return this._wrapped}}).call(this);
 
+
+
+  /***
+   * @package Core
+   * @description Internal utility and common methods.
+   ***/
+
+
+  // A few optimizations for Google Closure Compiler will save us a couple kb in the release script.
+  var object = Object, array = Array, regexp = RegExp, date = Date, string = String, number = Number, math = Math, Undefined;
+
+  // The global context
+  var globalContext = typeof global !== 'undefined' ? global : this;
+
+  // defineProperty exists in IE8 but will error when trying to define a property on
+  // native objects. IE8 does not have defineProperies, however, so this check saves a try/catch block.
+  var definePropertySupport = object.defineProperty && object.defineProperties;
+
+  // Class initializers and isClass type helpers
+
+  var ClassNames = 'Array,Boolean,Date,Function,Number,String,RegExp'.split(',');
+
+  var isArray    = buildClassCheck(ClassNames[0]);
+  var isBoolean  = buildClassCheck(ClassNames[1]);
+  var isDate     = buildClassCheck(ClassNames[2]);
+  var isFunction = buildClassCheck(ClassNames[3]);
+  var isNumber   = buildClassCheck(ClassNames[4]);
+  var isString   = buildClassCheck(ClassNames[5]);
+  var isRegExp   = buildClassCheck(ClassNames[6]);
+
+  function buildClassCheck(type) {
+    return function(obj) {
+      return isClass(obj, type);
+    }
+  }
+
+  function isClass(obj, str) {
+    return object.prototype.toString.call(obj) === '[object '+str+']';
+  }
+
+  function initializeClasses() {
+    initializeClass(object);
+    iterateOverObject(ClassNames, function(i,name) {
+      initializeClass(globalContext[name]);
+    });
+  }
+
+  function initializeClass(klass) {
+    if(klass['SugarMethods']) return;
+    defineProperty(klass, 'SugarMethods', {});
+    extend(klass, false, false, {
+      'restore': function() {
+        var all = arguments.length === 0, methods = multiArgs(arguments);
+        iterateOverObject(klass['SugarMethods'], function(name, m) {
+          if(all || methods.indexOf(name) > -1) {
+            defineProperty(m.instance ? klass.prototype : klass, name, m.method);
+          }
+        });
+      },
+      'extend': function(methods, override, instance) {
+        extend(klass, instance !== false, override, methods);
+      }
+    });
+  }
+
+  // Class extending methods
+
+  function extend(klass, instance, override, methods) {
+    var extendee = instance ? klass.prototype : klass, original;
+    initializeClass(klass);
+    iterateOverObject(methods, function(name, method) {
+      original = extendee[name];
+      if(typeof override === 'function') {
+        method = wrapNative(extendee[name], method, override);
+      }
+      if(override !== false || !extendee[name]) {
+        defineProperty(extendee, name, method);
+      }
+      // If the method is internal to Sugar, then store a reference so it can be restored later.
+      klass['SugarMethods'][name] = { instance: instance, method: method, original: original };
+    });
+  }
+
+  function extendSimilar(klass, instance, override, set, fn) {
+    var methods = {};
+    set = isString(set) ? set.split(',') : set;
+    set.forEach(function(name, i) {
+      fn(methods, name, i);
+    });
+    extend(klass, instance, override, methods);
+  }
+
+  function wrapNative(nativeFn, extendedFn, condition) {
+    return function() {
+      if(nativeFn && (condition === true || !condition.apply(this, arguments))) {
+        return nativeFn.apply(this, arguments);
+      } else {
+        return extendedFn.apply(this, arguments);
+      }
+    }
+  }
+
+  function defineProperty(target, name, method) {
+    if(definePropertySupport) {
+      object.defineProperty(target, name, { 'value': method, 'configurable': true, 'enumerable': false, 'writable': true });
+    } else {
+      target[name] = method;
+    }
+  }
+
+
+  // Argument helpers
+
+  function multiArgs(args, fn) {
+    var result = [], i = 0;
+    for(i = 0; i < args.length; i++) {
+      result.push(args[i]);
+      if(fn) fn.call(args, args[i], i);
+    }
+    return result;
+  }
+
+
+  // General helpers
+
+  function isDefined(o) {
+    return o !== Undefined;
+  }
+
+  function isUndefined(o) {
+    return o === Undefined;
+  }
+
+
+  // Object helpers
+
+  function isObjectPrimitive(obj) {
+    // Check for null
+    return obj && typeof obj === 'object';
+  }
+
+  function isObject(obj) {
+    // === on the constructor is not safe across iframes
+    return !!obj && isClass(obj, 'Object') && string(obj.constructor) === string(object);
+  }
+
+  function hasOwnProperty(obj, key) {
+    return object['hasOwnProperty'].call(obj, key);
+  }
+
+  function iterateOverObject(obj, fn) {
+    var key;
+    for(key in obj) {
+      if(!hasOwnProperty(obj, key)) continue;
+      if(fn.call(obj, key, obj[key]) === false) break;
+    }
+  }
+
+  function simpleMerge(target, source) {
+    iterateOverObject(source, function(key) {
+      target[key] = source[key];
+    });
+    return target;
+  }
+
+  // Hash definition
+
+  function Hash(obj) {
+    simpleMerge(this, obj);
+  };
+
+  Hash.prototype.constructor = object;
+
+  // Number helpers
+
+  function getRange(start, stop, fn, step) {
+    var arr = [], i = parseInt(start), down = step < 0;
+    while((!down && i <= stop) || (down && i >= stop)) {
+      arr.push(i);
+      if(fn) fn.call(this, i);
+      i += step || 1;
+    }
+    return arr;
+  }
+
+  function round(val, precision, method) {
+    var fn = math[method || 'round'];
+    var multiplier = math.pow(10, math.abs(precision || 0));
+    if(precision < 0) multiplier = 1 / multiplier;
+    return fn(val * multiplier) / multiplier;
+  }
+
+  function ceil(val, precision) {
+    return round(val, precision, 'ceil');
+  }
+
+  function floor(val, precision) {
+    return round(val, precision, 'floor');
+  }
+
+  function padNumber(num, place, sign, base) {
+    var str = math.abs(num).toString(base || 10);
+    str = repeatString(place - str.replace(/\.\d+/, '').length, '0') + str;
+    if(sign || num < 0) {
+      str = (num < 0 ? '-' : '+') + str;
+    }
+    return str;
+  }
+
+  function getOrdinalizedSuffix(num) {
+    if(num >= 11 && num <= 13) {
+      return 'th';
+    } else {
+      switch(num % 10) {
+        case 1:  return 'st';
+        case 2:  return 'nd';
+        case 3:  return 'rd';
+        default: return 'th';
+      }
+    }
+  }
+
+
+  // String helpers
+
+  // WhiteSpace/LineTerminator as defined in ES5.1 plus Unicode characters in the Space, Separator category.
+  function getTrimmableCharacters() {
+    return '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u180E\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u2028\u2029\u3000\uFEFF';
+  }
+
+  function repeatString(times, str) {
+    return array(math.max(0, isDefined(times) ? times : 1) + 1).join(str || '');
+  }
+
+
+  // RegExp helpers
+
+  function getRegExpFlags(reg, add) {
+    var flags = reg.toString().match(/[^/]*$/)[0];
+    if(add) {
+      flags = (flags + add).split('').sort().join('').replace(/([gimy])\1+/g, '$1');
+    }
+    return flags;
+  }
+
+  function escapeRegExp(str) {
+    if(!isString(str)) str = string(str);
+    return str.replace(/([\\/'*+?|()\[\]{}.^$])/g,'\\$1');
+  }
+
+
+  // Specialized helpers
+
+
+  // Used by Array#unique and Object.equal
+
+  function stringify(thing, stack) {
+    var value, klass, isObject, isArray, arr, i, key, type = typeof thing;
+
+    // Return quickly if string to save cycles
+    if(type === 'string') return thing;
+
+    klass    = object.prototype.toString.call(thing)
+    isObject = klass === '[object Object]';
+    isArray  = klass === '[object Array]';
+
+    if(thing != null && isObject || isArray) {
+      // This method for checking for cyclic structures was egregiously stolen from
+      // the ingenious method by @kitcambridge from the Underscore script:
+      // https://github.com/documentcloud/underscore/issues/240
+      if(!stack) stack = [];
+      // Allowing a step into the structure before triggering this
+      // script to save cycles on standard JSON structures and also to
+      // try as hard as possible to catch basic properties that may have
+      // been modified.
+      if(stack.length > 1) {
+        i = stack.length;
+        while (i--) {
+          if (stack[i] === thing) {
+            return 'CYC';
+          }
+        }
+      }
+      stack.push(thing);
+      value = string(thing.constructor);
+      arr = isArray ? thing : object.keys(thing).sort();
+      for(i = 0; i < arr.length; i++) {
+        key = isArray ? i : arr[i];
+        value += key + stringify(thing[key], stack);
+      }
+      stack.pop();
+    } else if(1 / thing === -Infinity) {
+      value = '-0';
+    } else {
+      value = string(thing && thing.valueOf());
+    }
+    return type + klass + value;
+  }
+
+
+  // Used by Array#at and String#at
+
+  function entryAtIndex(arr, args, str) {
+    var result = [], length = arr.length, loop = args[args.length - 1] !== false, r;
+    multiArgs(args, function(index) {
+      if(isBoolean(index)) return false;
+      if(loop) {
+        index = index % length;
+        if(index < 0) index = length + index;
+      }
+      r = str ? arr.charAt(index) || '' : arr[index];
+      result.push(r);
+    });
+    return result.length < 2 ? result[0] : result;
+  }
+
+
+  // Object class methods implemented as instance methods
+
+  function buildObjectInstanceMethods(set, target) {
+    extendSimilar(target, true, false, set, function(methods, name) {
+      methods[name + (name === 'equal' ? 's' : '')] = function() {
+        return object[name].apply(null, [this].concat(multiArgs(arguments)));
+      }
+    });
+  }
+
+  initializeClasses();
+
+
+
+  /***
+   * @package Function
+   * @dependency core
+   * @description Lazy, throttled, and memoized functions, delayed functions and handling of timers, argument currying.
+   *
+   ***/
+
+  function setDelay(fn, ms, after, scope, args) {
+    var index;
+    if(!fn.timers) fn.timers = [];
+    if(!isNumber(ms)) ms = 0;
+    fn.timers.push(setTimeout(function(){
+      fn.timers.splice(index, 1);
+      after.apply(scope, args || []);
+    }, ms));
+    index = fn.timers.length;
+  }
+
+  extend(Function, true, false, {
+
+     /***
+     * @method lazy([ms] = 1, [limit] = Infinity)
+     * @returns Function
+     * @short Creates a lazy function that, when called repeatedly, will queue execution and wait [ms] milliseconds to execute again.
+     * @extra Lazy functions will always execute as many times as they are called up to [limit], after which point subsequent calls will be ignored (if it is set to a finite number). Compare this to %throttle%, which will execute only once per [ms] milliseconds. %lazy% is useful when you need to be sure that every call to a function is executed, but in a non-blocking manner. Calling %cancel% on a lazy function will clear the entire queue. Note that [ms] can also be a fraction.
+     * @example
+     *
+     *   (function() {
+     *     // Executes immediately.
+     *   }).lazy()();
+     *   (3).times(function() {
+     *     // Executes 3 times, with each execution 20ms later than the last.
+     *   }.lazy(20));
+     *   (100).times(function() {
+     *     // Executes 50 times, with each execution 20ms later than the last.
+     *   }.lazy(20, 50));
+     *
+     ***/
+    'lazy': function(ms, limit) {
+      var fn = this, queue = [], lock = false, execute, rounded, perExecution;
+      ms = ms || 1;
+      limit = limit || Infinity;
+      rounded = ceil(ms);
+      perExecution = round(rounded / ms);
+      execute = function() {
+        if(lock || queue.length == 0) return;
+        var max = math.max(queue.length - perExecution, 0);
+        while(queue.length > max) {
+          // Getting uber-meta here...
+          Function.prototype.apply.apply(fn, queue.shift());
+        }
+        setDelay(lazy, rounded, function() {
+          lock = false;
+          execute();
+        });
+        lock = true;
+      }
+      function lazy() {
+        // The first call is immediate, so having 1 in the queue
+        // implies two calls have already taken place.
+        if(lock && queue.length > limit - 2) return;
+        queue.push([this, arguments]);
+        execute();
+      }
+      return lazy;
+    },
+
+     /***
+     * @method delay([ms] = 0, [arg1], ...)
+     * @returns Function
+     * @short Executes the function after <ms> milliseconds.
+     * @extra Returns a reference to itself. %delay% is also a way to execute non-blocking operations that will wait until the CPU is free. Delayed functions can be canceled using the %cancel% method. Can also curry arguments passed in after <ms>.
+     * @example
+     *
+     *   (function(arg1) {
+     *     // called 1s later
+     *   }).delay(1000, 'arg1');
+     *
+     ***/
+    'delay': function(ms) {
+      var fn = this;
+      var args = multiArgs(arguments).slice(1);
+      setDelay(fn, ms, fn, fn, args);
+      return fn;
+    },
+
+     /***
+     * @method throttle(<ms>)
+     * @returns Function
+     * @short Creates a "throttled" version of the function that will only be executed once per <ms> milliseconds.
+     * @extra This is functionally equivalent to calling %lazy% with a [limit] of %1%. %throttle% is appropriate when you want to make sure a function is only executed at most once for a given duration. Compare this to %lazy%, which will queue rapid calls and execute them later.
+     * @example
+     *
+     *   (3).times(function() {
+     *     // called only once. will wait 50ms until it responds again
+     *   }.throttle(50));
+     *
+     ***/
+    'throttle': function(ms) {
+      return this.lazy(ms, 1);
+    },
+
+     /***
+     * @method debounce(<ms>)
+     * @returns Function
+     * @short Creates a "debounced" function that postpones its execution until after <ms> milliseconds have passed.
+     * @extra This method is useful to execute a function after things have "settled down". A good example of this is when a user tabs quickly through form fields, execution of a heavy operation should happen after a few milliseconds when they have "settled" on a field.
+     * @example
+     *
+     *   var fn = (function(arg1) {
+     *     // called once 50ms later
+     *   }).debounce(50); fn() fn() fn();
+     *
+     ***/
+    'debounce': function(ms) {
+      var fn = this;
+      return function() {
+        fn.cancel();
+        setDelay(fn, ms, fn, this, arguments);
+      }
+    },
+
+     /***
+     * @method cancel()
+     * @returns Function
+     * @short Cancels a delayed function scheduled to be run.
+     * @extra %delay%, %lazy%, %throttle%, and %debounce% can all set delays.
+     * @example
+     *
+     *   (function() {
+     *     alert('hay'); // Never called
+     *   }).delay(500).cancel();
+     *
+     ***/
+    'cancel': function() {
+      if(isArray(this.timers)) {
+        while(this.timers.length > 0) {
+          clearTimeout(this.timers.shift());
+        }
+      }
+      return this;
+    },
+
+     /***
+     * @method after([num] = 1)
+     * @returns Function
+     * @short Creates a function that will execute after [num] calls.
+     * @extra %after% is useful for running a final callback after a series of asynchronous operations, when the order in which the operations will complete is unknown.
+     * @example
+     *
+     *   var fn = (function() {
+     *     // Will be executed once only
+     *   }).after(3); fn(); fn(); fn();
+     *
+     ***/
+    'after': function(num) {
+      var fn = this, counter = 0, storedArguments = [];
+      if(!isNumber(num)) {
+        num = 1;
+      } else if(num === 0) {
+        fn.call();
+        return fn;
+      }
+      return function() {
+        var ret;
+        storedArguments.push(multiArgs(arguments));
+        counter++;
+        if(counter == num) {
+          ret = fn.call(this, storedArguments);
+          counter = 0;
+          storedArguments = [];
+          return ret;
+        }
+      }
+    },
+
+     /***
+     * @method once()
+     * @returns Function
+     * @short Creates a function that will execute only once and store the result.
+     * @extra %once% is useful for creating functions that will cache the result of an expensive operation and use it on subsequent calls. Also it can be useful for creating initialization functions that only need to be run once.
+     * @example
+     *
+     *   var fn = (function() {
+     *     // Will be executed once only
+     *   }).once(); fn(); fn(); fn();
+     *
+     ***/
+    'once': function() {
+      var fn = this;
+      return function() {
+        return hasOwnProperty(fn, 'memo') ? fn['memo'] : fn['memo'] = fn.apply(this, arguments);
+      }
+    },
+
+     /***
+     * @method fill(<arg1>, <arg2>, ...)
+     * @returns Function
+     * @short Returns a new version of the function which when called will have some of its arguments pre-emptively filled in, also known as "currying".
+     * @extra Arguments passed to a "filled" function are generally appended to the curried arguments. However, if %undefined% is passed as any of the arguments to %fill%, it will be replaced, when the "filled" function is executed. This allows currying of arguments even when they occur toward the end of an argument list (the example demonstrates this much more clearly).
+     * @example
+     *
+     *   var delayOneSecond = setTimeout.fill(undefined, 1000);
+     *   delayOneSecond(function() {
+     *     // Will be executed 1s later
+     *   });
+     *
+     ***/
+    'fill': function() {
+      var fn = this, curried = multiArgs(arguments);
+      return function() {
+        var args = multiArgs(arguments);
+        curried.forEach(function(arg, index) {
+          if(arg != null || index >= args.length) args.splice(index, 0, arg);
+        });
+        return fn.apply(this, args);
+      }
+    }
+
+
+  });
+
+
 /*!
  * jQuery UI 1.8.18
  *

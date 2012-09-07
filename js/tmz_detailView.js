@@ -307,7 +307,7 @@
 			loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
 			// load third party data
-			loadThirdPartyData(firstItem);
+			loadThirdPartyData(firstItem, true);
 
 			// call main view detail method
 			completeSearchItemDetail(firstItem, currentProvider, 0);
@@ -360,7 +360,7 @@
 		loadAndDisplayUserAttributes(firstItem, itemAttributes);
 
 		// load third party data
-		loadThirdPartyData(firstItem);
+		loadThirdPartyData(firstItem, false);
 
 		// finish tasks for viewing items
 		completeViewItemDetail(firstItem, currentProvider, 0, item);
@@ -408,13 +408,13 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* loadThirdPartyData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var loadThirdPartyData = function(item) {
+	var loadThirdPartyData = function(item, fromSearch) {
 
 		// get wikipedia page
 		Wikipedia.getWikipediaPage(item.standardName, item, displayWikipediaPage);
 
 		// get metascore
-		getMetascore(item.standardName, item, false);
+		getMetascore(item.standardName, item, fromSearch);
 
 		// get gametrailers page
 		GameTrailers.getGametrailersPage(item.standardName, item, displayGametrailersPage);
