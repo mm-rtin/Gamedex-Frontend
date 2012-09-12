@@ -9,6 +9,7 @@
 		VIDEOS_PER_SET = 5,
 
 		// properties
+		initialLoad = false,
 		currentVideoSet = 0,
 		currentMaxVideoSet = null,
 		currentVideoCount = 0,
@@ -88,6 +89,13 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.showVideoPanel = function() {
 
+		if (initialLoad) {
+			initialLoad = false;
+
+			// update video source
+			changeVideoSource(0);
+		}
+
 		$('html, body').scrollTop(0);
 
 		// show video modal
@@ -100,6 +108,8 @@
 	* renderVideoModal -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	VideoPanel.renderVideoModal = function(videoResults, itemName) {
+
+		initialLoad = true;
 
 		currentVideos = $.extend(true, [], videoResults);
 
@@ -124,15 +134,12 @@
 			// set video game name
 			$videoModalTitle.text(itemName);
 
-			// update video source
-			changeVideoSource(0);
-
 			// change videoSet to default
 			currentVideoSet = 0;
 			changeVideoSet(0);
 
 			// init popover
-			$videoList.find('a').popover({'placement': 'top', 'animation': true});
+			//$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
 
 			showVideoListNavigation();
 		}

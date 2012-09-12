@@ -37,8 +37,10 @@
 		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
 		// remove words appearing after '-' unless it is less than 4 chars
-		re = new RegExp('\\s*-.*', 'gi');
-		match = re.exec(sanitizedName);
+		// BUG: removes spider-man: shatttered dimensions
+
+		//re = new RegExp('\\s*-.*', 'gi');
+		//match = re.exec(sanitizedName);
 
 		if (match && match[0].length > 3) {
 			sanitizedName = sanitizedName.replace(re, '');
@@ -166,9 +168,10 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findItemOnAlternateProvider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess) {
+	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess, onError) {
 
 		var searchRequest = null;
+		onError = typeof onError !== 'undefined' ? onError : null;
 
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
@@ -177,7 +180,7 @@
 
 				// run search for giantbomb
 				searchRequest = GiantBomb.searchGiantBomb(searchName, function(data) {
-					findGiantbombMatch(data, item, onSuccess);
+					findGiantbombMatch(data, item, onSuccess, onError);
 				});
 				break;
 
@@ -192,8 +195,8 @@
 
 				// run search for amazon
 				searchRequest = Amazon.searchAmazon(item.name, browseNode, function(data) {
-					findAmazonMatch(data, item, onSuccess, false);
-				}, null, preventMultipleRequests);
+					findAmazonMatch(data, item, onSuccess, onError, false);
+				}, onError, preventMultipleRequests);
 				break;
 		}
 
@@ -302,7 +305,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findAmazonMatch
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonMatch = function(data, sourceItem, onSuccess, lastSearch) {
+	var findAmazonMatch = function(data, sourceItem, onSuccess, onError, lastSearch) {
 
 		var resultLength = ($('Item', data).length);
 		var searchItem = {};
@@ -349,15 +352,17 @@
 		// re-run search without platform filter - only if this hasn't been run before
 		} else if (!lastSearch) {
 			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
-				findAmazonMatch(data, sourceItem, onSuccess, true);
-			});
+				findAmazonMatch(data, sourceItem, onSuccess, onError, true);
+			}, onError);
+		} else {
+			onError();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findGiantbombMatch -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findGiantbombMatch = function(data, sourceItem, onSuccess) {
+	var findGiantbombMatch = function(data, sourceItem, onSuccess, onError) {
 
 		var results = data.results;
 		var searchItem = {};
@@ -390,9 +395,15 @@
 
 		// return best match to onSuccess method
 		if (results.length !== 0) {
+
 			// return best match
 			onSuccess(bestMatch);
+
+		// no match found
+		} else {
+			onError();
 		}
+
 	};
 
 })(tmz.module('itemLinker'), tmz, jQuery, _);

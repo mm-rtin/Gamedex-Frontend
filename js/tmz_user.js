@@ -347,7 +347,7 @@
 			userData.email = email;
 			userData.viewUser = null;
 
-			// compare timestamps - if different form localstorage value: clear item local storage data
+			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
 			// if no localtimestamp in storage set new timestamp from data
@@ -356,7 +356,11 @@
 
 			// compare timestamps
 			} else if (data.timestamp != localTimestamp) {
+
 				ItemCache.clearStoredData();
+
+				// update timestamp
+				Storage.set('timestamp', data.timestamp);
 			}
 		}
 	};

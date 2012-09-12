@@ -141,8 +141,8 @@
 			$listResultsContainer.nanoScroller();
 		}, 1500);
 
-		// init BDSM (bootstrap dropdown sub menu)
-		$legacySubNav.BootstrapDropdownSubMenu({'$mainNav': $searchPlatforms});
+		// init BootstrapSubMenu (bootstrap sub menu)
+		$legacySubNav.BootstrapSubMenu({'$mainNav': $searchPlatforms});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

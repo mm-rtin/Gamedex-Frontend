@@ -1,7 +1,7 @@
 (function ($) {
 
     // properties
-    var pluginName = 'BootstrapDropdownSubMenu',
+    var pluginName = 'BootstrapSubMenu',
         defaults = {
             propertyName: "value"
         };
@@ -12,9 +12,9 @@
         hideTimeout = null;
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * BDSM - Bootstrap Dropdown Sub Menu
+    * BootstrapSubMenu - Bootstrap Dropdown Sub Menu
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    function BDSM(element, options) {
+    function BootstrapSubMenu(element, options) {
         this.element = element;
 
         this.options = $.extend({}, defaults, options) ;
@@ -28,7 +28,7 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * intialize
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    BDSM.prototype.init = function () {
+    BootstrapSubMenu.prototype.init = function () {
 
         // create events
         this.createEventHandlers($(this.element), this.options.$mainNav);
@@ -37,11 +37,12 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * createEventHandlers
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    BDSM.prototype.createEventHandlers = function ($subNav, $mainNav) {
+    BootstrapSubMenu.prototype.createEventHandlers = function ($subNav, $mainNav) {
 
         // mainNav root items: hover
-        $mainNav.find('li:not(.dropdown-sub li) a').hover(function(e) {
+        $mainNav.find('li:not(.dropdown-sub li)').hover(function(e) {
 
+            console.info('hide and stop show');
             // cancel show
             clearTimeout(showTimeout);
             showTimeout = null;
@@ -58,6 +59,7 @@
 
         // subNav: hover
         $subNav.hover(function(e) {
+            console.info('show and stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
@@ -67,7 +69,7 @@
                 // delay before showing subnav
                 showTimeout = setTimeout(function() {
                     $subNav.addClass('active');
-                }, 500);
+                }, 300);
             }
         });
 
@@ -80,15 +82,15 @@
         });
 
         // subNav items: hover
-        $subNav.find('li a').hover(function(e) {
-
+        $subNav.find('li').hover(function(e) {
+            console.info('stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
         });
 
         // subNav items: click
-        $subNav.find('li a').click(function(e) {
+        $subNav.find('li').click(function(e) {
             $mainNav.removeClass('open');
         });
 
@@ -104,7 +106,7 @@
         return this.each(function () {
             if (!$.data(this, 'plugin_' + pluginName)) {
                 $.data(this, 'plugin_' + pluginName,
-                new BDSM(this, options));
+                new BootstrapSubMenu(this, options));
             }
         });
     };

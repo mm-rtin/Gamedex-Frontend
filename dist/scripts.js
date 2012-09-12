@@ -1,7 +1,7 @@
 (function ($) {
 
     // properties
-    var pluginName = 'BootstrapDropdownSubMenu',
+    var pluginName = 'BootstrapSubMenu',
         defaults = {
             propertyName: "value"
         };
@@ -12,9 +12,9 @@
         hideTimeout = null;
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * BDSM - Bootstrap Dropdown Sub Menu
+    * BootstrapSubMenu - Bootstrap Dropdown Sub Menu
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    function BDSM(element, options) {
+    function BootstrapSubMenu(element, options) {
         this.element = element;
 
         this.options = $.extend({}, defaults, options) ;
@@ -28,7 +28,7 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * intialize
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    BDSM.prototype.init = function () {
+    BootstrapSubMenu.prototype.init = function () {
 
         // create events
         this.createEventHandlers($(this.element), this.options.$mainNav);
@@ -37,11 +37,12 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * createEventHandlers
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    BDSM.prototype.createEventHandlers = function ($subNav, $mainNav) {
+    BootstrapSubMenu.prototype.createEventHandlers = function ($subNav, $mainNav) {
 
         // mainNav root items: hover
-        $mainNav.find('li:not(.dropdown-sub li) a').hover(function(e) {
+        $mainNav.find('li:not(.dropdown-sub li)').hover(function(e) {
 
+            console.info('hide and stop show');
             // cancel show
             clearTimeout(showTimeout);
             showTimeout = null;
@@ -58,6 +59,7 @@
 
         // subNav: hover
         $subNav.hover(function(e) {
+            console.info('show and stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
@@ -67,7 +69,7 @@
                 // delay before showing subnav
                 showTimeout = setTimeout(function() {
                     $subNav.addClass('active');
-                }, 500);
+                }, 300);
             }
         });
 
@@ -80,15 +82,15 @@
         });
 
         // subNav items: hover
-        $subNav.find('li a').hover(function(e) {
-
+        $subNav.find('li').hover(function(e) {
+            console.info('stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
         });
 
         // subNav items: click
-        $subNav.find('li a').click(function(e) {
+        $subNav.find('li').click(function(e) {
             $mainNav.removeClass('open');
         });
 
@@ -104,7 +106,7 @@
         return this.each(function () {
             if (!$.data(this, 'plugin_' + pluginName)) {
                 $.data(this, 'plugin_' + pluginName,
-                new BDSM(this, options));
+                new BootstrapSubMenu(this, options));
             }
         });
     };
@@ -672,7 +674,7 @@ tmz.initializeModules = function() {
 			userData.email = email;
 			userData.viewUser = null;
 
-			// compare timestamps - if different form localstorage value: clear item local storage data
+			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
 			// if no localtimestamp in storage set new timestamp from data
@@ -681,7 +683,11 @@ tmz.initializeModules = function() {
 
 			// compare timestamps
 			} else if (data.timestamp != localTimestamp) {
+
 				ItemCache.clearStoredData();
+
+				// update timestamp
+				Storage.set('timestamp', data.timestamp);
 			}
 		}
 	};
@@ -2455,6 +2461,10 @@ tmz.initializeModules = function() {
 			}
 
 			$resetpasswordModal.modal('show');
+
+			_.delay(function() {
+				$resetPasswordEmailField.focus().select();
+			}, 1000);
 		});
 		// sendResetCodeButton: click
 		$sendResetCodeButton.click(function(e) {
@@ -3308,8 +3318,8 @@ tmz.initializeModules = function() {
 			$listResultsContainer.nanoScroller();
 		}, 1500);
 
-		// init BDSM (bootstrap dropdown sub menu)
-		$legacySubNav.BootstrapDropdownSubMenu({'$mainNav': $searchPlatforms});
+		// init BootstrapSubMenu (bootstrap sub menu)
+		$legacySubNav.BootstrapSubMenu({'$mainNav': $searchPlatforms});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5339,8 +5349,8 @@ tmz.initializeModules = function() {
 		// set initial filtered status
 		setClearFiltersButton(false);
 
-		// init BDSM (bootstrap dropdown sub menu)
-		$platformFilterSubNav.BootstrapDropdownSubMenu({'$mainNav': $filterOptions});
+		// init BootstrapSubMenu (bootstrap sub menu)
+		$platformFilterSubNav.BootstrapSubMenu({'$mainNav': $filterOptions});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5474,7 +5484,9 @@ tmz.initializeModules = function() {
 			$updateListModal.modal('show');
 
 			// select field text
-			$tagNameField.focus().select();
+			_.delay(function() {
+				$tagNameField.focus().select();
+			}, 1000);
 		});
 
 		// import menu buttons: click
@@ -5881,7 +5893,7 @@ tmz.initializeModules = function() {
 					amazonPrice_result(item.id, offers);
 				});
 
-			}.lazy(250);
+			}.lazy(250, 2000);
 		}
 
 		loadThirdPartyData.getAmazonItemOffersLimited(item);
@@ -8087,6 +8099,7 @@ tmz.initializeModules = function() {
 		VIDEOS_PER_SET = 5,
 
 		// properties
+		initialLoad = false,
 		currentVideoSet = 0,
 		currentMaxVideoSet = null,
 		currentVideoCount = 0,
@@ -8166,6 +8179,13 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.showVideoPanel = function() {
 
+		if (initialLoad) {
+			initialLoad = false;
+
+			// update video source
+			changeVideoSource(0);
+		}
+
 		$('html, body').scrollTop(0);
 
 		// show video modal
@@ -8178,6 +8198,8 @@ tmz.initializeModules = function() {
 	* renderVideoModal -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	VideoPanel.renderVideoModal = function(videoResults, itemName) {
+
+		initialLoad = true;
 
 		currentVideos = $.extend(true, [], videoResults);
 
@@ -8202,15 +8224,12 @@ tmz.initializeModules = function() {
 			// set video game name
 			$videoModalTitle.text(itemName);
 
-			// update video source
-			changeVideoSource(0);
-
 			// change videoSet to default
 			currentVideoSet = 0;
 			changeVideoSet(0);
 
 			// init popover
-			$videoList.find('a').popover({'placement': 'top', 'animation': true});
+			//$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
 
 			showVideoListNavigation();
 		}
@@ -8482,7 +8501,9 @@ tmz.initializeModules = function() {
 					onSuccess(data);
 				}
 			},
-			error: onError
+			error: function() {
+				onError();
+			}
 		});
 
 		return searchRequest;
@@ -9883,7 +9904,7 @@ tmz.initializeModules = function() {
 
 			// filter results based on platform
 			var filteredResults = filterListResults(cachedList, platform);
-					
+
 			// return list
 			onSuccess(filteredResults);
 
@@ -9925,6 +9946,10 @@ tmz.initializeModules = function() {
 		// iterate list results
 		for (var i = 0, len = listResults.length; i < len; i++) {
 
+			// clean up name
+			// remove words appearing after 'box'
+			listResults[i].name = listResults[i].name.replace(/\sbox\s*.*/gi, '');
+
 			if (_.has(listResults[i], 'platforms')) {
 				var listPlatforms = listResults[i].platforms.toLowerCase();
 
@@ -9940,7 +9965,7 @@ tmz.initializeModules = function() {
 
 		return filteredResults;
 	};
-	
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -
@@ -9999,8 +10024,10 @@ tmz.initializeModules = function() {
 		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
 		// remove words appearing after '-' unless it is less than 4 chars
-		re = new RegExp('\\s*-.*', 'gi');
-		match = re.exec(sanitizedName);
+		// BUG: removes spider-man: shatttered dimensions
+
+		//re = new RegExp('\\s*-.*', 'gi');
+		//match = re.exec(sanitizedName);
 
 		if (match && match[0].length > 3) {
 			sanitizedName = sanitizedName.replace(re, '');
@@ -10128,9 +10155,10 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findItemOnAlternateProvider
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess) {
+	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess, onError) {
 
 		var searchRequest = null;
+		onError = typeof onError !== 'undefined' ? onError : null;
 
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
@@ -10139,7 +10167,7 @@ tmz.initializeModules = function() {
 
 				// run search for giantbomb
 				searchRequest = GiantBomb.searchGiantBomb(searchName, function(data) {
-					findGiantbombMatch(data, item, onSuccess);
+					findGiantbombMatch(data, item, onSuccess, onError);
 				});
 				break;
 
@@ -10154,8 +10182,8 @@ tmz.initializeModules = function() {
 
 				// run search for amazon
 				searchRequest = Amazon.searchAmazon(item.name, browseNode, function(data) {
-					findAmazonMatch(data, item, onSuccess, false);
-				}, null, preventMultipleRequests);
+					findAmazonMatch(data, item, onSuccess, onError, false);
+				}, onError, preventMultipleRequests);
 				break;
 		}
 
@@ -10264,7 +10292,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findAmazonMatch
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonMatch = function(data, sourceItem, onSuccess, lastSearch) {
+	var findAmazonMatch = function(data, sourceItem, onSuccess, onError, lastSearch) {
 
 		var resultLength = ($('Item', data).length);
 		var searchItem = {};
@@ -10311,15 +10339,17 @@ tmz.initializeModules = function() {
 		// re-run search without platform filter - only if this hasn't been run before
 		} else if (!lastSearch) {
 			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
-				findAmazonMatch(data, sourceItem, onSuccess, true);
-			});
+				findAmazonMatch(data, sourceItem, onSuccess, onError, true);
+			}, onError);
+		} else {
+			onError();
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findGiantbombMatch -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findGiantbombMatch = function(data, sourceItem, onSuccess) {
+	var findGiantbombMatch = function(data, sourceItem, onSuccess, onError) {
 
 		var results = data.results;
 		var searchItem = {};
@@ -10352,9 +10382,15 @@ tmz.initializeModules = function() {
 
 		// return best match to onSuccess method
 		if (results.length !== 0) {
+
 			// return best match
 			onSuccess(bestMatch);
+
+		// no match found
+		} else {
+			onError();
 		}
+
 	};
 
 })(tmz.module('itemLinker'), tmz, jQuery, _);
@@ -10377,12 +10413,21 @@ tmz.initializeModules = function() {
 		// constants
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
 		INPUT_SOURCES_ID_NAME = ['Account Name', 'PSN ID', 'Gamertag'],
+		INPUT_SOURCES_URL = ['http://steamcommunity.com/actions/SearchFriends', 'http://us.playstation.com/mytrophies/', 'https://live.xbox.com/en-US/Friends'],
+
+		NO_MATCH_IMAGE = 'http://d2sifwlm28j6up.cloudfront.net/no_match.png',
 
 		// properties
+		requestCount = 0,
+		requestsCompleted = 0,
+		titlesFoundCount = 0,		// number of titles found form source
+		titlesImportedCount = 0,	// number of titles actually imported (linked to external source)
+
 		currentSourceID = null,
 		sourceImportStarted = {},
 
 		// data
+		importedTitles = [],
 		importedGames = [],
 
 		// element cache
@@ -10394,14 +10439,23 @@ tmz.initializeModules = function() {
 		$cancelImportBtn = $('#cancelImport_btn'),
 		$sourceUser = $('#sourceUser'),
 
-		$importSourceID = $('#importSourceID'),
-		$importSourceName = $('#importSourceName'),
+		$importSourceID = $('.importSourceID'),
+		$importSourceName = $('.importSourceName'),
+		$importSourceURL = $('.importSourceURL'),
 
 		// modal
 		$importConfigModal = $('#importConfig-modal'),
 		$importModal = $('#import-modal'),
 
 		$loadingStatus = $importContainer.find('.loadingStatus'),
+		$importProgress = $('#importProgress'),
+		$importProgressBar = $importProgress.find('.bar'),
+		$importStatus = $('#importStatus'),
+		$importStatusTitle = $importStatus.find('.statusTitle'),
+		$importStatusText = $importStatus.find('.statusText'),
+
+		// rate limited function for findAmazonItem - Amazon has request limit per second
+		findAmazonItemRateLimited = null,
 
 		// templates
 		importResultsTemplate = _.template($('#import-results-template').html());
@@ -10410,6 +10464,9 @@ tmz.initializeModules = function() {
 	* init
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var init = function() {
+
+		// construct rate limited function
+		findAmazonItemRateLimited = findAmazonItem.lazy(2000, 2000),
 
 		createEventHandlers();
 	};
@@ -10458,18 +10515,6 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* appendResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var appendResults = function(item) {
-
-		// get model data
-		var templateData = {'item': item};
-
-		// append model to importResults
-		$importResultsBody.append(importResultsTemplate(templateData));
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* clearImportView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var clearImportView = function() {
@@ -10508,11 +10553,17 @@ tmz.initializeModules = function() {
 		$importSourceID.text(INPUT_SOURCES_ID_NAME[currentSourceID]);
 		$importSourceName.text(INPUT_SOURCES[currentSourceID]);
 
+		var url = INPUT_SOURCES_URL[currentSourceID];
+		var href = '<a href="' + url + '" target="_blank">' + url + '</a>';
+		$importSourceURL.html(href);
+
 		// show modal
 		$importConfigModal.modal('show');
 
 		// focus source user filed
-		$sourceUser.focus();
+		_.delay(function() {
+			$sourceUser.focus().select();
+		}, 1000);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10526,11 +10577,19 @@ tmz.initializeModules = function() {
 		// reset data
 		importedGames = [];
 
+		requestCount = 0,
+		requestsCompleted = 0,
+		titlesFoundCount = 0,
+		titlesImportedCount = 0,
+
 		// clear import list
 		$importResultsBody.empty();
 
 		// hide loading status
 		$loadingStatus.stop().hide();
+		$importProgress.stop().hide();
+		$importStatus.stop().hide();
+		$importProgressBar.css({'width': '0%'});
 
 		// remove ready status from modal
 		$importModal.removeClass('ready');
@@ -10546,7 +10605,7 @@ tmz.initializeModules = function() {
 		ItemData.importGames(currentSourceID, sourceUser, function(importedTitles) {
 
 			// parse imported titles
-			parseImportList(importedTitles);
+			importTitles(importedTitles, ['PSN', 'PS3', 'Vita']);
 		});
 	};
 
@@ -10563,34 +10622,15 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseImportList -
+	* importTitles - begin linking and fetching title data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseImportList = function(importedTitles) {
+	var importTitles = function(_importedTitles, allowedPlatforms) {
 
-		var importRequests = [];
+		importedTitles = _importedTitles;
+		titlesFoundCount = importedTitles.length;
 
-		var findItemOnAlternateProviderLimited = function(searchItem, onSuccess) {
-
-			// find alternate amazon item
-			var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
-
-				// add asin to search item
-				searchItem.asin = item.asin;
-
-				onSuccess(searchItem);
-			});
-
-			// add alternate request to importRequests array
-			//importRequests.push(alternateRequest);
-
-		}.lazy(500);
-
-		var alternateComplete = function(searchItem) {
-
-			console.info(searchItem);
-		};
-
-		// for each imported game - search giantbomb and add
+		/* iterate each imported game - find on giantbomb, get platform, metacritic and alternate provider (Amazon) data
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 		_.each(importedTitles, function(title) {
 
 			// cleanup title
@@ -10599,64 +10639,193 @@ tmz.initializeModules = function() {
 			// set giantbomb as initial provider, add standard name propery
 			var searchItem = {'initialProvider': 1, 'standardName': title};
 
-			// search giantbomb
+			/* search giantbomb
+			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 			ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.Amazon, false, function (item) {
 
-				// extend searchItem with returned item data
-				$.extend(true, searchItem, item);
+				// process giantbomb item
+				processGiantbombItem(title, item, searchItem, allowedPlatforms);
 
-				// get platform information for each item by gbombID
-				GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
+			// on error - no giantbomb match found
+			}, function() {
 
-					// iterate platforms
-					_.each(platformResult.results.platforms, function(platform) {
-
-						// save platform name to search item
-						switch(platform.id) {
-
-							case 88:
-								searchItem.platform = 'PSN';
-								break;
-							case 35:
-								searchItem.platform = 'PS3';
-								break;
-							case 143:
-								searchItem.platform = 'Vita';
-								break;
-						}
-					});
-
-					var alternateRequest;
-
-					findItemOnAlternateProviderLimited(searchItem, alternateComplete);
-
-					// get metascore
-					var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, function(data) {
-
-						// score retrieved and properties added to searchItem
-					});
-
-					// add metascore request to importRequests array
-					importRequests.push(metascoreRequest);
-
-					// when requests complete
-					$.when(metascoreRequest).then(function() {
-
-						// add to importedGames
-						importedGames.push(searchItem);
-
-						// append item to importResults
-						appendResults(searchItem);
-					});
-				});
-			});
-
-
-			// when all requests complete
-			$.when.apply($, importRequests).then(function() {
-				finalizeImport();
+				// add no match placeholder warning
+				addNoMatchTitle(title);
 			});
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* processGiantbombItem - get platforms, linked source and third party data
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var processGiantbombItem = function(title, item, searchItem, allowedPlatforms) {
+
+		// extend searchItem with returned item data
+		$.extend(true, searchItem, item);
+
+		/* get platform information for each item by gbombID
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+		GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
+
+			var platformList = [];
+			var alternateRequest;
+
+			// iterate returned platforms
+			for (var i = 0, len = platformResult.results.platforms.length; i < len; i++) {
+
+				// standardize platform names
+				var standardPlatform = Utilities.matchPlatformToIndex(platformResult.results.platforms[i].name).name;
+				platformList.push(standardPlatform);
+			}
+
+			// use only first platform found in allowed platforms
+			var foundPlatforms = _.intersection(platformList, allowedPlatforms);
+
+			// assign first platform
+			searchItem.platform = foundPlatforms[0];
+
+			// allowed platform found, get alternate, metascore and add to import list
+			if (searchItem.platform) {
+
+				// two requests created: amazon and metascore
+				requestCount += 2;
+
+				/* get amazon alternate item
+				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+				findAmazonItemRateLimited(searchItem, amazonAlternateComplete);
+
+				/* get metascore
+				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+				var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, metascoreComplete);
+
+				/* add game title
+				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+				addTitle(searchItem);
+
+
+			// no platform found in allowedPlatforms - is likely not a correct match
+			} else {
+				addNoMatchTitle(title);
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findAmazonItem - get amazon alternate item
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findAmazonItem = function(searchItem, onSuccess) {
+
+		// find alternate amazon item
+		var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+
+			// add asin to search item
+			searchItem.asin = item.asin;
+			onSuccess();
+
+		// on error
+		}, function() {
+			onSuccess();
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addTitle - add title to results
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addTitle = function(importedItem) {
+
+		importedItem.importClass = 'imported';
+
+		if (titlesImportedCount === 0) {
+			$loadingStatus.stop().fadeOut();
+			$importProgress.stop().fadeIn();
+			$importStatus.stop().fadeIn();
+		}
+
+		titlesImportedCount++;
+
+		// add to importedGames
+		importedGames.push(importedItem);
+
+		// append item to importResults
+		appendResults(importedItem);
+
+		// increment progress bar
+		incrementProgress();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addNoMatchTitle - add placeholder warning title
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addNoMatchTitle = function(title) {
+
+		var placeholderItem = {
+			'thumbnailImage': NO_MATCH_IMAGE,
+			'name': title,
+			'calendarDate': '',
+			'platform': 'Title not found: please add manually',
+			'importClass': 'importFailed'
+		};
+
+		// append item to importResults
+		appendResults(placeholderItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* appendResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var appendResults = function(item) {
+
+		// get model data
+		var templateData = {'item': item};
+
+		// append model to importResults
+		$importResultsBody.append(importResultsTemplate(templateData));
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* amazonAlternateComplete - amazon alernate request complete
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var amazonAlternateComplete = function() {
+		incrementRequestProgress();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* metascoreComplete - metascore request complete
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var metascoreComplete = function(score) {
+		incrementRequestProgress();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* incrementRequestProgress - increment request progress and finalize when all requests complete
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var incrementRequestProgress = function() {
+
+		requestsCompleted++;
+
+		incrementProgress();
+
+		// allow import once all requests complete
+		if (requestCount == requestsCompleted) {
+			finalizeImport();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* increment progress bar
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var incrementProgress = function() {
+
+		// update progress bar
+		var progressTotal = titlesFoundCount + requestCount;
+		var progressComplete = titlesImportedCount + requestsCompleted;
+
+		var progressPercent = Math.round((progressComplete / progressTotal) * 100);
+
+		$importProgressBar.css({'width': progressPercent + '%'});
+
+		// update status text
+		$importStatusText.text(progressComplete + ' of ' + progressTotal);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10664,8 +10833,9 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var finalizeImport = function() {
 
-		// hide loading and show confirm import button
-		$loadingStatus.stop().fadeOut();
+		// hide progress and show confirm import button
+		$importProgress.stop().fadeOut();
+		$importStatus.stop().fadeOut();
 		$importModal.addClass('ready');
 	};
 

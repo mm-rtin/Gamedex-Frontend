@@ -277,6 +277,10 @@
 			}
 
 			$resetpasswordModal.modal('show');
+
+			_.delay(function() {
+				$resetPasswordEmailField.focus().select();
+			}, 1000);
 		});
 		// sendResetCodeButton: click
 		$sendResetCodeButton.click(function(e) {

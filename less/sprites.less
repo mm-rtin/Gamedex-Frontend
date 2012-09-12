@@ -1,17 +1,22 @@
 
 /* SPRITE CONFIG
 -----------------------------------------------------------*/
-.display_1_button, .display_1_button_active, .display_1_button_hover, .display_2_button, .display_2_button_active, .display_2_button_hover, .display_3_button, .display_3_button_active, .display_3_button_hover, .form_bg, .grid_view_button, .grid_view_button_over, .invalid_login_tag, .login_button, .login_button_over, .login_button_small, .login_button_small_over, .metacritic_favorable, .metacritic_favorable_over, .metacritic_neutral, .metacritic_neutral_over, .metacritic_unavailable, .metacritic_unavailable_over, .metacritic_unfavorable, .metacritic_unfavorable_over, .navigate_left, .navigate_left_over, .navigate_right, .navigate_right_over, .navigate_well, .price_menu_button, .price_menu_button_over, .price_menu_toggle, .price_menu_toggle_over, .quick_finished_button, .quick_finished_button_active, .quick_heart_button, .quick_heart_button_active, .quick_owned_button, .quick_owned_button_active, .quick_played_button, .quick_played_button_active, .quick_playing_button, .quick_playing_button_active, .remember_checkbox_off, .remember_checkbox_on, .reset_password, .save_button, .save_button_over, .search_button, .search_button_over, .signup_button, .signup_button_over, .signup_button_small, .signup_button_small_over, .videos_button, .videos_button_over, .account_exists_tag, .add_button, .add_button_over, .back_button, .back_button_over, .delete_button, .delete_button_over, .edit_button, .edit_button_active, .edit_button_over, .no_videos_button, .back_button_alt, .back_button_alt_over, .discussion_button, .discussion_button_over, .grid_view_button_active, .grid_view_button_active, .edit_button_active, .videos_button_active, .back_button_alt_active, .discussion_button_active, .add_button_active, .save_button_active, .search_button_active, .display_2_button_active2, .display_3_button_active2, .display_1_button_active2, .quick_playing_button_over, .quick_finished_button_over, .quick_owned_button_over, .quick_heart_button_over, .quick_played_button_over, .guide_button, .signup_button_down, .login_button_down, .guide_button_over, .guide_button_down, .import_button, .import_button_active, .import_button_over {
+.display_1_button, .display_1_button_active, .display_1_button_hover, .display_2_button, .display_2_button_active, .display_2_button_hover, .display_3_button, .display_3_button_active, .display_3_button_hover, .form_bg, .grid_view_button, .grid_view_button_over, .invalid_login_tag, .login_button, .login_button_over, .login_button_small, .login_button_small_over, .metacritic_favorable, .metacritic_favorable_over, .metacritic_neutral, .metacritic_neutral_over, .metacritic_unavailable, .metacritic_unavailable_over, .metacritic_unfavorable, .metacritic_unfavorable_over, .navigate_left, .navigate_left_over, .navigate_right, .navigate_right_over, .navigate_well, .price_menu_button, .price_menu_button_over, .price_menu_toggle, .price_menu_toggle_over, .quick_finished_button, .quick_finished_button_active, .quick_heart_button, .quick_heart_button_active, .quick_owned_button, .quick_owned_button_active, .quick_played_button, .quick_played_button_active, .quick_playing_button, .quick_playing_button_active, .remember_checkbox_off, .remember_checkbox_on, .reset_password, .save_button, .save_button_over, .search_button, .search_button_over, .signup_button, .signup_button_over, .signup_button_small, .signup_button_small_over, .videos_button, .videos_button_over, .account_exists_tag, .add_button, .add_button_over, .back_button, .back_button_over, .delete_button, .delete_button_over, .edit_button, .edit_button_active, .edit_button_over, .no_videos_button, .back_button_alt, .back_button_alt_over, .discussion_button, .discussion_button_over, .grid_view_button_active, .grid_view_button_active, .videos_button_active, .back_button_alt_active, .discussion_button_active, .add_button_active, .save_button_active, .search_button_active, .display_2_button_active2, .display_3_button_active2, .display_1_button_active2, .quick_playing_button_over, .quick_finished_button_over, .quick_owned_button_over, .quick_heart_button_over, .quick_played_button_over, .guide_button, .signup_button_down, .login_button_down, .guide_button_over, .guide_button_down, .import_button, .import_button_over, .import_button_active {
 	background: url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;
 }
 
-
+.back_button() {
+	background-position: -137px -180px;
+}
 .back_button_over() {
 	background-position: -174px -179px;
 }
 
 .delete_button() {
 	background-position: -481px -227px;
+}
+.delete_button_over() {
+	background-position: -518px -225px;
 }
 
 .account_exists_tag() {
@@ -21,15 +26,17 @@
 .add_button() {
 	background-position: 0 0;
 }
-
 .add_button_over() {
 	background-position: -76px 3px;
 }
 
-.back_button() {
-	background-position: -137px -180px;
-}
 
+.display_1_button() {
+	background-position: -340px -179px;
+}
+.display_1_button_active() {
+	background-position: -380px -179px;
+}
 .display_1_button_hover() {
 	background-position: -417px -176px;
 }
@@ -37,11 +44,9 @@
 .display_2_button() {
 	background-position: -223px -179px;
 }
-
 .display_2_button_active() {
 	background-position: -263px -179px;
 }
-
 .display_2_button_hover() {
 	background-position: -301px -176px;
 }
@@ -49,31 +54,16 @@
 .display_3_button() {
 	background-position: -455px -179px;
 }
-
 .display_3_button_active() {
 	background-position: -496px -179px;
 }
-
 .display_3_button_hover() {
 	background-position: -533px -176px;
-}
-
-.delete_button_over() {
-	background-position: -518px -225px;
-}
-
-.display_1_button() {
-	background-position: -340px -179px;
-}
-
-.display_1_button_active() {
-	background-position: -380px -179px;
 }
 
 .grid_view_button() {
 	background-position: -315px 0;
 }
-
 .grid_view_button_over {
 	background-position: -431px 3px;
 }
@@ -85,7 +75,6 @@
 .login_button_small() {
 	background-position: -193px -49px;
 }
-
 .login_button_small_over() {
 	background-position: -284px -48px;
 }
@@ -97,11 +86,9 @@
 .metacritic_favorable_over() {
 	background-position: -439px -224px;
 }
-
 .metacritic_neutral() {
 	background-position: -224px -227px;
 }
-
 .metacritic_neutral_over() {
 	background-position: -268px -224px;
 }
@@ -109,15 +96,12 @@
 .metacritic_unavailable() {
 	background-position: -137px -227px;
 }
-
 .metacritic_unavailable_over() {
 	background-position: -180px -222px;
 }
-
 .metacritic_unfavorable() {
 	background-position: -312px -227px;
 }
-
 .metacritic_unfavorable_over() {
 	background-position: -353px -222px;
 }
@@ -125,15 +109,12 @@
 .navigate_left() {
 	background-position: -5px -322px;
 }
-
 .navigate_left_over() {
 	background-position: -5px -359px;
 }
-
 .navigate_right() {
 	background-position: -37px -322px;
 }
-
 .navigate_right_over() {
 	background-position: -37px -359px;
 }
@@ -148,13 +129,11 @@
 .price_menu_toggle() {
 	background-position: -452px -275px;
 }
-
 .price_menu_button() {
 	background-position: -339px -275px;
 }
-
 .price_menu_button_over() {
-	background-position: -339px -309px;
+	background-position: -338px -309px;
 }
 
 
@@ -212,7 +191,6 @@
 .remember_checkbox_off() {
 	background-position: -3px -273px;
 }
-
 .remember_checkbox_on() {
 	background-position: -3px -296px;
 }
@@ -224,7 +202,6 @@
 .save_button() {
 	background-position: -151px 0;
 }
-
 .save_button_over() {
 	background-position: -233px 3px;
 }
@@ -232,7 +209,6 @@
 .search_button() {
 	background-position: -1px -49px;
 }
-
 .search_button_over() {
 	background-position: -95px -46px;
 }
@@ -240,7 +216,6 @@
 .signup_button_small() {
 	background-position: -374px -49px;
 }
-
 .signup_button_small_over {
 	background-position: -477px -49px;
 }
@@ -248,25 +223,21 @@
 .videos_button {
 	background-position: -495px -274px;
 }
-
 .videos_button_over {
 	background-position: -495px -312px;
 }
-
 .navigate_well() {
 	background-position: -5px -397px;
 }
 
-.edit_button{
-	background-position: -498px -349px;
+.edit_button {
+	background-position: -498px -349px ;
 }
-
-.edit_button_active {
-	background-position: -498px -390px;
-}
-
 .edit_button_over {
 	background-position: -495px -428px;
+}
+.edit_button_active {
+	background-position: -498px -390px ;
 }
 
 .no_videos_button {
@@ -288,9 +259,6 @@
 
 .grid_view_button_active {
 	background-position: -649px 0;
-}
-.edit_button_active {
-	background-position: -603px -179px;
 }
 .videos_button_active {
 	background-position: -668px -136px;
@@ -356,11 +324,9 @@
 .import_button {
 	background-position: -540px -94px ;
 }
-
 .import_button_over {
-	background-position: -540px -94px ;
+	background-position: -537px -132px ;
 }
-
 .import_button_active {
-	background-position: -540px -94px ;
+	background-position: -585px -179px ;
 }

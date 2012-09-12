@@ -24,7 +24,7 @@
 
 			// filter results based on platform
 			var filteredResults = filterListResults(cachedList, platform);
-					
+
 			// return list
 			onSuccess(filteredResults);
 
@@ -66,6 +66,10 @@
 		// iterate list results
 		for (var i = 0, len = listResults.length; i < len; i++) {
 
+			// clean up name
+			// remove words appearing after 'box'
+			listResults[i].name = listResults[i].name.replace(/\sbox\s*.*/gi, '');
+
 			if (_.has(listResults[i], 'platforms')) {
 				var listPlatforms = listResults[i].platforms.toLowerCase();
 
@@ -81,7 +85,7 @@
 
 		return filteredResults;
 	};
-	
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -

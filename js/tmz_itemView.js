@@ -137,8 +137,8 @@
 		// set initial filtered status
 		setClearFiltersButton(false);
 
-		// init BDSM (bootstrap dropdown sub menu)
-		$platformFilterSubNav.BootstrapDropdownSubMenu({'$mainNav': $filterOptions});
+		// init BootstrapSubMenu (bootstrap sub menu)
+		$platformFilterSubNav.BootstrapSubMenu({'$mainNav': $filterOptions});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -272,7 +272,9 @@
 			$updateListModal.modal('show');
 
 			// select field text
-			$tagNameField.focus().select();
+			_.delay(function() {
+				$tagNameField.focus().select();
+			}, 1000);
 		});
 
 		// import menu buttons: click
@@ -679,7 +681,7 @@
 					amazonPrice_result(item.id, offers);
 				});
 
-			}.lazy(250);
+			}.lazy(250, 2000);
 		}
 
 		loadThirdPartyData.getAmazonItemOffersLimited(item);

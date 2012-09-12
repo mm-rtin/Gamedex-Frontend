@@ -91,7 +91,9 @@
 					onSuccess(data);
 				}
 			},
-			error: onError
+			error: function() {
+				onError();
+			}
 		});
 
 		return searchRequest;

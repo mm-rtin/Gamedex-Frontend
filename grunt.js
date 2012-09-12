@@ -3,7 +3,7 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks('grunt-less');
 
-	// Project configuration.
+	// Project configuration
 	grunt.initConfig({
 		meta: {
 			version: '0.1.0',
@@ -27,14 +27,7 @@ module.exports = function(grunt) {
 				'lib/jquery.ba-resize.js',
 				'lib/jquery.nanoscroller.min.js',
 				'lib/jquery.isotope.min.js',
-				'lib/bootstrap-transition.js',
-				'lib/bootstrap-tooltip.js',
-				'lib/bootstrap-tab.js',
-				'lib/bootstrap-popover.js',
-				'lib/bootstrap-modal.js',
-				'lib/bootstrap-dropdown.js',
-				'lib/bootstrap-button.js',
-				'lib/bootstrap-alert.js',
+				'lib/bootstrap.min.js',
 				'lib/list.min.js',
 				'lib/video.min.js',
 				'lib/moment.js',
