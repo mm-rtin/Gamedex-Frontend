@@ -18,7 +18,7 @@
 		TIME_TO_SUBMIT_QUERY = 250,								// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
-		PANEL_HEIGHT_OFFSET_INFO = 493,
+		PANEL_HEIGHT_OFFSET_INFO = 503,
 		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
 

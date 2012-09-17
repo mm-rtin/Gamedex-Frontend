@@ -20,18 +20,27 @@
 
 		NO_MATCH_IMAGE = 'http://d2sifwlm28j6up.cloudfront.net/no_match.png',
 
+		IMPORTING_STATUS_TEXT = 'Loading Data: ',
+		ADDING_STATUS_TEXT = 'Importing: ',
+
 		// properties
 		requestCount = 0,
 		requestsCompleted = 0,
 		titlesFoundCount = 0,		// number of titles found form source
 		titlesImportedCount = 0,	// number of titles actually imported (linked to external source)
 
-		currentSourceID = null,
+		addTotal = 0,				// number of titles to be added
+		addCount = 0,				// number of titles currently added
+
+		currentSourceID = null,		// INPUT SOURCE: steam, psn, xbl
 		sourceImportStarted = {},
+
+		currentImportSessionID = 0,	// import session id for invalidating delayed function calls
 
 		// data
 		importedTitles = [],
 		importedGames = [],
+		pendingRequests = [],
 
 		// element cache
 		$importContainer = $('#importContainer'),
@@ -50,7 +59,7 @@
 		$importConfigModal = $('#importConfig-modal'),
 		$importModal = $('#import-modal'),
 
-		$loadingStatus = $importContainer.find('.loadingStatus'),
+		$importProgressContainer = $('#importProgressContainer'),
 		$importProgress = $('#importProgress'),
 		$importProgressBar = $importProgress.find('.bar'),
 		$importStatus = $('#importStatus'),
@@ -67,9 +76,6 @@
 	* init
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var init = function() {
-
-		// construct rate limited function
-		findAmazonItemRateLimited = findAmazonItem.lazy(2000, 2000),
 
 		createEventHandlers();
 	};
@@ -166,7 +172,7 @@
 		// focus source user filed
 		_.delay(function() {
 			$sourceUser.focus().select();
-		}, 1000);
+		}, 800);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,24 +191,21 @@
 		titlesFoundCount = 0,
 		titlesImportedCount = 0,
 
+		// create new rate limited function
+		findAmazonItemRateLimited = findAmazonItem.lazy(1200, 2000),
+
+		// increment session ID
+		currentImportSessionID++;
+
 		// clear import list
 		$importResultsBody.empty();
 
-		// hide loading status
-		$loadingStatus.stop().hide();
-		$importProgress.stop().hide();
-		$importStatus.stop().hide();
-		$importProgressBar.css({'width': '0%'});
-
-		// remove ready status from modal
-		$importModal.removeClass('ready');
+		// beging progress
+		initializeProgress(IMPORTING_STATUS_TEXT);
 
 		// hide config and show import modal
 		$importConfigModal.modal('hide');
 		$importModal.modal('show');
-
-		// show loading status
-		$loadingStatus.fadeIn();
 
 		// import games
 		ItemData.importGames(currentSourceID, sourceUser, function(importedTitles) {
@@ -219,6 +222,17 @@
 
 		delete sourceImportStarted[currentSourceID];
 
+		// increment session id to invalidate delayed function calls
+		currentImportSessionID++;
+
+		// abort all pending requests
+		_.each(pendingRequests, function(request, index) {
+
+			if (request && _.has(request, 'abort')) {
+				request.abort();
+			}
+		});
+
 		// show config and hide import modal
 		showImportConfigModal();
 		$importModal.modal('hide');
@@ -229,8 +243,12 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var importTitles = function(_importedTitles, allowedPlatforms) {
 
+		// set import properties
 		importedTitles = _importedTitles;
 		titlesFoundCount = importedTitles.length;
+
+		// clear pending requests array
+		pendingRequests = [];
 
 		/* iterate each imported game - find on giantbomb, get platform, metacritic and alternate provider (Amazon) data
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -239,23 +257,37 @@
 			// cleanup title
 			title = ItemLinker.standardizeTitle(title);
 
-			// set giantbomb as initial provider, add standard name propery
-			var searchItem = {'initialProvider': 1, 'standardName': title};
+			// search giantbomb
+			var giantbombSearchRequest = searchGiantbomb(title, allowedPlatforms);
 
-			/* search giantbomb
-			~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-			ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.Amazon, false, function (item) {
-
-				// process giantbomb item
-				processGiantbombItem(title, item, searchItem, allowedPlatforms);
-
-			// on error - no giantbomb match found
-			}, function() {
-
-				// add no match placeholder warning
-				addNoMatchTitle(title);
-			});
+			// add search request to pending requests
+			pendingRequests.push(giantbombSearchRequest);
 		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchGiantbomb -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var searchGiantbomb = function(title, allowedPlatforms) {
+
+		// set giantbomb as initial provider, add standard name propery
+		var searchItem = {'initialProvider': 1, 'standardName': title};
+
+		/* search giantbomb
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+		var giantbombSearchRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.Amazon, false, function (item) {
+
+			// process giantbomb item
+			processGiantbombItem(title, item, searchItem, allowedPlatforms);
+
+		// on error - no giantbomb match found
+		}, function() {
+
+			// add no match placeholder warning
+			addNoMatchTitle(title);
+		});
+
+		return giantbombSearchRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -268,10 +300,9 @@
 
 		/* get platform information for each item by gbombID
 		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-		GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
+		var giantbombPlatformRequest = GiantBomb.getGiantBombItemPlatform(searchItem.id, function(platformResult) {
 
 			var platformList = [];
-			var alternateRequest;
 
 			// iterate returned platforms
 			for (var i = 0, len = platformResult.results.platforms.length; i < len; i++) {
@@ -295,11 +326,11 @@
 
 				/* get amazon alternate item
 				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-				findAmazonItemRateLimited(searchItem, amazonAlternateComplete);
+				findAmazonItemRateLimited(searchItem, amazonAlternateComplete, currentImportSessionID);
 
 				/* get metascore
 				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-				var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, metascoreComplete);
+				getMetascore(searchItem);
 
 				/* add game title
 				~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -311,15 +342,37 @@
 				addNoMatchTitle(title);
 			}
 		});
+
+		// add to platform request to pending requests
+		pendingRequests.push(giantbombPlatformRequest);
 	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getMetascore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getMetascore = function(searchItem) {
+
+		console.info('metascore');
+
+		var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, metascoreComplete);
+
+		// add to pending requests
+		pendingRequests.push(metascoreRequest);
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* findAmazonItem - get amazon alternate item
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonItem = function(searchItem, onSuccess) {
+	var findAmazonItem = function(searchItem, onSuccess, importSessionID) {
+
+		// check if session invalidated
+		if (currentImportSessionID !== importSessionID) {
+			return;
+		}
 
 		// find alternate amazon item
-		var alternateRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
+		var amazonRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
 
 			// add asin to search item
 			searchItem.asin = item.asin;
@@ -329,6 +382,9 @@
 		}, function() {
 			onSuccess();
 		});
+
+		// add to pending requests
+		pendingRequests.push(amazonRequest);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -339,9 +395,7 @@
 		importedItem.importClass = 'imported';
 
 		if (titlesImportedCount === 0) {
-			$loadingStatus.stop().fadeOut();
-			$importProgress.stop().fadeIn();
-			$importStatus.stop().fadeIn();
+			startProgress();
 		}
 
 		titlesImportedCount++;
@@ -353,7 +407,7 @@
 		appendResults(importedItem);
 
 		// increment progress bar
-		incrementProgress();
+		incrementImportProgress();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -406,7 +460,7 @@
 
 		requestsCompleted++;
 
-		incrementProgress();
+		incrementImportProgress();
 
 		// allow import once all requests complete
 		if (requestCount == requestsCompleted) {
@@ -417,12 +471,11 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* increment progress bar
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var incrementProgress = function() {
+	var incrementImportProgress = function() {
 
 		// update progress bar
 		var progressTotal = titlesFoundCount + requestCount;
 		var progressComplete = titlesImportedCount + requestsCompleted;
-
 		var progressPercent = Math.round((progressComplete / progressTotal) * 100);
 
 		$importProgressBar.css({'width': progressPercent + '%'});
@@ -432,14 +485,68 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* increment add progress bar
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var incrementAddProgress = function() {
+
+		// update progress bar
+		var progressPercent = Math.round((addCount / addTotal) * 100);
+		$importProgressBar.css({'width': progressPercent + '%'});
+
+		// update status text
+		$importStatusText.text(addCount + ' of ' + addTotal);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initializeProgress - reset progress bar and status
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var initializeProgress = function(title) {
+
+		// remove ready class
+		$importModal.removeClass('ready').addClass('loading');
+
+		// hide progress container
+		$importProgressContainer.removeClass('show');
+
+		// progress bar width and status text reset
+		$importProgressBar.css({'width': '0%'});
+		$importStatusTitle.text(title);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* startProgress -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var startProgress = function() {
+
+		$importProgressContainer.addClass('show');
+		$importModal.removeClass('ready').removeClass('loading');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* hideProgress -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var hideProgress = function() {
+
+		$importProgressContainer.removeClass('show');
+
+		// reset width - delay so animation occurs while invisible
+		_.delay(function() {
+			$importProgressBar.css({'width': '0%'});
+		}, 1000);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* finalizeImport - all items imported and linked
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var finalizeImport = function() {
 
 		// hide progress and show confirm import button
-		$importProgress.stop().fadeOut();
-		$importStatus.stop().fadeOut();
-		$importModal.addClass('ready');
+		hideProgress();
+
+		// delay ready state
+		_.delay(function() {
+			$importModal.addClass('ready');
+		}, 1000);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -447,11 +554,15 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var addImportedGames = function() {
 
+		// new status text and start progress
+		$importStatusTitle.text(ADDING_STATUS_TEXT);
+		startProgress();
+
 		// get tag name
 		var tagName = INPUT_SOURCES[currentSourceID].toLowerCase() + ' import';
 
-		var importTotal = importedGames.length;
-		var importCount = 0;
+		addTotal = importedGames.length;
+		addCount = 0;
 
 		// create tag
 		TagView.addTag(tagName, function(tag) {
@@ -465,10 +576,13 @@
 				// add game to tag
 				ItemData.addItemToTags(tagsToAdd, item, function(data) {
 
-					importCount++;
+					addCount++;
+
+					// increment adding progress bar
+					incrementAddProgress();
 
 					// all items added > run final step
-					if (importCount === importTotal) {
+					if (addCount === addTotal) {
 						finalizeAdditions(tagsToAdd);
 					}
 				});

@@ -25,14 +25,14 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Metacritic.getMetascore = function(searchTerms, sourceItem, fromSearch, onSuccess) {
 
-		var ajax = null;
+		var metascoreRequest = null;
 
 		// find in cache first
 		var cachedScore = getCachedMetascore(sourceItem.asin, sourceItem.gbombID, sourceItem.platform);
 
 		if (cachedScore) {
 
-			ajax = cachedScore;
+			metascoreRequest = cachedScore;
 
 			// add score data to source item
 			sourceItem.metascore = cachedScore.metascore;
@@ -62,7 +62,7 @@
 					'platform': encodeURI(sourceItem.platform)
 				};
 
-				ajax = $.ajax({
+				metascoreRequest = $.ajax({
 						url: METACRITIC_SEARCH_URL,
 						type: 'GET',
 						data: requestData,
@@ -99,7 +99,7 @@
 			}
 		}
 
-		return ajax;
+		return metascoreRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

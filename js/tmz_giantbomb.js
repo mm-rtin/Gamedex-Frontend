@@ -112,9 +112,11 @@
 		// list of fields to get as query parameter
 		var fieldList = ['platforms'];
 
-		getGiantBombItem(gbombID, fieldList, function(data) {
+		var giantbombRequest = getGiantBombItem(gbombID, fieldList, function(data) {
 			onSuccess(data, gbombID);
 		}, onError);
+
+		return giantbombRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -227,7 +229,7 @@
 			'id': gbombID
 		};
 
-		$.ajax({
+		var giantbombRequest = $.ajax({
 			url: GIANTBOMB_DETAIL_URL,
 			type: 'GET',
 			data: requestData,
@@ -236,6 +238,8 @@
 			success: onSuccess,
 			error: onError
 		});
+
+		return giantbombRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

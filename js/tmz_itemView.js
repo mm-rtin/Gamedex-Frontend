@@ -24,7 +24,7 @@
 		VIEW_MODES = {'collection': 'collection', 'discussion': 'discussion'},
 		SORT_TYPES = {'alphabetical': 0, 'metascore': 1, 'releaseDate': 2, 'platform': 3, 'price': 4},
 		PANEL_HEIGHT_OFFSET_USE = 230,					// height offset when logged in
-		PANEL_HEIGHT_OFFSET_INFO = 450,					// height offset when logged out
+		PANEL_HEIGHT_OFFSET_INFO = 460,					// height offset when logged out
 		PANEL_HEIGHT_PADDING_DISCUSSION_MAX = 10,		// padding for discussion content (panel no scrolling)
 		PANEL_HEIGHT_PADDING_DISCUSSION_SCROLL = 50,	// padding for discussion content (panel requires scrolling)
 		PANEL_HEIGHT_PADDING_COLLECTION_MAX = 5,		// padding for collection content (panel no scrolling)

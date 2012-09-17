@@ -165,8 +165,8 @@ html {
 	-----------------------------------------------------------*/
 	@btnSuccessTop: #43a64a;
 	@btnSuccessBottom: #1D9400;
-	@btnSuccessTop_active: darken(@btnSuccessBottom, 10%);
-	@btnSuccessBottom_active: @btnSuccessTop;
+	@btnSuccessTop_active: darken(@btnSuccessBottom, 5%);
+	@btnSuccessBottom_active: @btnSuccessBottom;
 	@btnSuccess_hover: darken(@btnSuccessTop, 10%);
 	@btnSuccess_shadowColor: #289c00;
 	.btn-success {
@@ -207,9 +207,9 @@ html {
 	/* BTN DANGER
 	-----------------------------------------------------------*/
 	@btnDangerTop: #BF2C00;
-	@btnDangerBottom: #801D00;
-	@btnDangerTop_active: darken(@btnDangerBottom, 10%);
-	@btnDangerBottom_active: @btnDangerTop;
+	@btnDangerBottom: #952200;
+	@btnDangerTop_active: darken(@btnDangerBottom, 5%);
+	@btnDangerBottom_active: @btnDangerBottom;
 	@btnDanger_hover: darken(@btnDangerTop, 10%);
 	@btnDanger_shadowColor: #912F00;
 	.btn-danger {
@@ -252,7 +252,7 @@ html {
 	-----------------------------------------------------------*/
 	.progress {
 
-		border: 1px solid #7f949f;
+		border: 1px solid #5F747E;
 
 		.bar {
 			background-color: @btnPrimaryTop;
@@ -1487,23 +1487,40 @@ img {
 		display: none;
 	}
 
+	.loadingStatus {
+		display: none;
+	}
+
 	&.ready {
 		#confirmImport_btn {
 			display: inline-block;
 		}
-		.progress {
-			display: none !important;
-		}
+	}
+
+	&.loading {
 		.loadingStatus {
-			display: none !important;
+			display: block;
 		}
 	}
 
+	#importProgressContainer {
+		.transition(.4s);
+		.opacity(0);
+
+		&.show {
+			.opacity(1);
+
+			#importProgress {
+				width: 240px;
+			}
+		}
+	}
 	#importProgress {
+		.transition(.4s);
 		margin-right: 10px;
 		margin-top: 5px;
 		float: left;
-		width: 240px;
+		width: 10px;
 	}
 
 	#importStatus {
@@ -1511,13 +1528,12 @@ img {
 		float: left;
 
 		.status {
-			color: #7f949f;
+			color: #5C707A;
 			margin: 1px 10px 0px 10px;
 			font-size: 12px;
 			left: -9px;
 		}
 	}
-
 }
 
 #importResults {
