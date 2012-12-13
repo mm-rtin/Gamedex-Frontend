@@ -116,10 +116,10 @@
 		toggleClearSearchButton(false);
 
 		// init tooltips
-		$listDisplayOptions.find('a').each(function(key, button) {
+		$listDisplayOptions.find('button').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
-		$searchDisplayOptions.find('a').each(function(key, button) {
+		$searchDisplayOptions.find('button').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
@@ -218,17 +218,17 @@
 		});
 
 		// searchDisplayType toggle
-		$searchDisplayOptions.on('click', 'a', function(e) {
+		$searchDisplayOptions.on('click', 'button', function(e) {
 			e.preventDefault();
-			changeDisplayType($(this).attr('data-content'));
+			changeDisplayType($(this).attr('data-content'), false, $(this));
 		});
 		// listDisplayType toggle
-		$listDisplayOptions.on('click', 'a', function(e) {
+		$listDisplayOptions.on('click', 'button', function(e) {
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (upcoming/released games)
 			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED) {
-				changeDisplayType($(this).attr('data-content'));
+				changeDisplayType($(this).attr('data-content'), false, $(this));
 			}
 		});
 
@@ -831,7 +831,13 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayType = function(displayType, doNotUpdateCurrentDisplayType) {
+	var changeDisplayType = function(displayType, doNotUpdateCurrentDisplayType, $toggleButton) {
+
+		doNotUpdateCurrentDisplayType = typeof doNotUpdateCurrentDisplayType !== 'undefined' ? doNotUpdateCurrentDisplayType : false;
+
+		if ($toggleButton) {
+			$toggleButton.addClass('active').siblings().removeClass('active');
+		}
 
 		// change #searchResults or #listResults tbody class based on current tab
 		if (currentTab === TAB_IDS['#searchTab']) {
@@ -842,7 +848,7 @@
 		} else if ($listResults.find('tbody').hasClass('display-' + displayType) === false) {
 
 			// this is so popular list does not define the view for upcoming list
-			if (typeof doNotUpdateCurrentDisplayType === 'undefined') {
+			if (!doNotUpdateCurrentDisplayType) {
 				listDisplayType = displayType;
 			}
 			$listResults.find('tbody').removeClass().addClass('display-' + displayType);

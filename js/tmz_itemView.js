@@ -115,7 +115,7 @@
 
 		// init tooltips
 		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
-		$displayOptions.find('a').each(function(key, button) {
+		$displayOptions.find('button').each(function(key, button) {
 			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		});
 
@@ -288,9 +288,10 @@
 		});
 
 		// displayType: toggle
-		$displayOptions.find('a').click(function(e) {
+		$displayOptions.find('button').click(function(e) {
 			e.preventDefault();
-			changeDisplayType(this);
+
+			changeDisplayType($(this));
 		});
 
 		// sortOptions: select
@@ -1163,9 +1164,11 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* changeDisplayType
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeDisplayType = function(toggleButton) {
+	var changeDisplayType = function($toggleButton) {
 
-		var currentDisplayType = $(toggleButton).attr('data-content');
+		$toggleButton.addClass('active').siblings().removeClass('active');
+
+		var currentDisplayType = $toggleButton.attr('data-content');
 
 		// set new display type if changed
 		if (displayType !== currentDisplayType) {
