@@ -15,8 +15,9 @@
 
 		// constants
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
-		INPUT_SOURCES_ID_NAME = ['Account Name', 'PSN ID', 'Gamertag'],
-		INPUT_SOURCES_URL = ['http://steamcommunity.com/actions/SearchFriends', 'http://us.playstation.com/mytrophies/', 'https://live.xbox.com/en-US/Friends'],
+		INPUT_SOURCES_ID_NAME = ['Steam ID', 'PSN ID', 'Gamertag'],
+		INPUT_SOURCES_URL = ['http://steamcommunity.com/id/[steam_id]', 'http://us.playstation.com/mytrophies/', 'https://live.xbox.com/en-US/Friends'],
+		INPUT_SOURCES_PLATFORMS = [['PC', 'Mac'],  ['PSN', 'PS3', 'Vita'],  ['Xbox', 'Xbox360']],
 
 		NO_MATCH_IMAGE = 'http://d2sifwlm28j6up.cloudfront.net/no_match.png',
 
@@ -211,7 +212,7 @@
 		ItemData.importGames(currentSourceID, sourceUser, function(importedTitles) {
 
 			// parse imported titles
-			importTitles(importedTitles, ['PSN', 'PS3', 'Vita']);
+			importTitles(importedTitles, INPUT_SOURCES_PLATFORMS[currentSourceID]);
 		});
 	};
 
@@ -351,8 +352,6 @@
 	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getMetascore = function(searchItem) {
-
-		console.info('metascore');
 
 		var metascoreRequest = Metacritic.getMetascore(searchItem.standardName, searchItem, true, metascoreComplete);
 

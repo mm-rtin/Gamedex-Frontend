@@ -25,14 +25,10 @@
 		// search wikipedia
 		} else {
 
-
 			searchWikipedia(title, function(data) {
 
 				// get page array
-				var pageArray = null;
-				_.each(data, function(item, key) {
-					pageArray = item;
-				});
+				pageArray = data[1];
 
 				// match page to sourceItem
 				ItemLinker.findWikipediaMatch(pageArray, sourceItem, function(item) {
