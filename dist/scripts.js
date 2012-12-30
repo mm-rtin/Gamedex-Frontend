@@ -9755,8 +9755,6 @@ tmz.initializeModules = function() {
 		var cachedList = getCachedData(platform);
 
 		if (cachedList) {
-
-
 			// return list
 			onSuccess(cachedList);
 
@@ -9772,7 +9770,6 @@ tmz.initializeModules = function() {
 				data: requestData,
 				cache: true,
 				success: function(data) {
-
 
 					// cache result
 					gameStatsListCache[platform] = data;

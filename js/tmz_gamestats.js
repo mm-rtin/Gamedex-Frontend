@@ -21,8 +21,6 @@
 		var cachedList = getCachedData(platform);
 
 		if (cachedList) {
-
-
 			// return list
 			onSuccess(cachedList);
 
@@ -38,7 +36,6 @@
 				data: requestData,
 				cache: true,
 				success: function(data) {
-
 
 					// cache result
 					gameStatsListCache[platform] = data;

@@ -93,15 +93,31 @@ Specify the number of columns and set column and gutter widths
 -----------------------------------------------------------*/
 html {
 
+	/* ICON FONT OVERRIDES
+	----------------------------------------------------------*/
+	[class^="icon-"]:before, [class*=" icon-"]:before {
+	    font-weight: normal;
+	    font-size: 1.3em;
+	}
+
+	.icon-filter {
+		font-size: 0.85em;
+	}
+
+	.icon-caret-right {
+		line-height: 27px;
+	}
+
 	/* SELECT2 OVERRIDES
 	----------------------------------------------------------*/
 	.select2-container {
 		width: 190px;
 	}
-	.select2-container .select2-results .select2-highlighted {
-		background-color: #667677;
-		background-image: none;
+	.select2-results .select2-highlighted {
+		background: #667677;
+		color: #fff;
 	}
+
 	.select2-container-multi .select2-choices {
 		.borderRadius(3px);
 	}
@@ -265,6 +281,21 @@ html {
 			background-color: #061113;
 		}
 	}
+	.tooltip-arrow {
+		.opacity(.8);
+	}
+	.tooltip.bottom .tooltip-arrow {
+		border-bottom-color: #061113;
+	}
+	.tooltip.top .tooltip-arrow {
+		border-top-color: #061113;
+	}
+	.tooltip.left .tooltip-arrow {
+		border-left-color: #061113;
+	}
+	.tooltip.right .tooltip-arrow {
+		border-right-color: #061113;
+	}
 
 	/* PROGRESS
 	-----------------------------------------------------------*/
@@ -313,7 +344,7 @@ html {
 	-----------------------------------------------------------*/
 	.nav {
 		i {
-			.opacity(.3);
+			color: #798386;
 			margin-top: 2px;
 			margin-right: 2px;
 		}
@@ -323,15 +354,13 @@ html {
 		padding: 6px 10px 7px;
 		font-weight: 600;
 
-		&:hover {
-			i {
-				.opacity(1);
-			}
-		}
 		&:focus, &:hover {
 			background-color: transparent;
 			color: #fff;
 			text-decoration: none;
+			i {
+				color: #C8CBCC;
+			}
 		}
 	}
 
@@ -386,15 +415,16 @@ html {
 
 	/* LIST NAV
 	------------------------------------------------------------*/
+	.nav-list [class^="icon-"] {
+		margin-right: 6px;
+	}
 	.nav-list {
 		i {
-			.opacity(.7);
-
+			color: #606060;
 		}
 
 		a {
 			color: #3C3C3C;
-
 			&:hover {
 				color: #313131;
 			}
@@ -414,8 +444,8 @@ html {
 
 		background-color: #1e2828;
 		background-color: rgba(30, 40, 40, 0.95);
-		border: 1px solid #CCC;
-		border: 1px solid rgba(0, 0, 0, 0.8);
+		border: 1px solid #1e2828;
+		border: 1px solid rgba(30, 40, 40, 0.95);
 		list-style: none;
 		margin: 1px 0 0;
 		padding: 4px 0;
@@ -441,9 +471,14 @@ html {
 			color: #000000;
 			background-image: none;
 			overflow: hidden;
+
+			i {
+				color: #1e2828;
+			}
 		}
 		i {
-			.opacity(.5);
+			margin-right: 6px;
+			color: #BDBDBD;
 		}
 	}
 
@@ -472,7 +507,7 @@ html {
 				border-bottom-color: white;
 			}
 			i {
-			.opacity(1);
+
 			}
 		}
 	}
@@ -501,6 +536,9 @@ html {
 		.nav .active > a, .nav .active > a:hover {
 			background-color: #8B9B9C;
 			color: #000000;
+			i {
+				color: #4B5758;
+			}
 		}
 		.nav > li > .dropdown-menu::before {
 			display: none;
@@ -552,16 +590,6 @@ html {
 		strong {
 			margin-right: 10px;
 		}
-	}
-
-	/* ICON OVERRIDES
-	-----------------------------------------------------------*/
-	.icon-trash {
-		top: 2px;
-		position: relative;
-	}
-	.icon-fullscreen {
-		background-position: -456px -143px;
 	}
 
 	/* POPOVER
@@ -707,7 +735,7 @@ img {
 			.borderRadius(3px);
 			position: absolute;
 			background-color: white;
-			color: #061113;
+			color: rgb(70, 70, 70);
 			font-size: 16px;
 			font-weight: bold;
 			padding: 0px 4px 2px 4px;
@@ -716,23 +744,37 @@ img {
 
 			&:hover {
 				.opacity(1);
-				color: #2E2E2E;
+				color: rgb(70, 70, 70);
 			}
 
 			i {
 				position: relative;
 				top: 4px;
+				color: rgb(70, 70, 70);
 			}
 		}
 
 		.siteGuideExit_btn {
 			left: 10px;
+			i {
+				font-size: .7em;
+			}
 		}
 		.siteGuidePrevious_btn {
 			left: 100px;
+			i {
+				font-size: .9em;
+				line-height: 0px;
+				text-align: center;
+			}
 		}
 		.siteGuideNext_btn {
 			left: 127px;
+			i {
+				font-size: .9em;
+				line-height: 0px;
+				text-align: center;
+			}
 		}
 	}
 
