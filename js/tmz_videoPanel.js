@@ -139,7 +139,7 @@
 			changeVideoSet(0);
 
 			// init popover
-			//$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+			$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
 
 			showVideoListNavigation();
 		}

@@ -47,6 +47,23 @@ Specify the number of columns and set column and gutter widths
 	opacity: @opacity;
 }
 
+@-moz-keyframes bounceOut {
+	0%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+	25%{ box-shadow: 0 0 0 0px #fff; opacity:1;}
+	50%{ box-shadow: 0 0 0 4px #fff; opacity:1; }
+	75%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+	100%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+}
+
+@-webkit-keyframes bounceOut {
+	0%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+	25%{ box-shadow: 0 0 0 0px #fff; opacity:1;}
+	50%{ box-shadow: 0 0 0 4px #fff; opacity:1; }
+	75%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+	100%{ box-shadow: 0 0 0 2px #fff; opacity:1;}
+}
+
+
 .unselectable {
 	-moz-user-select: -moz-none;
 	-khtml-user-select: none;
@@ -596,6 +613,11 @@ html {
 	-----------------------------------------------------------*/
 	.popover {
 		z-index: 2000;
+		background-color: rgba(255, 255, 255, .80);
+
+		.popover-title {
+			background-color: rgba(247, 247, 247, .4);
+		}
 	}
 
 	/* MODAL
@@ -1679,35 +1701,37 @@ img {
 	list-style-type: none;
 	position: relative;
 	width: 796px;
-	left: -26px;
+	left: -21px;
 
 	.videoItem {
-		float: left;
-		border-radius: 9px;
-		margin: 0px 3px 3px 0px;
-		border: 2px solid #252B2C;
 		background-color: #000;
-		width: 150px;
-		height: 84px;
+		border-radius: 2px;
+		box-shadow: 0 0 0 2px #000;
+		float: left;
+		height: 79px;
+		margin: 7px 15px 3px 0px;
+		width: 140px;
 
 		&:hover {
-			img {
-				.opacity(.5);
-			}
+			box-shadow: 0 0 0 2px #fff;
+
+			-moz-animation: bounceOut .4s linear;
+			-webkit-animation: bounceOut .4s linear;
 		}
 
 		&.playing {
-			border: 2px solid #899399;
-
-			img {
-				.opacity(.5);
-			}
+			box-shadow: 0 0 0 2px #fff;
 		}
 
 		a {
 			display: block;
+
+			img {
+				border-radius: 2px;
+			}
 		}
 	}
+
 
 	&.display-0 {
 
@@ -1733,12 +1757,13 @@ img {
 	position: absolute;
 	width: 63px;
 	height: 52px;
-	left: 800px;
+	left: 792px;
 	top: 21px;
 
 	.navigateLeft {
-		position: absolute;
+		.opacity(.3);
 		.navigate_left();
+		position: absolute;
 		background-repeat: repeat;
 		cursor: pointer;
 		width: 29px;
@@ -1747,16 +1772,19 @@ img {
 		left: 2px;
 
 		&:hover {
+			.opacity(1);
 			.navigate_left_over();
 		}
 		&:active {
+			.opacity(1);
 			.navigate_left();
 		}
 	}
 
 	.navigateRight {
-		position: absolute;
+		.opacity(.3);
 		.navigate_right();
+		position: absolute;
 		background-repeat: repeat;
 		cursor: pointer;
 		width: 30px;
@@ -1765,9 +1793,11 @@ img {
 		top: 21px;
 
 		&:hover {
+			.opacity(1);
 			.navigate_right_over();
 		}
 		&:active {
+			.opacity(1);
 			.navigate_right();
 		}
 	}

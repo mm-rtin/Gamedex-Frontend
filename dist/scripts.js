@@ -3462,6 +3462,8 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderListResults = function(items, order) {
 
+		console.info(items, 'renderListResults');
+
 		// hide loading status
 		$listLoadingStatus.stop().hide();
 
@@ -3538,7 +3540,11 @@ tmz.initializeModules = function() {
 		$listTable.empty();
 
 		// get popular games
-		GameStats.getPopularGamesListByPlatform(platform.gamestats, getList_result);
+		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
+
+		function listResult(data) {
+			getList_result(data, 'desc', LIST_TYPE.POPULAR);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3567,7 +3573,7 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getReleasedList = function(platform) {
 
-		var numberOfWeeks = 12;
+		var numberOfWeeks = 14;
 
 		$listLoadingStatus.fadeIn();
 
@@ -3653,6 +3659,11 @@ tmz.initializeModules = function() {
 	* getList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList_result = function(data, order, sourceListType) {
+
+		console.info(data, 'getList_result');
+
+
+		console.info(sourceListType, listType);
 
 		// if current listType does not match source - skip render
 		if (sourceListType === listType) {
@@ -8238,7 +8249,7 @@ tmz.initializeModules = function() {
 			changeVideoSet(0);
 
 			// init popover
-			//$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+			$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
 
 			showVideoListNavigation();
 		}

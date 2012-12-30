@@ -285,6 +285,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderListResults = function(items, order) {
 
+		console.info(items, 'renderListResults');
+
 		// hide loading status
 		$listLoadingStatus.stop().hide();
 
@@ -361,7 +363,11 @@
 		$listTable.empty();
 
 		// get popular games
-		GameStats.getPopularGamesListByPlatform(platform.gamestats, getList_result);
+		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
+
+		function listResult(data) {
+			getList_result(data, 'desc', LIST_TYPE.POPULAR);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -390,7 +396,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getReleasedList = function(platform) {
 
-		var numberOfWeeks = 12;
+		var numberOfWeeks = 14;
 
 		$listLoadingStatus.fadeIn();
 
@@ -476,6 +482,11 @@
 	* getList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList_result = function(data, order, sourceListType) {
+
+		console.info(data, 'getList_result');
+
+
+		console.info(sourceListType, listType);
 
 		// if current listType does not match source - skip render
 		if (sourceListType === listType) {
