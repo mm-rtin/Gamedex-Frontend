@@ -9,7 +9,9 @@
     var $subNav = null,
         $mainNav = null,
         showTimeout = null,
-        hideTimeout = null;
+        hideTimeout = null,
+
+        subNavClickedItem = false;
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * BootstrapSubMenu - Bootstrap Dropdown Sub Menu
@@ -39,10 +41,13 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     BootstrapSubMenu.prototype.createEventHandlers = function ($subNav, $mainNav) {
 
+        $mainNav.click(function(e) {
+            subNavClickedItem = false;
+        });
+
         // mainNav root items: hover
         $mainNav.find('li:not(.dropdown-sub li)').hover(function(e) {
 
-            console.info('hide and stop show');
             // cancel show
             clearTimeout(showTimeout);
             showTimeout = null;
@@ -59,7 +64,6 @@
 
         // subNav: hover
         $subNav.hover(function(e) {
-            console.info('show and stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
@@ -68,7 +72,9 @@
             if (!showTimeout) {
                 // delay before showing subnav
                 showTimeout = setTimeout(function() {
-                    $subNav.addClass('active');
+                    if (!subNavClickedItem) {
+                        $subNav.addClass('active');
+                    }
                 }, 300);
             }
         });
@@ -78,12 +84,10 @@
             e.preventDefault();
             e.stopPropagation();
 
-            $subNav.addClass('active');
         });
 
         // subNav items: hover
         $subNav.find('li').hover(function(e) {
-            console.info('stop hide');
             // cancel hide
             clearTimeout(hideTimeout);
             hideTimeout = null;
@@ -91,11 +95,18 @@
 
         // subNav items: click
         $subNav.find('li').click(function(e) {
+            subNavClickedItem = true;
+            console.info('set true', subNavClickedItem);
+            $subNav.removeClass('active');
             $mainNav.removeClass('open');
         });
 
         // dropdown-toggle: click
         $mainNav.find('.dropdown-toggle').click(function(e) {
+            $subNav.removeClass('active');
+        });
+
+        $(document).click(function(e) {
             $subNav.removeClass('active');
         });
 
@@ -112,6 +123,7 @@
     };
 
 })( jQuery);
+
 
 // TMZ namespace
 var tmz = {

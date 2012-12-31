@@ -373,10 +373,10 @@ html {
 
 		&:focus, &:hover {
 			background-color: transparent;
-			color: #fff;
+			color: #fbc704;
 			text-decoration: none;
 			i {
-				color: #C8CBCC;
+				color: #fbc704;
 			}
 		}
 	}
@@ -483,19 +483,29 @@ html {
 			font-size: 13px;
 
 		}
-		li > a:hover, .active > a, .active > a:hover {
-			background-color: #BBC6C6;
-			color: #000000;
-			background-image: none;
-			overflow: hidden;
-
-			i {
-				color: #1e2828;
+		li {
+			> a {
+				.transition(.5s);
+				background-image: none;
+				height: 14px;
+				background-color: rgba(255, 255, 255, 0.0);
 			}
-		}
-		i {
-			margin-right: 6px;
-			color: #BDBDBD;
+
+			> a:hover, .active > a, .active > a:hover {
+				background-color: #fbc704;
+				height: 30px;
+				color: #000000;
+				background-image: none;
+				overflow: hidden;
+
+				i {
+					color: #1e2828;
+				}
+			}
+			i {
+				margin-right: 6px;
+				color: #BDBDBD;
+			}
 		}
 	}
 
@@ -503,6 +513,10 @@ html {
 		.opacity(1);
 		min-width: 160px;
 		visibility: visible;
+
+		li > a {
+			height: 20px;
+		}
 	}
 
 	// navbar dropdowns
@@ -570,15 +584,18 @@ html {
 	.nav li.dropdown ul.dropdown-menu {
 
 		ul {
-			display: none;
+			// display: none;
+			width: 0px;
 			float: right;
 			position: absolute;
 			top: auto;
+			left:100%;
 			margin-top: -30px;
 			margin-left: 3px;
 			min-width: 0px;
 			.opacity(0);
 		}
+
 		li.active ul {
 			display:block;
 			position:absolute;
@@ -588,6 +605,7 @@ html {
 			border-radius: 3px;
 
 			min-width: 160px;
+
 			.opacity(1);
 			visibility: visible;
 		}
@@ -1179,42 +1197,48 @@ img {
 }
 
 #signupSubmitButton {
-	.signup_button_small();
+	.signup_button_small_over();
 	display: none;
 	cursor: pointer;
 	position: absolute;
 	width: 100px;
-	height: 37px;
+	height: 46px;
 	top: 78px;
 	left: 208px;
 
 	&:hover {
+		.signup_button_small();
+	}
+	&:active {
 		.signup_button_small_over();
 	}
 }
 
 #loginSubmitButton {
-	.login_button_small();
+	.login_button_small_over();
 	display: none;
 	cursor: pointer;
 	position: absolute;
 	width: 89px;
-	height: 41px;
+	height: 46px;
 	top: 78px;
 	left: 221px;
 
 	&:hover {
+		.login_button_small();
+	}
+	&:active {
 		.login_button_small_over();
 	}
 }
 
 #backButton {
-	.back_button();
+	.back_button_over();
 	display: none;
 	cursor: pointer;
 	position: absolute;
 	width: 35px;
-	height: 34px;
+	height: 46px;
 	top: 78px;
 
 	&.login {
@@ -1223,8 +1247,10 @@ img {
 	&.signup {
 		left: 175px;
 	}
-
 	&:hover {
+		.back_button();
+	}
+	&:active {
 		.back_button_over();
 	}
 }
