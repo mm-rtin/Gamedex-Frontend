@@ -96,7 +96,6 @@
         // subNav items: click
         $subNav.find('li').click(function(e) {
             subNavClickedItem = true;
-            console.info('set true', subNavClickedItem);
             $subNav.removeClass('active');
             $mainNav.removeClass('open');
         });

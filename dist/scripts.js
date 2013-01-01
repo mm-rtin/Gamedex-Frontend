@@ -96,7 +96,6 @@
         // subNav items: click
         $subNav.find('li').click(function(e) {
             subNavClickedItem = true;
-            console.info('set true', subNavClickedItem);
             $subNav.removeClass('active');
             $mainNav.removeClass('open');
         });
@@ -1401,8 +1400,6 @@ tmz.initializeModules = function() {
 	* updateMetacritic
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var updateMetacritic = function(currentItem, onSuccess, onError) {
-
-		console.info(currentItem);
 
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
@@ -3492,15 +3489,8 @@ tmz.initializeModules = function() {
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
-		// update list.js for item list
-		itemList = new ListJS('listResultsContainer', listOptions);
-
-		// sort using current sort method
-		if (order === 'asc') {
-			itemList.sort('releaseDate', {sortFunction: releaseDateSortAsc});
-		} else {
-			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
-		}
+		// init listJS
+		initListJS(order);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3673,6 +3663,22 @@ tmz.initializeModules = function() {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_USE;
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initListJS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var initListJS = function(order) {
+
+		// update list.js for item list
+		itemList = new ListJS('listResults', listOptions);
+
+		// sort using current sort method
+		if (order === 'asc') {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortAsc});
+		} else {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
 		}
 	};
 
@@ -4106,7 +4112,12 @@ tmz.initializeModules = function() {
 			if (!doNotUpdateCurrentDisplayType) {
 				listDisplayType = displayType;
 			}
-			$listResults.find('tbody').removeClass().addClass('display-' + displayType);
+
+			$listResultsContainer.find('.content')
+				.removeClass('display-0')
+				.removeClass('display-1')
+				.removeClass('display-2')
+				.addClass('display-' + displayType);
 		}
 	};
 
@@ -9964,13 +9975,9 @@ tmz.initializeModules = function() {
 			// if request is already pending, skip
 			if (!_.has(pendingRequests, key)) {
 
-				console.info(key);
-
 				// add to pendingRequests
 				var pendingRequest = {'platform':platform};
 				pendingRequests[key] = pendingRequest;
-
-				console.info('request platform: ' + platform);
 
 				var requestData = {
 					'year': year,
@@ -9991,8 +9998,6 @@ tmz.initializeModules = function() {
 						// get platforms found in list
 						getPlatformsFound(data);
 
-						console.info('filtered: ', pendingRequests[key].platform);
-
 						// filter results based on platform
 						var filteredResults = parseAndFilterListResults(data, pendingRequests[key].platform);
 
@@ -10009,7 +10014,6 @@ tmz.initializeModules = function() {
 
 			// update platform for request
 			} else {
-				console.info('update platform: ', platform);
 				pendingRequests[key].platform = platform;
 			}
 		}

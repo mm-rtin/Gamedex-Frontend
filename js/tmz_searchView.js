@@ -302,15 +302,8 @@
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
-		// update list.js for item list
-		itemList = new ListJS('listResultsContainer', listOptions);
-
-		// sort using current sort method
-		if (order === 'asc') {
-			itemList.sort('releaseDate', {sortFunction: releaseDateSortAsc});
-		} else {
-			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
-		}
+		// init listJS
+		initListJS(order);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -483,6 +476,22 @@
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_USE;
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initListJS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var initListJS = function(order) {
+
+		// update list.js for item list
+		itemList = new ListJS('listResults', listOptions);
+
+		// sort using current sort method
+		if (order === 'asc') {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortAsc});
+		} else {
+			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
 		}
 	};
 
@@ -916,7 +925,12 @@
 			if (!doNotUpdateCurrentDisplayType) {
 				listDisplayType = displayType;
 			}
-			$listResults.find('tbody').removeClass().addClass('display-' + displayType);
+
+			$listResultsContainer.find('.content')
+				.removeClass('display-0')
+				.removeClass('display-1')
+				.removeClass('display-2')
+				.addClass('display-' + displayType);
 		}
 	};
 

@@ -43,13 +43,9 @@
 			// if request is already pending, skip
 			if (!_.has(pendingRequests, key)) {
 
-				console.info(key);
-
 				// add to pendingRequests
 				var pendingRequest = {'platform':platform};
 				pendingRequests[key] = pendingRequest;
-
-				console.info('request platform: ' + platform);
 
 				var requestData = {
 					'year': year,
@@ -70,8 +66,6 @@
 						// get platforms found in list
 						getPlatformsFound(data);
 
-						console.info('filtered: ', pendingRequests[key].platform);
-
 						// filter results based on platform
 						var filteredResults = parseAndFilterListResults(data, pendingRequests[key].platform);
 
@@ -88,7 +82,6 @@
 
 			// update platform for request
 			} else {
-				console.info('update platform: ', platform);
 				pendingRequests[key].platform = platform;
 			}
 		}
