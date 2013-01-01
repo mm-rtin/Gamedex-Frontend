@@ -3,6 +3,7 @@
 	"use strict";
 
     // module references
+	var Utilities = tmz.module('utilities');
 
 	// properties
 
@@ -10,7 +11,12 @@
 	var RELEASED_LIST_URL = tmz.api + 'list/released/',
 
 		// data
-		releasedListCache = {};
+		releasedListCache = {},
+
+		// list of platforms found in released list
+		platformsFound = {},
+
+		pendingRequests = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getReleasedGames -
@@ -19,73 +25,145 @@
 
 		// find in cache first
 		var cachedList = getCachedData(year, month, day);
+		var releasedGamesRequest = null;
 
 		if (cachedList) {
 
 			// filter results based on platform
-			var filteredResults = filterListResults(cachedList, platform);
+			var filteredResults = parseAndFilterListResults(cachedList, platform);
 
 			// return list
-			onSuccess(filteredResults);
+			onSuccess(filteredResults, platformsFound);
 
 		// fetch list data
 		} else {
-			var requestData = {
-				'year': year,
-				'month': month,
-				'day': day
-			};
 
-			$.ajax({
-				url: RELEASED_LIST_URL,
-				type: 'GET',
-				data: requestData,
-				cache: true,
-				success: function(data) {
+			var key = year + '_' + month + '_' + day;
 
-					// filter results based on platform
-					var filteredResults = filterListResults(data, platform);
+			// if request is already pending, skip
+			if (!_.has(pendingRequests, key)) {
 
-					// cache result
-					releasedListCache[year + '_' + month + '_' + day] = filteredResults;
+				console.info(key);
 
-					// return items to onSuccess function
-					onSuccess(filteredResults);
-				}
-			});
+				// add to pendingRequests
+				var pendingRequest = {'platform':platform};
+				pendingRequests[key] = pendingRequest;
+
+				console.info('request platform: ' + platform);
+
+				var requestData = {
+					'year': year,
+					'month': month,
+					'day': day
+				};
+
+				releasedGamesRequest = $.ajax({
+					url: RELEASED_LIST_URL,
+					type: 'GET',
+					data: requestData,
+					cache: true,
+					success: function(data) {
+
+						// parse platforms and add into proper platform list
+						parsePlatforms(data);
+
+						// get platforms found in list
+						getPlatformsFound(data);
+
+						console.info('filtered: ', pendingRequests[key].platform);
+
+						// filter results based on platform
+						var filteredResults = parseAndFilterListResults(data, pendingRequests[key].platform);
+
+						// cache unfiltered result
+						releasedListCache[year + '_' + month + '_' + day] = data;
+
+						// return items to onSuccess function
+						onSuccess(filteredResults, platformsFound);
+
+						// remove pending request
+						delete pendingRequests[key];
+					}
+				});
+
+			// update platform for request
+			} else {
+				console.info('update platform: ', platform);
+				pendingRequests[key].platform = platform;
+			}
 		}
+
+		return releasedGamesRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* filterListResults -
+	* parsePlatforms -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var filterListResults = function(listResults, platform) {
+	var parsePlatforms = function(listResults) {
+
+		// iterate list results
+		_.each(listResults, function(listItem) {
+
+			var platformList = listItem.platforms.split(',');
+
+			// created linkedPlatform property
+			listItem['linkedPlatforms'] = {'all': undefined};
+
+			// iterate list item platforms
+			_.each(platformList, function(platform) {
+
+				var cleanedPlatform = _.str.trim(platform);
+				var linkedPlatform = Utilities.getStandardPlatform(cleanedPlatform);
+
+				// add to linkedPlatforms
+				listItem.linkedPlatforms[linkedPlatform.id] = linkedPlatform.name;
+			});
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getPlatformsFound -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getPlatformsFound = function(listResults) {
+
+		// iterate list results
+		_.each(listResults, function(listItem) {
+
+			// iterate list item platforms
+			_.each(listItem.linkedPlatforms, function(value, id) {
+
+				// add playform to platformsFound object
+				if (!_.has(platformsFound, id)) {
+					platformsFound[id] = 1;
+				} else {
+					platformsFound[id] = platformsFound[id] + 1;
+				}
+			});
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAndFilterListResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseAndFilterListResults = function(listResults, platform) {
 
 		var filteredResults = [];
 
 		// iterate list results
-		for (var i = 0, len = listResults.length; i < len; i++) {
+		_.each(listResults, function(listItem) {
 
 			// clean up name
 			// remove words appearing after 'box'
-			listResults[i].name = listResults[i].name.replace(/\sbox\s*.*/gi, '');
+			listItem.name = listItem.name.replace(/\sbox\s*.*/gi, '');
 
-			if (_.has(listResults[i], 'platforms')) {
-				var listPlatforms = listResults[i].platforms.toLowerCase();
-
-				// find platform substring in listPlatforms
-				var searchIndex = listPlatforms.search(platform);
-
-				// result contains platform add to filteredResults
-				if (searchIndex !== -1) {
-					filteredResults.push(listResults[i]);
-				}
+			// result contains platform add to filteredResults
+			if (_.has(listItem.linkedPlatforms, platform)) {
+				filteredResults.push(listItem);
 			}
-		}
+		});
 
 		return filteredResults;
 	};
-
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -

@@ -19,7 +19,8 @@ module.exports = function(grunt) {
 
 			// libraries
 			lib: [
-				'lib/underscore-min.js',
+				'lib/underscore.min.js',
+				'lib/underscore.string.js',
 				'lib/sugar-core.js',
 				'lib/sugar-function.js',
 				'lib/jquery-ui.min.js',

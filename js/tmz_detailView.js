@@ -166,49 +166,6 @@
 
 		});
 
-		// amazonItemDetailThumbnail: mouseover
-		$amazonItemDetailThumbnail.mouseenter(function(e) {
-
-			if (itemDetailInfoTimeOut) {
-				clearTimeout(itemDetailInfoTimeOut);
-			}
-
-			itemDetailInfoTimeOut = setTimeout(function() {
-				$amazonItemDetailInfo.stop().fadeIn();
-			}, 250);
-		});
-
-		// amazonItemDetailThumbnail: mouseout
-		$amazonItemDetailThumbnail.mouseleave(function(e) {
-
-			if (itemDetailInfoTimeOut) {
-				clearTimeout(itemDetailInfoTimeOut);
-			}
-
-			$amazonItemDetailInfo.stop().fadeOut();
-		});
-
-		// giantbombItemDetailThumbnail: mouseover
-		$giantbombItemDetailThumbnail.mouseenter(function(e) {
-
-			if (itemDetailInfoTimeOut) {
-				clearTimeout(itemDetailInfoTimeOut);
-			}
-
-			itemDetailInfoTimeOut = setTimeout(function() {
-				$giantbombItemDetailInfo.stop().fadeIn();
-			}, 250);
-		});
-
-		// giantbombItemDetailThumbnail: mouseout
-		$giantbombItemDetailThumbnail.mouseleave(function(e) {
-
-			if (itemDetailInfoTimeOut) {
-				clearTimeout(itemDetailInfoTimeOut);
-			}
-
-			$giantbombItemDetailInfo.stop().fadeOut();
-		});
 
 		// saveItem_btn: click
 		$saveItemButton.click(function(e) {

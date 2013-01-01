@@ -63,6 +63,7 @@
 		$legacySubNav = $('#legacySubNav'),
 		$platformSelectButton = $('#platformSelect_btn'),
 		$listPlatforms = $('#listPlatforms'),
+		$listPlatformsDropdown = $('#listPlatforms').find('ul'),
 		$searchPlatformsName = $searchPlatforms.find('.platformName'),
 		$listPlatformsName = $listPlatforms.find('.platformName'),
 
@@ -97,6 +98,7 @@
 		// templates
 		searchResultsTemplate = _.template($('#search-results-template').html()),
 		listResultsTemplate = _.template($('#list-results-template').html()),
+		listPlatformTemplate = _.template($('#list-platform-template').html()),
 		platformDropdownTemplate = _.template($('#search-results-platform-dropdown-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,6 +107,9 @@
 	SearchView.init = function(keywords) {
 
 		SearchView.createEventHandlers();
+
+		// render list platform menu
+		renderListPlatformMenu();
 
 		// set default platform
 		searchPlatform = Utilities.PLATFORM_INDEX[0];
@@ -194,9 +199,12 @@
 		});
 
 		// listPlatforms: change
-		$listPlatforms.find('li a').click(function(e) {
+		$listPlatforms.on('click', 'li a', function(e) {
 			e.preventDefault();
-			changeListPlatform($(this).attr('data-content'), $(this).text());
+
+			if ($(this).attr('data-content')) {
+				changeListPlatform($(this).attr('data-content'), $(this).text());
+			}
 		});
 
 		// searchPlatforms: change
@@ -284,8 +292,6 @@
 	* renderListResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderListResults = function(items, order) {
-
-		console.info(items, 'renderListResults');
 
 		// hide loading status
 		$listLoadingStatus.stop().hide();
@@ -409,14 +415,16 @@
 		// get released games
 		// get up to numberOfWeeks previous releases
 		var previousWeek = startWeek;
+
 		for (var i = 0, len = numberOfWeeks; i < len; i++) {
 
-			ReleasedList.getReleasedGames(platform.gt, previousWeek.year(), previousWeek.month() + 1, previousWeek.date(), listResult);
+			ReleasedList.getReleasedGames(platform.id, previousWeek.year(), previousWeek.month() + 1, previousWeek.date(), listResult);
+
 			previousWeek = previousWeek.subtract('weeks', 1);
 		}
 
-		function listResult(data) {
-			getList_result(data, 'desc', LIST_TYPE.RELEASED);
+		function listResult(data, platformsFound) {
+			getList_result(data, 'desc', LIST_TYPE.RELEASED, platformsFound);
 		}
 	};
 
@@ -481,18 +489,54 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getList_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getList_result = function(data, order, sourceListType) {
+	var getList_result = function(data, order, sourceListType, platformsCount) {
 
-		console.info(data, 'getList_result');
+		platformsCount = typeof platformsCount !== 'undefined' ? platformsCount : null;
 
-
-		console.info(sourceListType, listType);
+		if (platformsCount) {
+			renderListPlatformMenu(platformsCount);
+		}
 
 		// if current listType does not match source - skip render
 		if (sourceListType === listType) {
 			// render list
 			SearchView.renderListResults(data, order);
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* renderListPlatformMenu - render platform filter with counts from currently viewing list
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var renderListPlatformMenu = function(platformCount) {
+
+		var formattedPlatformCount = {};
+
+		if (typeof platformCount !== 'undefined' && platformCount) {
+
+			// add parenthesis around counts
+			_.each(platformCount, function(count, key) {
+				formattedPlatformCount[key] = "(" + count + ") ";
+			});
+
+		} else {
+
+			// default
+			formattedPlatformCount = {
+				'all': '',
+				'pc': '',
+				'x360': '',
+				'xbl': '',
+				'ps3': '',
+				'psn': '',
+				'vita': '',
+				'ds': '',
+				'3ds': '',
+				'wii': '',
+				'wiiu': ''
+			};
+		}
+
+		$listPlatformsDropdown.html(listPlatformTemplate({'found': formattedPlatformCount}));
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -790,12 +834,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList = function(listType) {
 
+		// reset platform menu
+		renderListPlatformMenu();
+
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
+				resetListName();
 				SearchView.getGamestatsPopularityListByPlatform(listPlatform);
 				break;
 
 			case LIST_TYPE.UPCOMING:
+				resetListName();
 				SearchView.getIGNUpcomingListByPlatform(listPlatform);
 				break;
 
@@ -803,6 +852,11 @@
 				SearchView.getReleasedList(listPlatform);
 				break;
 		}
+
+		// reset platform name - to remove list counts
+		function resetListName() {
+			$listPlatformsName.text($listPlatformsName.text().split(' (')[0]);
+		};
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -926,7 +980,7 @@
 		$inputField.val(searchTerms);
 
 		// change searchPlatform to listPlatform
-		changeSearchPlatform(listPlatform.id);
+		changeSearchPlatform(listPlatform.id, listPlatform.name);
 
 		// start search for clicked item text
 		SearchView.search(searchTerms);
