@@ -19,20 +19,20 @@ module.exports = function(grunt) {
 
 			// libraries
 			lib: [
-				'lib/underscore.min.js',
+				// 'lib/underscore.min.js',
 				'lib/underscore.string.js',
 				'lib/sugar-core.js',
 				'lib/sugar-function.js',
 				'lib/jquery-ui.min.js',
 				'lib/jquery.ui.stars.min.js',
 				'lib/jquery.ba-resize.js',
-				'lib/jquery.nanoscroller.min.js',
-				'lib/jquery.isotope.min.js',
-				'lib/bootstrap.min.js',
-				'lib/list.min.js',
-				'lib/video.min.js',
+				'lib/jquery.nanoscroller.js',
+				'lib/jquery.isotope.js',
+				'lib/bootstrap.js',
+				'lib/video.js',
 				'lib/moment.js',
-				'lib/select2.min.js'
+				'lib/select2.js',
+				'lib/list.js'
 			],
 
 			// gamedex source (order matters)
@@ -72,14 +72,14 @@ module.exports = function(grunt) {
 			]
 		},
 		// concat
-		concat: {
+		concat2: {
 			dist: {
 				src: ['<config:src.gamedex>'],
 				dest: 'dist/scripts.js'
 			}
 		},
 		// minify
-		min: {
+		min2: {
 			dist: {
 				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
 				dest: 'dist/scripts.min.js'
@@ -87,14 +87,14 @@ module.exports = function(grunt) {
 		},
 
 		// concat lib
-		concat2: {
+		concat: {
 			dist: {
 				src: ['<config:src.lib>'],
 				dest: 'dist/lib.js'
 			}
 		},
 		// minify lib
-		min2: {
+		min: {
 			dist: {
 				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
 				dest: 'dist/lib.min.js'
