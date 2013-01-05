@@ -581,6 +581,8 @@
 
 				updateUserItemData(item);
 				onSuccess(item, data);
+
+				alertify.success(item.name + ' status updated');
 			},
 			error: onError
 		});

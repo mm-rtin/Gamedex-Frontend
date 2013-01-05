@@ -127,13 +127,15 @@
 		var filtered = false;
 
 		// apply filters
-		list.filter(function(itemValues) {
+		list.filter(function(item) {
 
-			var releaseDateStatus = FilterPanel.releaseDateFilter(itemValues.releaseDate, filters.releaseDateFilters);
-			var metascoreStatus = FilterPanel.metascoreFilter(itemValues.metascore, filters.metascoreFilters);
-			var platformStatus = FilterPanel.platformFilter(itemValues.platform, filters.platformFilters);
-			var gameStatus = FilterPanel.gameStatusFilter(itemValues.gameStatus, filters.gameStatusFilters);
-			var playStatus = FilterPanel.playStatusFilter(itemValues.playStatus, filters.playStatusFilters);
+			var releaseDateStatus = FilterPanel.releaseDateFilter(item.values().releaseDate, filters.releaseDateFilters);
+			var metascoreStatus = FilterPanel.metascoreFilter(item.values().metascore, filters.metascoreFilters);
+			var platformStatus = FilterPanel.platformFilter(item.values().platform, filters.platformFilters);
+			var gameStatus = FilterPanel.gameStatusFilter(item.values().gameStatus, filters.gameStatusFilters);
+			var playStatus = FilterPanel.playStatusFilter(item.values().playStatus, filters.playStatusFilters);
+
+			console.info(platformStatus);
 
 			// not filtered
 			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
@@ -419,6 +421,8 @@
 
 		// iterate platform list
 		for (var i = 0, len = filterList.length; i < len; i++) {
+
+			console.info(filterList[i].name, platform);
 
 			if (filterList[i].name === platform) {
 				return true;

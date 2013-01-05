@@ -268,7 +268,7 @@ img{border-radius:6px;}
 #updatePassword_btn{display:none;}
 .optionsGroup{margin:0px 0px 8px 0px;}
 .filterStatus{display:none;}
-.displayOptions{float:left;margin-right:-11px;position:relative;}.displayOptions button{width:36px;height:37px;margin-right:3px;}.displayOptions button:hover{background-position:3px 4px;}
+.displayOptions{float:left;margin-right:-11px;position:relative;z-index:2;}.displayOptions button{width:36px;height:37px;margin-right:3px;}.displayOptions button:hover{background-position:3px 4px;}
 .displayOptions button.active{background-position:0px 0px;}
 .displayOptions .display1{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-340px -179px;left:0px;}.displayOptions .display1:hover{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-648px -220px;}
 .displayOptions .display1:active{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-417px -176px;}

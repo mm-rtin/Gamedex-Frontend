@@ -229,7 +229,7 @@ tmz.initializeModules = function() {
 			{'id': 'pc', 'gt': 'pc', 'ign': 'pc', 'gamestats': 'pc', 'amazon': 229575, alias: 'pc,windows', name: 'PC'},
 			{'id': 'mac', 'gt': '', 'ign': '', 'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
 			{'id': 'xbox', 'gt': '', 'ign': '', 'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'Xbox 360'},
+			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
 			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'Xbox Live'},
 			{'id': 'ds', 'gt': 'ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
 			{'id': '3ds', 'gt': '3ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 2622269011,alias: '3ds,nintendo 3ds', name: '3DS'},
@@ -1423,6 +1423,8 @@ tmz.initializeModules = function() {
 
 				updateUserItemData(item);
 				onSuccess(item, data);
+
+				alertify.success(item.name + ' status updated');
 			},
 			error: onError
 		});
@@ -7918,13 +7920,15 @@ tmz.initializeModules = function() {
 		var filtered = false;
 
 		// apply filters
-		list.filter(function(itemValues) {
+		list.filter(function(item) {
 
-			var releaseDateStatus = FilterPanel.releaseDateFilter(itemValues.releaseDate, filters.releaseDateFilters);
-			var metascoreStatus = FilterPanel.metascoreFilter(itemValues.metascore, filters.metascoreFilters);
-			var platformStatus = FilterPanel.platformFilter(itemValues.platform, filters.platformFilters);
-			var gameStatus = FilterPanel.gameStatusFilter(itemValues.gameStatus, filters.gameStatusFilters);
-			var playStatus = FilterPanel.playStatusFilter(itemValues.playStatus, filters.playStatusFilters);
+			var releaseDateStatus = FilterPanel.releaseDateFilter(item.values().releaseDate, filters.releaseDateFilters);
+			var metascoreStatus = FilterPanel.metascoreFilter(item.values().metascore, filters.metascoreFilters);
+			var platformStatus = FilterPanel.platformFilter(item.values().platform, filters.platformFilters);
+			var gameStatus = FilterPanel.gameStatusFilter(item.values().gameStatus, filters.gameStatusFilters);
+			var playStatus = FilterPanel.playStatusFilter(item.values().playStatus, filters.playStatusFilters);
+
+			console.info(platformStatus);
 
 			// not filtered
 			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
@@ -8210,6 +8214,8 @@ tmz.initializeModules = function() {
 
 		// iterate platform list
 		for (var i = 0, len = filterList.length; i < len; i++) {
+
+			console.info(filterList[i].name, platform);
 
 			if (filterList[i].name === platform) {
 				return true;
