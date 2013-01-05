@@ -1,5 +1,5 @@
 // ItemData
-(function(ItemData, tmz, $, _, moment) {
+(function(ItemData, tmz, $, _, moment, alertify) {
 	"use strict";
 
 	// Dependencies
@@ -336,6 +336,19 @@
 						// update tagView initialItemTags
 						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
 
+						// create alert
+						var tagNames = [];
+						var alertMessage = ' added to tag: ';
+						_.each(tagIDs, function(tag) {
+							tagNames.push(TagView.getTagName(tag));
+						});
+
+						if (tagIDs.length > 1) {
+							alertMessage = ' added to tags: ';
+						}
+
+						alertify.success(item.name + alertMessage + tagNames.join(', '));
+
 						// callback
 						onSuccess(data, addedItems);
 					},
@@ -432,6 +445,17 @@
 			cache: true,
 			success: function(data) {
 
+				// create alert
+				var tagNames = [];
+				var alertMessage = ' removed from tag: ';
+				_.each(deletedTagIDs, function(tag) {
+					tagNames.push(TagView.getTagName(tag));
+				});
+
+				if (deletedTagIDs.length > 1) {
+					alertMessage = ' removed from tags: ';
+				}
+				alertify.error(currentItem.name + alertMessage + tagNames.join(', '));
 			},
 			error: onError
 		});
@@ -914,5 +938,5 @@
 
 	$.extend(ItemData, publicMethods);
 
-})(tmz.module('itemData'), tmz, $, _, moment);
+})(tmz.module('itemData'), tmz, $, _, moment, alertify);
 

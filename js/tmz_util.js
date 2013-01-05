@@ -8,18 +8,18 @@
 
 		// amazon nodes, possible platform names and standard name link table
 		PLATFORM_INDEX = [
-			{'id': 'all', 'gt': '', 'ign': '', 'gamestats': '', 'amazon': 468642, alias: 'all'},
+			{'id': 'all', 'gt': '', 'ign': '', 'gamestats': '', 'amazon': 468642, alias: 'all', name: 'All Platforms'},
 			{'id': 'pc', 'gt': 'pc', 'ign': 'pc', 'gamestats': 'pc', 'amazon': 229575, alias: 'pc,windows', name: 'PC'},
 			{'id': 'mac', 'gt': '', 'ign': '', 'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
 			{'id': 'xbox', 'gt': '', 'ign': '', 'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
-			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'XBL'},
+			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'Xbox 360'},
+			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'Xbox Live'},
 			{'id': 'ds', 'gt': 'ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
 			{'id': '3ds', 'gt': '3ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 2622269011,alias: '3ds,nintendo 3ds', name: '3DS'},
 			{'id': 'wii', 'gt': 'wii', 'ign': 'wii', 'gamestats': 'wii', 'amazon': 14218901, alias: 'wii,nintendo wii', name: 'Wii'},
 			{'id': 'wiiu', 'gt': 'wii u', 'ign': 'wii u', 'gamestats': 'wii u', 'amazon': 3075112011, alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu', name: 'Wii U'},
-			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
-			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
+			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'Playstation'},
+			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'Playstation 2'},
 			{'id': 'ps3', 'gt': 'ps3', 'ign': 'ps3', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
 			{'id': 'psn', 'gt': '', 'ign': 'ps3&downloadType=201', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'psn,playstation network', name: 'PSN'},
 			{'id': 'vita', 'gt': 'vita', 'ign': 'ps-vita', 'gamestats': 'playstation-3', 'amazon': 3010556011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},

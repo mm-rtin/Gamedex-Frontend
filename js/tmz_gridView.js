@@ -1,5 +1,5 @@
 // GiantBomb
-(function(GridView, tmz, $, _) {
+(function(GridView, tmz, $, _, alertify) {
 	"use strict";
 
     // module references
@@ -227,8 +227,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	GridView.showGridView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
 
-		// switch content display to gridView
+		alertify.success('Loading Grid View images');
 
+		// switch content display to gridView
 		// modify styles
 		$wrapper.removeClass('standardView');
 		$wrapper.addClass('gridView');
@@ -635,4 +636,4 @@
 	};
 
 
-})(tmz.module('gridView'), tmz, jQuery, _);
+})(tmz.module('gridView'), tmz, jQuery, _, alertify);

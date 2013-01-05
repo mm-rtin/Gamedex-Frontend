@@ -1,5 +1,5 @@
 // USER
-(function(User, tmz, $, _) {
+(function(User, tmz, $, _, alertify) {
 	"use strict";
 
 	// Dependencies
@@ -76,6 +76,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.login = function(email, password, onSuccess, onError) {
 
+		alertify.success('Attempting to log in: ' + email);
+
 		var requestData = {
 			user_email: email,
 			user_password: password
@@ -135,7 +137,9 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.logout = function(email, password, onSuccess) {
+	User.logout = function(email) {
+
+		alertify.success('Logged out');
 
 		var requestData = {
 			uid: userData.user_id,
@@ -169,6 +173,8 @@
 	* createUser -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.createUser = function(email, password, onSuccess, onError) {
+
+		alertify.success('Creating account : ' + email);
 
 		// get parameters
 		var requestData = {
@@ -347,6 +353,8 @@
 			userData.email = email;
 			userData.viewUser = null;
 
+			alertify.success('Welcome ' + data.userName);
+
 			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
@@ -378,4 +386,4 @@
 		}
 	};
 
-})(tmz.module('user'), tmz, jQuery, _);
+})(tmz.module('user'), tmz, jQuery, _, alertify);

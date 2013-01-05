@@ -32,7 +32,8 @@ module.exports = function(grunt) {
 				'lib/video.js',
 				'lib/moment.js',
 				'lib/select2.js',
-				'lib/list.js'
+				'lib/list.js',
+				'lib/alertify.js'
 			],
 
 			// gamedex source (order matters)
@@ -72,14 +73,14 @@ module.exports = function(grunt) {
 			]
 		},
 		// concat
-		concat2: {
+		concat: {
 			dist: {
 				src: ['<config:src.gamedex>'],
 				dest: 'dist/scripts.js'
 			}
 		},
 		// minify
-		min2: {
+		min: {
 			dist: {
 				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
 				dest: 'dist/scripts.min.js'
@@ -87,14 +88,14 @@ module.exports = function(grunt) {
 		},
 
 		// concat lib
-		concat: {
+		concat2: {
 			dist: {
 				src: ['<config:src.lib>'],
 				dest: 'dist/lib.js'
 			}
 		},
 		// minify lib
-		min: {
+		min2: {
 			dist: {
 				src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
 				dest: 'dist/lib.min.js'

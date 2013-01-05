@@ -1,5 +1,5 @@
 // ITEM VIEW
-(function(ImportView, tmz, $, _) {
+(function(ImportView, tmz, $, _, alertify) {
 	"use strict";
 
     // modules references
@@ -214,6 +214,8 @@
 			// parse imported titles
 			importTitles(importedTitles, INPUT_SOURCES_PLATFORMS[currentSourceID]);
 		});
+
+		alertify.success('Importing ' + INPUT_SOURCES[currentSourceID] + ' games for: ' + sourceUser);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,6 +239,8 @@
 		// show config and hide import modal
 		showImportConfigModal();
 		$importModal.modal('hide');
+
+		alertify.error(INPUT_SOURCES[currentSourceID] + ' import cancelled');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -546,6 +550,8 @@
 		_.delay(function() {
 			$importModal.addClass('ready');
 		}, 1000);
+
+		alertify.success(titlesFoundCount + ' titles found and linked for ' + INPUT_SOURCES[currentSourceID]);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -582,21 +588,20 @@
 
 					// all items added > run final step
 					if (addCount === addTotal) {
-						finalizeAdditions(tagsToAdd);
+						finalizeAdditions(tagsToAdd, tagName);
 					}
 				});
 			});
 		});
-
-		// import complete, reset source id
-		delete sourceImportStarted[currentSourceID];
-		currentSourceID = null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* finalizeAdditions - all items added to tag list
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var finalizeAdditions = function(tagIDsAdded) {
+	var finalizeAdditions = function(tagIDsAdded, tagName) {
+
+		alertify.success(INPUT_SOURCES[currentSourceID] + ' Import Complete');
+		alertify.log('Games added to tag: ' + tagName);
 
 		// hide modal
 		$importModal.modal('hide');
@@ -609,6 +614,10 @@
 
 		// select random item
 		ItemView.viewRandomItem();
+
+		// import complete, reset source id
+		delete sourceImportStarted[currentSourceID];
+		currentSourceID = null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -622,4 +631,4 @@
 	$.extend(ImportView, publicMethods);
 
 
-})(tmz.module('importView'), tmz, jQuery, _);
+})(tmz.module('importView'), tmz, jQuery, _, alertify);

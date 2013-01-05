@@ -1,5 +1,5 @@
 // SITEVIEW
-(function(SiteView, tmz, $, _) {
+(function(SiteView, tmz, $, _, alertify) {
 	"use strict";
 
     // module references
@@ -28,8 +28,12 @@
 		$infoHeader = $('#infoHeader'),
 		$header = $('#header'),
 		$userMenu = $('#userMenu'),
-		$logoutButton = $('#logoutButton'),
 		$loggedInButton = $('#loggedInButton'),
+		// nav buttons
+		$managementButton = $('#managementButton'),
+		$updateProfileButton = $('#updateProfileButton'),
+		$changePasswordButton = $('#changePasswordButton'),
+		$logoutButton = $('#logoutButton'),
 
 		// login/signup
 		$loginForm = $('#loginForm'),
@@ -48,20 +52,31 @@
 		$invalidLoginTag = $('#invalidLoginTag'),
 		$accountExistsTag = $('#accountExistsTag'),
 
-		// account management
+		// account management modals
 		$accountManagementModal = $('#accountManagement-modal'),
+		$updateProfileModal = $('#updateProfile-modal'),
+		$changePasswordModal = $('#changePassword-modal'),
+
+		// account management
 		$clearLocalStorageButton = $('#clearLocalStorage_btn'),
 		$deleteAccountButton = $('#deleteAccount_btn'),
-		$managementButton = $('#managementButton'),
-		$updateAccountButton = $('#updateAccount_btn'),
-		$userNameUpdateField = $('#userNameUpdateField'),
-		$passwordField = $('#passwordField'),
-		$passwordUpdateField = $('#passwordUpdateField'),
-		$emailUpdateField = $('#emailUpdateField'),
-		$existingPasswordGroup = $accountManagementModal.find('.existingPasswordGroup'),
-		$emailGroup = $accountManagementModal.find('.emailGroup'),
-		$successAlert = $accountManagementModal.find('.alert-success'),
-		$errorAlert = $accountManagementModal.find('.alert-error'),
+
+		// update profile
+		$usernameGroup = $updateProfileModal.find('.usernameGroup'),
+		$userNameUpdateField = $updateProfileModal.find('#userNameUpdateField'),
+		$emailGroup = $updateProfileModal.find('.emailGroup'),
+		$emailUpdateField = $updateProfileModal.find('#emailUpdateField'),
+		$existingPasswordGroupProfile = $updateProfileModal.find('.existingPasswordGroup'),
+		$successAlert = $updateProfileModal.find('.alert-success'),
+		$errorAlert = $updateProfileModal.find('.alert-error'),
+		$updateAccountSubmit = $updateProfileModal.find('#updateAccount_btn'),
+
+		// change password
+		$passwordUpdateField = $changePasswordModal.find('#passwordUpdateField'),
+		$passwordConfirmField = $changePasswordModal.find('#passwordConfirmField'),
+		$existingPasswordGroupPassword = $changePasswordModal.find('.existingPasswordGroup'),
+		$passwordField = $changePasswordModal.find('#passwordField'),
+		$changePasswordSubmit = $changePasswordModal.find('#changePassword_btn'),
 
 		// reset password
 		$resetpasswordModal = $('#resetpassword-modal'),
@@ -141,10 +156,16 @@
 			showAccountManagement();
 		});
 
-		// updateAccountButton: click
-		$updateAccountButton.click(function(e) {
+		// updateAccountSubmit: click
+		$updateAccountSubmit.click(function(e) {
 			e.preventDefault();
 			updateAccount();
+		});
+
+		// changePasswordButton: click
+		$changePasswordButton.click(function(e) {
+			e.preventDefault();
+
 		});
 
 		// email field: keydown
@@ -506,7 +527,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var logout = function(email, password) {
+	var logout = function() {
 
 		// return to info view
 		showInfoView();
@@ -553,6 +574,8 @@
 
 		// invalid login
 		} else if (typeof data.status !== 'undefined' && data.status === 'invalid_login') {
+
+			alertify.error('Login Failed: ' + email);
 
 			// show invalid login tag
 			$invalidLoginTag.fadeIn();
@@ -894,7 +917,7 @@
 		$emailUpdateField.val(userData.email);
 
 		// show modal
-		$accountManagementModal.modal('show');
+		$updateProfileModal.modal('show');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -918,23 +941,29 @@
 			User.updateUser(password, email, userName, newPassword, function(data) {
 
 
-
 				// update success
 				if (data.status === 'success') {
 
 					// update user email
 					$loggedInButton.find('.userEmail').text(email);
-					$passwordField.val('');
 					$passwordUpdateField.val('');
+					// clear password
+					$passwordField.val('');
 
 					// show alert
 					$successAlert.fadeIn().find('.alertText').text('Account updated');
 
 				// password incorrect error
 				} else if (data.status === 'incorrect_password') {
-
-					$existingPasswordGroup.addClass('error');
+					$existingPasswordGroupProfile.addClass('error');
 					$errorAlert.fadeIn().find('.alertText').text('Incorrect password');
+					// clear password
+					$passwordField.val('');
+
+				// user name exists
+				} else if (data.status === 'username_exists') {
+					$usernameGroup.addClass('error');
+					$errorAlert.fadeIn().find('.alertText').text('User name exists');
 				}
 
 			});
@@ -943,7 +972,7 @@
 		// no existing password
 		if (password === '') {
 			// password empty error
-			$existingPasswordGroup.addClass('error');
+			$existingPasswordGroupProfile.addClass('error');
 			$errorAlert.fadeIn().find('.alertText').text('Please enter existing password');
 		}
 
@@ -974,8 +1003,9 @@
 		// reset form
 		$successAlert.hide();
 		$errorAlert.hide();
-		$existingPasswordGroup.removeClass('error');
+		$existingPasswordGroupProfile.removeClass('error');
 		$emailGroup.removeClass('error');
+		$userNameUpdateField.removeClass('error');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -988,5 +1018,5 @@
 
 	$.extend(SiteView, publicMethods);
 
-})(tmz.module('siteView'), tmz, jQuery, _);
+})(tmz.module('siteView'), tmz, jQuery, _, alertify);
 

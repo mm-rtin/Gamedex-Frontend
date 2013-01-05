@@ -170,10 +170,7 @@
 		$searchProvider.find('li a').click(function(e) {
 			e.preventDefault();
 			// set attribute
-			$searchProvider.attr('data-content', $(this).attr('data-content'));
-			previousSearchTerms = '';
-
-			searchProviderChanged();
+			changeSearchProvider($(this).attr('data-content'));
 		});
 
 		// searchViewMenu .dropdown: hover
@@ -320,7 +317,6 @@
 
 		// change finder tab to search if not on search tab
 		if (currentTab !== TAB_IDS['#searchTab']) {
-
 			// manually toggle search tab
 			$searchTabLink.trigger('click');
 			finderTabChanged(TAB_IDS['#searchTab']);
@@ -676,10 +672,8 @@
 	var finderTabChanged = function(tab) {
 
 		switch(tab) {
-
 			// search tab
 			case 0:
-
 				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
 				$searchResultsContainer.nanoScroller({scrollTop:searchTabScrollPosition - 1});
 
@@ -690,7 +684,6 @@
 
 			// list tab
 			case 1:
-
 				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
 				$listResultsContainer.nanoScroller({scrollTop:parseInt(listTabScrollPosition - 1, 10)});
 
@@ -699,6 +692,21 @@
 				listTypeChanged();
 				break;
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* changeSearchProvider -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var changeSearchProvider = function(newProviderID) {
+
+		// update data attribute
+		$searchProvider.attr('data-content', newProviderID);
+		searchProvider = newProviderID;
+
+		// clear search terms
+		previousSearchTerms = '';
+
+		searchProviderChanged();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -810,6 +818,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeSearchPlatform = function(platform, name) {
 
+		console.info(platform, name);
+
 		previousSearchTerms = '';
 
 		// set platform name
@@ -817,6 +827,8 @@
 
 		// set platform object
 		searchPlatform = Utilities.getStandardPlatform(platform);
+
+		console.info(searchPlatform);
 
 		// do search with new platform
 		SearchView.search(searchTerms);
@@ -992,6 +1004,9 @@
 
 		// set search input field
 		$inputField.val(searchTerms);
+
+		// search list items from giantbomb
+		changeSearchProvider(Utilities.SEARCH_PROVIDERS.GiantBomb);
 
 		// change searchPlatform to listPlatform
 		changeSearchPlatform(listPlatform.id, listPlatform.name);

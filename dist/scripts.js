@@ -225,18 +225,18 @@ tmz.initializeModules = function() {
 
 		// amazon nodes, possible platform names and standard name link table
 		PLATFORM_INDEX = [
-			{'id': 'all', 'gt': '', 'ign': '', 'gamestats': '', 'amazon': 468642, alias: 'all'},
+			{'id': 'all', 'gt': '', 'ign': '', 'gamestats': '', 'amazon': 468642, alias: 'all', name: 'All Platforms'},
 			{'id': 'pc', 'gt': 'pc', 'ign': 'pc', 'gamestats': 'pc', 'amazon': 229575, alias: 'pc,windows', name: 'PC'},
 			{'id': 'mac', 'gt': '', 'ign': '', 'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
 			{'id': 'xbox', 'gt': '', 'ign': '', 'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
-			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'XBL'},
+			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'Xbox 360'},
+			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'Xbox Live'},
 			{'id': 'ds', 'gt': 'ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
 			{'id': '3ds', 'gt': '3ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 2622269011,alias: '3ds,nintendo 3ds', name: '3DS'},
 			{'id': 'wii', 'gt': 'wii', 'ign': 'wii', 'gamestats': 'wii', 'amazon': 14218901, alias: 'wii,nintendo wii', name: 'Wii'},
 			{'id': 'wiiu', 'gt': 'wii u', 'ign': 'wii u', 'gamestats': 'wii u', 'amazon': 3075112011, alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu', name: 'Wii U'},
-			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
-			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
+			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'Playstation'},
+			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'Playstation 2'},
 			{'id': 'ps3', 'gt': 'ps3', 'ign': 'ps3', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
 			{'id': 'psn', 'gt': '', 'ign': 'ps3&downloadType=201', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'psn,playstation network', name: 'PSN'},
 			{'id': 'vita', 'gt': 'vita', 'ign': 'ps-vita', 'gamestats': 'playstation-3', 'amazon': 3010556011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},
@@ -338,7 +338,7 @@ tmz.initializeModules = function() {
 
 
 // USER
-(function(User, tmz, $, _) {
+(function(User, tmz, $, _, alertify) {
 	"use strict";
 
 	// Dependencies
@@ -415,6 +415,8 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.login = function(email, password, onSuccess, onError) {
 
+		alertify.success('Attempting to log in: ' + email);
+
 		var requestData = {
 			user_email: email,
 			user_password: password
@@ -474,7 +476,9 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.logout = function(email, password, onSuccess) {
+	User.logout = function(email) {
+
+		alertify.success('Logged out');
 
 		var requestData = {
 			uid: userData.user_id,
@@ -508,6 +512,8 @@ tmz.initializeModules = function() {
 	* createUser -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.createUser = function(email, password, onSuccess, onError) {
+
+		alertify.success('Creating account : ' + email);
 
 		// get parameters
 		var requestData = {
@@ -686,6 +692,8 @@ tmz.initializeModules = function() {
 			userData.email = email;
 			userData.viewUser = null;
 
+			alertify.success('Welcome ' + data.userName);
+
 			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
@@ -717,7 +725,7 @@ tmz.initializeModules = function() {
 		}
 	};
 
-})(tmz.module('user'), tmz, jQuery, _);
+})(tmz.module('user'), tmz, jQuery, _, alertify);
 
 // Storage
 (function(Storage, tmz, $, _) {
@@ -833,7 +841,7 @@ tmz.initializeModules = function() {
 
 
 // ItemData
-(function(ItemData, tmz, $, _, moment) {
+(function(ItemData, tmz, $, _, moment, alertify) {
 	"use strict";
 
 	// Dependencies
@@ -1170,6 +1178,19 @@ tmz.initializeModules = function() {
 						// update tagView initialItemTags
 						TagView.updateInitialItemTags(data.tagIDsAdded, data.idsAdded);
 
+						// create alert
+						var tagNames = [];
+						var alertMessage = ' added to tag: ';
+						_.each(tagIDs, function(tag) {
+							tagNames.push(TagView.getTagName(tag));
+						});
+
+						if (tagIDs.length > 1) {
+							alertMessage = ' added to tags: ';
+						}
+
+						alertify.success(item.name + alertMessage + tagNames.join(', '));
+
 						// callback
 						onSuccess(data, addedItems);
 					},
@@ -1266,6 +1287,17 @@ tmz.initializeModules = function() {
 			cache: true,
 			success: function(data) {
 
+				// create alert
+				var tagNames = [];
+				var alertMessage = ' removed from tag: ';
+				_.each(deletedTagIDs, function(tag) {
+					tagNames.push(TagView.getTagName(tag));
+				});
+
+				if (deletedTagIDs.length > 1) {
+					alertMessage = ' removed from tags: ';
+				}
+				alertify.error(currentItem.name + alertMessage + tagNames.join(', '));
 			},
 			error: onError
 		});
@@ -1748,7 +1780,7 @@ tmz.initializeModules = function() {
 
 	$.extend(ItemData, publicMethods);
 
-})(tmz.module('itemData'), tmz, $, _, moment);
+})(tmz.module('itemData'), tmz, $, _, moment, alertify);
 
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2193,7 +2225,7 @@ tmz.initializeModules = function() {
 
 
 // SITEVIEW
-(function(SiteView, tmz, $, _) {
+(function(SiteView, tmz, $, _, alertify) {
 	"use strict";
 
     // module references
@@ -2222,8 +2254,12 @@ tmz.initializeModules = function() {
 		$infoHeader = $('#infoHeader'),
 		$header = $('#header'),
 		$userMenu = $('#userMenu'),
-		$logoutButton = $('#logoutButton'),
 		$loggedInButton = $('#loggedInButton'),
+		// nav buttons
+		$managementButton = $('#managementButton'),
+		$updateProfileButton = $('#updateProfileButton'),
+		$changePasswordButton = $('#changePasswordButton'),
+		$logoutButton = $('#logoutButton'),
 
 		// login/signup
 		$loginForm = $('#loginForm'),
@@ -2242,20 +2278,31 @@ tmz.initializeModules = function() {
 		$invalidLoginTag = $('#invalidLoginTag'),
 		$accountExistsTag = $('#accountExistsTag'),
 
-		// account management
+		// account management modals
 		$accountManagementModal = $('#accountManagement-modal'),
+		$updateProfileModal = $('#updateProfile-modal'),
+		$changePasswordModal = $('#changePassword-modal'),
+
+		// account management
 		$clearLocalStorageButton = $('#clearLocalStorage_btn'),
 		$deleteAccountButton = $('#deleteAccount_btn'),
-		$managementButton = $('#managementButton'),
-		$updateAccountButton = $('#updateAccount_btn'),
-		$userNameUpdateField = $('#userNameUpdateField'),
-		$passwordField = $('#passwordField'),
-		$passwordUpdateField = $('#passwordUpdateField'),
-		$emailUpdateField = $('#emailUpdateField'),
-		$existingPasswordGroup = $accountManagementModal.find('.existingPasswordGroup'),
-		$emailGroup = $accountManagementModal.find('.emailGroup'),
-		$successAlert = $accountManagementModal.find('.alert-success'),
-		$errorAlert = $accountManagementModal.find('.alert-error'),
+
+		// update profile
+		$usernameGroup = $updateProfileModal.find('.usernameGroup'),
+		$userNameUpdateField = $updateProfileModal.find('#userNameUpdateField'),
+		$emailGroup = $updateProfileModal.find('.emailGroup'),
+		$emailUpdateField = $updateProfileModal.find('#emailUpdateField'),
+		$existingPasswordGroupProfile = $updateProfileModal.find('.existingPasswordGroup'),
+		$successAlert = $updateProfileModal.find('.alert-success'),
+		$errorAlert = $updateProfileModal.find('.alert-error'),
+		$updateAccountSubmit = $updateProfileModal.find('#updateAccount_btn'),
+
+		// change password
+		$passwordUpdateField = $changePasswordModal.find('#passwordUpdateField'),
+		$passwordConfirmField = $changePasswordModal.find('#passwordConfirmField'),
+		$existingPasswordGroupPassword = $changePasswordModal.find('.existingPasswordGroup'),
+		$passwordField = $changePasswordModal.find('#passwordField'),
+		$changePasswordSubmit = $changePasswordModal.find('#changePassword_btn'),
 
 		// reset password
 		$resetpasswordModal = $('#resetpassword-modal'),
@@ -2335,10 +2382,16 @@ tmz.initializeModules = function() {
 			showAccountManagement();
 		});
 
-		// updateAccountButton: click
-		$updateAccountButton.click(function(e) {
+		// updateAccountSubmit: click
+		$updateAccountSubmit.click(function(e) {
 			e.preventDefault();
 			updateAccount();
+		});
+
+		// changePasswordButton: click
+		$changePasswordButton.click(function(e) {
+			e.preventDefault();
+
 		});
 
 		// email field: keydown
@@ -2700,7 +2753,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var logout = function(email, password) {
+	var logout = function() {
 
 		// return to info view
 		showInfoView();
@@ -2747,6 +2800,8 @@ tmz.initializeModules = function() {
 
 		// invalid login
 		} else if (typeof data.status !== 'undefined' && data.status === 'invalid_login') {
+
+			alertify.error('Login Failed: ' + email);
 
 			// show invalid login tag
 			$invalidLoginTag.fadeIn();
@@ -3088,7 +3143,7 @@ tmz.initializeModules = function() {
 		$emailUpdateField.val(userData.email);
 
 		// show modal
-		$accountManagementModal.modal('show');
+		$updateProfileModal.modal('show');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3112,23 +3167,29 @@ tmz.initializeModules = function() {
 			User.updateUser(password, email, userName, newPassword, function(data) {
 
 
-
 				// update success
 				if (data.status === 'success') {
 
 					// update user email
 					$loggedInButton.find('.userEmail').text(email);
-					$passwordField.val('');
 					$passwordUpdateField.val('');
+					// clear password
+					$passwordField.val('');
 
 					// show alert
 					$successAlert.fadeIn().find('.alertText').text('Account updated');
 
 				// password incorrect error
 				} else if (data.status === 'incorrect_password') {
-
-					$existingPasswordGroup.addClass('error');
+					$existingPasswordGroupProfile.addClass('error');
 					$errorAlert.fadeIn().find('.alertText').text('Incorrect password');
+					// clear password
+					$passwordField.val('');
+
+				// user name exists
+				} else if (data.status === 'username_exists') {
+					$usernameGroup.addClass('error');
+					$errorAlert.fadeIn().find('.alertText').text('User name exists');
 				}
 
 			});
@@ -3137,7 +3198,7 @@ tmz.initializeModules = function() {
 		// no existing password
 		if (password === '') {
 			// password empty error
-			$existingPasswordGroup.addClass('error');
+			$existingPasswordGroupProfile.addClass('error');
 			$errorAlert.fadeIn().find('.alertText').text('Please enter existing password');
 		}
 
@@ -3168,8 +3229,9 @@ tmz.initializeModules = function() {
 		// reset form
 		$successAlert.hide();
 		$errorAlert.hide();
-		$existingPasswordGroup.removeClass('error');
+		$existingPasswordGroupProfile.removeClass('error');
 		$emailGroup.removeClass('error');
+		$userNameUpdateField.removeClass('error');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3182,7 +3244,7 @@ tmz.initializeModules = function() {
 
 	$.extend(SiteView, publicMethods);
 
-})(tmz.module('siteView'), tmz, jQuery, _);
+})(tmz.module('siteView'), tmz, jQuery, _, alertify);
 
 
 // SEARCH VIEW
@@ -3357,10 +3419,7 @@ tmz.initializeModules = function() {
 		$searchProvider.find('li a').click(function(e) {
 			e.preventDefault();
 			// set attribute
-			$searchProvider.attr('data-content', $(this).attr('data-content'));
-			previousSearchTerms = '';
-
-			searchProviderChanged();
+			changeSearchProvider($(this).attr('data-content'));
 		});
 
 		// searchViewMenu .dropdown: hover
@@ -3507,7 +3566,6 @@ tmz.initializeModules = function() {
 
 		// change finder tab to search if not on search tab
 		if (currentTab !== TAB_IDS['#searchTab']) {
-
 			// manually toggle search tab
 			$searchTabLink.trigger('click');
 			finderTabChanged(TAB_IDS['#searchTab']);
@@ -3863,10 +3921,8 @@ tmz.initializeModules = function() {
 	var finderTabChanged = function(tab) {
 
 		switch(tab) {
-
 			// search tab
 			case 0:
-
 				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
 				$searchResultsContainer.nanoScroller({scrollTop:searchTabScrollPosition - 1});
 
@@ -3877,7 +3933,6 @@ tmz.initializeModules = function() {
 
 			// list tab
 			case 1:
-
 				// scroll to previous location - if location is same where it left off chrome won't scrollTo (buggy) so we -1
 				$listResultsContainer.nanoScroller({scrollTop:parseInt(listTabScrollPosition - 1, 10)});
 
@@ -3886,6 +3941,21 @@ tmz.initializeModules = function() {
 				listTypeChanged();
 				break;
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* changeSearchProvider -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var changeSearchProvider = function(newProviderID) {
+
+		// update data attribute
+		$searchProvider.attr('data-content', newProviderID);
+		searchProvider = newProviderID;
+
+		// clear search terms
+		previousSearchTerms = '';
+
+		searchProviderChanged();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3997,6 +4067,8 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeSearchPlatform = function(platform, name) {
 
+		console.info(platform, name);
+
 		previousSearchTerms = '';
 
 		// set platform name
@@ -4004,6 +4076,8 @@ tmz.initializeModules = function() {
 
 		// set platform object
 		searchPlatform = Utilities.getStandardPlatform(platform);
+
+		console.info(searchPlatform);
 
 		// do search with new platform
 		SearchView.search(searchTerms);
@@ -4179,6 +4253,9 @@ tmz.initializeModules = function() {
 
 		// set search input field
 		$inputField.val(searchTerms);
+
+		// search list items from giantbomb
+		changeSearchProvider(Utilities.SEARCH_PROVIDERS.GiantBomb);
 
 		// change searchPlatform to listPlatform
 		changeSearchPlatform(listPlatform.id, listPlatform.name);
@@ -6449,7 +6526,7 @@ tmz.initializeModules = function() {
 })(tmz.module('itemView'), tmz, jQuery, _, List);
 
 // GiantBomb
-(function(GridView, tmz, $, _) {
+(function(GridView, tmz, $, _, alertify) {
 	"use strict";
 
     // module references
@@ -6677,8 +6754,9 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	GridView.showGridView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
 
-		// switch content display to gridView
+		alertify.success('Loading Grid View images');
 
+		// switch content display to gridView
 		// modify styles
 		$wrapper.removeClass('standardView');
 		$wrapper.addClass('gridView');
@@ -7085,7 +7163,7 @@ tmz.initializeModules = function() {
 	};
 
 
-})(tmz.module('gridView'), tmz, jQuery, _);
+})(tmz.module('gridView'), tmz, jQuery, _, alertify);
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
@@ -10519,7 +10597,7 @@ tmz.initializeModules = function() {
 })(tmz.module('itemLinker'), tmz, jQuery, _);
 
 // ITEM VIEW
-(function(ImportView, tmz, $, _) {
+(function(ImportView, tmz, $, _, alertify) {
 	"use strict";
 
     // modules references
@@ -10734,6 +10812,8 @@ tmz.initializeModules = function() {
 			// parse imported titles
 			importTitles(importedTitles, INPUT_SOURCES_PLATFORMS[currentSourceID]);
 		});
+
+		alertify.success('Importing ' + INPUT_SOURCES[currentSourceID] + ' games for: ' + sourceUser);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10757,6 +10837,8 @@ tmz.initializeModules = function() {
 		// show config and hide import modal
 		showImportConfigModal();
 		$importModal.modal('hide');
+
+		alertify.error(INPUT_SOURCES[currentSourceID] + ' import cancelled');
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11066,6 +11148,8 @@ tmz.initializeModules = function() {
 		_.delay(function() {
 			$importModal.addClass('ready');
 		}, 1000);
+
+		alertify.success(titlesFoundCount + ' titles found and linked for ' + INPUT_SOURCES[currentSourceID]);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11102,21 +11186,20 @@ tmz.initializeModules = function() {
 
 					// all items added > run final step
 					if (addCount === addTotal) {
-						finalizeAdditions(tagsToAdd);
+						finalizeAdditions(tagsToAdd, tagName);
 					}
 				});
 			});
 		});
-
-		// import complete, reset source id
-		delete sourceImportStarted[currentSourceID];
-		currentSourceID = null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* finalizeAdditions - all items added to tag list
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var finalizeAdditions = function(tagIDsAdded) {
+	var finalizeAdditions = function(tagIDsAdded, tagName) {
+
+		alertify.success(INPUT_SOURCES[currentSourceID] + ' Import Complete');
+		alertify.log('Games added to tag: ' + tagName);
 
 		// hide modal
 		$importModal.modal('hide');
@@ -11129,6 +11212,10 @@ tmz.initializeModules = function() {
 
 		// select random item
 		ItemView.viewRandomItem();
+
+		// import complete, reset source id
+		delete sourceImportStarted[currentSourceID];
+		currentSourceID = null;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11142,7 +11229,7 @@ tmz.initializeModules = function() {
 	$.extend(ImportView, publicMethods);
 
 
-})(tmz.module('importView'), tmz, jQuery, _);
+})(tmz.module('importView'), tmz, jQuery, _, alertify);
 
 	// intialize app
 	tmz.initialize();
