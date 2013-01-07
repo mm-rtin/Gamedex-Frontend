@@ -59,6 +59,7 @@ module.exports = function(grunt) {
 				'js/tmz_metacritic.js',
 				'js/tmz_wikipedia.js',
 				'js/tmz_gametrailers.js',
+				'js/tmz_steam.js',
 				'js/tmz_gamestats.js',
 				'js/tmz_ign.js',
 				'js/tmz_releasedList.js',

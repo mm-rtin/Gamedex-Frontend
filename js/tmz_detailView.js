@@ -14,6 +14,7 @@
 		GiantBomb = tmz.module('giantbomb'),
 		Wikipedia = tmz.module('wikipedia'),
 		GameTrailers = tmz.module('gameTrailers'),
+		Steam = tmz.module('steam'),
 		VideoPanel = tmz.module('videoPanel'),
 
 		// constants
@@ -71,9 +72,10 @@
 		$giantBombPage = $('#giantBombPage'),
 		$metacriticPage = $('#metacriticPage'),
 
-		$amazonPriceHeader = $itemAttributes.find('#amazonPriceHeader'),
+		$priceHeader = $itemAttributes.find('#priceHeader'),
 		$amazonPriceNew = $itemAttributes.find('#amazonPriceNew'),
 		$amazonPriceUsed = $itemAttributes.find('#amazonPriceUsed'),
+		$steamPrice = $itemAttributes.find('#steamPrice'),
 
 		// node cache: custom attributes
 		$gameStatus = $('#gameStatus'),
@@ -378,6 +380,9 @@
 
 		// get gametrailers page
 		GameTrailers.getGametrailersPage(item.standardName, item, displayGametrailersPage);
+
+		// get steam page and price
+		Steam.getSteamGame(item.standardName, item, displaySteamInformation);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -593,6 +598,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* displaySteamInformation -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var displaySteamInformation = function(steamItem) {
+
+		if (steamItem.steamPrice !== '') {
+			$priceHeader.show();
+			$steamPrice.find('.data').text(steamItem.steamPrice);
+			$steamPrice.find('a').attr('href', steamItem.steamPage);
+			$steamPrice.show();
+		} else {
+			$steamPrice.hide();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getProviderSpecificItemDetails -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getProviderSpecificItemDetails = function(provider, item) {
@@ -617,7 +637,7 @@
 
 		// update data panel information
 		if (offers.buyNowPrice !== '' || offers.lowestUsedPrice !== '') {
-			$amazonPriceHeader.show();
+			$priceHeader.show();
 		}
 
 		// new price
@@ -707,9 +727,10 @@
 		$giantBombPage.hide();
 		$metacriticPage.hide();
 
-		$amazonPriceHeader.hide();
+		$priceHeader.hide();
 		$amazonPriceNew.hide();
 		$amazonPriceUsed.hide();
+		$steamPrice.hide();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
