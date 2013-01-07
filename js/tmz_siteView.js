@@ -12,6 +12,7 @@
 
 		// constants
 		FORM_TYPES = {'login': 0, 'signup': 1},
+		LOAD_DELAY = 900,
 
 		// properties
 		formType = FORM_TYPES.login,
@@ -469,58 +470,63 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var startApp = function() {
 
-		// show loading status
-		$loadingStatus.fadeIn();
+		// delay app loading
+		window.setTimeout(function() {
 
-		// focus search input field
-		$searchInput.focus();
+			// show loading status
+			$loadingStatus.fadeIn();
 
-		// clear view and item data
-		ItemView.clearItemView();
-		ItemData.resetItemData();
+			// focus search input field
+			$searchInput.focus();
 
-		// returned data
-		var itemsReturnedData = null;
-		var listReturnedData = null;
+			// clear view and item data
+			ItemView.clearItemView();
+			ItemData.resetItemData();
 
-		// directory request promise
-		var directoryRequest = ItemData.downloadItemDirectory();
+			// returned data
+			var itemsReturnedData = null;
+			var listReturnedData = null;
 
-		// items request promise
-		var itemsRequest = ItemView.initializeUserItems(function(items) {
-			itemsReturnedData = items;
+			// directory request promise
+			var directoryRequest = ItemData.downloadItemDirectory();
 
-		}, function() {
-			itemsReturnedData = {};
-		});
+			// items request promise
+			var itemsRequest = ItemView.initializeUserItems(function(items) {
+				itemsReturnedData = items;
 
-		// get user tags
-		var tagRequest = TagView.getTags(function(data) {
-			listReturnedData = data;
+			}, function() {
+				itemsReturnedData = {};
+			});
 
-		}, function() {
+			// get user tags
+			var tagRequest = TagView.getTags(function(data) {
+				listReturnedData = data;
 
-		});
+			}, function() {
 
-		// deferreds: wait for itemsRequest and directoryRequest
-		$.when(itemsRequest, directoryRequest, tagRequest).then(
+			});
 
-			// all ajax requests returned
-			function() {
+			// deferreds: wait for itemsRequest and directoryRequest
+			$.when(itemsRequest, directoryRequest, tagRequest).then(
 
-				// list result
-				TagView.getTags_result(listReturnedData);
+				// all ajax requests returned
+				function() {
 
-				// itemView result
-				ItemView.initializeUserItems_result(itemsReturnedData);
+					// list result
+					TagView.getTags_result(listReturnedData);
 
-				// hide loading status
-				$loadingStatus.hide();
-			},
-			function() {
+					// itemView result
+					ItemView.initializeUserItems_result(itemsReturnedData);
 
-			}
-		);
+					// hide loading status
+					$loadingStatus.hide();
+				},
+				function() {
+
+				}
+			);
+
+		}, LOAD_DELAY);
 	};
 
 

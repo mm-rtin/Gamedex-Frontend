@@ -33,12 +33,12 @@ Specify the number of columns and set column and gutter widths
 	-webkit-border-radius: @radius1 @radius2 @radius3 @radius4;
 	border-radius: @radius1 @radius2 @radius3 @radius4;
 }
-.transition(@duration, @step1: 0.250, @step2: 0.460, @step3: 0.450, @step4: 0.940) {
-	-webkit-transition: @duration all cubic-bezier(@step1, @step2, @step3, @step4);
-	-moz-transition: @duration all cubic-bezier(@step1, @step2, @step3, @step4);
-	-ms-transition: @duration all cubic-bezier(@step1, @step2, @step3, @step4);
-	-o-transition: @duration all cubic-bezier(@step1, @step2, @step3, @step4);
-	transition: @duration all cubic-bezier(@step1, @step2, @step3, @step4);
+.transition(@duration, @attrib: all, @step1: 0.250, @step2: 0.460, @step3: 0.450, @step4: 0.940) {
+	-webkit-transition: @duration @attrib cubic-bezier(@step1, @step2, @step3, @step4);
+	-moz-transition: @duration @attrib cubic-bezier(@step1, @step2, @step3, @step4);
+	-ms-transition: @duration @attrib cubic-bezier(@step1, @step2, @step3, @step4);
+	-o-transition: @duration @attrib cubic-bezier(@step1, @step2, @step3, @step4);
+	transition: @duration @attrib cubic-bezier(@step1, @step2, @step3, @step4);
 
 	/* enable 3d render composition */
 	-webkit-transform: translate3d(0, 0, 0);
@@ -770,7 +770,10 @@ body {
 			margin: 0 auto;
 		}
 		#header {
-			display: none;
+			top: -35px;
+		}
+		#content {
+			margin: 0 auto;
 		}
 	}
 
@@ -780,10 +783,13 @@ body {
 		}
 
 		#infoHeader {
-			display: none;
+			height: 0px;
 		}
 		#header {
-			display: block;
+			top: 0px;
+		}
+		#content {
+			margin: 44px auto;
 		}
 	}
 }
@@ -1050,6 +1056,7 @@ img {
 /* INFO HEADER
 -----------------------------------------------------------*/
 #infoHeader {
+	.transition(.5s, height);
 	background-image:  url('http://d2sifwlm28j6up.cloudfront.net/header_tile.png');
 	background-repeat: repeat-x;
 	background-position: 0px -21px;
@@ -1058,6 +1065,7 @@ img {
 	margin-bottom: 8px;
 	position: relative;
 	z-index: 1039;
+	overflow: hidden;
 
 	.infoHeaderContent {
 		margin: 0 auto;
@@ -1400,7 +1408,7 @@ img {
 	----------------------- */
 	&.standardView {
 		text-align: left;
-		margin: 46px auto;
+		margin: 0px auto;
 		width: 100%;
 
 		/* PANEL STYLES
@@ -1432,15 +1440,17 @@ img {
 	&.gridView {
 		text-align: left;
 		width: 100%;
-		margin: 46px auto !important;
+		margin: 0px auto !important;
 
 		#infoHeader {
 			display: none;
 		}
-
 		#header {
+			top: 0px;
 			min-width: 1266px;
-			display: block;
+		}
+		#content {
+			margin: 44px auto;
 		}
 
 		/* PANEL STYLES
@@ -1450,7 +1460,6 @@ img {
 		}
 		#panel2 {
 			position: fixed;
-			top: 46px;
 			margin-left: 10px;
 			width: 287px;
 		}
@@ -1483,8 +1492,9 @@ img {
 }
 
 #header {
+	.transition(.8s, top, 1, 0, 0.57, 1.02);
 	min-width: 500px;
-	display: none;
+	position: absolute;
 
 	.container-fluid {
 		margin: 0 auto;
@@ -2106,9 +2116,6 @@ img {
 	float: left;
 	margin: 0px 10px 8px 0px;
 }
-#searchProvider {
-
-}
 #listType {
 	display: none;
 	margin-left: 0;
@@ -2408,7 +2415,7 @@ img {
 	}
 
 	.itemDetailInfo {
-		.transition(0.5s, 1,0,.39,.33);
+		.transition(0.5s, opacity, 1,0,.39,.33);
 		.opacity(0);
 		.boxShadow(.2);
 		.borderRadius(4px);

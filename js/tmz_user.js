@@ -76,7 +76,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.login = function(email, password, onSuccess, onError) {
 
-		alertify.success('Attempting to log in: ' + email);
+		alertify.success('Logging in... ' + email);
 
 		var requestData = {
 			user_email: email,

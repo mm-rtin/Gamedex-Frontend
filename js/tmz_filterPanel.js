@@ -135,8 +135,6 @@
 			var gameStatus = FilterPanel.gameStatusFilter(item.values().gameStatus, filters.gameStatusFilters);
 			var playStatus = FilterPanel.playStatusFilter(item.values().playStatus, filters.playStatusFilters);
 
-			console.info(platformStatus);
-
 			// not filtered
 			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
 				return true;
@@ -421,8 +419,6 @@
 
 		// iterate platform list
 		for (var i = 0, len = filterList.length; i < len; i++) {
-
-			console.info(filterList[i].name, platform);
 
 			if (filterList[i].name === platform) {
 				return true;

@@ -255,7 +255,10 @@
 				return function(item) {
 					viewSecondSearchItemDetail(item, id);
 				};
-			}(currentID), true);
+			}(currentID), function() {
+
+				// no match found
+			});
 
 			// display tags
 			loadAndDisplayTags(firstItem, itemAttributes);

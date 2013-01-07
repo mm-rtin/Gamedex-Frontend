@@ -230,13 +230,13 @@ tmz.initializeModules = function() {
 			{'id': 'mac', 'gt': '', 'ign': '', 'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
 			{'id': 'xbox', 'gt': '', 'ign': '', 'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
 			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
-			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'Xbox Live'},
+			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'XBL'},
 			{'id': 'ds', 'gt': 'ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
 			{'id': '3ds', 'gt': '3ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 2622269011,alias: '3ds,nintendo 3ds', name: '3DS'},
 			{'id': 'wii', 'gt': 'wii', 'ign': 'wii', 'gamestats': 'wii', 'amazon': 14218901, alias: 'wii,nintendo wii', name: 'Wii'},
 			{'id': 'wiiu', 'gt': 'wii u', 'ign': 'wii u', 'gamestats': 'wii u', 'amazon': 3075112011, alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu', name: 'Wii U'},
-			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'Playstation'},
-			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'Playstation 2'},
+			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
+			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
 			{'id': 'ps3', 'gt': 'ps3', 'ign': 'ps3', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
 			{'id': 'psn', 'gt': '', 'ign': 'ps3&downloadType=201', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'psn,playstation network', name: 'PSN'},
 			{'id': 'vita', 'gt': 'vita', 'ign': 'ps-vita', 'gamestats': 'playstation-3', 'amazon': 3010556011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},
@@ -415,7 +415,7 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	User.login = function(email, password, onSuccess, onError) {
 
-		alertify.success('Attempting to log in: ' + email);
+		alertify.success('Logging in... ' + email);
 
 		var requestData = {
 			user_email: email,
@@ -2240,6 +2240,7 @@ tmz.initializeModules = function() {
 
 		// constants
 		FORM_TYPES = {'login': 0, 'signup': 1},
+		LOAD_DELAY = 900,
 
 		// properties
 		formType = FORM_TYPES.login,
@@ -2697,58 +2698,63 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var startApp = function() {
 
-		// show loading status
-		$loadingStatus.fadeIn();
+		// delay app loading
+		window.setTimeout(function() {
 
-		// focus search input field
-		$searchInput.focus();
+			// show loading status
+			$loadingStatus.fadeIn();
 
-		// clear view and item data
-		ItemView.clearItemView();
-		ItemData.resetItemData();
+			// focus search input field
+			$searchInput.focus();
 
-		// returned data
-		var itemsReturnedData = null;
-		var listReturnedData = null;
+			// clear view and item data
+			ItemView.clearItemView();
+			ItemData.resetItemData();
 
-		// directory request promise
-		var directoryRequest = ItemData.downloadItemDirectory();
+			// returned data
+			var itemsReturnedData = null;
+			var listReturnedData = null;
 
-		// items request promise
-		var itemsRequest = ItemView.initializeUserItems(function(items) {
-			itemsReturnedData = items;
+			// directory request promise
+			var directoryRequest = ItemData.downloadItemDirectory();
 
-		}, function() {
-			itemsReturnedData = {};
-		});
+			// items request promise
+			var itemsRequest = ItemView.initializeUserItems(function(items) {
+				itemsReturnedData = items;
 
-		// get user tags
-		var tagRequest = TagView.getTags(function(data) {
-			listReturnedData = data;
+			}, function() {
+				itemsReturnedData = {};
+			});
 
-		}, function() {
+			// get user tags
+			var tagRequest = TagView.getTags(function(data) {
+				listReturnedData = data;
 
-		});
+			}, function() {
 
-		// deferreds: wait for itemsRequest and directoryRequest
-		$.when(itemsRequest, directoryRequest, tagRequest).then(
+			});
 
-			// all ajax requests returned
-			function() {
+			// deferreds: wait for itemsRequest and directoryRequest
+			$.when(itemsRequest, directoryRequest, tagRequest).then(
 
-				// list result
-				TagView.getTags_result(listReturnedData);
+				// all ajax requests returned
+				function() {
 
-				// itemView result
-				ItemView.initializeUserItems_result(itemsReturnedData);
+					// list result
+					TagView.getTags_result(listReturnedData);
 
-				// hide loading status
-				$loadingStatus.hide();
-			},
-			function() {
+					// itemView result
+					ItemView.initializeUserItems_result(itemsReturnedData);
 
-			}
-		);
+					// hide loading status
+					$loadingStatus.hide();
+				},
+				function() {
+
+				}
+			);
+
+		}, LOAD_DELAY);
 	};
 
 
@@ -3266,7 +3272,7 @@ tmz.initializeModules = function() {
 		// constants
 		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
-		TIME_TO_SUBMIT_QUERY = 250,								// the number of miliseconds to wait before submiting search query
+		TIME_TO_SUBMIT_QUERY = 400,								// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 503,
@@ -3280,9 +3286,9 @@ tmz.initializeModules = function() {
 		searchTerms = 'skyrim',
 		previousSearchTerms = '',
 		searchResults = {},
+		sortedSearchResults = [],
 
 		// properties
-		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon,
 		listType = null,
 		currentTab = TAB_IDS['#searchTab'],
 		searchTabScrollPosition = 0,
@@ -3305,9 +3311,7 @@ tmz.initializeModules = function() {
 		$searchContainer = $('#searchContainer'),
 
 		$searchViewMenu = $('#searchViewMenu'),
-		$searchProvider = $('#searchProvider'),
 		$listType = $('#listType'),
-		$searchProviderName = $searchProvider.find('.providerName'),
 		$listTypeName = $listType.find('.listTypeName'),
 
 		$searchPlatforms = $('#searchPlatforms'),
@@ -3366,9 +3370,6 @@ tmz.initializeModules = function() {
 		searchPlatform = Utilities.PLATFORM_INDEX[0];
 		listPlatform = Utilities.getStandardPlatform('');
 
-		// set default search provider
-		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
-
 		toggleClearSearchButton(false);
 
 		// init tooltips
@@ -3416,13 +3417,6 @@ tmz.initializeModules = function() {
 
 		// search field: keypress
 		$inputField.keyup(inputFieldKeyUp);
-
-		// searchProvider: change
-		$searchProvider.find('li a').click(function(e) {
-			e.preventDefault();
-			// set attribute
-			changeSearchProvider($(this).attr('data-content'));
-		});
 
 		// searchViewMenu .dropdown: hover
 		$searchViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
@@ -3516,8 +3510,6 @@ tmz.initializeModules = function() {
 		// hide loading status
 		$searchLoadingStatus.stop().hide();
 
-		var sortedSearchResults = [];
-
 		// generate sorted items array
 		_.each(items, function(item, key) {
 			sortedSearchResults.push(item);
@@ -3560,6 +3552,8 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
 
+		clearSearch();
+
 		if (keywords === '') {
 			toggleClearSearchButton(false);
 		} else {
@@ -3582,19 +3576,13 @@ tmz.initializeModules = function() {
 
 			previousSearchTerms = keywords;
 
-			// search based on search provider
-			switch (searchProvider) {
-
-				// amazon
-				case Utilities.SEARCH_PROVIDERS.Amazon:
-					Amazon.searchAmazon(keywords, searchPlatform.amazon, searchAmazon_result);
-					break;
-
-				// giantbomb
-				case Utilities.SEARCH_PROVIDERS.GiantBomb:
-					GiantBomb.searchGiantBomb(keywords, searchGiantBomb_result);
-					break;
-			}
+			// search amazon and giantbomb
+			Amazon.searchAmazon(keywords, searchPlatform.amazon, function(data) {
+				searchAmazon_result(data, keywords);
+			});
+			GiantBomb.searchGiantBomb(keywords, function(data) {
+				searchGiantBomb_result(data, keywords);
+			});
 		}
 	};
 
@@ -3727,6 +3715,21 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearSearch -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearSearch = function() {
+
+		// clear results output
+		$searchResults.empty();
+
+		$searchLoadingStatus.fadeIn();
+
+		// clear searchResults data
+		searchResults = {};
+		sortedSearchResults = [];
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* initListJS -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initListJS = function(order) {
@@ -3799,7 +3802,7 @@ tmz.initializeModules = function() {
 	* searchAmazon_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchAmazon_result = function(data) {
+	var searchAmazon_result = function(data, keywords) {
 		// local properties
 		var	filtered = false;
 		var tempSearchResults = {};
@@ -3821,18 +3824,23 @@ tmz.initializeModules = function() {
 			}
 		});
 
-		// set tempSearchResults to searchResults data
-		searchResults = tempSearchResults;
+		// extend searchResults data with tempSearchResults
+		$.extend(true, searchResults, tempSearchResults);
 
-		// renderSearchResults results
-		SearchView.renderSearchResults(searchResults);
+		// skip render if current search terms do not match search terms for this query
+		console.info(searchTerms, keywords);
+
+		if (searchTerms === keywords) {
+			// renderSearchResults results
+			SearchView.renderSearchResults(searchResults);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchGiantBomb_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchGiantBomb_result = function(data) {
+	var searchGiantBomb_result = function(data, keywords) {
 
 		var results = data.results;
 		var tempSearchResults = {};
@@ -3851,11 +3859,15 @@ tmz.initializeModules = function() {
 			tempSearchResults[searchItem.id] = searchItem;
 		}
 
-		// set tempSearchResults to searchResults data
-		searchResults = tempSearchResults;
+		// extend searchResults data with tempSearchResults
+		$.extend(true, searchResults, tempSearchResults);
 
-		// renderSearchResults results
-		SearchView.renderSearchResults(searchResults);
+		// skip render if current search terms do not match search terms for this query
+		console.info(searchTerms, keywords);
+		if (searchTerms === keywords) {
+			// renderSearchResults results
+			SearchView.renderSearchResults(searchResults);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3880,10 +3892,12 @@ tmz.initializeModules = function() {
 
 		// get searchItem from model and save platform list to searchItem
 		var searchItem = SearchView.getSearchResult(gbombID);
-		searchItem['platformList'] = platformList;
 
-		// set default platform
-		searchItem.platform = platformList[0];
+		if (searchItem) {
+			searchItem['platformList'] = platformList;
+			// set default platform
+			searchItem.platform = platformList[0];
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3930,7 +3944,6 @@ tmz.initializeModules = function() {
 
 				showSearchOptions(true);
 				showListOptions(false);
-				searchProviderChanged();
 				break;
 
 			// list tab
@@ -3943,49 +3956,6 @@ tmz.initializeModules = function() {
 				listTypeChanged();
 				break;
 		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeSearchProvider -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeSearchProvider = function(newProviderID) {
-
-		// update data attribute
-		$searchProvider.attr('data-content', newProviderID);
-		searchProvider = newProviderID;
-
-		// clear search terms
-		previousSearchTerms = '';
-
-		searchProviderChanged();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchProviderChanged
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchProviderChanged = function() {
-
-		var providerID = $searchProvider.attr('data-content');
-
-		switch(providerID) {
-			case '0':
-				searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
-				// set title
-				$searchProviderName.text('Amazon');
-				// show platform list
-				$searchPlatforms.show();
-				break;
-			case '1':
-				searchProvider = Utilities.SEARCH_PROVIDERS.GiantBomb;
-				// set title
-				$searchProviderName.text('GiantBomb');
-				// show platform list
-				$searchPlatforms.hide();
-				break;
-		}
-
-		// run search with new search provider
-		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4069,8 +4039,6 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeSearchPlatform = function(platform, name) {
 
-		console.info(platform, name);
-
 		previousSearchTerms = '';
 
 		// set platform name
@@ -4078,8 +4046,6 @@ tmz.initializeModules = function() {
 
 		// set platform object
 		searchPlatform = Utilities.getStandardPlatform(platform);
-
-		console.info(searchPlatform);
 
 		// do search with new platform
 		SearchView.search(searchTerms);
@@ -4139,12 +4105,10 @@ tmz.initializeModules = function() {
 		if (show) {
 			$searchDisplayOptions.show();
 			$searchPlatforms.show();
-			$searchProvider.show();
 
 		} else {
 			$searchDisplayOptions.hide();
 			$searchPlatforms.hide();
-			$searchProvider.hide();
 		}
 	};
 
@@ -4214,6 +4178,8 @@ tmz.initializeModules = function() {
 		// get search value
 		searchTerms = $inputField.val();
 
+		clearSearch();
+
 		if (searchFieldTimeout) {
 			clearTimeout(searchFieldTimeout);
 		}
@@ -4255,9 +4221,6 @@ tmz.initializeModules = function() {
 
 		// set search input field
 		$inputField.val(searchTerms);
-
-		// search list items from giantbomb
-		changeSearchProvider(Utilities.SEARCH_PROVIDERS.GiantBomb);
 
 		// change searchPlatform to listPlatform
 		changeSearchPlatform(listPlatform.id, listPlatform.name);
@@ -4594,7 +4557,10 @@ tmz.initializeModules = function() {
 				return function(item) {
 					viewSecondSearchItemDetail(item, id);
 				};
-			}(currentID), true);
+			}(currentID), function() {
+
+				// no match found
+			});
 
 			// display tags
 			loadAndDisplayTags(firstItem, itemAttributes);
@@ -7928,8 +7894,6 @@ tmz.initializeModules = function() {
 			var gameStatus = FilterPanel.gameStatusFilter(item.values().gameStatus, filters.gameStatusFilters);
 			var playStatus = FilterPanel.playStatusFilter(item.values().playStatus, filters.playStatusFilters);
 
-			console.info(platformStatus);
-
 			// not filtered
 			if (releaseDateStatus && metascoreStatus && platformStatus && playStatus && gameStatus) {
 				return true;
@@ -8214,8 +8178,6 @@ tmz.initializeModules = function() {
 
 		// iterate platform list
 		for (var i = 0, len = filterList.length; i < len; i++) {
-
-			console.info(filterList[i].name, platform);
 
 			if (filterList[i].name === platform) {
 				return true;

@@ -15,7 +15,7 @@
 		// constants
 		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
-		TIME_TO_SUBMIT_QUERY = 250,								// the number of miliseconds to wait before submiting search query
+		TIME_TO_SUBMIT_QUERY = 400,								// the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 503,
@@ -29,9 +29,9 @@
 		searchTerms = 'skyrim',
 		previousSearchTerms = '',
 		searchResults = {},
+		sortedSearchResults = [],
 
 		// properties
-		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon,
 		listType = null,
 		currentTab = TAB_IDS['#searchTab'],
 		searchTabScrollPosition = 0,
@@ -54,9 +54,7 @@
 		$searchContainer = $('#searchContainer'),
 
 		$searchViewMenu = $('#searchViewMenu'),
-		$searchProvider = $('#searchProvider'),
 		$listType = $('#listType'),
-		$searchProviderName = $searchProvider.find('.providerName'),
 		$listTypeName = $listType.find('.listTypeName'),
 
 		$searchPlatforms = $('#searchPlatforms'),
@@ -115,9 +113,6 @@
 		searchPlatform = Utilities.PLATFORM_INDEX[0];
 		listPlatform = Utilities.getStandardPlatform('');
 
-		// set default search provider
-		searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
-
 		toggleClearSearchButton(false);
 
 		// init tooltips
@@ -165,13 +160,6 @@
 
 		// search field: keypress
 		$inputField.keyup(inputFieldKeyUp);
-
-		// searchProvider: change
-		$searchProvider.find('li a').click(function(e) {
-			e.preventDefault();
-			// set attribute
-			changeSearchProvider($(this).attr('data-content'));
-		});
 
 		// searchViewMenu .dropdown: hover
 		$searchViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
@@ -265,8 +253,6 @@
 		// hide loading status
 		$searchLoadingStatus.stop().hide();
 
-		var sortedSearchResults = [];
-
 		// generate sorted items array
 		_.each(items, function(item, key) {
 			sortedSearchResults.push(item);
@@ -309,6 +295,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
 
+		clearSearch();
+
 		if (keywords === '') {
 			toggleClearSearchButton(false);
 		} else {
@@ -331,19 +319,13 @@
 
 			previousSearchTerms = keywords;
 
-			// search based on search provider
-			switch (searchProvider) {
-
-				// amazon
-				case Utilities.SEARCH_PROVIDERS.Amazon:
-					Amazon.searchAmazon(keywords, searchPlatform.amazon, searchAmazon_result);
-					break;
-
-				// giantbomb
-				case Utilities.SEARCH_PROVIDERS.GiantBomb:
-					GiantBomb.searchGiantBomb(keywords, searchGiantBomb_result);
-					break;
-			}
+			// search amazon and giantbomb
+			Amazon.searchAmazon(keywords, searchPlatform.amazon, function(data) {
+				searchAmazon_result(data, keywords);
+			});
+			GiantBomb.searchGiantBomb(keywords, function(data) {
+				searchGiantBomb_result(data, keywords);
+			});
 		}
 	};
 
@@ -476,6 +458,21 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearSearch -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearSearch = function() {
+
+		// clear results output
+		$searchResults.empty();
+
+		$searchLoadingStatus.fadeIn();
+
+		// clear searchResults data
+		searchResults = {};
+		sortedSearchResults = [];
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* initListJS -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initListJS = function(order) {
@@ -548,7 +545,7 @@
 	* searchAmazon_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchAmazon_result = function(data) {
+	var searchAmazon_result = function(data, keywords) {
 		// local properties
 		var	filtered = false;
 		var tempSearchResults = {};
@@ -570,18 +567,23 @@
 			}
 		});
 
-		// set tempSearchResults to searchResults data
-		searchResults = tempSearchResults;
+		// extend searchResults data with tempSearchResults
+		$.extend(true, searchResults, tempSearchResults);
 
-		// renderSearchResults results
-		SearchView.renderSearchResults(searchResults);
+		// skip render if current search terms do not match search terms for this query
+		console.info(searchTerms, keywords);
+
+		if (searchTerms === keywords) {
+			// renderSearchResults results
+			SearchView.renderSearchResults(searchResults);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchGiantBomb_result - results callback from search()
 	* @param {object} data
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchGiantBomb_result = function(data) {
+	var searchGiantBomb_result = function(data, keywords) {
 
 		var results = data.results;
 		var tempSearchResults = {};
@@ -600,11 +602,15 @@
 			tempSearchResults[searchItem.id] = searchItem;
 		}
 
-		// set tempSearchResults to searchResults data
-		searchResults = tempSearchResults;
+		// extend searchResults data with tempSearchResults
+		$.extend(true, searchResults, tempSearchResults);
 
-		// renderSearchResults results
-		SearchView.renderSearchResults(searchResults);
+		// skip render if current search terms do not match search terms for this query
+		console.info(searchTerms, keywords);
+		if (searchTerms === keywords) {
+			// renderSearchResults results
+			SearchView.renderSearchResults(searchResults);
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -629,10 +635,12 @@
 
 		// get searchItem from model and save platform list to searchItem
 		var searchItem = SearchView.getSearchResult(gbombID);
-		searchItem['platformList'] = platformList;
 
-		// set default platform
-		searchItem.platform = platformList[0];
+		if (searchItem) {
+			searchItem['platformList'] = platformList;
+			// set default platform
+			searchItem.platform = platformList[0];
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -679,7 +687,6 @@
 
 				showSearchOptions(true);
 				showListOptions(false);
-				searchProviderChanged();
 				break;
 
 			// list tab
@@ -692,49 +699,6 @@
 				listTypeChanged();
 				break;
 		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeSearchProvider -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeSearchProvider = function(newProviderID) {
-
-		// update data attribute
-		$searchProvider.attr('data-content', newProviderID);
-		searchProvider = newProviderID;
-
-		// clear search terms
-		previousSearchTerms = '';
-
-		searchProviderChanged();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchProviderChanged
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchProviderChanged = function() {
-
-		var providerID = $searchProvider.attr('data-content');
-
-		switch(providerID) {
-			case '0':
-				searchProvider = Utilities.SEARCH_PROVIDERS.Amazon;
-				// set title
-				$searchProviderName.text('Amazon');
-				// show platform list
-				$searchPlatforms.show();
-				break;
-			case '1':
-				searchProvider = Utilities.SEARCH_PROVIDERS.GiantBomb;
-				// set title
-				$searchProviderName.text('GiantBomb');
-				// show platform list
-				$searchPlatforms.hide();
-				break;
-		}
-
-		// run search with new search provider
-		SearchView.search(searchTerms);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -818,8 +782,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var changeSearchPlatform = function(platform, name) {
 
-		console.info(platform, name);
-
 		previousSearchTerms = '';
 
 		// set platform name
@@ -827,8 +789,6 @@
 
 		// set platform object
 		searchPlatform = Utilities.getStandardPlatform(platform);
-
-		console.info(searchPlatform);
 
 		// do search with new platform
 		SearchView.search(searchTerms);
@@ -888,12 +848,10 @@
 		if (show) {
 			$searchDisplayOptions.show();
 			$searchPlatforms.show();
-			$searchProvider.show();
 
 		} else {
 			$searchDisplayOptions.hide();
 			$searchPlatforms.hide();
-			$searchProvider.hide();
 		}
 	};
 
@@ -963,6 +921,8 @@
 		// get search value
 		searchTerms = $inputField.val();
 
+		clearSearch();
+
 		if (searchFieldTimeout) {
 			clearTimeout(searchFieldTimeout);
 		}
@@ -1004,9 +964,6 @@
 
 		// set search input field
 		$inputField.val(searchTerms);
-
-		// search list items from giantbomb
-		changeSearchProvider(Utilities.SEARCH_PROVIDERS.GiantBomb);
 
 		// change searchPlatform to listPlatform
 		changeSearchPlatform(listPlatform.id, listPlatform.name);
