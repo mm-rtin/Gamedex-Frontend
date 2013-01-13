@@ -13,6 +13,7 @@
 		USER_LOGOUT_URL = tmz.api + 'user/logout/',
 		USER_VIEW_URL = tmz.api + 'user/',
 		USER_CREATE_URL = tmz.api + 'user/create/',
+		USER_DELETE_URL = tmz.api + 'user/delete/',
 		USER_UPDATE_URL = tmz.api + 'user/update/',
 		USER_SEND_RESET_CODE_URL = tmz.api + 'user/resetcode/send/',
 		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'user/resetcode/submit/',
@@ -78,6 +79,17 @@
 
 		alertify.success('Logging in... ' + email);
 
+		User.verifyUser(email, password, function(data, email) {
+			login_success(data, email);
+			onSuccess(data, email);
+		}, onError);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* verifyUser
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.verifyUser = function(email, password, onSuccess, onError) {
+
 		var requestData = {
 			user_email: email,
 			user_password: password
@@ -91,8 +103,31 @@
 			dataType: 'json',
 			cache: true,
 			success: function(data) {
-				login_success(data, email);
 				onSuccess(data, email);
+			},
+			error: onError
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteAccount
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	User.deleteAccount = function(userID, password, onSuccess, onError) {
+
+		var requestData = {
+			uid: userID,
+			user_password: password
+		};
+
+		// login request
+		$.ajax({
+			url: USER_DELETE_URL,
+			type: 'POST',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: function(data) {
+				onSuccess(data);
 			},
 			error: onError
 		});
@@ -137,7 +172,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* logout
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	User.logout = function(email) {
+	User.logout = function() {
 
 		alertify.success('Logged out');
 
@@ -209,10 +244,10 @@
 				'user_password': password
 			};
 
-			if (userName !== userData.userName) {
+			if (userName !== '' && userName !== userData.userName) {
 				requestData.user_name = userName;
 			}
-			if (email !== userData.email) {
+			if (userName !== '' && email !== userData.email) {
 				requestData.user_email = email;
 			}
 			if (newPassword !== '') {

@@ -602,6 +602,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var displaySteamInformation = function(steamItem) {
 
+		console.info(steamItem.steamPage);
+
 		if (steamItem.steamPrice !== '') {
 			$priceHeader.show();
 			$steamPrice.find('.data').text(steamItem.steamPrice);
