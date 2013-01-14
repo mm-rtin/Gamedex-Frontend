@@ -26,6 +26,7 @@
 		// properties
 		hasRendered = false,
 		currentProvider = null,
+		viewingProvider = null,
 		currentTab = TAB_IDS[0],
 		currentID = null,
 		currentItemHasVideo = false,
@@ -391,7 +392,7 @@
 	var viewSecondSearchItemDetail = function(searchItem, linkedID) {
 
 		// clone object as secondItem
-		var secondItem = $.extend(true, {}, searchItem);
+		secondItem = $.extend(true, {}, searchItem);
 
 
 		if (currentID === linkedID) {
@@ -602,8 +603,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var displaySteamInformation = function(steamItem) {
 
-		console.info(steamItem.steamPage);
-
 		if (steamItem.steamPrice !== '') {
 			$priceHeader.show();
 			$steamPrice.find('.data').text(steamItem.steamPrice);
@@ -707,12 +706,16 @@
 
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
+
+				viewingProvider = provider;
 				// attach detailContainer to item detail info
 				$amazonItemDetailInfo.append($detailContainer);
 				$amazonTabLink.tab('show');
 				break;
 
 			case Utilities.SEARCH_PROVIDERS.GiantBomb:
+
+				viewingProvider = provider;
 				// attach detailContainer to item detail info
 				$giantbombItemDetailInfo.append($detailContainer);
 				$giantBombTabLink.tab('show');
@@ -872,6 +875,23 @@
 
 		// add tags
 		if (tagsToAdd.length > 0) {
+
+			// if initialProvider !== current
+			if (viewingProvider !== currentProvider) {
+
+				// make sure the viewing provider has content
+				if ((viewingProvider == Utilities.SEARCH_PROVIDERS.Amazon && item.asin !== 0) || viewingProvider == Utilities.SEARCH_PROVIDERS.GiantBomb && item.gbombID !== 0) {
+
+					// switch initialProvider and change out images
+					item.initialProvider = viewingProvider;
+					item.largeImage = secondItem.largeImage;
+					item.smallImage = secondItem.smallImage;
+					item.thumbnailImage = secondItem.thumbnailImage;
+				}
+			}
+
+			console.info(item);
+
 			addItemToTagRequest = ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
 		}
 

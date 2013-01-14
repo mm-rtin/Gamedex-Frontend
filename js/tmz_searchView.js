@@ -295,8 +295,6 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
 
-		clearSearch();
-
 		if (keywords === '') {
 			toggleClearSearchButton(false);
 		} else {
@@ -312,6 +310,8 @@
 
 		// don't search previous search terms
 		if (keywords !== previousSearchTerms) {
+
+			clearSearch();
 
 			// show loading status
 			$searchResultsContainer.find('.noResults').hide();
@@ -571,8 +571,6 @@
 		$.extend(true, searchResults, tempSearchResults);
 
 		// skip render if current search terms do not match search terms for this query
-		console.info(searchTerms, keywords);
-
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
@@ -606,7 +604,6 @@
 		$.extend(true, searchResults, tempSearchResults);
 
 		// skip render if current search terms do not match search terms for this query
-		console.info(searchTerms, keywords);
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
@@ -921,7 +918,9 @@
 		// get search value
 		searchTerms = $inputField.val();
 
-		clearSearch();
+		if (searchTerms !== previousSearchTerms) {
+			clearSearch();
+		}
 
 		if (searchFieldTimeout) {
 			clearTimeout(searchFieldTimeout);

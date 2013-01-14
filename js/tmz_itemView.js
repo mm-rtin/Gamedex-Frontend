@@ -18,6 +18,7 @@
 		ItemLinker = tmz.module('itemLinker'),
 		FilterPanel = tmz.module('filterPanel'),
 		GiantBomb = tmz.module('giantbomb'),
+		Steam = tmz.module('steam'),
 
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
@@ -104,6 +105,7 @@
 
 		// templates
 		priceMenuTemplate = _.template($('#price-menu-template').html()),
+		steamPriceMenuTemplate = _.template($('#steam-price-menu-template').html()),
 		itemResultsTemplate = _.template($('#item-results-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -679,13 +681,18 @@
 			loadThirdPartyData.getAmazonItemOffersLimited = function(item) {
 
 				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
-					amazonPrice_result(item.id, offers);
+					amazonPrice_result(item.id, item, offers);
 				});
 
 			}.lazy(250, 2000);
 		}
 
 		loadThirdPartyData.getAmazonItemOffersLimited(item);
+
+		// get steam page and price
+		Steam.getSteamGame(item.standardName, item, function(steamItem) {
+			steamPrice_result(item.id, item, steamItem);
+		});
 
 		// get updated metascore - if metascore or metascore page not in item data
 		if (item.metascore === null || item.metascorePage === null) {
@@ -713,16 +720,84 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* amazonPrice_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var amazonPrice_result = function(id, offers) {
+	var amazonPrice_result = function(id, item, offers) {
 
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
-			// display price
-			var priceSelector = '#' + id + ' .priceDetails';
 
-			// attach to existing item result
-			$(priceSelector).html(priceMenuTemplate(offers));
+			var priceSelector = '#' + id + ' .priceDetails';
+			var lowestProvider = getLowestPrice(item);
+
+			// attach amazon price to item
+			if (lowestProvider == 'amazon') {
+				// attach to existing item result
+				$(priceSelector).html(priceMenuTemplate(offers));
+			}
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* steamPrice_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var steamPrice_result = function(id, item, steamItem) {
+
+		if (steamItem.steamPrice !== '') {
+
+			var priceSelector = '#' + id + ' .priceDetails';
+			var lowestProvider = getLowestPrice(item);
+
+			// attach steam price to item
+			if (lowestProvider == 'steam') {
+
+				// truncate steam page url
+				steamItem.steamPageDisplay = steamItem.steamPage.split('.com')[1].split('?')[0];
+
+				// attach to existing item result
+				$(priceSelector).html(steamPriceMenuTemplate(steamItem));
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getLowestPrice -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getLowestPrice = function(item) {
+
+		var buyNowPrice = 9999.00;
+		var lowestNewPrice = 9999.00;
+		var lowestAmazonPrice = 9999.00;
+
+		var steamPrice = 9999.00;
+
+		var lowestPrice = 'amazon';
+
+		// get amazon prices
+		if (!_.isUndefined(item.offers)) {
+			if (!_.isUndefined(item.offers.buyNowPrice)) {
+				buyNowPrice = parseFloat(item.offers.buyNowPrice);
+				lowestAmazonPrice = buyNowPrice;
+			}
+			if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				lowestNewPrice = parseFloat(item.offers.lowestNewPrice);
+			}
+		}
+
+		// get steam price
+		if (!_.isUndefined(item.steamPrice)) {
+			steamPrice = parseFloat(item.steamPrice);
+		}
+
+		// get lowest amazon price
+		if (lowestNewPrice < buyNowPrice) {
+			lowestAmazonPrice = lowestNewPrice;
+		}
+
+		// get lowest price overall
+		if (steamPrice < lowestAmazonPrice) {
+			lowestPrice = 'steam';
+		}
+
+		return lowestPrice;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

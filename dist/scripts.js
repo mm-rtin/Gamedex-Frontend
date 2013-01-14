@@ -3779,8 +3779,6 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.search = function(keywords) {
 
-		clearSearch();
-
 		if (keywords === '') {
 			toggleClearSearchButton(false);
 		} else {
@@ -3796,6 +3794,8 @@ tmz.initializeModules = function() {
 
 		// don't search previous search terms
 		if (keywords !== previousSearchTerms) {
+
+			clearSearch();
 
 			// show loading status
 			$searchResultsContainer.find('.noResults').hide();
@@ -4055,8 +4055,6 @@ tmz.initializeModules = function() {
 		$.extend(true, searchResults, tempSearchResults);
 
 		// skip render if current search terms do not match search terms for this query
-		console.info(searchTerms, keywords);
-
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
@@ -4090,7 +4088,6 @@ tmz.initializeModules = function() {
 		$.extend(true, searchResults, tempSearchResults);
 
 		// skip render if current search terms do not match search terms for this query
-		console.info(searchTerms, keywords);
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
@@ -4405,7 +4402,9 @@ tmz.initializeModules = function() {
 		// get search value
 		searchTerms = $inputField.val();
 
-		clearSearch();
+		if (searchTerms !== previousSearchTerms) {
+			clearSearch();
+		}
 
 		if (searchFieldTimeout) {
 			clearTimeout(searchFieldTimeout);
@@ -4555,6 +4554,7 @@ tmz.initializeModules = function() {
 		// properties
 		hasRendered = false,
 		currentProvider = null,
+		viewingProvider = null,
 		currentTab = TAB_IDS[0],
 		currentID = null,
 		currentItemHasVideo = false,
@@ -4920,7 +4920,7 @@ tmz.initializeModules = function() {
 	var viewSecondSearchItemDetail = function(searchItem, linkedID) {
 
 		// clone object as secondItem
-		var secondItem = $.extend(true, {}, searchItem);
+		secondItem = $.extend(true, {}, searchItem);
 
 
 		if (currentID === linkedID) {
@@ -5131,8 +5131,6 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var displaySteamInformation = function(steamItem) {
 
-		console.info(steamItem.steamPage);
-
 		if (steamItem.steamPrice !== '') {
 			$priceHeader.show();
 			$steamPrice.find('.data').text(steamItem.steamPrice);
@@ -5236,12 +5234,16 @@ tmz.initializeModules = function() {
 
 		switch (provider) {
 			case Utilities.SEARCH_PROVIDERS.Amazon:
+
+				viewingProvider = provider;
 				// attach detailContainer to item detail info
 				$amazonItemDetailInfo.append($detailContainer);
 				$amazonTabLink.tab('show');
 				break;
 
 			case Utilities.SEARCH_PROVIDERS.GiantBomb:
+
+				viewingProvider = provider;
 				// attach detailContainer to item detail info
 				$giantbombItemDetailInfo.append($detailContainer);
 				$giantBombTabLink.tab('show');
@@ -5401,6 +5403,23 @@ tmz.initializeModules = function() {
 
 		// add tags
 		if (tagsToAdd.length > 0) {
+
+			// if initialProvider !== current
+			if (viewingProvider !== currentProvider) {
+
+				// make sure the viewing provider has content
+				if ((viewingProvider == Utilities.SEARCH_PROVIDERS.Amazon && item.asin !== 0) || viewingProvider == Utilities.SEARCH_PROVIDERS.GiantBomb && item.gbombID !== 0) {
+
+					// switch initialProvider and change out images
+					item.initialProvider = viewingProvider;
+					item.largeImage = secondItem.largeImage;
+					item.smallImage = secondItem.smallImage;
+					item.thumbnailImage = secondItem.thumbnailImage;
+				}
+			}
+
+			console.info(item);
+
 			addItemToTagRequest = ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
 		}
 
@@ -5577,6 +5596,7 @@ tmz.initializeModules = function() {
 		ItemLinker = tmz.module('itemLinker'),
 		FilterPanel = tmz.module('filterPanel'),
 		GiantBomb = tmz.module('giantbomb'),
+		Steam = tmz.module('steam'),
 
 		// constants
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1},
@@ -5663,6 +5683,7 @@ tmz.initializeModules = function() {
 
 		// templates
 		priceMenuTemplate = _.template($('#price-menu-template').html()),
+		steamPriceMenuTemplate = _.template($('#steam-price-menu-template').html()),
 		itemResultsTemplate = _.template($('#item-results-template').html());
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6238,13 +6259,18 @@ tmz.initializeModules = function() {
 			loadThirdPartyData.getAmazonItemOffersLimited = function(item) {
 
 				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
-					amazonPrice_result(item.id, offers);
+					amazonPrice_result(item.id, item, offers);
 				});
 
 			}.lazy(250, 2000);
 		}
 
 		loadThirdPartyData.getAmazonItemOffersLimited(item);
+
+		// get steam page and price
+		Steam.getSteamGame(item.standardName, item, function(steamItem) {
+			steamPrice_result(item.id, item, steamItem);
+		});
 
 		// get updated metascore - if metascore or metascore page not in item data
 		if (item.metascore === null || item.metascorePage === null) {
@@ -6272,16 +6298,84 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* amazonPrice_result -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var amazonPrice_result = function(id, offers) {
+	var amazonPrice_result = function(id, item, offers) {
 
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
-			// display price
-			var priceSelector = '#' + id + ' .priceDetails';
 
-			// attach to existing item result
-			$(priceSelector).html(priceMenuTemplate(offers));
+			var priceSelector = '#' + id + ' .priceDetails';
+			var lowestProvider = getLowestPrice(item);
+
+			// attach amazon price to item
+			if (lowestProvider == 'amazon') {
+				// attach to existing item result
+				$(priceSelector).html(priceMenuTemplate(offers));
+			}
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* steamPrice_result -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var steamPrice_result = function(id, item, steamItem) {
+
+		if (steamItem.steamPrice !== '') {
+
+			var priceSelector = '#' + id + ' .priceDetails';
+			var lowestProvider = getLowestPrice(item);
+
+			// attach steam price to item
+			if (lowestProvider == 'steam') {
+
+				// truncate steam page url
+				steamItem.steamPageDisplay = steamItem.steamPage.split('.com')[1].split('?')[0];
+
+				// attach to existing item result
+				$(priceSelector).html(steamPriceMenuTemplate(steamItem));
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getLowestPrice -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getLowestPrice = function(item) {
+
+		var buyNowPrice = 9999.00;
+		var lowestNewPrice = 9999.00;
+		var lowestAmazonPrice = 9999.00;
+
+		var steamPrice = 9999.00;
+
+		var lowestPrice = 'amazon';
+
+		// get amazon prices
+		if (!_.isUndefined(item.offers)) {
+			if (!_.isUndefined(item.offers.buyNowPrice)) {
+				buyNowPrice = parseFloat(item.offers.buyNowPrice);
+				lowestAmazonPrice = buyNowPrice;
+			}
+			if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				lowestNewPrice = parseFloat(item.offers.lowestNewPrice);
+			}
+		}
+
+		// get steam price
+		if (!_.isUndefined(item.steamPrice)) {
+			steamPrice = parseFloat(item.steamPrice);
+		}
+
+		// get lowest amazon price
+		if (lowestNewPrice < buyNowPrice) {
+			lowestAmazonPrice = lowestNewPrice;
+		}
+
+		// get lowest price overall
+		if (steamPrice < lowestAmazonPrice) {
+			lowestPrice = 'steam';
+		}
+
+		return lowestPrice;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10110,7 +10204,7 @@ tmz.initializeModules = function() {
 			sourceItem.steamPage = steamItem.steamPage;
 			sourceItem.steamPrice = steamItem.steamPrice;
 
-			// return updated source item
+			// return steam item
 			onSuccess(steamItem);
 
 		// fetch steam item
@@ -10143,19 +10237,22 @@ tmz.initializeModules = function() {
 							// parse result
 							var steamItem = parseSteamResults(cleanedSearchTerms, data, sourceItem);
 
-							// iterate queued return methods
-							_.each(getSteamQueue[queueKey], function(successMethod) {
+							if (steamItem) {
 
-								// add steamItem to source item
-								sourceItem.steamItem = steamItem.steamPage;
-								sourceItem.steamPrice = steamItem.steamPrice;
+								// iterate queued return methods
+								_.each(getSteamQueue[queueKey], function(successMethod) {
 
-								// add to local cache
-								addToSteamCache(searchTerms, steamItem.steampage, steamItem.steamPrice);
+									// add steamItem to source item
+									sourceItem.steamPage = steamItem.steamPage;
+									sourceItem.steamPrice = steamItem.steamPrice;
 
-								// return data
-								successMethod(steamItem);
-							});
+									// add to local cache
+									addToSteamCache(searchTerms, steamItem.steamPage, steamItem.steamPrice);
+
+									// return data
+									successMethod(steamItem);
+								});
+							}
 
 							// empty queue
 							getSteamQueue[queueKey] = [];
@@ -10210,12 +10307,22 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseSteamResults = function(keywords, data, sourceItem) {
 
-		// get result that matches sourceItem
-		var steamItem = getMatchedSearchResult(data, sourceItem);
+		var steamItem = {};
 
-		// send matched result to be cached on server
-		if (steamItem) {
-			addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
+		// cache new result which requires matching and caching
+		if (typeof data.url === 'undefined') {
+
+			// get result that matches sourceItem
+			steamItem = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (steamItem) {
+				addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
+			}
+
+		// parse cached result
+		} else {
+			steamItem = {'steamPage': data.url, 'steamPrice': data.price};
 		}
 
 		return steamItem;
@@ -10256,16 +10363,12 @@ tmz.initializeModules = function() {
 		// iterate search results
 		_.each(steamList, function(steamItem) {
 
-			console.info(steamItem);
-
 			// get similarity score
 			score = ItemLinker.getSimilarityScore(sourceItem, steamItem);
 
-			console.info(score);
-
 			// check if score is new best
 			if (score > bestScore) {
-				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price};
+				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price.replace('$', '')};
 				bestScore = score;
 			}
 		});

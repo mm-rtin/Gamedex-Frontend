@@ -34,7 +34,7 @@
 			sourceItem.steamPage = steamItem.steamPage;
 			sourceItem.steamPrice = steamItem.steamPrice;
 
-			// return updated source item
+			// return steam item
 			onSuccess(steamItem);
 
 		// fetch steam item
@@ -67,19 +67,22 @@
 							// parse result
 							var steamItem = parseSteamResults(cleanedSearchTerms, data, sourceItem);
 
-							// iterate queued return methods
-							_.each(getSteamQueue[queueKey], function(successMethod) {
+							if (steamItem) {
 
-								// add steamItem to source item
-								sourceItem.steamItem = steamItem.steamPage;
-								sourceItem.steamPrice = steamItem.steamPrice;
+								// iterate queued return methods
+								_.each(getSteamQueue[queueKey], function(successMethod) {
 
-								// add to local cache
-								addToSteamCache(searchTerms, steamItem.steampage, steamItem.steamPrice);
+									// add steamItem to source item
+									sourceItem.steamPage = steamItem.steamPage;
+									sourceItem.steamPrice = steamItem.steamPrice;
 
-								// return data
-								successMethod(steamItem);
-							});
+									// add to local cache
+									addToSteamCache(searchTerms, steamItem.steamPage, steamItem.steamPrice);
+
+									// return data
+									successMethod(steamItem);
+								});
+							}
 
 							// empty queue
 							getSteamQueue[queueKey] = [];
@@ -134,12 +137,22 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var parseSteamResults = function(keywords, data, sourceItem) {
 
-		// get result that matches sourceItem
-		var steamItem = getMatchedSearchResult(data, sourceItem);
+		var steamItem = {};
 
-		// send matched result to be cached on server
-		if (steamItem) {
-			addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
+		// cache new result which requires matching and caching
+		if (typeof data.url === 'undefined') {
+
+			// get result that matches sourceItem
+			steamItem = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (steamItem) {
+				addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
+			}
+
+		// parse cached result
+		} else {
+			steamItem = {'steamPage': data.url, 'steamPrice': data.price};
 		}
 
 		return steamItem;
@@ -180,16 +193,12 @@
 		// iterate search results
 		_.each(steamList, function(steamItem) {
 
-			console.info(steamItem);
-
 			// get similarity score
 			score = ItemLinker.getSimilarityScore(sourceItem, steamItem);
 
-			console.info(score);
-
 			// check if score is new best
 			if (score > bestScore) {
-				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price};
+				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price.replace('$', '')};
 				bestScore = score;
 			}
 		});

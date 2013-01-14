@@ -534,7 +534,7 @@ html {
 		}
 		li {
 			> a {
-				.transition(.6s);
+				.transition(.6s, height);
 				background-image: none;
 				height: 14px;
 				background-color: rgba(255, 255, 255, 0.0);
@@ -545,9 +545,8 @@ html {
 			}
 
 			> a:hover, .active > a, .active > a:hover {
-				background-color: #fbc704;
-				height: 25px;
 				color: #000000;
+				background-color: #fbc704;
 				background-image: none;
 				overflow: hidden;
 
@@ -2777,6 +2776,11 @@ img {
 		.priceMenu {
 			position: relative;
 			margin-bottom: 0px;
+
+			&.open .dropdown-menu {
+				position: relative;
+				margin-bottom: 10px;
+			}
 
 			.priceButton {
 				.price_menu_button();
