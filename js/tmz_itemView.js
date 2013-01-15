@@ -332,7 +332,7 @@
 			e.preventDefault();
 
 			SiteView.hideSiteGuide();
-			showGridView();
+			ItemView.showGridView();
 		});
 
 		// show collection button: click
@@ -604,7 +604,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showGridView = function() {
+	ItemView.showGridView = function() {
 
 		// show grid for current tag
 		GridView.showGridView(currentViewTagID, filterType, $filterTypeField.text(), isFiltered);

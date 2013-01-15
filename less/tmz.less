@@ -12,7 +12,7 @@ Specify the number of columns and set column and gutter widths
 
 @total-width: 100%;
 
-/* SEMANTIC GRID CONFIG
+/* COLORS
 -----------------------------------------------------------*/
 @neutralDark: #666d6e;
 
@@ -121,18 +121,18 @@ html {
 	    font-weight: normal;
 	    font-size: 16px;
 	}
-
-	.icon-filter {
-		font-size: 0.85em;
+	.icon-filter:before {
+		font-size: 14px !important;
 	}
-
 	.icon-caret-right {
 		line-height: 27px;
 	}
-
-	/* ALERTIFY OVERRIDES
-	----------------------------------------------------------*/
-
+	.icon-close:before {
+		font-size: 13px !important;
+	}
+	.icon-th-large:before, .icon-th-list:before, .icon-th:before {
+		font-size: 17px !important;
+	}
 
 	/* SELECT2 OVERRIDES
 	----------------------------------------------------------*/
@@ -184,6 +184,23 @@ html {
 	-----------------------------------------------------------*/
 	#uvTab {
 		z-index: 1030 !important;
+	}
+
+
+	/* CROSS BROWSER BUG FIXES
+	-----------------------------------------------------------*/
+	#platformFilterSubNav {
+		> a {
+			/* firefox drops caret to next line with white-space: no-wrap */
+			white-space: normal;
+		}
+	}
+
+	#legacySubNav {
+		> a {
+			/* firefox drops caret to next line with white-space: no-wrap */
+			white-space: normal;
+		}
 	}
 
 	/* BOOTSTRAP OVERRIDES
@@ -789,6 +806,33 @@ body {
 		}
 		#content {
 			margin: 44px auto;
+		}
+
+		&.viewOnly {
+
+			#userMenu {
+				.caret {
+					display: none;
+				}
+				.dropdown-menu {
+					display: none;
+				}
+			}
+			#importMenu {
+				display: none;
+			}
+			#addListContainer {
+				display: none;
+			}
+			#addListButtons {
+				display: none;
+			}
+			#itemResults .options {
+				display: none;
+			}
+			#editMenu {
+				display: none;
+			}
 		}
 	}
 }
@@ -1510,6 +1554,7 @@ img {
 		width: 129px;
 		top: 6px;
 		left: -1px;
+		cursor: pointer;
 	}
 }
 

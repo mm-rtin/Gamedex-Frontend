@@ -46,8 +46,10 @@ body:after{clear:both;}
 .unselectable{-moz-user-select:-moz-none;-khtml-user-select:none;-webkit-user-select:none;}
 .clear{clear:both;}
 @-moz-keyframes bounceOut{0%{box-shadow:0 0 0 2px #fff;} 25%{box-shadow:0 0 0 0px #fff;} 50%{box-shadow:0 0 0 4px #fff;} 75%{box-shadow:0 0 0 2px #fff;} 100%{box-shadow:0 0 0 2px #fff;}}@-webkit-keyframes bounceOut{0%{box-shadow:0 0 0 2px #fff;} 25%{box-shadow:0 0 0 0px #fff;} 50%{box-shadow:0 0 0 4px #fff;} 75%{box-shadow:0 0 0 2px #fff;} 100%{box-shadow:0 0 0 2px #fff;}}html{}html [class^="icon-"]:before,html [class*=" icon-"]:before{font-weight:normal;font-size:16px;}
-html .icon-filter{font-size:0.85em;}
+html .icon-filter:before{font-size:14px !important;}
 html .icon-caret-right{line-height:27px;}
+html .icon-close:before{font-size:13px !important;}
+html .icon-th-large:before,html .icon-th-list:before,html .icon-th:before{font-size:17px !important;}
 html .select2-container{width:190px;}
 html .select2-results .select2-highlighted{background:#667677;color:#fff;}
 html .select2-container-multi .select2-choices{-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;}
@@ -59,6 +61,8 @@ html .select2-container-multi .select2-results{margin:0px;}
 html .select2-drop{margin-top:-2px;}
 html .select2-container-multi .select2-choices .select2-search-field input{font-family:'Open Sans',sans-serif;}
 html #uvTab{z-index:1030 !important;}
+html #platformFilterSubNav>a{white-space:normal;}
+html #legacySubNav>a{white-space:normal;}
 html a{color:#3B5C6D;text-decoration:none;}
 html textarea:focus,html input[type="text"]:focus,html input[type="password"]:focus{border-color:rgba(141, 161, 177, 0.8);outline:0;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.075),0 0 8px rgba(141, 161, 177, 0.6);-moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.075),0 0 8px rgba(141, 161, 177, 0.6);box-shadow:inset 0 1px 1px rgba(0, 0, 0, 0.075),0 0 8px rgba(141, 161, 177, 0.6);}
 html button{background-position:0px 0px;background-repeat:no-repeat;cursor:pointer;display:inline-block;position:relative;border:none;top:-2px;}
@@ -135,6 +139,13 @@ body.useHeader .header{border-top:1px solid #575757;}
 body.useHeader #infoHeader{height:0px;}
 body.useHeader #header{top:0px;}
 body.useHeader #content{margin:44px auto;}
+body.useHeader.viewOnly #userMenu .caret{display:none;}
+body.useHeader.viewOnly #userMenu .dropdown-menu{display:none;}
+body.useHeader.viewOnly #importMenu{display:none;}
+body.useHeader.viewOnly #addListContainer{display:none;}
+body.useHeader.viewOnly #addListButtons{display:none;}
+body.useHeader.viewOnly #itemResults .options{display:none;}
+body.useHeader.viewOnly #editMenu{display:none;}
 input,select,textarea{font-family:'Open Sans',sans-serif;font-weight:600;}
 img{border-radius:6px;}
 #siteGuide{padding-left:9px;margin:0 auto;display:none;}
@@ -216,7 +227,7 @@ img{border-radius:6px;}
 @media only screen and (max-width:1500px),only screen and (max-device-width:1500px){#wrapper.gridView #panel4{width:72% !important;}}@media only screen and (max-width:1200px),only screen and (max-device-width:1200px){#wrapper.gridView #panel4{width:69% !important;}}#wrapper.gridView #panel4{margin:0 307px;position:relative;top:0px;width:78%;}
 #wrapper.gridView #gridViewMenu{display:block;}
 #header{-webkit-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-moz-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-ms-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-o-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-webkit-transform:translate3d(0, 0, 0);-moz-transform:translate3d(0, 0, 0);min-width:500px;position:absolute;}#header .container-fluid{margin:0 auto;max-width:1600px;padding-right:0px;}
-#header .miniLogo{background-image:url('http://d2sifwlm28j6up.cloudfront.net/logo_small.png');float:left;position:relative;height:22px;width:129px;top:6px;left:-1px;}
+#header .miniLogo{background-image:url('http://d2sifwlm28j6up.cloudfront.net/logo_small.png');float:left;position:relative;height:22px;width:129px;top:6px;left:-1px;cursor:pointer;}
 #content{max-width:1600px;padding-left:9px;margin:0 auto;}
 .header{background-image:url('http://d2sifwlm28j6up.cloudfront.net/bg_tile_light.png');color:#ffffff;height:17px;position:relative;z-index:999;border-top:1px solid #626d6b;}
 .panel{-moz-border-radius:2px;-webkit-border-radius:2px;border-radius:2px;background-color:#F5F5F5;padding:29px 10px 10px 10px;position:relative;top:-17px;}

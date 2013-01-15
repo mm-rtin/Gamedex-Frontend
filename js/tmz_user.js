@@ -390,6 +390,12 @@
 
 			alertify.success('Welcome ' + data.userName);
 
+			// set history state to root
+			var path = window.location.pathname;
+			if (history && path !== '/') {
+				history.pushState(null, null, '/');
+			}
+
 			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 

@@ -729,6 +729,12 @@ tmz.initializeModules = function() {
 
 			alertify.success('Welcome ' + data.userName);
 
+			// set history state to root
+			var path = window.location.pathname;
+			if (history && path !== '/') {
+				history.pushState(null, null, '/');
+			}
+
 			// compare timestamps - if different from localstorage value: clear item local storage data
 			var localTimestamp = Storage.get('timestamp');
 
@@ -2275,9 +2281,10 @@ tmz.initializeModules = function() {
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
-        LOAD_DELAY = 900,
+        LOAD_DELAY = 600,
 
         // properties
+        siteLoaded = false,
         formType = FORM_TYPES.login,
         rememberMe = false,
         siteGuideCurrentStep = 1,
@@ -2293,6 +2300,8 @@ tmz.initializeModules = function() {
         $header = $('#header'),
         $userMenu = $('#userMenu'),
         $loggedInButton = $('#loggedInButton'),
+        $miniLogo = $('.miniLogo'),
+
         // nav buttons
         $managementButton = $('#managementButton'),
         $updateProfileButton = $('#updateProfileButton'),
@@ -2400,33 +2409,19 @@ tmz.initializeModules = function() {
         // setup password reset modal
         $resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
-        // get url path parts
-        var urlPathParts = window.location.pathname.split( '/' );
-        var action = urlPathParts[1];
-        var userName = urlPathParts[2];
-
-        // view public user
-        if (action == 'user' && userName !== '') {
-
-            // validate user
-            User.validateUser(userName, function(data) {
-
-                // start app with user info
-                if (data.status === 'success') {
-                    viewUser();
-                }
-            });
-
-        // demo app
-        } else {
-            startDemo();
-        }
+        setupUser();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * createEventHandlers -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var createEventHandlers = function() {
+
+        // history state: popstate
+        window.addEventListener('popstate', function(event) {
+            var path = window.location.pathname;
+            route(path);
+        });
 
         // managementButton: click
         $managementButton.click(function(e) {
@@ -2470,6 +2465,10 @@ tmz.initializeModules = function() {
         $logoutButton.click(function(e) {
             e.preventDefault();
             // logout
+            logout();
+        });
+
+        $miniLogo.on('click', function(e) {
             logout();
         });
 
@@ -2687,6 +2686,16 @@ tmz.initializeModules = function() {
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * route - setup new user on history api state pop
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var route = function(path) {
+
+        if (siteLoaded) {
+            setupUser();
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * initLoginForm -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var initLoginForm = function() {
@@ -2738,9 +2747,42 @@ tmz.initializeModules = function() {
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * setupUser -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var setupUser = function() {
+
+        // get url path parts
+        var urlPathParts = window.location.pathname.split( '/' );
+        var action = urlPathParts[1];
+        var userName = urlPathParts[2];
+
+        // view public user
+        if (action == 'user' && userName !== '') {
+
+            // validate user
+            User.validateUser(userName, function(data) {
+
+                // start app with user info
+                if (data.status === 'success') {
+                    viewUser(userName);
+                }
+            });
+
+        // demo app
+        } else {
+            startDemo();
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * startDemo -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var startDemo = function() {
+
+        alertify.success('Loading Demo');
+
+        // reset user view
+        resetFromUserView();
 
         // demo login
         User.demoLogin();
@@ -2752,10 +2794,29 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * viewUser -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var viewUser = function() {
+    var viewUser = function(userName) {
+
+        alertify.success('Loading User: ' + userName);
+
+        showUserView(userName);
 
         // start app with viewing user data
         startApp();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * resetFromUserView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var resetFromUserView = function() {
+
+        // set history state to root
+        var path = window.location.pathname;
+        if (history && path !== '/') {
+            history.pushState(null, null, '/');
+        }
+
+        // remove viewOnly class
+        $('body').removeClass('viewOnly');
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2763,15 +2824,16 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var startApp = function() {
 
+        // show loading status
+        $loadingStatus.stop().fadeIn();
+
+        // clear view and item data
+        ItemView.clearItemView();
+        ItemView.resizePanel();
+        ItemData.resetItemData();
+
         // delay app loading
         window.setTimeout(function() {
-
-            // show loading status
-            $loadingStatus.fadeIn();
-
-            // clear view and item data
-            ItemView.clearItemView();
-            ItemData.resetItemData();
 
             // returned data
             var itemsReturnedData = null;
@@ -2809,7 +2871,10 @@ tmz.initializeModules = function() {
                     ItemView.initializeUserItems_result(itemsReturnedData);
 
                     // hide loading status
-                    $loadingStatus.hide();
+                    $loadingStatus.stop(). hide();
+
+                    // site finished loading
+                    siteLoaded = true;
                 },
                 function() {
 
@@ -2863,7 +2928,7 @@ tmz.initializeModules = function() {
             setupRememberMe();
 
             // show logged in view
-            showUseView(email);
+            showLoggedInView(email);
 
             // start user app
             startApp();
@@ -2984,7 +3049,7 @@ tmz.initializeModules = function() {
         if (typeof data.status !== 'undefined' && data.status === 'success') {
 
             // hide previous form and buttons
-            $resetCodeForm.codeForm_reset();
+            $codeForm_reset.hide();
             $submitResetCodeButton_reset.hide();
 
             // show password form and button
@@ -3047,7 +3112,7 @@ tmz.initializeModules = function() {
         $submitResetCodeButton_reset.hide();
         $updatePasswordButton_reset.hide();
 
-        $resetCodeForm.codeForm_reset();
+        $codeForm_reset.hide();
         $passwordForm_reset.hide();
 
         $emailContainer_reset.show();
@@ -3062,9 +3127,11 @@ tmz.initializeModules = function() {
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * showUseView -
+    * showLoggedInView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var showUseView = function(email) {
+    var showLoggedInView = function(email) {
+
+        resetFromUserView();
 
         // set new body class
         $('body').removeClass('infoHeader');
@@ -3072,6 +3139,27 @@ tmz.initializeModules = function() {
 
         // set user button
         $loggedInButton.find('.userEmail').text(email);
+
+        // notify views
+        ItemView.loggedInView(true);
+        SearchView.loggedInView(true);
+
+        // show user menu
+        $userMenu.show();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showUserView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showUserView = function(userName) {
+
+        // set new body class
+        $('body').removeClass('infoHeader');
+        $('body').addClass('useHeader');
+        $('body').addClass('viewOnly');
+
+        // set user button
+        $loggedInButton.find('.userEmail').text(userName);
 
         // notify views
         ItemView.loggedInView(true);
@@ -5910,7 +5998,7 @@ tmz.initializeModules = function() {
 			e.preventDefault();
 
 			SiteView.hideSiteGuide();
-			showGridView();
+			ItemView.showGridView();
 		});
 
 		// show collection button: click
@@ -6182,7 +6270,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* showGridView -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showGridView = function() {
+	ItemView.showGridView = function() {
 
 		// show grid for current tag
 		GridView.showGridView(currentViewTagID, filterType, $filterTypeField.text(), isFiltered);

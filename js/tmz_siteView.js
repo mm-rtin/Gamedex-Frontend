@@ -12,9 +12,10 @@
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
-        LOAD_DELAY = 900,
+        LOAD_DELAY = 600,
 
         // properties
+        siteLoaded = false,
         formType = FORM_TYPES.login,
         rememberMe = false,
         siteGuideCurrentStep = 1,
@@ -30,6 +31,8 @@
         $header = $('#header'),
         $userMenu = $('#userMenu'),
         $loggedInButton = $('#loggedInButton'),
+        $miniLogo = $('.miniLogo'),
+
         // nav buttons
         $managementButton = $('#managementButton'),
         $updateProfileButton = $('#updateProfileButton'),
@@ -137,33 +140,19 @@
         // setup password reset modal
         $resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
-        // get url path parts
-        var urlPathParts = window.location.pathname.split( '/' );
-        var action = urlPathParts[1];
-        var userName = urlPathParts[2];
-
-        // view public user
-        if (action == 'user' && userName !== '') {
-
-            // validate user
-            User.validateUser(userName, function(data) {
-
-                // start app with user info
-                if (data.status === 'success') {
-                    viewUser();
-                }
-            });
-
-        // demo app
-        } else {
-            startDemo();
-        }
+        setupUser();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * createEventHandlers -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var createEventHandlers = function() {
+
+        // history state: popstate
+        window.addEventListener('popstate', function(event) {
+            var path = window.location.pathname;
+            route(path);
+        });
 
         // managementButton: click
         $managementButton.click(function(e) {
@@ -207,6 +196,10 @@
         $logoutButton.click(function(e) {
             e.preventDefault();
             // logout
+            logout();
+        });
+
+        $miniLogo.on('click', function(e) {
             logout();
         });
 
@@ -424,6 +417,16 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * route - setup new user on history api state pop
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var route = function(path) {
+
+        if (siteLoaded) {
+            setupUser();
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * initLoginForm -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var initLoginForm = function() {
@@ -475,9 +478,42 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * setupUser -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var setupUser = function() {
+
+        // get url path parts
+        var urlPathParts = window.location.pathname.split( '/' );
+        var action = urlPathParts[1];
+        var userName = urlPathParts[2];
+
+        // view public user
+        if (action == 'user' && userName !== '') {
+
+            // validate user
+            User.validateUser(userName, function(data) {
+
+                // start app with user info
+                if (data.status === 'success') {
+                    viewUser(userName);
+                }
+            });
+
+        // demo app
+        } else {
+            startDemo();
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * startDemo -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var startDemo = function() {
+
+        alertify.success('Loading Demo');
+
+        // reset user view
+        resetFromUserView();
 
         // demo login
         User.demoLogin();
@@ -489,10 +525,29 @@
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * viewUser -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var viewUser = function() {
+    var viewUser = function(userName) {
+
+        alertify.success('Loading User: ' + userName);
+
+        showUserView(userName);
 
         // start app with viewing user data
         startApp();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * resetFromUserView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var resetFromUserView = function() {
+
+        // set history state to root
+        var path = window.location.pathname;
+        if (history && path !== '/') {
+            history.pushState(null, null, '/');
+        }
+
+        // remove viewOnly class
+        $('body').removeClass('viewOnly');
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -500,15 +555,16 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var startApp = function() {
 
+        // show loading status
+        $loadingStatus.stop().fadeIn();
+
+        // clear view and item data
+        ItemView.clearItemView();
+        ItemView.resizePanel();
+        ItemData.resetItemData();
+
         // delay app loading
         window.setTimeout(function() {
-
-            // show loading status
-            $loadingStatus.fadeIn();
-
-            // clear view and item data
-            ItemView.clearItemView();
-            ItemData.resetItemData();
 
             // returned data
             var itemsReturnedData = null;
@@ -546,7 +602,10 @@
                     ItemView.initializeUserItems_result(itemsReturnedData);
 
                     // hide loading status
-                    $loadingStatus.hide();
+                    $loadingStatus.stop(). hide();
+
+                    // site finished loading
+                    siteLoaded = true;
                 },
                 function() {
 
@@ -600,7 +659,7 @@
             setupRememberMe();
 
             // show logged in view
-            showUseView(email);
+            showLoggedInView(email);
 
             // start user app
             startApp();
@@ -721,7 +780,7 @@
         if (typeof data.status !== 'undefined' && data.status === 'success') {
 
             // hide previous form and buttons
-            $resetCodeForm.codeForm_reset();
+            $codeForm_reset.hide();
             $submitResetCodeButton_reset.hide();
 
             // show password form and button
@@ -784,7 +843,7 @@
         $submitResetCodeButton_reset.hide();
         $updatePasswordButton_reset.hide();
 
-        $resetCodeForm.codeForm_reset();
+        $codeForm_reset.hide();
         $passwordForm_reset.hide();
 
         $emailContainer_reset.show();
@@ -799,9 +858,11 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * showUseView -
+    * showLoggedInView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var showUseView = function(email) {
+    var showLoggedInView = function(email) {
+
+        resetFromUserView();
 
         // set new body class
         $('body').removeClass('infoHeader');
@@ -809,6 +870,27 @@
 
         // set user button
         $loggedInButton.find('.userEmail').text(email);
+
+        // notify views
+        ItemView.loggedInView(true);
+        SearchView.loggedInView(true);
+
+        // show user menu
+        $userMenu.show();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showUserView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showUserView = function(userName) {
+
+        // set new body class
+        $('body').removeClass('infoHeader');
+        $('body').addClass('useHeader');
+        $('body').addClass('viewOnly');
+
+        // set user button
+        $loggedInButton.find('.userEmail').text(userName);
 
         // notify views
         ItemView.loggedInView(true);
