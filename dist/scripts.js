@@ -3587,7 +3587,7 @@ tmz.initializeModules = function() {
 		// constants
 		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
-		TIME_TO_SUBMIT_QUERY = 400,								// the number of miliseconds to wait before submiting search query
+		TIME_TO_SUBMIT_QUERY = 400,                             // the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
 		PANEL_HEIGHT_OFFSET_USE = 258,
 		PANEL_HEIGHT_OFFSET_INFO = 503,
@@ -4122,7 +4122,7 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var searchAmazon_result = function(data, keywords) {
 		// local properties
-		var	filtered = false;
+		var filtered = false;
 		var tempSearchResults = {};
 		var searchItem = {};
 
@@ -4488,7 +4488,7 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* inputFieldKeyUp
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var inputFieldKeyUp = function(event) {
+	var inputFieldKeyUp = function(event) {
 
 		// get search value
 		searchTerms = $inputField.val();
@@ -4509,23 +4509,23 @@ tmz.initializeModules = function() {
 		} else {
 			searchFieldTimeout = setTimeout(searchFieldTrigger, TIME_TO_SUBMIT_QUERY);
 		}
-    };
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* searchResultItem_onClick
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var searchResultItem_onClick = function() {
+	var searchResultItem_onClick = function() {
 
 		var searchResult = SearchView.getSearchResult($(this).attr('id'));
 
 		// show item detail
 		DetailView.viewFirstSearchItemDetail(searchResult);
-    };
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* listResultItem_onClick
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var listResultItem_onClick = function() {
+	var listResultItem_onClick = function() {
 
 		// save scroll position for active tab
 		saveNanoscrollPositions();
@@ -4544,12 +4544,12 @@ tmz.initializeModules = function() {
 
 		// start search for clicked item text
 		SearchView.search(searchTerms);
-    };
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* selectPlatform
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var selectPlatform = function(element) {
+	var selectPlatform = function(element) {
 
 		// assign platform to searchItem and relaunch detail view
 		var searchResult = SearchView.getSearchResult($(element).attr('data-content'));
@@ -4557,12 +4557,12 @@ tmz.initializeModules = function() {
 
 		// get title element
 		$(element).parent().siblings('.dropdown-toggle').html(searchResult.platform).append('<b class="caret"></b>');
-    };
+	};
 
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * toggleClearSearchButton -
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var toggleClearSearchButton = function(toggle) {
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* toggleClearSearchButton -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var toggleClearSearchButton = function(toggle) {
 
 		if (toggle) {
 			$clearSearchIcon.show();
@@ -4571,12 +4571,12 @@ tmz.initializeModules = function() {
 			$clearSearchIcon.hide();
 			$clearSearchButton.removeClass('hover');
 		}
-    };
+	};
 
-    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * saveNanoscrollPositions -
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var saveNanoscrollPositions = function() {
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* saveNanoscrollPositions -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var saveNanoscrollPositions = function() {
 
 		// save scroll position for active tab
 		if (currentTab === TAB_IDS['#searchTab']) {
@@ -4585,7 +4585,7 @@ tmz.initializeModules = function() {
 		} else if (currentTab === TAB_IDS['#listTab']) {
 			listTabScrollPosition = $listResultsContent.scrollTop() || 1;
 		}
-    };
+	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* releaseDateSortAsc -
