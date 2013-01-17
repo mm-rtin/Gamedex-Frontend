@@ -250,6 +250,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.renderSearchResults = function(items) {
 
+		// reset sorted results
+		sortedSearchResults = [];
+
 		// hide loading status
 		$searchLoadingStatus.stop().hide();
 
