@@ -10371,9 +10371,9 @@ tmz.initializeModules = function() {
 		re = /\s*[:&]\s*/g;
 		var cleanedSearchTerms = searchTerms.replace(re, ' ');
 
-		// convert spaces to '+'
+		// remove spaces
 		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
+		cleanedSearchTerms = cleanedSearchTerms.replace(re, '');
 
 		return cleanedSearchTerms;
 	};
