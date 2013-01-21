@@ -11236,7 +11236,7 @@ tmz.initializeModules = function() {
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
 		INPUT_SOURCES_ID_NAME = ['Steam ID', 'PSN ID', 'Gamertag'],
 		INPUT_SOURCES_URL = ['http://steamcommunity.com/id/[steam_id]', 'http://us.playstation.com/mytrophies/', 'https://live.xbox.com/en-US/Friends'],
-		INPUT_SOURCES_PLATFORMS = [['PC', 'Mac'],  ['PSN', 'PS3', 'Vita'],  ['Xbox', 'Xbox360']],
+		INPUT_SOURCES_PLATFORMS = [['PC', 'Mac'],  ['PSN', 'PS3', 'Vita'],  ['Xbox', 'X360', 'XBL']],
 
 		NO_MATCH_IMAGE = 'http://d2sifwlm28j6up.cloudfront.net/no_match.png',
 
@@ -11412,7 +11412,7 @@ tmz.initializeModules = function() {
 		titlesImportedCount = 0,
 
 		// create new rate limited function
-		findAmazonItemRateLimited = findAmazonItem.lazy(1200, 2000),
+		findAmazonItemRateLimited = findAmazonItem.lazy(2000, 10000),
 
 		// increment session ID
 		currentImportSessionID++;

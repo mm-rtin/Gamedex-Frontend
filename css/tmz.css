@@ -155,14 +155,14 @@ img{border-radius:6px;}
 #siteGuideContainer #siteGuideNavigation .siteGuideExit_btn{left:10px;}#siteGuideContainer #siteGuideNavigation .siteGuideExit_btn i{font-size:.7em;}
 #siteGuideContainer #siteGuideNavigation .siteGuidePrevious_btn{left:100px;}#siteGuideContainer #siteGuideNavigation .siteGuidePrevious_btn i{font-size:.9em;line-height:0px;text-align:center;}
 #siteGuideContainer #siteGuideNavigation .siteGuideNext_btn{left:127px;}#siteGuideContainer #siteGuideNavigation .siteGuideNext_btn i{font-size:.9em;line-height:0px;text-align:center;}
-#siteGuideContainer #step1{background-image:url('http://static.gamedex.net/images/step1.png');width:611px;height:156px;top:-97px;left:17%;}
+#siteGuideContainer #step1{background-image:url('http://static.gamedex.net/images/step1.png');width:714px;height:156px;top:-97px;left:14%;}
 #siteGuideContainer #step2{background-image:url('http://static.gamedex.net/images/step2.png');width:623px;height:61px;top:151px;left:31%;}
 #siteGuideContainer #step3{background-image:url('http://static.gamedex.net/images/step3.png');width:431px;height:71px;top:201px;left:51%;}
 #siteGuideContainer #step4{background-image:url('http://static.gamedex.net/images/step4.png');width:458px;height:91px;top:-76px;left:34%;}
 #siteGuideContainer #step5{background-image:url('http://static.gamedex.net/images/step5.png');width:665px;height:98px;top:-118px;left:8%;}
 #siteGuideBackdrop{opacity:0.0095;filter:alpha(opacity=0.95);zoom:1;filter:alpha(opacity=80);opacity:0.95;position:fixed;top:0;right:0;bottom:0;left:0;z-index:1039;background-color:#061113;}
 @media screen and (max-width:1500px){#siteGuideContainer #step3{left:53%;} body #content.step3 #siteGuideNavigation{left:53%;}}#content.step1 #step1{display:block;}
-#content.step1 #siteGuideNavigation{top:-33px;left:17%;margin-left:421px;}#content.step1 #siteGuideNavigation .siteGuidePrevious_btn{display:none;}
+#content.step1 #siteGuideNavigation{top:-33px;left:14%;margin-left:521px;}#content.step1 #siteGuideNavigation .siteGuidePrevious_btn{display:none;}
 #content.step1 #siteGuideNavigation .siteGuideExit_btn{left:64px;}
 #content.step1 #panel1{position:relative;z-index:1045;}
 #content.step2 #step2{display:block;}
