@@ -458,6 +458,8 @@
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
+
+		ItemView.resizePanel();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

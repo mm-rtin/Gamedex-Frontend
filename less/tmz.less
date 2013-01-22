@@ -810,6 +810,10 @@ body {
 
 		&.viewOnly {
 
+			#showInfoHeader_btn {
+				display: block;
+			}
+
 			#userMenu {
 				.caret {
 					display: none;
@@ -1117,6 +1121,31 @@ img {
 	}
 }
 
+
+.toggleInfoHeader_btn {
+	.opacity(.50);
+	cursor: pointer;
+	position: relative;
+	left: 50%;
+	height: 20px;
+	width: 67px;
+	margin-left: -33px;
+
+	&:hover {
+		.opacity(.7);
+	}
+}
+#hideInfoHeader_btn {
+	.hide_button();
+	top: -176px;
+}
+
+#showInfoHeader_btn {
+	.show_button();
+	display: none;
+	top: 15px;
+}
+
 #logo {
 	background-image: url('http://d2sifwlm28j6up.cloudfront.net/logo.png');
 	position: relative;
@@ -1268,6 +1297,13 @@ img {
 	top: 3px;
 	margin-right: 63px;
 	display: none;
+
+	#loggedInButton {
+
+		i {
+			vertical-align: top;
+		}
+	}
 
 	.userEmail {
 		display: inline-block;
@@ -1486,10 +1522,18 @@ img {
 		width: 100%;
 		margin: 0px auto !important;
 
+		#showInfoHeader_btn {
+			display: none;
+		}
+
 		#infoHeader {
 			display: none;
 		}
 		#header {
+			position: fixed;
+			-webkit-box-shadow: 0px 0px 19px 2px #070C0C;
+			-moz-box-shadow:    0px 0px 19px 2px #070C0C;
+			box-shadow:         0px 0px 19px 2px #070C0C;
 			top: 0px;
 			min-width: 1266px;
 		}
@@ -1503,6 +1547,7 @@ img {
 			display: none;
 		}
 		#panel2 {
+			-moz-transform: translate3d(0, 0, 0);
 			position: fixed;
 			margin-left: 10px;
 			width: 287px;
@@ -1523,6 +1568,7 @@ img {
 		}
 
 		#panel4 {
+			-moz-transform: translate3d(0, 0, 0);
 			margin: 0 307px;
 			position: relative;
 			top: 0px;
@@ -1537,8 +1583,8 @@ img {
 
 #header {
 	.transition(.8s, top, 1, 0, 0.57, 1.02);
-	min-width: 500px;
 	position: absolute;
+	min-width: 500px;
 
 	.container-fluid {
 		margin: 0 auto;
@@ -1559,6 +1605,12 @@ img {
 }
 
 #content {
+	-webkit-transition: .8s margin cubic-bezier(0.250, 0.460, 0.450, 0.940);
+	-moz-transition: .8s margin cubic-bezier(0.250, 0.460, 0.450, 0.940);
+	-ms-transition: .8s margin cubic-bezier(0.250, 0.460, 0.450, 0.940);
+	-o-transition: .8s margin cubic-bezier(0.250, 0.460, 0.450, 0.940);
+	transition: .8s margin cubic-bezier(0.250, 0.460, 0.450, 0.940);
+
 	max-width: 1600px;
 	padding-left: 9px;
 	margin: 0 auto;
@@ -1777,7 +1829,6 @@ img {
 /* VIDEO MODAL
 -----------------------------------------------------------*/
 #video-modal {
-	position: absolute;
 	width: 900px;
 	margin: -330px 0 0 -450px;
 	background-color: rgba(255, 255, 255, .1);
@@ -1896,8 +1947,6 @@ img {
 }
 
 #videoListNavigation {
-
-	.navigate_well();
 	position: absolute;
 	width: 63px;
 	height: 52px;
@@ -3064,11 +3113,12 @@ img {
 #gridViewContainer {
 
 	display: none;
+	padding: 20px;
 	padding-bottom: 50px;
 
 	&.display-0 {
 		.gridItem {
-			margin: 2px;
+			margin: 4px;
 			width: 100px;
 		}
 
@@ -3087,6 +3137,10 @@ img {
 	}
 	&.display-3 {
 		.gridItem {
+			border-radius: 6px;
+			background-color: #fff;
+			padding: 5px;
+			border: 1px solid rgb(228, 228, 228);
 			margin: 3px;
 			width: 175px;
 		}
@@ -3133,12 +3187,21 @@ img {
 }
 
 .gridItem {
-	.boxShadow(.3);
 	-webkit-transform: translate3d(0, 0, 0);
 	-moz-transform: translate3d(0, 0, 0);
 	float: left;
-	margin: 3px;
+	margin: 8px;
 	width: 175px;
+
+	&:hover {
+		-webkit-box-shadow: 2px 2px 19px 0px #000000;
+		-moz-box-shadow: 2px 2px 19px 0px #000000;
+		box-shadow: 2px 2px 19px 0px #000000;
+
+		img {
+			border-radius: 0px;
+		}
+	}
 
 	.thumbnail {
 		background-color: rgba(255, 255, 255, 0.50);

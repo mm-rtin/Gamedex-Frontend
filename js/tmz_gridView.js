@@ -24,11 +24,14 @@
 		isFiltered = false,
 
 		// node cache
+		$panel = $('#panel4'),
 		$wrapper = $('#wrapper'),
 		$gridViewContainer = $('#gridViewContainer'),
 		$gridList = $('#gridList'),
 		$viewName = $gridList.find('.viewName'),
 		$gridViewMenu = $('#gridViewMenu'),
+
+		$gridViewLoadingStatus = $panel.find('.loadingStatus'),
 
 		// display options
 		$displayOptions = $gridViewMenu.find('.grid_displayOptions'),
@@ -229,6 +232,8 @@
 
 		alertify.success('Loading Grid View images');
 
+		$gridViewLoadingStatus.fadeIn();
+
 		// switch content display to gridView
 		// modify styles
 		$wrapper.removeClass('standardView');
@@ -245,6 +250,17 @@
 
 		$filterTypeField.text(filterTypeFieldText);
 		setClearFiltersButton(isFiltered);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* exitGridView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GridView.exitGridView = function() {
+
+		// switch content display to standardView
+		// modify styles
+		$wrapper.removeClass('gridView');
+		$wrapper.addClass('standardView');
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -264,10 +280,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showListView = function() {
 
-		// switch content display to standardView
-		// modify styles
-		$wrapper.removeClass('gridView');
-		$wrapper.addClass('standardView');
+		GridView.exitGridView();
 
 		// sync ItemView with gridView tagID list
 		ItemView.showListView(currentTagID, filterType, $filterTypeField.text(), isFiltered);
@@ -326,6 +339,8 @@
 
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
+
+			$gridViewLoadingStatus.stop().hide();
 
 			// show gridViewContainer
 			$gridViewContainer.show();

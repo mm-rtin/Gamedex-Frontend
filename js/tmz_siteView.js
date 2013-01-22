@@ -9,6 +9,7 @@
         ItemView = tmz.module('itemView'),
         SearchView = tmz.module('searchView'),
         Storage = tmz.module('storage'),
+        GridView = tmz.module('gridView'),
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
@@ -38,6 +39,8 @@
         $updateProfileButton = $('#updateProfileButton'),
         $changePasswordButton = $('#changePasswordButton'),
         $logoutButton = $('#logoutButton'),
+        $hideInfoHeaderButton = $('#hideInfoHeader_btn'),
+        $showInfoHeaderButton = $('#showInfoHeader_btn'),
 
         // login/signup
         $loginForm = $('#loginForm'),
@@ -152,6 +155,18 @@
         window.addEventListener('popstate', function(event) {
             var path = window.location.pathname;
             route(path);
+        });
+
+        // hideInfoHeaderButton: click
+        $hideInfoHeaderButton.click(function(e) {
+            e.preventDefault();
+            showUserView('Demo');
+        });
+
+        // showInfoHeaderButton: click
+        $showInfoHeaderButton.click(function(e) {
+            e.preventDefault();
+            showInfoView();
         });
 
         // managementButton: click
@@ -627,6 +642,9 @@
         // clear view
         ItemView.clearItemView();
 
+        // exit gridView
+        GridView.exitGridView();
+
         // logout user
         User.logout();
 
@@ -864,16 +882,11 @@
 
         resetFromUserView();
 
-        // set new body class
-        $('body').removeClass('infoHeader');
-        $('body').addClass('useHeader');
+        // show use header
+        showUseHeader();
 
         // set user button
         $loggedInButton.find('.userEmail').text(email);
-
-        // notify views
-        ItemView.loggedInView(true);
-        SearchView.loggedInView(true);
 
         // show user menu
         $userMenu.show();
@@ -884,13 +897,32 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var showUserView = function(userName) {
 
-        // set new body class
-        $('body').removeClass('infoHeader');
-        $('body').addClass('useHeader');
+        // show use header
+        showUseHeader();
+
         $('body').addClass('viewOnly');
 
         // set user button
         $loggedInButton.find('.userEmail').text(userName);
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showInfoView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showInfoView = function() {
+
+        // show info header
+        showInfoHeader();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showUseHeader -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showUseHeader = function() {
+
+        // set new body class
+        $('body').removeClass('infoHeader');
+        $('body').addClass('useHeader');
 
         // notify views
         ItemView.loggedInView(true);
@@ -901,17 +933,19 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * showInfoView -
+    * showInfoHeader -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var showInfoView = function() {
+    var showInfoHeader = function() {
 
         // set new body class
         $('body').removeClass('useHeader');
         $('body').addClass('infoHeader');
+        $('body').removeClass('viewOnly');
 
         // notify views
         ItemView.loggedInView(false);
         SearchView.loggedInView(false);
+
 
         // hide user menu
         $userMenu.hide();

@@ -2278,6 +2278,7 @@ tmz.initializeModules = function() {
         ItemView = tmz.module('itemView'),
         SearchView = tmz.module('searchView'),
         Storage = tmz.module('storage'),
+        GridView = tmz.module('gridView'),
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
@@ -2307,6 +2308,8 @@ tmz.initializeModules = function() {
         $updateProfileButton = $('#updateProfileButton'),
         $changePasswordButton = $('#changePasswordButton'),
         $logoutButton = $('#logoutButton'),
+        $hideInfoHeaderButton = $('#hideInfoHeader_btn'),
+        $showInfoHeaderButton = $('#showInfoHeader_btn'),
 
         // login/signup
         $loginForm = $('#loginForm'),
@@ -2421,6 +2424,18 @@ tmz.initializeModules = function() {
         window.addEventListener('popstate', function(event) {
             var path = window.location.pathname;
             route(path);
+        });
+
+        // hideInfoHeaderButton: click
+        $hideInfoHeaderButton.click(function(e) {
+            e.preventDefault();
+            showUserView('Demo');
+        });
+
+        // showInfoHeaderButton: click
+        $showInfoHeaderButton.click(function(e) {
+            e.preventDefault();
+            showInfoView();
         });
 
         // managementButton: click
@@ -2896,6 +2911,9 @@ tmz.initializeModules = function() {
         // clear view
         ItemView.clearItemView();
 
+        // exit gridView
+        GridView.exitGridView();
+
         // logout user
         User.logout();
 
@@ -3133,16 +3151,11 @@ tmz.initializeModules = function() {
 
         resetFromUserView();
 
-        // set new body class
-        $('body').removeClass('infoHeader');
-        $('body').addClass('useHeader');
+        // show use header
+        showUseHeader();
 
         // set user button
         $loggedInButton.find('.userEmail').text(email);
-
-        // notify views
-        ItemView.loggedInView(true);
-        SearchView.loggedInView(true);
 
         // show user menu
         $userMenu.show();
@@ -3153,13 +3166,32 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var showUserView = function(userName) {
 
-        // set new body class
-        $('body').removeClass('infoHeader');
-        $('body').addClass('useHeader');
+        // show use header
+        showUseHeader();
+
         $('body').addClass('viewOnly');
 
         // set user button
         $loggedInButton.find('.userEmail').text(userName);
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showInfoView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showInfoView = function() {
+
+        // show info header
+        showInfoHeader();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showUseHeader -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showUseHeader = function() {
+
+        // set new body class
+        $('body').removeClass('infoHeader');
+        $('body').addClass('useHeader');
 
         // notify views
         ItemView.loggedInView(true);
@@ -3170,17 +3202,19 @@ tmz.initializeModules = function() {
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    * showInfoView -
+    * showInfoHeader -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    var showInfoView = function() {
+    var showInfoHeader = function() {
 
         // set new body class
         $('body').removeClass('useHeader');
         $('body').addClass('infoHeader');
+        $('body').removeClass('viewOnly');
 
         // notify views
         ItemView.loggedInView(false);
         SearchView.loggedInView(false);
+
 
         // hide user menu
         $userMenu.hide();
@@ -3982,7 +4016,6 @@ tmz.initializeModules = function() {
 		var resultsHeight = null;
 		var $container = null;
 
-
 		switch(currentTab) {
 			case TAB_IDS['#searchTab']:
 
@@ -4030,6 +4063,8 @@ tmz.initializeModules = function() {
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
+
+		SearchView.resizePanel();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6134,6 +6169,8 @@ tmz.initializeModules = function() {
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
+
+		ItemView.resizePanel();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6961,11 +6998,14 @@ tmz.initializeModules = function() {
 		isFiltered = false,
 
 		// node cache
+		$panel = $('#panel4'),
 		$wrapper = $('#wrapper'),
 		$gridViewContainer = $('#gridViewContainer'),
 		$gridList = $('#gridList'),
 		$viewName = $gridList.find('.viewName'),
 		$gridViewMenu = $('#gridViewMenu'),
+
+		$gridViewLoadingStatus = $panel.find('.loadingStatus'),
 
 		// display options
 		$displayOptions = $gridViewMenu.find('.grid_displayOptions'),
@@ -7166,6 +7206,8 @@ tmz.initializeModules = function() {
 
 		alertify.success('Loading Grid View images');
 
+		$gridViewLoadingStatus.fadeIn();
+
 		// switch content display to gridView
 		// modify styles
 		$wrapper.removeClass('standardView');
@@ -7182,6 +7224,17 @@ tmz.initializeModules = function() {
 
 		$filterTypeField.text(filterTypeFieldText);
 		setClearFiltersButton(isFiltered);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* exitGridView -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GridView.exitGridView = function() {
+
+		// switch content display to standardView
+		// modify styles
+		$wrapper.removeClass('gridView');
+		$wrapper.addClass('standardView');
 	};
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -7201,10 +7254,7 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var showListView = function() {
 
-		// switch content display to standardView
-		// modify styles
-		$wrapper.removeClass('gridView');
-		$wrapper.addClass('standardView');
+		GridView.exitGridView();
 
 		// sync ItemView with gridView tagID list
 		ItemView.showListView(currentTagID, filterType, $filterTypeField.text(), isFiltered);
@@ -7263,6 +7313,8 @@ tmz.initializeModules = function() {
 
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
+
+			$gridViewLoadingStatus.stop().hide();
 
 			// show gridViewContainer
 			$gridViewContainer.show();

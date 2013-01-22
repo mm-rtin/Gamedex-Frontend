@@ -410,7 +410,6 @@
 		var resultsHeight = null;
 		var $container = null;
 
-
 		switch(currentTab) {
 			case TAB_IDS['#searchTab']:
 
@@ -458,6 +457,8 @@
 		} else {
 			panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
 		}
+
+		SearchView.resizePanel();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
