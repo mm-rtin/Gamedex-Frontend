@@ -362,7 +362,7 @@ tmz.initializeModules = function() {
 		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
 
 		// demo account
-		demoUser = {'user_id': '1', 'secret_key': '1'};
+		demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGBIM', 'secret_key': '1'};
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5966,6 +5966,8 @@ tmz.initializeModules = function() {
 
 		// updateListBtn: click
 		$updateListBtn.click(function(e) {
+			e.preventDefault();
+
 			// update tag name
 			updateTag(currentViewTagID, $tagNameField.val());
 			$updateListModal.modal('hide');

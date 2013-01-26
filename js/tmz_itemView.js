@@ -255,6 +255,8 @@
 
 		// updateListBtn: click
 		$updateListBtn.click(function(e) {
+			e.preventDefault();
+
 			// update tag name
 			updateTag(currentViewTagID, $tagNameField.val());
 			$updateListModal.modal('hide');
