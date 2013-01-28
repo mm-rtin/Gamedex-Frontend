@@ -362,7 +362,7 @@ tmz.initializeModules = function() {
 		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
 
 		// demo account
-		demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGBIM', 'secret_key': '1'};
+		demoUser = {'user_id': 'ag1zfnQtbWludXN6ZXJvcgwLEgVVc2Vycxj6VQw', 'secret_key': '1'};
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11289,7 +11289,7 @@ tmz.initializeModules = function() {
 		// constants
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
 		INPUT_SOURCES_ID_NAME = ['Steam ID', 'PSN ID', 'Gamertag'],
-		INPUT_SOURCES_URL = ['http://steamcommunity.com/id/[steam_id]', 'http://us.playstation.com/mytrophies/', 'https://live.xbox.com/en-US/Friends'],
+		INPUT_SOURCES_URL = ['http://steamcommunity.com/id/[steam_id]/games/', 'http://us.playstation.com/mytrophies/', 'http://www.xboxgamertag.com/search/[gamer_tag]'],
 		INPUT_SOURCES_PLATFORMS = [['PC', 'Mac'],  ['PSN', 'PS3', 'Vita'],  ['Xbox', 'X360', 'XBL']],
 
 		NO_MATCH_IMAGE = 'http://d2sifwlm28j6up.cloudfront.net/no_match.png',

@@ -326,6 +326,7 @@ img{border-radius:6px;}
 #searchResults .display-0 .smallImage,#searchResults .display-0 .mediumImage{display:none;}
 #searchResults .display-0 .calendarDate{display:none;}
 #searchResults .display-0 .platform{display:none;}
+#searchResults .display-1 .itemName{font-size:14px;font-weight:600;}
 #searchResults .display-1 .smallImage{width:11%;min-width:52px;}#searchResults .display-1 .smallImage img{max-width:55px;}
 #searchResults .display-1 .mediumImage{display:none;}
 #searchResults .display-1 .calendarDate{color:#7D7D7D;font-size:12px;}
@@ -337,7 +338,7 @@ img{border-radius:6px;}
 #listResultsContainer{-webkit-transition:0.4s;-moz-transition:0.4s;-ms-transition:0.4s;-o-transition:0.4s;transition:0.4s;-webkit-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-moz-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-ms-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-o-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-webkit-transform:translate3d(0, 0, 0);-moz-transform:translate3d(0, 0, 0);}#listResultsContainer .display-0 .mediumImage{display:none;}
 #listResultsContainer .display-0 .calendarDate{display:none;}
 #listResultsContainer .display-1 .mediumImage{width:11%;min-width:52px;}#listResultsContainer .display-1 .mediumImage img{max-width:55px;}
-#listResultsContainer .display-1 .itemName{font-size:1.2em;padding-bottom:5px;}
+#listResultsContainer .display-1 .itemName{padding-bottom:5px;font-size:14px;font-weight:600;}
 #listResultsContainer .display-1 .calendarDate{color:#7D7D7D;font-size:12px;}
 #listResultsContainer .display-1 .platform{color:#7D7D7D;font-size:12px;}
 #listResultsContainer .display-2 .mediumImage{min-width:100px;max-width:119px;width:15%;}#listResultsContainer .display-2 .mediumImage img{max-width:115px;}
@@ -438,7 +439,7 @@ img{border-radius:6px;}
 #itemResults .display-0 .extraData{min-width:150px;}
 #itemResults .display-1 .smallImage{width:11%;min-width:52px;}#itemResults .display-1 .smallImage img{max-width:55px;}
 #itemResults .display-1 .mediumImage{display:none;}
-#itemResults .display-1 .itemName{padding-bottom:5px;font-size:1.2em;}
+#itemResults .display-1 .itemName{padding-bottom:5px;font-size:14px;font-weight:600;}
 #itemResults .display-1 .calendarDate{color:#7D7D7D;font-size:12px;}
 #itemResults .display-1 .platform{font-size:12px;color:#7D7D7D;}
 #itemResults .display-1 .extraData{min-width:150px;}
