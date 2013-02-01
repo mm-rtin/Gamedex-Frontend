@@ -16,7 +16,7 @@
 		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch/',
 		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
 		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
-		ITEM_SHARED_UPDATE = tmz.api + 'item/shared/update/',
+		ITEM_SHARED_PRICE_UPDATE = tmz.api + 'item/shared/price/update/',
 		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/',
 		IMPORT_GAMES_URL = tmz.api + 'import/',
 
@@ -215,34 +215,61 @@
 		var calendarDate = null;
 
 		// iterate itemResults
-		for (var i = 0, len = itemResults.items.length; i < len; i++) {
+		_.each(itemResults.items, function(currentItem) {
 
 			item = {};
 
-			var initialProvider = itemResults.items[i].ip;
-			var imageBaseURL = itemResults.items[i].ib || '';
+			var initialProvider = currentItem.ip;
+			var imageBaseURL = currentItem.ib || '';
 
 			// add image base url and add media provider url prefix
-			var smallImage = addImageURLPrefix(itemResults.items[i].si, imageBaseURL, initialProvider);
-			var thumbnailImage = addImageURLPrefix(itemResults.items[i].ti, imageBaseURL, initialProvider);
-			var largeImage = addImageURLPrefix(itemResults.items[i].li, imageBaseURL, initialProvider);
+			var smallImage = addImageURLPrefix(currentItem.si, imageBaseURL, initialProvider);
+			var thumbnailImage = addImageURLPrefix(currentItem.ti, imageBaseURL, initialProvider);
+			var largeImage = addImageURLPrefix(currentItem.li, imageBaseURL, initialProvider);
 
 			// get attributes
-			item.id = itemResults.items[i].iid;
-			item.initialProvider = itemResults.items[i].ip;
-			item.itemID = itemResults.items[i].iid;
-			item.asin = itemResults.items[i].aid;
-			item.gbombID = itemResults.items[i].gid;
+			item.id = currentItem.iid;
+			item.initialProvider = currentItem.ip;
+			item.itemID = currentItem.iid;
+			item.asin = currentItem.aid;
+			item.gbombID = currentItem.gid;
 
-			item.name = itemResults.items[i].n;
-			item.releaseDate = itemResults.items[i].rd;
-			item.platform = itemResults.items[i].p;
+			item.name = currentItem.n;
+			item.releaseDate = currentItem.rd;
+			item.platform = currentItem.p;
 			item.smallImage = smallImage;
 			item.thumbnailImage = thumbnailImage;
 			item.largeImage = largeImage;
-			item.metascore = itemResults.items[i].ms;
-			item.metascorePage = itemResults.items[i].mp;
+			item.metascore = currentItem.ms;
+			item.metascorePage = currentItem.mp;
+
 			item.offers = {};
+
+			// amazon price (best offer)
+			if (currentItem.ap !== null) {
+				item.offers.buyNowPrice = currentItem.ap;
+				item.offers.buyNowRawPrice = currentItem.ap.replace('.', '');
+				item.offers.offersURL = currentItem.apu;
+				item.offers.productURL = currentItem.apu;
+			}
+
+			// amazone new price
+			if (currentItem.anp !== null) {
+				item.offers.lowestNewPrice = currentItem.anp;
+				item.offers.offersURLNew = currentItem.anpu;
+			}
+
+			// amazon used price
+			if (currentItem.aup !== null) {
+				item.offers.lowestUsedPrice = currentItem.aup;
+				item.offers.offersURLUsed = currentItem.aupu;
+			}
+
+			// steam price
+			if (currentItem.sp !== null) {
+				item.steamPrice = currentItem.sp;
+				item.steamPage = currentItem.spu;
+			}
 
 			item.description = '';
 
@@ -251,7 +278,8 @@
 
 			// add to lists objects
 			tempItems[item.itemID] = item;
-		}
+
+		});
 
 		return tempItems;
 	};
@@ -293,6 +321,8 @@
 		thumbnailImage = s2.slice(lastCommonIndex).join('');
 		largeImage = s3.slice(lastCommonIndex).join('');
 
+		console.info(item);
+
 		// request data
 		var requestData = {
 			'lids': tagIDs,
@@ -316,6 +346,34 @@
 			'ps': item.playStatus,
 			'ur': item.userRating
 		};
+
+		// add price data
+
+		// amazon price data found
+		if (!_.isUndefined(item.offers)) {
+			if (!_.isUndefined(item.offers.buyNowPrice)) {
+				requestData.ap = item.offers.buyNowPrice;
+				requestData.apu = item.offers.productURL;
+			}
+
+			if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				requestData.anp = item.offers.lowestNewPrice;
+				requestData.anpu = item.offers.offersURLNew;
+			}
+
+			if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+				requestData.aup = item.offers.lowestUsedPrice;
+				requestData.aupu = item.offers.offersURLUsed;
+			}
+		}
+
+		// steam price data found
+		if (!_.isUndefined(item.steamPrice)) {
+			requestData.sp = item.steamPrice;
+			requestData.spu = item.steamPage;
+		}
+
+
 		$.extend(true, requestData, userData);
 
 		ajax = $.ajax({
@@ -514,9 +572,9 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateItem
+	* updateSharedItemPrice
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateItem = function(currentItem, onSuccess, onError) {
+	var updateSharedItemPrice = function(currentItem, onSuccess, onError) {
 
 		// get tags for itemID
 		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
@@ -527,19 +585,17 @@
 		var item = $.extend(true, {}, currentItem);
 
 		var requestData = {
-			'id': item.itemID,
-			'aid': item.asin,
-			'gid': item.gbombID,
+			'id': item.itemID
 
-			'rd': item.releaseDate,
-			'si': item.smallImage,
-			'ti': item.thumbnailImage,
-			'li': item.largeImage
+			// 'ap': item.releaseDate,
+			// 'anp': item.smallImage,
+			// 'aup': item.thumbnailImage,
+			// 'sp': item.largeImage
 		};
 		$.extend(true, requestData, userData);
 
 		$.ajax({
-			url: ITEM_SHARED_UPDATE,
+			url: ITEM_SHARED_PRICE_UPDATE,
 			type: 'POST',
 			data: requestData,
 			dataType: 'json',
@@ -930,6 +986,7 @@
 		'downloadItemDirectory': downloadItemDirectory,
 		'addItemToTags': addItemToTags,
 		'updateUserItem': updateUserItem,
+		'updateSharedItemPrice': updateSharedItemPrice,
 		'updateMetacritic': updateMetacritic,
 		'deleteTagsForItem': deleteTagsForItem,
 		'deleteSingleTagForItem': deleteSingleTagForItem,

@@ -275,7 +275,6 @@
 		var buyNowPrice = null;
 		var buyNowRawPrice = null;
 
-
 		// iterate offers
 		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
 			if (offerItem.offers[i].availability === 'now') {

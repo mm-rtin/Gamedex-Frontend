@@ -691,12 +691,30 @@
 			}.lazy(250, 2000);
 		}
 
-		loadThirdPartyData.getAmazonItemOffersLimited(item);
+		// download amazon offer data
+		if (_.keys(item.offers).length === 0) {
+			console.info('download amazon', item.name);
+			loadThirdPartyData.getAmazonItemOffersLimited(item);
+
+		// use data from item
+		} else {
+			console.info('use existing offers', item.offers);
+			amazonPrice_result(item.id, item, item.offers);
+		}
+
 
 		// get steam page and price
-		Steam.getSteamGame(item.standardName, item, function(steamItem) {
-			steamPrice_result(item.id, item, steamItem);
-		});
+		if (_.isUndefined(item.steamPrice)) {
+			console.info('download steam', item.name)
+			Steam.getSteamGame(item.standardName, item, function(steamItem) {
+				steamPrice_result(item.id, item, steamItem);
+			});
+
+		// use data from item
+		} else {
+			console.info('use existing steam', item.steamPrice, item.steamPage);
+			steamPrice_result(item.id, item, item);
+		}
 
 		// get updated metascore - if metascore or metascore page not in item data
 		if (item.metascore === null || item.metascorePage === null) {

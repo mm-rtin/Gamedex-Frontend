@@ -24,6 +24,7 @@
 
 		// demo account
 		demoUser = {'user_id': 'ag1zfnQtbWludXN6ZXJvcgwLEgVVc2Vycxj6VQw', 'secret_key': '1'};
+		// demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGBIM', 'secret_key': '1'};
 
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
