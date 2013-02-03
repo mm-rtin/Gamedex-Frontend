@@ -160,7 +160,7 @@
         // hideInfoHeaderButton: click
         $hideInfoHeaderButton.click(function(e) {
             e.preventDefault();
-            showUserView('Demo');
+            showDemoView();
         });
 
         // showInfoHeaderButton: click
@@ -907,6 +907,21 @@
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showDemoView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showDemoView = function() {
+
+        // show use header
+        showUseHeader();
+
+        $('body').addClass('demo');
+
+        // set user button
+        $loggedInButton.find('.userEmail').text('Demo');
+    };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * showInfoView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var showInfoView = function() {
@@ -941,6 +956,7 @@
         $('body').removeClass('useHeader');
         $('body').addClass('infoHeader');
         $('body').removeClass('viewOnly');
+        $('body').removeClass('demo');
 
         // notify views
         ItemView.loggedInView(false);

@@ -141,6 +141,9 @@ body.useHeader .header{border-top:1px solid #575757;}
 body.useHeader #infoHeader{height:0px;}
 body.useHeader #header{top:0px;}
 body.useHeader #content{margin:44px auto;}
+body.useHeader.demo #showInfoHeader_btn{display:block;}
+body.useHeader.demo #userMenu .caret{display:none;}
+body.useHeader.demo #userMenu .dropdown-menu{display:none;}
 body.useHeader.viewOnly #showInfoHeader_btn{display:block;}
 body.useHeader.viewOnly #userMenu .caret{display:none;}
 body.useHeader.viewOnly #userMenu .dropdown-menu{display:none;}
@@ -238,8 +241,8 @@ img{border-radius:6px;}
 #header{-webkit-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-moz-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-ms-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-o-transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);transition:0.8s top cubic-bezier(1, 0, 0.57, 1.02);-webkit-transform:translate3d(0, 0, 0);-moz-transform:translate3d(0, 0, 0);position:absolute;min-width:500px;}#header .container-fluid{margin:0 auto;max-width:1600px;padding-right:0px;}
 #header .miniLogo{background-image:url('http://d2sifwlm28j6up.cloudfront.net/logo_small.png');float:left;position:relative;height:22px;width:129px;top:6px;left:-1px;cursor:pointer;}
 #content{-webkit-transition:0.8s margin cubic-bezier(0.25, 0.46, 0.45, 0.94);-moz-transition:0.8s margin cubic-bezier(0.25, 0.46, 0.45, 0.94);-ms-transition:0.8s margin cubic-bezier(0.25, 0.46, 0.45, 0.94);-o-transition:0.8s margin cubic-bezier(0.25, 0.46, 0.45, 0.94);transition:0.8s margin cubic-bezier(0.25, 0.46, 0.45, 0.94);max-width:1600px;padding-left:9px;margin:0 auto;}
-.header{background-image:url('http://d2sifwlm28j6up.cloudfront.net/bg_tile_light.png');color:#ffffff;height:17px;position:relative;z-index:999;border-top:1px solid #626d6b;}
-.panel{-moz-border-radius:2px;-webkit-border-radius:2px;border-radius:2px;background-color:#F5F5F5;padding:29px 10px 10px 10px;position:relative;top:-17px;}
+.header{color:#ffffff;height:17px;position:relative;z-index:999;border-top:1px solid #626d6b;}
+.panel{-moz-border-radius:2px;-webkit-border-radius:2px;border-radius:2px;background-color:#F5F5F5;padding:11px 10px 10px 10px;position:relative;top:-17px;}
 .loadingStatus{display:none;background-image:url('http://d2sifwlm28j6up.cloudfront.net/loading_bar.gif');margin:5px auto;width:48px;height:48px;}
 .no-results strong{color:#1D9400;}
 .subMenuIcon{float:right;}

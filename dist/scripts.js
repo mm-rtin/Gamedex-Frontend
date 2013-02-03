@@ -1470,12 +1470,31 @@ tmz.initializeModules = function() {
 
 		var requestData = {
 			'id': item.itemID
-
-			// 'ap': item.releaseDate,
-			// 'anp': item.smallImage,
-			// 'aup': item.thumbnailImage,
-			// 'sp': item.largeImage
 		};
+
+		// amazon price data found
+		if (!_.isUndefined(item.offers)) {
+			if (!_.isUndefined(item.offers.buyNowPrice)) {
+				requestData.ap = item.offers.buyNowPrice;
+				requestData.apu = item.offers.productURL;
+			}
+
+			if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				requestData.anp = item.offers.lowestNewPrice;
+				requestData.anpu = item.offers.offersURLNew;
+			}
+
+			if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+				requestData.aup = item.offers.lowestUsedPrice;
+				requestData.aupu = item.offers.offersURLUsed;
+			}
+		}
+		// steam price data found
+		if (!_.isUndefined(item.steamPrice)) {
+			requestData.sp = item.steamPrice;
+			requestData.spu = item.steamPage;
+		}
+
 		$.extend(true, requestData, userData);
 
 		$.ajax({
@@ -2487,7 +2506,7 @@ tmz.initializeModules = function() {
         // hideInfoHeaderButton: click
         $hideInfoHeaderButton.click(function(e) {
             e.preventDefault();
-            showUserView('Demo');
+            showDemoView();
         });
 
         // showInfoHeaderButton: click
@@ -3234,6 +3253,21 @@ tmz.initializeModules = function() {
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showDemoView -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showDemoView = function() {
+
+        // show use header
+        showUseHeader();
+
+        $('body').addClass('demo');
+
+        // set user button
+        $loggedInButton.find('.userEmail').text('Demo');
+    };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * showInfoView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var showInfoView = function() {
@@ -3268,6 +3302,7 @@ tmz.initializeModules = function() {
         $('body').removeClass('useHeader');
         $('body').addClass('infoHeader');
         $('body').removeClass('viewOnly');
+        $('body').removeClass('demo');
 
         // notify views
         ItemView.loggedInView(false);
@@ -6475,6 +6510,7 @@ tmz.initializeModules = function() {
 		// get steam page and price
 		if (_.isUndefined(item.steamPrice)) {
 			console.info('download steam', item.name)
+
 			Steam.getSteamGame(item.standardName, item, function(steamItem) {
 				steamPrice_result(item.id, item, steamItem);
 			});

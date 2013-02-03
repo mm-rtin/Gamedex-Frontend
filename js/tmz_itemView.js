@@ -706,6 +706,7 @@
 		// get steam page and price
 		if (_.isUndefined(item.steamPrice)) {
 			console.info('download steam', item.name)
+
 			Steam.getSteamGame(item.standardName, item, function(steamItem) {
 				steamPrice_result(item.id, item, steamItem);
 			});

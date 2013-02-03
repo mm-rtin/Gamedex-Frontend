@@ -586,12 +586,31 @@
 
 		var requestData = {
 			'id': item.itemID
-
-			// 'ap': item.releaseDate,
-			// 'anp': item.smallImage,
-			// 'aup': item.thumbnailImage,
-			// 'sp': item.largeImage
 		};
+
+		// amazon price data found
+		if (!_.isUndefined(item.offers)) {
+			if (!_.isUndefined(item.offers.buyNowPrice)) {
+				requestData.ap = item.offers.buyNowPrice;
+				requestData.apu = item.offers.productURL;
+			}
+
+			if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				requestData.anp = item.offers.lowestNewPrice;
+				requestData.anpu = item.offers.offersURLNew;
+			}
+
+			if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+				requestData.aup = item.offers.lowestUsedPrice;
+				requestData.aupu = item.offers.offersURLUsed;
+			}
+		}
+		// steam price data found
+		if (!_.isUndefined(item.steamPrice)) {
+			requestData.sp = item.steamPrice;
+			requestData.spu = item.steamPage;
+		}
+
 		$.extend(true, requestData, userData);
 
 		$.ajax({

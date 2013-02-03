@@ -808,6 +808,22 @@ body {
 			margin: 44px auto;
 		}
 
+		&.demo {
+
+			#showInfoHeader_btn {
+				display: block;
+			}
+
+			#userMenu {
+				.caret {
+					display: none;
+				}
+				.dropdown-menu {
+					display: none;
+				}
+			}
+		}
+
 		&.viewOnly {
 
 			#showInfoHeader_btn {
@@ -1634,7 +1650,6 @@ img {
 }
 
 .header {
-	background-image:  url('http://d2sifwlm28j6up.cloudfront.net/bg_tile_light.png');
 	color: #ffffff;
 	height: 17px;
 	position: relative;
@@ -1645,7 +1660,7 @@ img {
 .panel {
 	.borderRadius(2px);
 	background-color: #F5F5F5;
-	padding: 29px 10px 10px 10px;
+	padding: 11px 10px 10px 10px;
 	position: relative;
 	top: -17px;
 }
