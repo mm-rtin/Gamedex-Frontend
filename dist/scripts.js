@@ -257,6 +257,7 @@ tmz.initializeModules = function() {
 
 		// constants
 		SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1},
+		PRICE_PROVIDERS = {'Amazon': 0, 'Steam': 1},
 		VIEW_ALL_TAG_ID = '0',
 
 		// 3RD PARTY IMAGE PREFIX
@@ -325,6 +326,7 @@ tmz.initializeModules = function() {
     var publicMethods = {
         'PLATFORM_INDEX': PLATFORM_INDEX,
         'SEARCH_PROVIDERS': SEARCH_PROVIDERS,
+        'PRICE_PROVIDERS': PRICE_PROVIDERS,
         'VIEW_ALL_TAG_ID': VIEW_ALL_TAG_ID,
         'AMAZON_IMAGE': AMAZON_IMAGE,
         'GIANTBOMB_IMAGE': GIANTBOMB_IMAGE,
@@ -1458,12 +1460,9 @@ tmz.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateSharedItemPrice
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateSharedItemPrice = function(currentItem, onSuccess, onError) {
+	var updateSharedItemPrice = function(currentItem, priceProvider, onSuccess, onError) {
 
-		// get tags for itemID
-		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
-
-		var userData = User.getUserCredentials(true);
+		var update = false;
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
@@ -1472,44 +1471,66 @@ tmz.initializeModules = function() {
 			'id': item.itemID
 		};
 
-		// amazon price data found
-		if (!_.isUndefined(item.offers)) {
-			if (!_.isUndefined(item.offers.buyNowPrice)) {
-				requestData.ap = item.offers.buyNowPrice;
-				requestData.apu = item.offers.productURL;
+		// Amazon Price
+		if (priceProvider == Utilities.PRICE_PROVIDERS.Amazon) {
+
+			// amazon price data found
+			if (!_.isUndefined(item.offers)) {
+				if (!_.isUndefined(item.offers.buyNowPrice)) {
+					update = true;
+					requestData.ap = item.offers.buyNowPrice;
+					requestData.apu = item.offers.productURL;
+				}
+
+				if (!_.isUndefined(item.offers.lowestNewPrice)) {
+					update = true;
+					requestData.anp = item.offers.lowestNewPrice;
+					requestData.anpu = item.offers.offersURLNew;
+				}
+
+				if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+					update = true;
+					requestData.aup = item.offers.lowestUsedPrice;
+					requestData.aupu = item.offers.offersURLUsed;
+				}
 			}
 
-			if (!_.isUndefined(item.offers.lowestNewPrice)) {
-				requestData.anp = item.offers.lowestNewPrice;
-				requestData.anpu = item.offers.offersURLNew;
-			}
+		// Steam Price
+		} else if (priceProvider == Utilities.PRICE_PROVIDERS.Steam) {
 
-			if (!_.isUndefined(item.offers.lowestUsedPrice)) {
-				requestData.aup = item.offers.lowestUsedPrice;
-				requestData.aupu = item.offers.offersURLUsed;
+			// steam price data found
+			if (!_.isUndefined(item.steamPrice)) {
+				update = true;
+				requestData.sp = item.steamPrice;
+				requestData.spu = item.steamPage;
 			}
 		}
-		// steam price data found
-		if (!_.isUndefined(item.steamPrice)) {
-			requestData.sp = item.steamPrice;
-			requestData.spu = item.steamPage;
+
+		if (update) {
+
+			// get tags for itemID
+			var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
+
+			var userData = User.getUserCredentials(true);
+
+			// push update to item cache
+			updateItemData(item, itemTags);
+
+			$.extend(true, requestData, userData);
+
+			$.ajax({
+				url: ITEM_SHARED_PRICE_UPDATE,
+				type: 'POST',
+				data: requestData,
+				dataType: 'json',
+				cache: true,
+				success: function(data) {
+
+					onSuccess(item, data);
+				},
+				error: onError
+			});
 		}
-
-		$.extend(true, requestData, userData);
-
-		$.ajax({
-			url: ITEM_SHARED_PRICE_UPDATE,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-
-				updateItemData(item, itemTags);
-				onSuccess(item, data);
-			},
-			error: onError
-		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5420,12 +5441,12 @@ tmz.initializeModules = function() {
     var amazonItemOffers_result = function(offers) {
 
         // update data panel information
-        if (offers.buyNowPrice !== '' || offers.lowestUsedPrice !== '') {
+        if ((_.has(offers, 'buyNowPrice') && offers.buyNowPrice !== '') || (_.has(offers, 'lowestUsedPrice') && offers.lowestUsedPrice !== '')) {
             $priceHeader.show();
         }
 
         // new price
-        if (offers.buyNowPrice !== '') {
+        if (_.has(offers, 'buyNowPrice') && offers.buyNowPrice !== '') {
             $amazonPriceNew.find('a').attr('href', offers.productURL);
             $amazonPriceNew.find('.data').text(offers.buyNowPrice);
             $amazonPriceNew.show();
@@ -5434,7 +5455,7 @@ tmz.initializeModules = function() {
         }
 
         // used price
-        if (offers.lowestUsedPrice !== '') {
+        if (_.has(offers, 'lowestUsedPrice') && offers.lowestUsedPrice !== '') {
             $amazonPriceUsed.find('.data').text(offers.lowestUsedPrice);
             $amazonPriceUsed.find('a').attr('href', offers.offersURLUsed);
             $amazonPriceUsed.show();
@@ -6519,19 +6540,25 @@ tmz.initializeModules = function() {
 
 				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
 					amazonPrice_result(item.id, item, offers);
+
+					// update shared amazon price info
+					ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Amazon, function(data) {
+						console.info('############# update amazon price');
+					});
 				});
 
 			}.lazy(250, 2000);
 		}
 
 		// download amazon offer data
-		if (_.keys(item.offers).length === 0) {
+		if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
 			console.info('download amazon', item.name);
 			loadThirdPartyData.getAmazonItemOffersLimited(item);
 
 		// use data from item
 		} else {
 			console.info('use existing offers', item.offers);
+
 			amazonPrice_result(item.id, item, item.offers);
 		}
 
@@ -6542,6 +6569,11 @@ tmz.initializeModules = function() {
 
 			Steam.getSteamGame(item.standardName, item, function(steamItem) {
 				steamPrice_result(item.id, item, steamItem);
+
+				// update shared amazon price info
+				ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
+					console.info('############ update steam price');
+				});
 			});
 
 		// use data from item
@@ -6580,6 +6612,14 @@ tmz.initializeModules = function() {
 
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
+
+			if (_.isUndefined(offers.lowestNewPrice)) {
+				offers.lowestNewPrice = '';
+			}
+
+			if (_.isUndefined(offers.lowestUsedPrice)) {
+				offers.lowestUsedPrice = '';
+			}
 
 			var priceSelector = '#' + id + ' .priceDetails';
 			var lowestProvider = getLowestPrice(item);
@@ -8923,8 +8963,6 @@ tmz.initializeModules = function() {
 			// update video source
 			changeVideoSource(0);
 		}
-
-		$('html, body').scrollTop(0);
 
 		// show video modal
 		$videoModal.modal('show');

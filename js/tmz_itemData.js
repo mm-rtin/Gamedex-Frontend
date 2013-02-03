@@ -574,12 +574,9 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* updateSharedItemPrice
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateSharedItemPrice = function(currentItem, onSuccess, onError) {
+	var updateSharedItemPrice = function(currentItem, priceProvider, onSuccess, onError) {
 
-		// get tags for itemID
-		var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
-
-		var userData = User.getUserCredentials(true);
+		var update = false;
 
 		// clone currentItem as new object
 		var item = $.extend(true, {}, currentItem);
@@ -588,44 +585,66 @@
 			'id': item.itemID
 		};
 
-		// amazon price data found
-		if (!_.isUndefined(item.offers)) {
-			if (!_.isUndefined(item.offers.buyNowPrice)) {
-				requestData.ap = item.offers.buyNowPrice;
-				requestData.apu = item.offers.productURL;
+		// Amazon Price
+		if (priceProvider == Utilities.PRICE_PROVIDERS.Amazon) {
+
+			// amazon price data found
+			if (!_.isUndefined(item.offers)) {
+				if (!_.isUndefined(item.offers.buyNowPrice)) {
+					update = true;
+					requestData.ap = item.offers.buyNowPrice;
+					requestData.apu = item.offers.productURL;
+				}
+
+				if (!_.isUndefined(item.offers.lowestNewPrice)) {
+					update = true;
+					requestData.anp = item.offers.lowestNewPrice;
+					requestData.anpu = item.offers.offersURLNew;
+				}
+
+				if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+					update = true;
+					requestData.aup = item.offers.lowestUsedPrice;
+					requestData.aupu = item.offers.offersURLUsed;
+				}
 			}
 
-			if (!_.isUndefined(item.offers.lowestNewPrice)) {
-				requestData.anp = item.offers.lowestNewPrice;
-				requestData.anpu = item.offers.offersURLNew;
-			}
+		// Steam Price
+		} else if (priceProvider == Utilities.PRICE_PROVIDERS.Steam) {
 
-			if (!_.isUndefined(item.offers.lowestUsedPrice)) {
-				requestData.aup = item.offers.lowestUsedPrice;
-				requestData.aupu = item.offers.offersURLUsed;
+			// steam price data found
+			if (!_.isUndefined(item.steamPrice)) {
+				update = true;
+				requestData.sp = item.steamPrice;
+				requestData.spu = item.steamPage;
 			}
 		}
-		// steam price data found
-		if (!_.isUndefined(item.steamPrice)) {
-			requestData.sp = item.steamPrice;
-			requestData.spu = item.steamPage;
+
+		if (update) {
+
+			// get tags for itemID
+			var itemTags = getDirectoryItemByItemID(currentItem.itemID)['tags'];
+
+			var userData = User.getUserCredentials(true);
+
+			// push update to item cache
+			updateItemData(item, itemTags);
+
+			$.extend(true, requestData, userData);
+
+			$.ajax({
+				url: ITEM_SHARED_PRICE_UPDATE,
+				type: 'POST',
+				data: requestData,
+				dataType: 'json',
+				cache: true,
+				success: function(data) {
+
+					onSuccess(item, data);
+				},
+				error: onError
+			});
 		}
-
-		$.extend(true, requestData, userData);
-
-		$.ajax({
-			url: ITEM_SHARED_PRICE_UPDATE,
-			type: 'POST',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: function(data) {
-
-				updateItemData(item, itemTags);
-				onSuccess(item, data);
-			},
-			error: onError
-		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

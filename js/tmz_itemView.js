@@ -686,19 +686,25 @@
 
 				Amazon.getAmazonItemOffers(item.asin, item, function(offers) {
 					amazonPrice_result(item.id, item, offers);
+
+					// update shared amazon price info
+					ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Amazon, function(data) {
+						console.info('############# update amazon price');
+					});
 				});
 
 			}.lazy(250, 2000);
 		}
 
 		// download amazon offer data
-		if (_.keys(item.offers).length === 0) {
+		if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
 			console.info('download amazon', item.name);
 			loadThirdPartyData.getAmazonItemOffersLimited(item);
 
 		// use data from item
 		} else {
 			console.info('use existing offers', item.offers);
+
 			amazonPrice_result(item.id, item, item.offers);
 		}
 
@@ -709,6 +715,11 @@
 
 			Steam.getSteamGame(item.standardName, item, function(steamItem) {
 				steamPrice_result(item.id, item, steamItem);
+
+				// update shared amazon price info
+				ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
+					console.info('############ update steam price');
+				});
 			});
 
 		// use data from item
@@ -747,6 +758,14 @@
 
 		// render if offers available
 		if (typeof offers.productURL !== 'undefined') {
+
+			if (_.isUndefined(offers.lowestNewPrice)) {
+				offers.lowestNewPrice = '';
+			}
+
+			if (_.isUndefined(offers.lowestUsedPrice)) {
+				offers.lowestUsedPrice = '';
+			}
 
 			var priceSelector = '#' + id + ' .priceDetails';
 			var lowestProvider = getLowestPrice(item);

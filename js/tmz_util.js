@@ -40,6 +40,7 @@
 
 		// constants
 		SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1},
+		PRICE_PROVIDERS = {'Amazon': 0, 'Steam': 1},
 		VIEW_ALL_TAG_ID = '0',
 
 		// 3RD PARTY IMAGE PREFIX
@@ -108,6 +109,7 @@
     var publicMethods = {
         'PLATFORM_INDEX': PLATFORM_INDEX,
         'SEARCH_PROVIDERS': SEARCH_PROVIDERS,
+        'PRICE_PROVIDERS': PRICE_PROVIDERS,
         'VIEW_ALL_TAG_ID': VIEW_ALL_TAG_ID,
         'AMAZON_IMAGE': AMAZON_IMAGE,
         'GIANTBOMB_IMAGE': GIANTBOMB_IMAGE,

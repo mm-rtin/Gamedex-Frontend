@@ -644,12 +644,12 @@
     var amazonItemOffers_result = function(offers) {
 
         // update data panel information
-        if (offers.buyNowPrice !== '' || offers.lowestUsedPrice !== '') {
+        if ((_.has(offers, 'buyNowPrice') && offers.buyNowPrice !== '') || (_.has(offers, 'lowestUsedPrice') && offers.lowestUsedPrice !== '')) {
             $priceHeader.show();
         }
 
         // new price
-        if (offers.buyNowPrice !== '') {
+        if (_.has(offers, 'buyNowPrice') && offers.buyNowPrice !== '') {
             $amazonPriceNew.find('a').attr('href', offers.productURL);
             $amazonPriceNew.find('.data').text(offers.buyNowPrice);
             $amazonPriceNew.show();
@@ -658,7 +658,7 @@
         }
 
         // used price
-        if (offers.lowestUsedPrice !== '') {
+        if (_.has(offers, 'lowestUsedPrice') && offers.lowestUsedPrice !== '') {
             $amazonPriceUsed.find('.data').text(offers.lowestUsedPrice);
             $amazonPriceUsed.find('a').attr('href', offers.offersURLUsed);
             $amazonPriceUsed.show();

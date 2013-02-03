@@ -96,8 +96,6 @@
 			changeVideoSource(0);
 		}
 
-		$('html, body').scrollTop(0);
-
 		// show video modal
 		$videoModal.modal('show');
 
