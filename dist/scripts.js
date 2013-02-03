@@ -2362,6 +2362,7 @@ tmz.initializeModules = function() {
         LOAD_DELAY = 600,
 
         // properties
+        currentlyViewingUsername = 'Demo',
         siteLoaded = false,
         formType = FORM_TYPES.login,
         rememberMe = false,
@@ -2480,6 +2481,16 @@ tmz.initializeModules = function() {
     * init
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var init = function() {
+
+        // configure alertify
+        alertify.set(
+            {
+                labels: {
+                    ok: "Close",
+                    cancel: "Close"},
+                delay: 2000
+            }
+        );
 
         createEventHandlers();
 
@@ -2782,6 +2793,8 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var route = function(path) {
 
+        currentlyViewingUsername = 'Demo';
+
         if (siteLoaded) {
             setupUser();
         }
@@ -2845,11 +2858,10 @@ tmz.initializeModules = function() {
 
         // get url path parts
         var urlPathParts = window.location.pathname.split( '/' );
-        var action = urlPathParts[1];
-        var userName = urlPathParts[2];
+        var userName = urlPathParts[1];
 
         // view public user
-        if (action == 'user' && userName !== '') {
+        if (userName !== '') {
 
             // validate user
             User.validateUser(userName, function(data) {
@@ -2857,6 +2869,8 @@ tmz.initializeModules = function() {
                 // start app with user info
                 if (data.status === 'success') {
                     viewUser(userName);
+                } else {
+                    viewUserError(userName);
                 }
             });
 
@@ -2888,12 +2902,25 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var viewUser = function(userName) {
 
+        currentlyViewingUsername = userName;
+
         alertify.success('Loading User: ' + userName);
 
         showUserView(userName);
 
         // start app with viewing user data
         startApp();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * viewUserError -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var viewUserError = function(userName) {
+
+        alertify.alert('User "' + userName + '" not found');
+
+        // start app with viewing user data
+        startDemo();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2981,6 +3008,8 @@ tmz.initializeModules = function() {
     * logout -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var logout = function() {
+
+        currentlyViewingUsername = 'Demo';
 
         // return to info view
         showInfoView();
@@ -3263,7 +3292,7 @@ tmz.initializeModules = function() {
         $('body').addClass('demo');
 
         // set user button
-        $loggedInButton.find('.userEmail').text('Demo');
+        $loggedInButton.find('.userEmail').text(currentlyViewingUsername);
     };
 
 
