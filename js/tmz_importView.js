@@ -193,7 +193,7 @@
 		titlesImportedCount = 0,
 
 		// create new rate limited function
-		findAmazonItemRateLimited = findAmazonItem.lazy(2000, 10000),
+		findAmazonItemRateLimited = findAmazonItem.lazy(500, 10000),
 
 		// increment session ID
 		currentImportSessionID++;
@@ -377,13 +377,22 @@
 		// find alternate amazon item
 		var amazonRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
 
+			console.info('success: ', searchItem.name)
+
 			// add asin to search item
 			searchItem.asin = item.asin;
 			onSuccess();
 
 		// on error
-		}, function() {
-			onSuccess();
+		}, function(serviceUnavailable) {
+
+			if (serviceUnavailable) {
+				console.info('service unavailable: ', searchItem.name)
+
+			} else {
+				console.info('no match found: ', searchItem.name)
+				onSuccess();
+			}
 		});
 
 		// add to pending requests

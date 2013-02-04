@@ -21,7 +21,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getSteamGame -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Steam.getSteamGame = function(searchTerms, sourceItem, onSuccess) {
+	Steam.getSteamGame = function(searchTerms, sourceItem, onSuccess, onError) {
 
 		var ajax = null;
 
@@ -82,6 +82,12 @@
 									// return data
 									successMethod(steamItem);
 								});
+
+							// no result
+							} else {
+								if (!_.isUndefined(onError)) {
+									onError();
+								}
 							}
 
 							// empty queue

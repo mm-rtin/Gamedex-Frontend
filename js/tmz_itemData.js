@@ -587,22 +587,55 @@
 
 		// Amazon Price
 		if (priceProvider == Utilities.PRICE_PROVIDERS.Amazon) {
+			console.info('update amazon price')
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info(item);
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info('--------------------');
+			console.info('--------------------');
 
 			// amazon price data found
-			if (!_.isUndefined(item.offers)) {
-				if (!_.isUndefined(item.offers.buyNowPrice)) {
+			if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
+
+				item.offers = {
+					buyNowPrice: '',
+					buyNowRawPrice: '',
+					lowestNewPrice: '',
+					lowestUsedPrice: '',
+					offersURL: '',
+					offersURLNew: '',
+					offersURLUsed: '',
+					productURL: ''
+				};
+
+				requestData.ap = '';
+				requestData.apu = '';
+				requestData.anp = '';
+				requestData.anpu = '';
+				requestData.aup = '';
+				requestData.aupu = '';
+
+
+			// update amazon item price
+			} else {
+				if (!_.isUndefined(item.offers.buyNowPrice) && item.offers.buyNowPrice !== '') {
 					update = true;
 					requestData.ap = item.offers.buyNowPrice;
 					requestData.apu = item.offers.productURL;
 				}
 
-				if (!_.isUndefined(item.offers.lowestNewPrice)) {
+				if (!_.isUndefined(item.offers.lowestNewPrice) && item.offers.lowestNewPrice !== '') {
 					update = true;
 					requestData.anp = item.offers.lowestNewPrice;
 					requestData.anpu = item.offers.offersURLNew;
 				}
 
-				if (!_.isUndefined(item.offers.lowestUsedPrice)) {
+				if (!_.isUndefined(item.offers.lowestUsedPrice) && item.offers.lowestUsedPrice !== '') {
 					update = true;
 					requestData.aup = item.offers.lowestUsedPrice;
 					requestData.aupu = item.offers.offersURLUsed;
@@ -611,12 +644,25 @@
 
 		// Steam Price
 		} else if (priceProvider == Utilities.PRICE_PROVIDERS.Steam) {
+			console.info('update steam price')
 
-			// steam price data found
-			if (!_.isUndefined(item.steamPrice)) {
+			// steam price data not found > set to empty string
+			if (_.isUndefined(item.steamPrice)) {
 				update = true;
-				requestData.sp = item.steamPrice;
-				requestData.spu = item.steamPage;
+				item.steamPrice = '';
+				item.steamPage = '';
+
+				requestData.sp = '';
+				requestData.spu = '';
+
+			// update item price
+			} else {
+
+				if (!_.isUndefined(item.steamPrice) && item.steamPrice !== '') {
+					update = true;
+					requestData.sp = item.steamPrice;
+					requestData.spu = item.steamPage;
+				}
 			}
 		}
 

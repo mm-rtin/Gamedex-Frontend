@@ -39,6 +39,10 @@
 		AMAZON_SEARCH_URL = tmz.api + 'amazon/search/',
 		AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/',
 
+		// constants
+		RETRY_AMAZON_MIN = 500,
+		RETRY_AMAZON_MAX = 3000,
+
 		// data
 		amazonOffersCache = {},
 		amazonItemCache = {},
@@ -46,6 +50,9 @@
 		// request queues
 		getAmazonItemOffersQueue = {},
 		getAmazonItemDetailQueue = {},
+
+		// failed requests
+		failedAmazonSearchRequests = [],
 
 		// ajax requests
 		searchRequest = null,
@@ -92,7 +99,18 @@
 				}
 			},
 			error: function() {
-				onError();
+
+				// random delay
+				var delayMS = Math.floor(Math.random() * (RETRY_AMAZON_MAX - RETRY_AMAZON_MIN + 1)) + RETRY_AMAZON_MIN;
+
+				// retry request after random delay
+				(function() {
+					Amazon.searchAmazon(keywords, browseNode, onSuccess, onError, preventMultipleRequests);
+
+				}).delay(delayMS);
+
+				// return error with serviceUnavailable status as True
+				onError(true);
 			}
 		});
 
@@ -358,35 +376,42 @@
 		var re = /\$/;
 
 		// get attributes from xml
-		offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text().replace(re, '');
-		offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text().replace(re, '');
-		offerItem.totalNew = $resultItem.find('TotalNew').text();
-		offerItem.totalUsed = $resultItem.find('TotalUsed').text();
-		offerItem.totalOffers = $resultItem.find('TotalOffers').text();
-		offerItem.offersURL = $resultItem.find('MoreOffersUrl').text();
-		offerItem.offersURLNew = $resultItem.find('MoreOffersUrl').text() + '&condition=new';
-		offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
+		var totalNew = parseInt($resultItem.find('TotalNew').text(), 10);
+		var totalUsed = parseInt($resultItem.find('TotalUsed').text(), 10);
 
-		// convert offer url to a product url
-		var offerRE = /offer-listing/gi;
-		offerItem.productURL = offerItem.offersURL.replace(offerRE, 'product');
-		offerItem.offers = [];
+		// offers found
+		if (totalNew !== 0 || totalUsed !== 0) {
 
-		// iterate offers
-		$('Offer', $resultItem).each(function() {
+			offerItem.totalNew = totalNew;
+			offerItem.totalUsed = totalUsed;
+			offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text().replace(re, '');
+			offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text().replace(re, '');
+			offerItem.totalOffers = $resultItem.find('TotalOffers').text();
+			offerItem.offersURL = $resultItem.find('MoreOffersUrl').text();
+			offerItem.offersURLNew = $resultItem.find('MoreOffersUrl').text() + '&condition=new';
+			offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
 
-			offer = {};
+			// convert offer url to a product url
+			var offerRE = /offer-listing/gi;
+			offerItem.productURL = offerItem.offersURL.replace(offerRE, 'product');
+			offerItem.offers = [];
 
-			offer.price = $(this).find('Price FormattedPrice').text().replace(re, '');
-			offer.rawPrice = $(this).find('Price Amount').text();
-			offer.availability = $(this).find('AvailabilityType').text();
-			offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
+			// iterate offers
+			$('Offer', $resultItem).each(function() {
 
-			offerItem.offers.push(offer);
-		});
+				offer = {};
 
-		// format offer data
-		formatOfferData(offerItem);
+				offer.price = $(this).find('Price FormattedPrice').text().replace(re, '');
+				offer.rawPrice = $(this).find('Price Amount').text();
+				offer.availability = $(this).find('AvailabilityType').text();
+				offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
+
+				offerItem.offers.push(offer);
+			});
+
+			// format offer data
+			formatOfferData(offerItem);
+		}
 
 		return offerItem;
 	};
