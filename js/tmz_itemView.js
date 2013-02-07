@@ -358,8 +358,8 @@
 
         // item length
         var length = 0;
-        var delayBetweenBlocks = 100;
-        var blockSize = 50;
+        var delayBetweenBlocks = 500;
+        var blockSize = 25;
         var blockCount = 0;
 
         var itemChunk = [];
