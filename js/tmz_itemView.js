@@ -54,7 +54,7 @@
 
         // element cache
         $wrapper = $('#wrapper'),
-        $itemResults = $('#itemResults'),
+        $itemResults = $('#itemResults tbody'),
         $resizeContainer = $('#resizeContainer'),
         $viewItemsContainer = $('#viewItemsContainer'),
         $itemResultsContainer = $('#itemResultsContainer'),
@@ -355,24 +355,70 @@
 
         // item length
         var length = 0;
+        var delayBetweenBlocks = 1000;
+        var blockSize = 100;
+        var blockCount = 0;
+
+        var itemChunk = [];
+
+        // add displayType/currentViewTagID to templateData
+        $itemResults.addClass('list display-' + displayType);
 
         // add user attributes to model
         _.each(items, function(item, key) {
             addUserAttributes(item);
             length++;
+
+            itemChunk.push(item);
+
+            if (length % blockSize === 0) {
+
+                (function(length, itemChunk) {
+                    // render
+                    _.delay(function() {
+                        console.info('@@@@@@@@@@@@@@@@@@');
+                        console.info(length, itemChunk);
+
+                        renderChunk(itemChunk);
+                        itemChunk = [];
+                    }, delayBetweenBlocks * blockCount);
+
+                }(length, $.extend(true, {}, itemChunk)));
+
+                blockCount++;
+
+                itemChunk = [];
+            }
         });
 
-        // get model data
-        var templateData = {'items': items, 'length': length};
+        // finalize
+        _.delay(function() {
+            console.info('************************');
+            console.info(length, itemChunk);
 
-        // add displayType/currentViewTagID to templateData
-        templateData.displayType = displayType;
+            renderChunk(itemChunk);
+            itemChunk = [];
+
+            finalizeRender(items, length);
+
+        }, delayBetweenBlocks * blockCount);
+    };
+
+    var renderChunk = function(itemChunk) {
+
+        // get model data
+        var templateData = {'items': itemChunk, 'length': length};
+
         templateData.currentViewTagID = currentViewTagID;
 
         // render model data to template
-        $itemResults.html(itemResultsTemplate(templateData));
+        $itemResults.append(itemResultsTemplate(templateData));
+    };
+
+    var finalizeRender = function(items, length) {
 
         if (length > 0) {
+
             // activate tooltips for quickAttributes bar
             $itemResults.find('.quickAttributes a').each(function(key, button) {
                 $(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
@@ -1305,7 +1351,7 @@
             displayType = currentDisplayType;
 
             // change #itemResults tbody class
-            $itemResults.find('tbody').removeClass().addClass('display-' + displayType);
+            $itemResults.removeClass().addClass('list display-' + displayType);
 
             // set nanoscroll
             $itemResultsContainer.nanoScroller();
