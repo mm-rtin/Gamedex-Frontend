@@ -6011,9 +6011,9 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * init
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.init = function() {
+    var init = function() {
 
-        ItemView.createEventHandlers();
+        createEventHandlers();
 
         // init tooltips
         $filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
@@ -6046,7 +6046,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * createEventHandlers
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.createEventHandlers = function() {
+    var createEventHandlers = function() {
 
         // itemViewMenu .dropdown: hover
         $itemViewMenu.on('mouseenter', '.dropdown-toggle', function(e) {
@@ -6234,18 +6234,18 @@ tmz.initializeModules = function() {
             e.preventDefault();
 
             SiteView.hideSiteGuide();
-            ItemView.showGridView();
+            showGridView();
         });
 
         // show collection button: click
         $showCollectionButton.click(function(e) {
             e.preventDefault();
-            ItemView.viewCollection();
+            viewCollection();
         });
 
         // window, itemResults: resized
-        $resizeContainer.resize(ItemView.resizePanel);
-        $(window).resize(ItemView.resizePanel);
+        $resizeContainer.resize(resizePanel);
+        $(window).resize(resizePanel);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6253,10 +6253,13 @@ tmz.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var render = function(items) {
 
+        // clear item view before render
+        clearItemView();
+
         // item length
         var length = 0;
-        var delayBetweenBlocks = 1000;
-        var blockSize = 100;
+        var delayBetweenBlocks = 100;
+        var blockSize = 50;
         var blockCount = 0;
 
         var itemChunk = [];
@@ -6271,32 +6274,35 @@ tmz.initializeModules = function() {
 
             itemChunk.push(item);
 
+            // if we reach block size break point
             if (length % blockSize === 0) {
 
-                (function(length, itemChunk) {
+                // create new closure and pass in current properties and data
+                (function(length, itemChunk, currentViewTagID) {
                     // render
                     _.delay(function() {
                         console.info('@@@@@@@@@@@@@@@@@@');
                         console.info(length, itemChunk);
 
-                        renderChunk(itemChunk);
+                        renderChunk(itemChunk, currentViewTagID);
                         itemChunk = [];
                     }, delayBetweenBlocks * blockCount);
 
-                }(length, $.extend(true, {}, itemChunk)));
+                }(length, $.extend(true, {}, itemChunk), currentViewTagID));
 
                 blockCount++;
 
+                // clear item chunk for next block size break point
                 itemChunk = [];
             }
         });
 
-        // finalize
+        // finalize and load remaining items which do not fit inside of block size
         _.delay(function() {
             console.info('************************');
             console.info(length, itemChunk);
 
-            renderChunk(itemChunk);
+            renderChunk(itemChunk, currentViewTagID);
             itemChunk = [];
 
             finalizeRender(items, length);
@@ -6304,17 +6310,30 @@ tmz.initializeModules = function() {
         }, delayBetweenBlocks * blockCount);
     };
 
-    var renderChunk = function(itemChunk) {
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * renderChunk
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var renderChunk = function(itemChunk, renderViewTagID) {
 
-        // get model data
-        var templateData = {'items': itemChunk, 'length': length};
+        if (renderViewTagID === currentViewTagID) {
 
-        templateData.currentViewTagID = currentViewTagID;
+            // get model data
+            var templateData = {'items': itemChunk, 'length': length};
 
-        // render model data to template
-        $itemResults.append(itemResultsTemplate(templateData));
+            templateData.currentViewTagID = currentViewTagID;
+
+            // render model data to template
+            $itemResults.append(itemResultsTemplate(templateData));
+
+        } else {
+
+            console.info('################ TAG MISMATCH!!! ###############');
+        }
     };
 
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * finalizeRender
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var finalizeRender = function(items, length) {
 
         if (length > 0) {
@@ -6351,7 +6370,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * getItem -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.getItem = function(id) {
+    var getItem = function(id) {
 
         return ItemData.getItem(id);
     };
@@ -6359,15 +6378,15 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * clearItemView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.clearItemView = function() {
+    var clearItemView = function() {
 
-        $itemResults.html('');
+        $itemResults.empty();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * resizePanel -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.resizePanel = function() {
+    var resizePanel = function() {
 
         var windowHeight = $(window).height();
         var resultsHeight = $resizeContainer.height();
@@ -6399,7 +6418,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * loggedInView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.loggedInView = function(isLoggedIn) {
+    var loggedInView = function(isLoggedIn) {
 
         if (isLoggedIn) {
             panelHeightOffset = PANEL_HEIGHT_OFFSET_USE;
@@ -6407,13 +6426,13 @@ tmz.initializeModules = function() {
             panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO;
         }
 
-        ItemView.resizePanel();
+        resizePanel();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * initializeUserItems -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.initializeUserItems = function(onSuccess, onFail) {
+    var initializeUserItems = function(onSuccess, onFail) {
 
         // save tagID
         currentViewTagID = VIEW_ALL_TAG_ID;
@@ -6425,7 +6444,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * initializeUserItems_result - called upon result of initializeUserItems and other dependencies
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.initializeUserItems_result = function(items) {
+    var initializeUserItems_result = function(items) {
 
         // ItemData items result
         ItemData.itemsAndDirectoryLoaded(items);
@@ -6435,7 +6454,7 @@ tmz.initializeModules = function() {
 
         if (!$.isEmptyObject(items)) {
             // view random item
-            ItemView.viewRandomItem();
+            viewRandomItem();
 
         } else {
             DetailView.resetDetail();
@@ -6445,7 +6464,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * updateListDeletions -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.updateListDeletions = function(itemID, deletedTagIDs) {
+    var updateListDeletions = function(itemID, deletedTagIDs) {
 
         var tagCount = null;
 
@@ -6475,7 +6494,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * updateListAdditions
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.updateListAdditions = function(data, addedItems) {
+    var updateListAdditions = function(data, addedItems) {
 
         var renderCurrentList = false;
 
@@ -6509,7 +6528,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * updateListAttributesChanged
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.updateListAttributesChanged = function(item) {
+    var updateListAttributesChanged = function(item) {
 
         queueDisplayRefresh = true;
     };
@@ -6517,7 +6536,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * showListView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.showListView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
+    var showListView = function(tagID, newFilterType, filterTypeFieldText, isFiltered) {
 
         filterType = newFilterType;
 
@@ -6530,7 +6549,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * viewDiscussion -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.viewDiscussion = function() {
+    var viewDiscussion = function() {
         itemViewMode = VIEW_MODES.discussion;
         $viewItemsContainer.removeClass().addClass(itemViewMode);
     };
@@ -6538,7 +6557,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * viewCollection -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.viewCollection = function() {
+    var viewCollection = function() {
         itemViewMode = VIEW_MODES.collection;
         $viewItemsContainer.removeClass().addClass(itemViewMode);
     };
@@ -6546,7 +6565,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * refreshView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.refreshView = function() {
+    var refreshView = function() {
 
         viewItems(currentViewTagID);
     };
@@ -6554,7 +6573,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * showGridView -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.showGridView = function() {
+    var showGridView = function() {
 
         // show grid for current tag
         GridView.showGridView(currentViewTagID, filterType, $filterTypeField.text(), isFiltered);
@@ -6829,7 +6848,7 @@ tmz.initializeModules = function() {
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * viewRandomItem -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-    ItemView.viewRandomItem = function() {
+    var viewRandomItem = function() {
 
         // get random id and view item for id
         var id = ItemData.getRandomItemID();
@@ -6842,7 +6861,7 @@ tmz.initializeModules = function() {
     var viewItem = function(id) {
 
         // get item
-        var item = ItemView.getItem(id);
+        var item = getItem(id);
 
         // show item detail page
         DetailView.viewItemDetail(item);
@@ -6926,7 +6945,7 @@ tmz.initializeModules = function() {
     var setQuickAttribute = function($button, id, attributeID) {
 
         // get item by id
-        var item = ItemView.getItem(id);
+        var item = getItem(id);
 
         // flag for item refresh
         queueDisplayRefresh = true;
@@ -7257,6 +7276,32 @@ tmz.initializeModules = function() {
             $itemResultsContainer.nanoScroller();
         }
     };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * PUBLIC METHODS -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var publicMethods = {
+        'init': init,
+        'createEventHandlers': createEventHandlers,
+        'getItem': getItem,
+        'clearItemView': clearItemView,
+        'resizePanel': resizePanel,
+        'loggedInView': loggedInView,
+        'initializeUserItems': initializeUserItems,
+        'initializeUserItems_result': initializeUserItems_result,
+        'updateListDeletions': updateListDeletions,
+        'updateListAdditions': updateListAdditions,
+        'updateListAttributesChanged': updateListAttributesChanged,
+        'showListView': showListView,
+        'viewDiscussion': viewDiscussion,
+        'viewCollection': viewCollection,
+        'refreshView': refreshView,
+        'showGridView': showGridView,
+        'viewRandomItem': viewRandomItem
+    };
+
+    $.extend(ItemView, publicMethods);
 
 })(tmz.module('itemView'), tmz, jQuery, _, List);
 
