@@ -2498,6 +2498,7 @@ tmz.initializeModules = function() {
         $successAlert_profile = $updateProfileModal.find('.alert-success'),
         $errorAlert_profile = $updateProfileModal.find('.alert-error'),
         $submitButton_profile = $updateProfileModal.find('#updateAccount_btn'),
+        $profileURL = $updateProfileModal.find('.profileURL'),
 
         // change password
         $changePasswordModal = $('#changePassword-modal'),
@@ -3534,6 +3535,8 @@ tmz.initializeModules = function() {
         $userNameUpdate_profile.val(userData.userName);
         $emailUpdate_profile.val(userData.email);
 
+        $profileURL.text('http://www.gamedex.net/' + userData.userName);
+
         // show modal
         $updateProfileModal.modal('show');
     };
@@ -3639,6 +3642,8 @@ tmz.initializeModules = function() {
 
                 // update success
                 if (data.status === 'success') {
+
+                    $profileURL.text('http://www.gamedex.net/' + userName);
 
                     // update user email
                     $loggedInButton.find('.userEmail').text(email);

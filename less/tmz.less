@@ -251,8 +251,11 @@ html {
 
 	.well {
 		padding: 11px 15px 11px 0px;
-		background-color: #CFD7DB;
-		border: 1px solid #B8B8B8;
+		background-color: transparent;
+		border: none;
+		-webkit-box-shadow: none;
+		-moz-box-shadow: none;
+		box-shadow: none;
 
 		label {
 			color: #677279;
@@ -1628,14 +1631,20 @@ img {
 	}
 
 	.miniLogo {
-		background-image:  url('http://d2sifwlm28j6up.cloudfront.net/logo_small.png');
+		.opacity(.7);
+		.transition(.4s, opacity);
+		background-image: url('http://d2sifwlm28j6up.cloudfront.net/logo_small.png');
 		float: left;
 		position: relative;
-		height: 22px;
-		width: 129px;
-		top: 6px;
+		height: 20px;
+		width: 127px;
+		top: 8px;
 		left: -1px;
 		cursor: pointer;
+
+		&:hover {
+			.opacity(1);
+		}
 	}
 }
 
@@ -1671,6 +1680,11 @@ img {
 
 /* COMPONENT STYLES
 -----------------------------------------------------------*/
+
+#profileURLAlert {
+	margin-bottom: 5px;
+	display: block;
+}
 
 .loadingStatus {
 	display: none;
@@ -1731,7 +1745,7 @@ img {
 
 	&.favorable {
 		.metacritic_favorable();
-		color: #3b5212;
+		color: #fff;
 		&:hover {
 			.metacritic_favorable_over();
 		}
@@ -1745,7 +1759,7 @@ img {
 	}
 	&.unfavorable {
 		.metacritic_unfavorable();
-		color: #622615;
+		color: #fff;
 		&:hover {
 			.metacritic_unfavorable_over();
 		}
