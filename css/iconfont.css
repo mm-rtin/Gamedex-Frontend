@@ -26,8 +26,8 @@
     font-style: normal;
     speak: none;
     font-weight: normal;
-    line-height: 1;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.2;
+    text-shadow: none;
 }
 .icon-gamepad:before {
     content: "\e000";

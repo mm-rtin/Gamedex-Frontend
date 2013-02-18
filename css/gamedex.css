@@ -48,7 +48,7 @@ body:after{clear:both;}
 .unselectable{-moz-user-select:-moz-none;-khtml-user-select:none;-webkit-user-select:none;}
 .clear{clear:both;}
 @-moz-keyframes bounceOut{0%{box-shadow:0 0 0 2px #fff;} 25%{box-shadow:0 0 0 0px #fff;} 50%{box-shadow:0 0 0 4px #fff;} 75%{box-shadow:0 0 0 2px #fff;} 100%{box-shadow:0 0 0 2px #fff;}}@-webkit-keyframes bounceOut{0%{box-shadow:0 0 0 2px #fff;} 25%{box-shadow:0 0 0 0px #fff;} 50%{box-shadow:0 0 0 4px #fff;} 75%{box-shadow:0 0 0 2px #fff;} 100%{box-shadow:0 0 0 2px #fff;}}html{}html [class^="icon-"]:before,html [class*=" icon-"]:before{font-weight:normal;font-size:16px;}
-html .icon-filter:before{font-size:14px !important;}
+html .icon-filter:before{font-size:14px !important;position:relative;top:-2px;}
 html .icon-caret-right{line-height:27px;}
 html .icon-close:before{font-size:13px !important;}
 html .icon-th-large:before,html .icon-th-list:before,html .icon-th:before{font-size:17px !important;}

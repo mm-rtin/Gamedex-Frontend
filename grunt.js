@@ -99,8 +99,8 @@ module.exports = function(grunt) {
         // less
         less: {
             all: {
-                src: 'less/tmz.less',
-                dest: 'css/tmz.css',
+                src: 'less/gamedex.less',
+                dest: 'css/gamedex.css',
                 options: {
                     compress: true
                 }
