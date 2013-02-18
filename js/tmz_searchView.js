@@ -13,7 +13,7 @@
 		ItemLinker = tmz.module('itemLinker'),
 
 		// constants
-		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
+		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2, 'REVIEWED': 3},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
 		TIME_TO_SUBMIT_QUERY = 400,                             // the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
@@ -21,6 +21,8 @@
 		PANEL_HEIGHT_OFFSET_INFO = 503,
 		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
+		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1000,
+		NUMBER_OF_LIST_PAGES_TO_LOAD = 1,
 
 		// timeout
 		searchFieldTimeout = null,
@@ -32,16 +34,26 @@
 		sortedSearchResults = [],
 
 		// properties
-		listType = null,
 		currentTab = TAB_IDS['#searchTab'],
-		searchTabScrollPosition = 0,
+
+		infiniteScrollDisabled = false,
+		ignUpcomingListPagesLoaded = -1,
+		ignReleasedListPagesLoaded = -1,
+		ignUpcomingListPagesEnded = false,
+		ignReviewedListPagesEnded = false,
+
+		listType = null,
 		listTabScrollPosition = 0,
-		searchPlatform = null,
 		listPlatform = null,
-		searchDisplayType = DISPLAY_TYPE.Icons,
 		listDisplayType = DISPLAY_TYPE.Icons,
+
+		searchTabScrollPosition = 0,
+		searchPlatform = null,
+		searchDisplayType = DISPLAY_TYPE.Icons,
+
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 		scrollSaved = false,
+
 
 		// list
 		itemList = null,
@@ -141,6 +153,24 @@
 			$listResultsContainer.nanoScroller();
 		}, 1500);
 
+		// setup infinite scroll event
+		$listResultsContent.on('scroll', function(e) {
+
+			var scrollPos = $listResultsContent.scrollTop(),
+				contentHeight = $listResults.height(),
+				containerHeight = $listResultsContent.height(),
+
+				posToEnd = contentHeight - (scrollPos + containerHeight);
+
+			if (posToEnd < DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER) {
+
+				if (!infiniteScrollDisabled) {
+					infiniteScrollDisabled = true;
+					SearchView.loadNextListPages();
+				}
+			}
+		});
+
 		// init BootstrapSubMenu (bootstrap sub menu)
 		$legacySubNav.BootstrapSubMenu({'$mainNav': $searchPlatforms});
 	};
@@ -220,7 +250,7 @@
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (upcoming/released games)
-			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED) {
+			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED) {
 				changeDisplayType($(this).attr('data-content'), false, $(this));
 			}
 		});
@@ -285,6 +315,8 @@
 		// get model data
 		var templateData = {'listResults': items};
 
+		console.info('render list', items, order);
+
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
@@ -333,14 +365,33 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loadNextListPages -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.loadNextListPages = function() {
+
+		console.info('load next', listType);
+
+		switch (listType) {
+			case LIST_TYPE.POPULAR:
+				break;
+
+			case LIST_TYPE.UPCOMING:
+				SearchView.getIGNUpcomingList(listPlatform, ignUpcomingListPagesLoaded + 1);
+				break;
+
+			case LIST_TYPE.RELEASED:
+				break;
+
+			case LIST_TYPE.REVIEWED:
+				SearchView.getIGNReviewedList(listPlatform, ignReleasedListPagesLoaded + 1);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getGamestatsPopularityListByPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
-
-		$listLoadingStatus.fadeIn();
-
-		// clear listTable
-		$listTable.empty();
 
 		// get popular games
 		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
@@ -351,37 +402,67 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getIGNUpcomingListByPlatform -
+	* getIGNUpcomingList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getIGNUpcomingListByPlatform = function(platform) {
+	SearchView.getIGNUpcomingList = function(platform, page) {
 
-		$listLoadingStatus.fadeIn();
+		if (ignUpcomingListPagesEnded) {
+			return;
+		}
 
-		// clear listTable
-		$listTable.empty();
-
-		// get upcoming games (page 1)
-		IGN.getUpcomingGames(platform.ign, 0, listResult);
-
-		// get upcoming games (page 2)
-		IGN.getUpcomingGames(platform.ign, 1, listResult);
+		// get upcoming games (page 1..2)
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getUpcomingGames(platform.ign, page + i, listResult);
+			console.info('load page: ', page + i);
+		}
 
 		function listResult(data) {
+
+			if (data.length === 0) {
+				console.info('end')
+				ignUpcomingListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
 			getList_result(data, 'asc', LIST_TYPE.UPCOMING);
+			ignUpcomingListPagesLoaded++;
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getReleasedList -
+	* getIGNReviewedList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getReleasedList = function(platform) {
+	SearchView.getIGNReviewedList = function(platform, page) {
+
+		if (ignReviewedListPagesEnded) {
+			return;
+		}
+
+		// get reviewed games (page 1)
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getReviewedGames(platform.ign, page + i, listResult);
+			console.info('load page: ', page + i);
+		}
+
+		function listResult(data) {
+
+			if (data.length === 0) {
+				console.info('end')
+				ignReviewedListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
+			getList_result(data, 'desc', LIST_TYPE.REVIEWED);
+			ignReleasedListPagesLoaded++;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGTReleasedList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.getGTReleasedList = function(platform) {
 
 		var numberOfWeeks = 14;
-
-		$listLoadingStatus.fadeIn();
-
-		// clear listTable
-		$listTable.empty();
 
 		// get current date (start of week)
 		var startWeek = moment().day(0);
@@ -729,7 +810,7 @@
 					listType = LIST_TYPE.POPULAR;
 					break;
 
-				// upcoming games
+				// ign upcoming games
 				case 1:
 
 					// set toggle button and enable display options
@@ -743,7 +824,7 @@
 					listType = LIST_TYPE.UPCOMING;
 					break;
 
-				// released games
+				// gt released games
 				case 2:
 
 					// set toggle button and enable display options
@@ -755,6 +836,20 @@
 					$listTypeName.text('Released');
 
 					listType = LIST_TYPE.RELEASED;
+					break;
+
+				// ign reviewed games
+				case 3:
+
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
+
+					// set title
+					$listTypeName.text('Reviewed');
+
+					listType = LIST_TYPE.REVIEWED;
 					break;
 			}
 
@@ -816,8 +911,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList = function(listType) {
 
+		infiniteScrollDisabled = false;
+		ignReviewedListPagesEnded = false;
+		ignUpcomingListPagesEnded = false;
+		ignUpcomingListPagesLoaded = -1;
+		ignReleasedListPagesLoaded = -1;
+
 		// reset platform menu
 		renderListPlatformMenu();
+
+		$listLoadingStatus.fadeIn();
+		$listTable.empty();
 
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
@@ -827,18 +931,22 @@
 
 			case LIST_TYPE.UPCOMING:
 				resetListName();
-				SearchView.getIGNUpcomingListByPlatform(listPlatform);
+				SearchView.getIGNUpcomingList(listPlatform, 0);
 				break;
 
 			case LIST_TYPE.RELEASED:
-				SearchView.getReleasedList(listPlatform);
+				SearchView.getGTReleasedList(listPlatform);
+				break;
+
+			case LIST_TYPE.REVIEWED:
+				SearchView.getIGNReviewedList(listPlatform, 0);
 				break;
 		}
 
 		// reset platform name - to remove list counts
 		function resetListName() {
 			$listPlatformsName.text($listPlatformsName.text().split(' (')[0]);
-		};
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

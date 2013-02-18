@@ -3815,7 +3815,7 @@ tmz.initializeModules = function() {
 		ItemLinker = tmz.module('itemLinker'),
 
 		// constants
-		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2},
+		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2, 'REVIEWED': 3},
 		TAB_IDS = {'#searchTab': 0, '#listTab': 1},
 		TIME_TO_SUBMIT_QUERY = 400,                             // the number of miliseconds to wait before submiting search query
 		DISPLAY_TYPE = {'List': 0, 'Icons': 1, 'Cover': 2},
@@ -3823,6 +3823,8 @@ tmz.initializeModules = function() {
 		PANEL_HEIGHT_OFFSET_INFO = 503,
 		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
+		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1000,
+		NUMBER_OF_LIST_PAGES_TO_LOAD = 1,
 
 		// timeout
 		searchFieldTimeout = null,
@@ -3834,16 +3836,26 @@ tmz.initializeModules = function() {
 		sortedSearchResults = [],
 
 		// properties
-		listType = null,
 		currentTab = TAB_IDS['#searchTab'],
-		searchTabScrollPosition = 0,
+
+		infiniteScrollDisabled = false,
+		ignUpcomingListPagesLoaded = -1,
+		ignReleasedListPagesLoaded = -1,
+		ignUpcomingListPagesEnded = false,
+		ignReviewedListPagesEnded = false,
+
+		listType = null,
 		listTabScrollPosition = 0,
-		searchPlatform = null,
 		listPlatform = null,
-		searchDisplayType = DISPLAY_TYPE.Icons,
 		listDisplayType = DISPLAY_TYPE.Icons,
+
+		searchTabScrollPosition = 0,
+		searchPlatform = null,
+		searchDisplayType = DISPLAY_TYPE.Icons,
+
 		panelHeightOffset = PANEL_HEIGHT_OFFSET_INFO,
 		scrollSaved = false,
+
 
 		// list
 		itemList = null,
@@ -3943,6 +3955,24 @@ tmz.initializeModules = function() {
 			$listResultsContainer.nanoScroller();
 		}, 1500);
 
+		// setup infinite scroll event
+		$listResultsContent.on('scroll', function(e) {
+
+			var scrollPos = $listResultsContent.scrollTop(),
+				contentHeight = $listResults.height(),
+				containerHeight = $listResultsContent.height(),
+
+				posToEnd = contentHeight - (scrollPos + containerHeight);
+
+			if (posToEnd < DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER) {
+
+				if (!infiniteScrollDisabled) {
+					infiniteScrollDisabled = true;
+					SearchView.loadNextListPages();
+				}
+			}
+		});
+
 		// init BootstrapSubMenu (bootstrap sub menu)
 		$legacySubNav.BootstrapSubMenu({'$mainNav': $searchPlatforms});
 	};
@@ -4022,7 +4052,7 @@ tmz.initializeModules = function() {
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (upcoming/released games)
-			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED) {
+			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED) {
 				changeDisplayType($(this).attr('data-content'), false, $(this));
 			}
 		});
@@ -4087,6 +4117,8 @@ tmz.initializeModules = function() {
 		// get model data
 		var templateData = {'listResults': items};
 
+		console.info('render list', items, order);
+
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
@@ -4135,14 +4167,33 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* loadNextListPages -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.loadNextListPages = function() {
+
+		console.info('load next', listType);
+
+		switch (listType) {
+			case LIST_TYPE.POPULAR:
+				break;
+
+			case LIST_TYPE.UPCOMING:
+				SearchView.getIGNUpcomingList(listPlatform, ignUpcomingListPagesLoaded + 1);
+				break;
+
+			case LIST_TYPE.RELEASED:
+				break;
+
+			case LIST_TYPE.REVIEWED:
+				SearchView.getIGNReviewedList(listPlatform, ignReleasedListPagesLoaded + 1);
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getGamestatsPopularityListByPlatform -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
-
-		$listLoadingStatus.fadeIn();
-
-		// clear listTable
-		$listTable.empty();
 
 		// get popular games
 		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
@@ -4153,37 +4204,67 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getIGNUpcomingListByPlatform -
+	* getIGNUpcomingList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getIGNUpcomingListByPlatform = function(platform) {
+	SearchView.getIGNUpcomingList = function(platform, page) {
 
-		$listLoadingStatus.fadeIn();
+		if (ignUpcomingListPagesEnded) {
+			return;
+		}
 
-		// clear listTable
-		$listTable.empty();
-
-		// get upcoming games (page 1)
-		IGN.getUpcomingGames(platform.ign, 0, listResult);
-
-		// get upcoming games (page 2)
-		IGN.getUpcomingGames(platform.ign, 1, listResult);
+		// get upcoming games (page 1..2)
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getUpcomingGames(platform.ign, page + i, listResult);
+			console.info('load page: ', page + i);
+		}
 
 		function listResult(data) {
+
+			if (data.length === 0) {
+				console.info('end')
+				ignUpcomingListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
 			getList_result(data, 'asc', LIST_TYPE.UPCOMING);
+			ignUpcomingListPagesLoaded++;
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getReleasedList -
+	* getIGNReviewedList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getReleasedList = function(platform) {
+	SearchView.getIGNReviewedList = function(platform, page) {
+
+		if (ignReviewedListPagesEnded) {
+			return;
+		}
+
+		// get reviewed games (page 1)
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getReviewedGames(platform.ign, page + i, listResult);
+			console.info('load page: ', page + i);
+		}
+
+		function listResult(data) {
+
+			if (data.length === 0) {
+				console.info('end')
+				ignReviewedListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
+			getList_result(data, 'desc', LIST_TYPE.REVIEWED);
+			ignReleasedListPagesLoaded++;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGTReleasedList -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	SearchView.getGTReleasedList = function(platform) {
 
 		var numberOfWeeks = 14;
-
-		$listLoadingStatus.fadeIn();
-
-		// clear listTable
-		$listTable.empty();
 
 		// get current date (start of week)
 		var startWeek = moment().day(0);
@@ -4531,7 +4612,7 @@ tmz.initializeModules = function() {
 					listType = LIST_TYPE.POPULAR;
 					break;
 
-				// upcoming games
+				// ign upcoming games
 				case 1:
 
 					// set toggle button and enable display options
@@ -4545,7 +4626,7 @@ tmz.initializeModules = function() {
 					listType = LIST_TYPE.UPCOMING;
 					break;
 
-				// released games
+				// gt released games
 				case 2:
 
 					// set toggle button and enable display options
@@ -4557,6 +4638,20 @@ tmz.initializeModules = function() {
 					$listTypeName.text('Released');
 
 					listType = LIST_TYPE.RELEASED;
+					break;
+
+				// ign reviewed games
+				case 3:
+
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
+
+					// set title
+					$listTypeName.text('Reviewed');
+
+					listType = LIST_TYPE.REVIEWED;
 					break;
 			}
 
@@ -4618,8 +4713,17 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList = function(listType) {
 
+		infiniteScrollDisabled = false;
+		ignReviewedListPagesEnded = false;
+		ignUpcomingListPagesEnded = false;
+		ignUpcomingListPagesLoaded = -1;
+		ignReleasedListPagesLoaded = -1;
+
 		// reset platform menu
 		renderListPlatformMenu();
+
+		$listLoadingStatus.fadeIn();
+		$listTable.empty();
 
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
@@ -4629,18 +4733,22 @@ tmz.initializeModules = function() {
 
 			case LIST_TYPE.UPCOMING:
 				resetListName();
-				SearchView.getIGNUpcomingListByPlatform(listPlatform);
+				SearchView.getIGNUpcomingList(listPlatform, 0);
 				break;
 
 			case LIST_TYPE.RELEASED:
-				SearchView.getReleasedList(listPlatform);
+				SearchView.getGTReleasedList(listPlatform);
+				break;
+
+			case LIST_TYPE.REVIEWED:
+				SearchView.getIGNReviewedList(listPlatform, 0);
 				break;
 		}
 
 		// reset platform name - to remove list counts
 		function resetListName() {
 			$listPlatformsName.text($listPlatformsName.text().split(' (')[0]);
-		};
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -10977,15 +11085,17 @@ tmz.initializeModules = function() {
 // IGN
 (function(IGN, tmz, $, _) {
 
-    // module references
+    // module referenceswadwadwa
 
 	// properties
 
 	// REST URL
-	var UPCOMING_LIST_URL = tmz.api + 'list/upcoming/',
+	var UPCOMING_LIST_URL = tmz.api + 'list/ign/upcoming/',
+		REVIEWED_LIST_URL = tmz.api + 'list/ign/reviewed/',
 
 		// data
 		IGNUpcomingListCache = {};
+		IGNReviewedListCache = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUpcomingGames -
@@ -10993,7 +11103,7 @@ tmz.initializeModules = function() {
 	IGN.getUpcomingGames = function(platform, page, onSuccess) {
 
 		// find in cache first
-		var cachedList = getCachedData(platform, page);
+		var cachedList = getCachedData(IGNUpcomingListCache, platform, page);
 
 		if (cachedList) {
 
@@ -11024,27 +11134,58 @@ tmz.initializeModules = function() {
 		}
 	};
 
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getReviewedGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	IGN.getReviewedGames = function(platform, page, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(IGNReviewedListCache, platform, page);
+
+		if (cachedList) {
+
+			// return list
+			onSuccess(cachedList);
+
+		// fetch list data
+		} else {
+			var requestData = {
+				'platform': platform,
+				'page': page
+			};
+
+			$.ajax({
+				url: REVIEWED_LIST_URL,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+
+					// cache result
+					IGNReviewedListCache[platform + '_' + page] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
+				}
+			});
+		}
+	};
+
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getCachedData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(platform, page) {
+	var getCachedData = function(cache, platform, page) {
 
 		var IGNUpcomingList = null;
 
-		if (typeof IGNUpcomingListCache[platform + '_' + page] !== 'undefined') {
-			IGNUpcomingList = IGNUpcomingListCache[platform + '_' + page];
+		if (typeof cache[platform + '_' + page] !== 'undefined') {
+			IGNUpcomingList = cache[platform + '_' + page];
 		}
 
 		return IGNUpcomingList;
 	};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToIGNCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToIGNCache = function() {
-
-
-	};
 
 })(tmz.module('ign'), tmz, jQuery, _);
 
@@ -11059,7 +11200,7 @@ tmz.initializeModules = function() {
 	// properties
 
 	// REST URL
-	var RELEASED_LIST_URL = tmz.api + 'list/released/',
+	var RELEASED_LIST_URL = tmz.api + 'list/gt/released/',
 
 		// data
 		releasedListCache = {},

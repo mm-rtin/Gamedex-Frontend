@@ -126,6 +126,10 @@ html {
 		position: relative;
 		top: -2px;
 	}
+	.icon-amazon:before {
+		position: relative;
+		top: -2px;
+	}
 	.icon-caret-right {
 		line-height: 27px;
 	}
@@ -404,12 +408,37 @@ html {
 		overflow: inherit;
 		display: block;
 	}
-	.nav-tabs a {
-		color: #3C3C3C;
+
+	.nav-tabs > li > a {
+		height: 12px;
+		background-color: #F0F0F0;
+		border: 1px solid #DBDBDB;
+		font-weight: 600;
+		color: #888;
+		font-size: 13px;
+		border-bottom: none;
+		line-height: 12px;
+		top: 6px;
+		position: relative;
 	}
-	.nav-tabs a:hover {
-		color: #313131;
+	.nav-tabs > .active > a, .nav-tabs > .active > a:hover {
+		height: 18px;
+		color: #696969;
+		background-color: #ffffff;
+		border: 1px solid #ddd;
+		border-bottom-color: transparent;
+		cursor: default;
+		position: relative;
+		top: 0px;
+		line-height: 16px;
 	}
+
+	.nav-tabs > li > a:hover {
+		background-color: #767E83;
+		color: #fff;
+		border-color: #7A7A7A;
+	}
+
 
 	/* TITLE BAR NAV
 	-----------------------------------------------------------*/
@@ -471,7 +500,7 @@ html {
 	/* NAVBAR
 	-----------------------------------------------------------*/
 	.navbar-static {
-		margin-bottom: 4px;
+		margin-bottom: 8px;
 
 		.leftCap {
 			float: left;
@@ -512,9 +541,20 @@ html {
 		}
 
 		a {
-			color: #3C3C3C;
+			color: #5C5C5C;
+			font-weight: 600;
+			font-size: 13px;
+
 			&:hover {
-				color: #313131;
+				border-radius: 4px;
+				margin-right: 0px;
+				background-color: #767E83;
+				color: #fff;
+				text-shadow: none;
+
+				i {
+					color: #fff;
+				}
 			}
 		}
 	}
@@ -2083,7 +2123,7 @@ img {
 /* OPTIONS
 -----------------------------------------------------------*/
 .optionsGroup {
-	margin: 0px 0px 8px 0px;
+	margin: 0px 0px 24px 0px;
 }
 
 .filterOptions {
@@ -2202,6 +2242,7 @@ img {
 
 #searchFieldContainer {
 	min-width: 267px;
+	margin-bottom: 10px;
 }
 
 #search_btn {
@@ -2269,11 +2310,13 @@ img {
 }
 .searchDisplayOptions {
 	margin-right: -13px;
+	position: absolute;
 }
 .btn-group + .listDisplayOptions.btn-group {
 	display: none;
 	margin-left: 0px;
 	margin-right: -10px;
+	position: absolute;
 }
 
 #listPlatforms {
@@ -2288,6 +2331,7 @@ img {
 	position: relative;
 	z-index: 1;
 	margin-bottom: 8px;
+	margin-left: 100px;
 }
 
 #searchResultsContainer {
@@ -2476,6 +2520,7 @@ img {
 #itemDetails {
 
 	#detailTab {
+		margin-top: 20px;
 		margin-bottom: 5px;
 	}
 

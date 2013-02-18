@@ -8,7 +8,7 @@
 	// properties
 
 	// REST URL
-	var RELEASED_LIST_URL = tmz.api + 'list/released/',
+	var RELEASED_LIST_URL = tmz.api + 'list/gt/released/',
 
 		// data
 		releasedListCache = {},
