@@ -1,9 +1,9 @@
 // Storage
-(function(Storage, tmz, $, _) {
+(function(Storage, gamedex, $, _) {
 	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user');
+	var User = gamedex.module('user');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* get
@@ -108,5 +108,5 @@
 		localStorage.clear();
 	};
 
-})(tmz.module('storage'), tmz, jQuery, _);
+})(gamedex.module('storage'), gamedex, jQuery, _);
 

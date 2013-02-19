@@ -1,11 +1,11 @@
 // ItemLinker
-(function(ItemLinker, tmz, $, _) {
+(function(ItemLinker, gamedex, $, _) {
 	"use strict";
 
 	// Dependencies
-	var Amazon = tmz.module('amazon'),
-		GiantBomb = tmz.module('giantbomb'),
-		Utilities = tmz.module('utilities');
+	var Amazon = gamedex.module('amazon'),
+		GiantBomb = gamedex.module('giantbomb'),
+		Utilities = gamedex.module('utilities');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* standardizeTitle -
@@ -406,4 +406,4 @@
 
 	};
 
-})(tmz.module('itemLinker'), tmz, jQuery, _);
+})(gamedex.module('itemLinker'), gamedex, jQuery, _);

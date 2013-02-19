@@ -1,9 +1,9 @@
 // Amazon
-(function(Amazon, tmz, $, _, moment) {
+(function(Amazon, gamedex, $, _, moment) {
 	"use strict";
 
     // module references
-    var Utilities = tmz.module('utilities'),
+    var Utilities = gamedex.module('utilities'),
 
 		// constants
 		FILTERED_NAMES = [
@@ -36,8 +36,8 @@
 		],
 
 		// REST URLS
-		AMAZON_SEARCH_URL = tmz.api + 'amazon/search/',
-		AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/',
+		AMAZON_SEARCH_URL = gamedex.api + 'amazon/search/',
+		AMAZON_DETAIL_URL = gamedex.api + 'amazon/detail/',
 
 		// constants
 		RETRY_AMAZON_MIN = 500,
@@ -416,5 +416,5 @@
 		return offerItem;
 	};
 
-})(tmz.module('amazon'), tmz, jQuery, _, moment);
+})(gamedex.module('amazon'), gamedex, jQuery, _, moment);
 

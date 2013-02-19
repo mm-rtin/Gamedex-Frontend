@@ -1,19 +1,19 @@
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG DATA - methods for interacting with server side tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-(function(TagData, tmz, $, _) {
+(function(TagData, gamedex, $, _) {
 	"use strict";
 
 	// constants
-	var TAG_GET_URL = tmz.api + 'tag/',
-		TAG_ADD_URL = tmz.api + 'tag/add/',
-		TAG_UPDATE_URL = tmz.api + 'tag/update/',
-		TAG_DELETE_URL = tmz.api + 'tag/delete/',
+	var TAG_GET_URL = gamedex.api + 'tag/',
+		TAG_ADD_URL = gamedex.api + 'tag/add/',
+		TAG_UPDATE_URL = gamedex.api + 'tag/update/',
+		TAG_DELETE_URL = gamedex.api + 'tag/delete/',
 
 		// Dependencies
-		User = tmz.module('user'),
-		Storage = tmz.module('storage'),
-		ItemData = tmz.module('itemData'),
+		User = gamedex.module('user'),
+		Storage = gamedex.module('storage'),
+		ItemData = gamedex.module('itemData'),
 
 		// local represenation of localStorage data model
 		storedTags = {};
@@ -168,5 +168,5 @@
 	};
 
 
-})(tmz.module('tagData'), tmz, jQuery, _);
+})(gamedex.module('tagData'), gamedex, jQuery, _);
 

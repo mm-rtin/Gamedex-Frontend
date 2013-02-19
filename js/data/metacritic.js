@@ -1,15 +1,15 @@
 // Metacritic
-(function(Metacritic, tmz, $, _) {
+(function(Metacritic, gamedex, $, _) {
 	"use strict";
 
     // module references
-	var Amazon = tmz.module('amazon'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemData = tmz.module('itemData'),
+	var Amazon = gamedex.module('amazon'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemData = gamedex.module('itemData'),
 
 		// REST URL
-		METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search/',
-		METACRITIC_CACHE_URL = tmz.api + 'metacritic/cache/',
+		METACRITIC_SEARCH_URL = gamedex.api + 'metacritic/search/',
+		METACRITIC_CACHE_URL = gamedex.api + 'metacritic/cache/',
 
 		// properties
 		metacriticDomain = 'metacritic.com',
@@ -307,5 +307,5 @@
 		return bestMatch;
 	};
 
-})(tmz.module('metacritic'), tmz, jQuery, _);
+})(gamedex.module('metacritic'), gamedex, jQuery, _);
 

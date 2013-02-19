@@ -1,23 +1,23 @@
 // USER
-(function(User, tmz, $, _, alertify) {
+(function(User, gamedex, $, _, alertify) {
 	"use strict";
 
 	// Dependencies
-	var Utilities = tmz.module('utilities'),
-		Storage = tmz.module('storage'),
-		ItemView = tmz.module('itemView'),
-		ItemCache = tmz.module('itemCache'),
+	var Utilities = gamedex.module('utilities'),
+		Storage = gamedex.module('storage'),
+		ItemView = gamedex.module('itemView'),
+		ItemCache = gamedex.module('itemCache'),
 
 		// constants
-		USER_LOGIN_URL = tmz.api + 'user/login/',
-		USER_LOGOUT_URL = tmz.api + 'user/logout/',
-		USER_VIEW_URL = tmz.api + 'user/',
-		USER_CREATE_URL = tmz.api + 'user/create/',
-		USER_DELETE_URL = tmz.api + 'user/delete/',
-		USER_UPDATE_URL = tmz.api + 'user/update/',
-		USER_SEND_RESET_CODE_URL = tmz.api + 'user/resetcode/send/',
-		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'user/resetcode/submit/',
-		USER_UPDATE_PASSWORD_URL = tmz.api + 'user/password/update/',
+		USER_LOGIN_URL = gamedex.api + 'user/login/',
+		USER_LOGOUT_URL = gamedex.api + 'user/logout/',
+		USER_VIEW_URL = gamedex.api + 'user/',
+		USER_CREATE_URL = gamedex.api + 'user/create/',
+		USER_DELETE_URL = gamedex.api + 'user/delete/',
+		USER_UPDATE_URL = gamedex.api + 'user/update/',
+		USER_SEND_RESET_CODE_URL = gamedex.api + 'user/resetcode/send/',
+		USER_SUBMIT_RESET_CODE_URL = gamedex.api + 'user/resetcode/submit/',
+		USER_UPDATE_PASSWORD_URL = gamedex.api + 'user/password/update/',
 
 		// data
 		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
@@ -430,4 +430,4 @@
 		}
 	};
 
-})(tmz.module('user'), tmz, jQuery, _, alertify);
+})(gamedex.module('user'), gamedex, jQuery, _, alertify);

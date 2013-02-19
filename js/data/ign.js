@@ -1,17 +1,54 @@
 // IGN
-(function(IGN, tmz, $, _) {
-
-    // module referenceswadwadwa
-
-	// properties
+(function(IGN, gamedex, $, _) {
 
 	// REST URL
-	var UPCOMING_LIST_URL = tmz.api + 'list/ign/upcoming/',
-		REVIEWED_LIST_URL = tmz.api + 'list/ign/reviewed/',
+	var UPCOMING_POPULAR_LIST_URL = gamedex.api + 'list/ign/upcoming/popular/',
+		UPCOMING_LIST_URL = gamedex.api + 'list/ign/upcoming/',
+		REVIEWED_LIST_URL = gamedex.api + 'list/ign/reviewed/',
 
 		// data
+		IGNUpcomingPopularListCache = {};
 		IGNUpcomingListCache = {};
 		IGNReviewedListCache = {};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getPopularGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	IGN.getPopularGames = function(platform, page, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(IGNUpcomingPopularListCache, platform, page);
+
+		if (cachedList) {
+
+			// return list
+			onSuccess(cachedList);
+
+		// fetch list data
+		} else {
+			var requestData = {
+				'platform': platform,
+				'page': page
+			};
+
+			$.ajax({
+				url: UPCOMING_POPULAR_LIST_URL,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+
+					// cache result
+					IGNUpcomingPopularListCache[platform + '_' + page] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
+				}
+			});
+		}
+	};
+
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getUpcomingGames -
@@ -103,5 +140,5 @@
 	};
 
 
-})(tmz.module('ign'), tmz, jQuery, _);
+})(gamedex.module('ign'), gamedex, jQuery, _);
 

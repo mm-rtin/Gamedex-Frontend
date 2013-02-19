@@ -1,16 +1,15 @@
 // SEARCH VIEW
-(function(SearchView, tmz, $, _, moment, ListJS) {
+(function(SearchView, gamedex, $, _, moment, ListJS) {
 	"use strict";
 
 	// module references
-	var DetailView = tmz.module('detailView'),
-		Amazon = tmz.module('amazon'),
-		GiantBomb = tmz.module('giantbomb'),
-		Utilities = tmz.module('utilities'),
-		GameStats = tmz.module('gameStats'),
-		IGN = tmz.module('ign'),
-		ReleasedList = tmz.module('releasedList'),
-		ItemLinker = tmz.module('itemLinker'),
+	var DetailView = gamedex.module('detailView'),
+		Amazon = gamedex.module('amazon'),
+		GiantBomb = gamedex.module('giantbomb'),
+		Utilities = gamedex.module('utilities'),
+		IGN = gamedex.module('ign'),
+		ReleasedList = gamedex.module('releasedList'),
+		ItemLinker = gamedex.module('itemLinker'),
 
 		// constants
 		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2, 'REVIEWED': 3},
@@ -37,10 +36,15 @@
 		currentTab = TAB_IDS['#searchTab'],
 
 		infiniteScrollDisabled = false,
+
 		ignUpcomingListPagesLoaded = -1,
 		ignReleasedListPagesLoaded = -1,
+		ignPopularListPagesLoaded = -1,
+
 		ignUpcomingListPagesEnded = false,
 		ignReviewedListPagesEnded = false,
+		ignPopularListPagesEnded = false,
+
 
 		listType = null,
 		listTabScrollPosition = 0,
@@ -250,7 +254,7 @@
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (upcoming/released games)
-			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED) {
+			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED || listType == LIST_TYPE.POPULAR) {
 				changeDisplayType($(this).attr('data-content'), false, $(this));
 			}
 		});
@@ -315,8 +319,6 @@
 		// get model data
 		var templateData = {'listResults': items};
 
-		console.info('render list', items, order);
-
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
@@ -369,10 +371,9 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.loadNextListPages = function() {
 
-		console.info('load next', listType);
-
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
+				SearchView.getIGNPopularList(listPlatform, ignPopularListPagesLoaded + 1);
 				break;
 
 			case LIST_TYPE.UPCOMING:
@@ -389,15 +390,28 @@
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGamestatsPopularityListByPlatform -
+	* getIGNPopularList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
+	SearchView.getIGNPopularList = function(platform, page) {
 
-		// get popular games
-		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
+		if (ignPopularListPagesEnded) {
+			return;
+		}
+
+		// get upcoming games
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getPopularGames(platform.ign, page + i, listResult);
+		}
 
 		function listResult(data) {
-			getList_result(data, 'desc', LIST_TYPE.POPULAR);
+
+			if (data.length === 0) {
+				ignPopularListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
+			getList_result(data, 'asc', LIST_TYPE.POPULAR);
+			ignPopularListPagesLoaded++;
 		}
 	};
 
@@ -413,13 +427,11 @@
 		// get upcoming games (page 1..2)
 		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
 			IGN.getUpcomingGames(platform.ign, page + i, listResult);
-			console.info('load page: ', page + i);
 		}
 
 		function listResult(data) {
 
 			if (data.length === 0) {
-				console.info('end')
 				ignUpcomingListPagesEnded = true;
 			}
 
@@ -441,13 +453,11 @@
 		// get reviewed games (page 1)
 		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
 			IGN.getReviewedGames(platform.ign, page + i, listResult);
-			console.info('load page: ', page + i);
 		}
 
 		function listResult(data) {
 
 			if (data.length === 0) {
-				console.info('end')
 				ignReviewedListPagesEnded = true;
 			}
 
@@ -797,12 +807,11 @@
 
 				// popular games
 				case 0:
-					// disable display options and set to list
 
-					// EXCEPTION:
-					// do not update listDisplayType as popular list cannot have any other view
-					changeDisplayType(0, true);
-					$listDisplayOptions.fadeTo(100, 0.35);
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
 
 					// set title
 					$listTypeName.text('Popular');
@@ -912,10 +921,14 @@
 	var getList = function(listType) {
 
 		infiniteScrollDisabled = false;
+
 		ignReviewedListPagesEnded = false;
 		ignUpcomingListPagesEnded = false;
+		ignPopularListPagesEnded = false;
+
 		ignUpcomingListPagesLoaded = -1;
 		ignReleasedListPagesLoaded = -1;
+		ignPopularListPagesLoaded = -1;
 
 		// reset platform menu
 		renderListPlatformMenu();
@@ -926,7 +939,7 @@
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
 				resetListName();
-				SearchView.getGamestatsPopularityListByPlatform(listPlatform);
+				SearchView.getIGNPopularList(listPlatform, 0);
 				break;
 
 			case LIST_TYPE.UPCOMING:
@@ -1152,4 +1165,4 @@
 		return date2 - date1;
 	};
 
-})(tmz.module('searchView'), tmz, jQuery, _, moment, List);
+})(gamedex.module('searchView'), gamedex, jQuery, _, moment, List);

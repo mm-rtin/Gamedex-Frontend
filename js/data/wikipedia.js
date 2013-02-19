@@ -2,9 +2,9 @@
 (function(Wikipedia) {
 
 	// Dependencies
-	var User = tmz.module('user'),
-		Utilities = tmz.module('utilities'),
-		ItemLinker = tmz.module('itemLinker'),
+	var User = gamedex.module('user'),
+		Utilities = gamedex.module('utilities'),
+		ItemLinker = gamedex.module('itemLinker'),
 
 		// wikipedia cache
 		wikipediaPageCache = {};
@@ -108,5 +108,5 @@
 	};
 
 
-})(tmz.module('wikipedia'));
+})(gamedex.module('wikipedia'));
 

@@ -1,9 +1,9 @@
 // FILTER PANEL
-(function(FilterPanel, tmz, $, _, moment) {
+(function(FilterPanel, gamedex, $, _, moment) {
 	"use strict";
 
 	// dependecies
-	var Utilities = tmz.module('utilities'),
+	var Utilities = gamedex.module('utilities'),
 
 		// node cache
 		$filtersModal = $('#filters-modal'),
@@ -428,4 +428,4 @@
 		return false;
 	};
 
-})(tmz.module('filterPanel'), tmz, $, _, moment);
+})(gamedex.module('filterPanel'), gamedex, $, _, moment);

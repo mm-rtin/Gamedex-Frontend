@@ -1,14 +1,14 @@
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-(function(TagView, tmz, $, _) {
+(function(TagView, gamedex, $, _) {
     "use strict";
 
     // dependecies
-    var User = tmz.module('user'),
-        TagData = tmz.module('tagData'),
-        ItemData = tmz.module('itemData'),
-        ItemCache = tmz.module('itemCache'),
+    var User = gamedex.module('user'),
+        TagData = gamedex.module('tagData'),
+        ItemData = gamedex.module('itemData'),
+        ItemCache = gamedex.module('itemCache'),
 
         // node cache
         $addListContainer = $('#addListContainer'),
@@ -620,4 +620,4 @@
     $.extend(TagView, publicMethods);
 
 
-})(tmz.module('tagView'), tmz, jQuery, _);
+})(gamedex.module('tagView'), gamedex, jQuery, _);

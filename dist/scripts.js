@@ -124,8 +124,8 @@
 })( jQuery);
 
 
-// TMZ namespace
-var tmz = {
+// gamedex namespace
+var gamedex = {
  // Create this closure to contain the cached modules
  module: function() {
     // Internal module cache.
@@ -146,25 +146,25 @@ var tmz = {
 };
 
 // set application properties
-tmz.api = '/';
+gamedex.api = '/';
 
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initialize
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initialize = function() {
+gamedex.initialize = function() {
 
 	// 3rd party libaries
-	tmz.initializeLibraries();
+	gamedex.initializeLibraries();
 
 	// event handling
-	tmz.initializeModules();
+	gamedex.initializeModules();
 };
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initializeLibraries
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initializeLibraries = function() {
+gamedex.initializeLibraries = function() {
 
 	// moment.js calendar config
 	moment.calendar = {
@@ -188,19 +188,19 @@ tmz.initializeLibraries = function() {
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initializeModules
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initializeModules = function() {
+gamedex.initializeModules = function() {
 
 	// module references
-    var itemData = tmz.module('itemData'),
-        searchView = tmz.module('searchView'),
-		detailView = tmz.module('detailView'),
-		itemView = tmz.module('itemView'),
-		tagView = tmz.module('tagView'),
-		gridView = tmz.module('gridView'),
-		filterPanel = tmz.module('filterPanel'),
-        videoPanel = tmz.module('videoPanel'),
-		importView = tmz.module('importView'),
-		siteView = tmz.module('siteView');
+    var itemData = gamedex.module('itemData'),
+        searchView = gamedex.module('searchView'),
+		detailView = gamedex.module('detailView'),
+		itemView = gamedex.module('itemView'),
+		tagView = gamedex.module('tagView'),
+		gridView = gamedex.module('gridView'),
+		filterPanel = gamedex.module('filterPanel'),
+        videoPanel = gamedex.module('videoPanel'),
+		importView = gamedex.module('importView'),
+		siteView = gamedex.module('siteView');
 
 	// initialize modules
     itemData.init();
@@ -217,108 +217,108 @@ tmz.initializeModules = function() {
 
 
 // UTILITIES
-(function(Utilities, tmz, $, _) {
-	"use strict";
+(function(Utilities, gamedex, $, _) {
+    "use strict";
 
-	// Dependencies
-	var User = tmz.module('user'),
+    // Dependencies
+    var User = gamedex.module('user'),
 
-		// amazon nodes, possible platform names and standard name link table
-		PLATFORM_INDEX = [
-			{'id': 'all', 'gt': '', 'ign': '', 'gamestats': '', 'amazon': 468642, alias: 'all', name: 'All Platforms'},
-			{'id': 'pc', 'gt': 'pc', 'ign': 'pc', 'gamestats': 'pc', 'amazon': 229575, alias: 'pc,windows', name: 'PC'},
-			{'id': 'mac', 'gt': '', 'ign': '', 'gamestats': 'pc', 'amazon': 229647, alias: 'mac,macwindows,osx,os x,apple,macintosh', name: 'Mac'},
-			{'id': 'xbox', 'gt': '', 'ign': '', 'gamestats': 'xbox', 'amazon': 537504, alias: 'xbox,microsoft xbox', name: 'Xbox'},
-			{'id': 'x360', 'gt': 'xbox 360', 'ign': 'x360', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'x360,xbox 360,microsoft xbox360,360', name: 'X360'},
-			{'id': 'xbl', 'gt': 'xbla', 'ign': 'x360&downloadType=1', 'gamestats': 'xbox-360', 'amazon': 14220161, alias: 'xbl,xbox live', name: 'XBL'},
-			{'id': 'ds', 'gt': 'ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 11075831, alias: 'ds,nintendo ds', name: 'DS'},
-			{'id': '3ds', 'gt': '3ds', 'ign': 'ds', 'gamestats': 'nintendo-ds', 'amazon': 2622269011,alias: '3ds,nintendo 3ds', name: '3DS'},
-			{'id': 'wii', 'gt': 'wii', 'ign': 'wii', 'gamestats': 'wii', 'amazon': 14218901, alias: 'wii,nintendo wii', name: 'Wii'},
-			{'id': 'wiiu', 'gt': 'wii u', 'ign': 'wii u', 'gamestats': 'wii u', 'amazon': 3075112011, alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu', name: 'Wii U'},
-			{'id': 'ps', 'gt': '', 'ign': '', 'gamestats': 'playstation', 'amazon': 229773, alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation', name: 'PS1'},
-			{'id': 'ps2', 'gt': '', 'ign': '', 'gamestats': 'playstation-2', 'amazon': 301712, alias: 'ps2,playstation 2,playstation2,sony playstation 2', name: 'PS2'},
-			{'id': 'ps3', 'gt': 'ps3', 'ign': 'ps3', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'ps3,playstation 3,playstation3,sony playstation 3', name: 'PS3'},
-			{'id': 'psn', 'gt': '', 'ign': 'ps3&downloadType=201', 'gamestats': 'playstation-3', 'amazon': 14210751, alias: 'psn,playstation network', name: 'PSN'},
-			{'id': 'vita', 'gt': 'vita', 'ign': 'ps-vita', 'gamestats': 'playstation-3', 'amazon': 3010556011, alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita', name: 'Vita'},
-			{'id': 'psp', 'gt': '', 'ign': '', 'gamestats': 'playstation-portable', 'amazon': 11075221, alias: 'psp,sony psp', name: 'PSP'},
-			{'id': 'gc', 'gt': '', 'ign': '', 'gamestats': 'gamecube', 'amazon': 541022, alias: 'gamecube,gc,nintendo gamecube', name: 'Gamecube'},
-			{'id': 'n64', 'gt': '', 'ign': '', 'gamestats': 'nintendo-64', 'amazon': 229763, alias: 'n64,nintendo 64,nintendo64', name: 'N64'},
-			{'id': 'nes', 'gt': '', 'ign': '', 'gamestats': 'nes', 'amazon': 566458, alias: 'nes,nintendo nes', name: 'NES'},
-			{'id': 'snes', 'gt': '', 'ign': '', 'gamestats': 'super-nes', 'amazon': 294945, alias: 'snes,super nintendo,nintendo snes', name: 'SNES'},
-			{'id': 'gba', 'gt': '', 'ign': '', 'gamestats': 'gameboy-advance', 'amazon': 1272528011, alias: 'gb,gameboy', name: 'Game Boy'},
-			{'id': 'gb', 'gt': '', 'ign': '', 'gamestats': 'game-boy', 'amazon': 541020, alias: 'gba,gameboy advance,game boy,advance,gbadvance', name: 'GBA'},
-			{'id': 'gbc', 'gt': '', 'ign': '', 'gamestats': 'game-boy-color', 'amazon': 229783, alias: 'gbc,gbcolor,gameboy color', name: 'GBC'},
-			{'id': 'dc', 'gt': '', 'ign': '', 'gamestats': 'dreamcast', 'amazon': 229793, alias: 'dc,dreamcast,sega dreamcast,sega dream cast,dream cast', name: 'Dreamcast'},
-			{'id': 'saturn', 'gt': '', 'ign': '', 'gamestats': 'saturn', 'amazon': 294944, alias: 'saturn,sega saturn', name: 'Saturn'},
-			{'id': 'genesis', 'gt': '', 'ign': '', 'gamestats': 'genesis', 'amazon': 294943, alias: 'genesis,sega genesis', name: 'Genesis'},
-			{'id': 'gamegear', 'gt': '', 'ign': '', 'gamestats': 'game-gear', 'amazon': 294942, alias: 'gamegear,game gear,sega gamegear', name: 'Gamegear'},
-			{'id': 'segacd', 'gt': '', 'ign': '', 'gamestats': 'sega-cd', 'amazon': 11000181, alias: 'cd,sega cd', name: 'Sega CD'}
-		],
+        // amazon nodes, possible platform names and standard name link table
+        PLATFORM_INDEX = [
+            {id: 'all',       gt: '',           ign: '',          amazon: 468642,       name: 'All Platforms',  alias: 'all'                                                                               },
+            {id: 'pc',        gt: 'pc',         ign: 'pc',        amazon: 229575,       name: 'PC',             alias: 'pc,windows'                                                                        },
+            {id: 'mac',       gt: '',           ign: 'mac',       amazon: 229647,       name: 'Mac',            alias: 'mac,macwindows,osx,os x,apple,macintosh'                                           },
+            {id: 'xbox',      gt: '',           ign: 'xbox',      amazon: 537504,       name: 'Xbox',           alias: 'xbox,microsoft xbox'                                                               },
+            {id: 'x360',      gt: 'xbox 360',   ign: 'xbox-360',  amazon: 14220161,     name: 'X360',           alias: 'x360,xbox 360,microsoft xbox360,360'                                               },
+            {id: 'xbl',       gt: 'xbla',       ign: 'xbox-360',  amazon: 14220161,     name: 'XBL',            alias: 'xbl,xbox live'                                                                     },
+            {id: 'ds',        gt: 'ds',         ign: 'ds',        amazon: 11075831,     name: 'DS',             alias: 'ds,nintendo ds'                                                                    },
+            {id: '3ds',       gt: '3ds',        ign: 'ds',        amazon: 2622269011,   name: '3DS',            alias: '3ds,nintendo 3ds'                                                                  },
+            {id: 'wii',       gt: 'wii',        ign: 'wii',       amazon: 14218901,     name: 'Wii',            alias: 'wii,nintendo wii'                                                                  },
+            {id: 'wiiu',      gt: 'wii u',      ign: 'wii u',     amazon: 3075112011,   name: 'Wii U',          alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu'                                     },
+            {id: 'ps',        gt: '',           ign: 'ps',        amazon: 229773,       name: 'PS1',            alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation' },
+            {id: 'ps2',       gt: '',           ign: 'ps2',       amazon: 301712,       name: 'PS2',            alias: 'ps2,playstation 2,playstation2,sony playstation 2'                                 },
+            {id: 'ps3',       gt: 'ps3',        ign: 'ps3',       amazon: 14210751,     name: 'PS3',            alias: 'ps3,playstation 3,playstation3,sony playstation 3'                                 },
+            {id: 'psn',       gt: '',           ign: 'ps3',       amazon: 14210751,     name: 'PSN',            alias: 'psn,playstation network'                                                           },
+            {id: 'vita',      gt: 'vita',       ign: 'vita',      amazon: 3010556011,   name: 'Vita',           alias: 'vita,psvita,ps vita,playstation vita,sony vita,sony playstation vita'              },
+            {id: 'psp',       gt: '',           ign: 'psp',       amazon: 11075221,     name: 'PSP',            alias: 'psp,sony psp'                                                                      },
+            {id: 'gc',        gt: '',           ign: 'gcn',       amazon: 541022,       name: 'Gamecube',       alias: 'gamecube,gc,nintendo gamecube'                                                     },
+            {id: 'n64',       gt: '',           ign: 'n64',       amazon: 229763,       name: 'N64',            alias: 'n64,nintendo 64,nintendo64'                                                        },
+            {id: 'nes',       gt: '',           ign: '',          amazon: 566458,       name: 'NES',            alias: 'nes,nintendo nes'                                                                  },
+            {id: 'snes',      gt: '',           ign: '',          amazon: 294945,       name: 'SNES',           alias: 'snes,super nintendo,nintendo snes'                                                 },
+            {id: 'gba',       gt: '',           ign: 'gba',       amazon: 1272528011,   name: 'Game Boy',       alias: 'gb,gameboy'                                                                        },
+            {id: 'gb',        gt: '',           ign: 'gb',        amazon: 541020,       name: 'GBA',            alias: 'gba,gameboy advance,game boy,advance,gbadvance'                                    },
+            {id: 'gbc',       gt: '',           ign: '',          amazon: 229783,       name: 'GBC',            alias: 'gbc,gbcolor,gameboy color'                                                         },
+            {id: 'dc',        gt: '',           ign: 'dc',        amazon: 229793,       name: 'Dreamcast',      alias: 'dc,dreamcast,sega dreamcast,sega dream cast,dream cast'                            },
+            {id: 'saturn',    gt: '',           ign: '',          amazon: 294944,       name: 'Saturn',         alias: 'saturn,sega saturn'                                                                },
+            {id: 'genesis',   gt: '',           ign: '',          amazon: 294943,       name: 'Genesis',        alias: 'genesis,sega genesis'                                                              },
+            {id: 'gamegear',  gt: '',           ign: '',          amazon: 294942,       name: 'Gamegear',       alias: 'gamegear,game gear,sega gamegear'                                                  },
+            {id: 'segacd',    gt: '',           ign: '',          amazon: 11000181,     name: 'Sega CD',        alias: 'cd,sega cd'                                                                        }
+        ],
 
-		// constants
-		SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1},
-		PRICE_PROVIDERS = {'Amazon': 0, 'Steam': 1},
-		VIEW_ALL_TAG_ID = '0',
+        // constants
+        SEARCH_PROVIDERS = {'Amazon': 0, 'GiantBomb': 1},
+        PRICE_PROVIDERS = {'Amazon': 0, 'Steam': 1},
+        VIEW_ALL_TAG_ID = '0',
 
-		// 3RD PARTY IMAGE PREFIX
-		AMAZON_IMAGE = {'URL': 'http://ecx.images-amazon.com/images', 'RE': /http:\/\/ecx\.images-amazon\.com\/images/gi, 'TOKEN': '~1~'},
-		GIANTBOMB_IMAGE = {'URL': 'http://media.giantbomb.com/uploads', 'RE': /http:\/\/media\.giantbomb\.com\/uploads/gi, 'TOKEN': '~1~'};
+        // 3RD PARTY IMAGE PREFIX
+        AMAZON_IMAGE = {'URL': 'http://ecx.images-amazon.com/images', 'RE': /http:\/\/ecx\.images-amazon\.com\/images/gi, 'TOKEN': '~1~'},
+        GIANTBOMB_IMAGE = {'URL': 'http://media.giantbomb.com/uploads', 'RE': /http:\/\/media\.giantbomb\.com\/uploads/gi, 'TOKEN': '~1~'};
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getStandardPlatform -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getStandardPlatform = function(platformName) {
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getStandardPlatform -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getStandardPlatform = function(platformName) {
 
-		var re = new RegExp(platformName, 'gi');
+        var re = new RegExp(platformName, 'gi');
 
-		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
-			if (re.test(PLATFORM_INDEX[i].alias)) {
-				return PLATFORM_INDEX[i];
-			}
-		}
-		return PLATFORM_INDEX[0];
-	};
+        for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
+            if (re.test(PLATFORM_INDEX[i].alias)) {
+                return PLATFORM_INDEX[i];
+            }
+        }
+        return PLATFORM_INDEX[0];
+    };
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* matchPlatformToIndex -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var matchPlatformToIndex = function(platformName) {
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * matchPlatformToIndex -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var matchPlatformToIndex = function(platformName) {
 
-		var re = null;
-		var aliasArray = [];
-		var bestMatch = null;
-		var originalTextLength = platformName.length;
-		var bestMatchLength = 0;
-		var currentMatch = null;
+        var re = null;
+        var aliasArray = [];
+        var bestMatch = null;
+        var originalTextLength = platformName.length;
+        var bestMatchLength = 0;
+        var currentMatch = null;
 
-		// reverse lookup - make regex of each platform index alias and match with platformName
-		for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
+        // reverse lookup - make regex of each platform index alias and match with platformName
+        for (var i = 0, len = PLATFORM_INDEX.length; i < len; i++) {
 
-			aliasArray = PLATFORM_INDEX[i].alias.split(',');
+            aliasArray = PLATFORM_INDEX[i].alias.split(',');
 
-			for (var j = 0, aliasLen = aliasArray.length; j < aliasLen; j++) {
+            for (var j = 0, aliasLen = aliasArray.length; j < aliasLen; j++) {
 
-				re = new RegExp(aliasArray[j], 'gi');
-				currentMatch = re.exec(platformName);
+                re = new RegExp(aliasArray[j], 'gi');
+                currentMatch = re.exec(platformName);
 
-				if (currentMatch && currentMatch[0].length === originalTextLength) {
+                if (currentMatch && currentMatch[0].length === originalTextLength) {
 
-					return PLATFORM_INDEX[i];
+                    return PLATFORM_INDEX[i];
 
-				} else if (currentMatch && currentMatch[0].length > bestMatchLength) {
+                } else if (currentMatch && currentMatch[0].length > bestMatchLength) {
 
-					bestMatchLength = currentMatch[0].length;
-					bestMatch = PLATFORM_INDEX[i];
-				}
-			}
-		}
+                    bestMatchLength = currentMatch[0].length;
+                    bestMatch = PLATFORM_INDEX[i];
+                }
+            }
+        }
 
-		if (bestMatch) {
-			return bestMatch;
-		}
+        if (bestMatch) {
+            return bestMatch;
+        }
 
-		return PLATFORM_INDEX[0];
-	};
+        return PLATFORM_INDEX[0];
+    };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     * PUBLIC -
@@ -336,29 +336,29 @@ tmz.initializeModules = function() {
 
     $.extend(Utilities, publicMethods);
 
-})(tmz.module('utilities'), tmz, jQuery, _);
+})(gamedex.module('utilities'), gamedex, jQuery, _);
 
 
 // USER
-(function(User, tmz, $, _, alertify) {
+(function(User, gamedex, $, _, alertify) {
 	"use strict";
 
 	// Dependencies
-	var Utilities = tmz.module('utilities'),
-		Storage = tmz.module('storage'),
-		ItemView = tmz.module('itemView'),
-		ItemCache = tmz.module('itemCache'),
+	var Utilities = gamedex.module('utilities'),
+		Storage = gamedex.module('storage'),
+		ItemView = gamedex.module('itemView'),
+		ItemCache = gamedex.module('itemCache'),
 
 		// constants
-		USER_LOGIN_URL = tmz.api + 'user/login/',
-		USER_LOGOUT_URL = tmz.api + 'user/logout/',
-		USER_VIEW_URL = tmz.api + 'user/',
-		USER_CREATE_URL = tmz.api + 'user/create/',
-		USER_DELETE_URL = tmz.api + 'user/delete/',
-		USER_UPDATE_URL = tmz.api + 'user/update/',
-		USER_SEND_RESET_CODE_URL = tmz.api + 'user/resetcode/send/',
-		USER_SUBMIT_RESET_CODE_URL = tmz.api + 'user/resetcode/submit/',
-		USER_UPDATE_PASSWORD_URL = tmz.api + 'user/password/update/',
+		USER_LOGIN_URL = gamedex.api + 'user/login/',
+		USER_LOGOUT_URL = gamedex.api + 'user/logout/',
+		USER_VIEW_URL = gamedex.api + 'user/',
+		USER_CREATE_URL = gamedex.api + 'user/create/',
+		USER_DELETE_URL = gamedex.api + 'user/delete/',
+		USER_UPDATE_URL = gamedex.api + 'user/update/',
+		USER_SEND_RESET_CODE_URL = gamedex.api + 'user/resetcode/send/',
+		USER_SUBMIT_RESET_CODE_URL = gamedex.api + 'user/resetcode/submit/',
+		USER_UPDATE_PASSWORD_URL = gamedex.api + 'user/password/update/',
 
 		// data
 		userData = {'user_id': '', 'secret_key': '', 'viewUser': null},
@@ -771,14 +771,14 @@ tmz.initializeModules = function() {
 		}
 	};
 
-})(tmz.module('user'), tmz, jQuery, _, alertify);
+})(gamedex.module('user'), gamedex, jQuery, _, alertify);
 
 // Storage
-(function(Storage, tmz, $, _) {
+(function(Storage, gamedex, $, _) {
 	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user');
+	var User = gamedex.module('user');
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* get
@@ -883,30 +883,1405 @@ tmz.initializeModules = function() {
 		localStorage.clear();
 	};
 
-})(tmz.module('storage'), tmz, jQuery, _);
+})(gamedex.module('storage'), gamedex, jQuery, _);
 
 
-// ItemData
-(function(ItemData, tmz, $, _, moment, alertify) {
+// ItemCache
+(function(ItemCache, gamedex, $, _) {
 	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemCache = tmz.module('itemCache'),
-		TagView = tmz.module('tagView'),
-		Utilities = tmz.module('utilities'),
+	var User = gamedex.module('user'),
+		Storage = gamedex.module('storage'),
+		Utilities = gamedex.module('utilities'),
+
+		// constants
+		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
+
+		// data
+
+		// items cached by tagID
+		itemsCacheByTag = {},
+
+		// tagIDs which have been retrieved from local storage
+		storedItems = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedItemsByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedItemsByTag = function(tagID) {
+
+		var cachedItems = null;
+
+		// check memory (session)
+		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
+			cachedItems = itemsCacheByTag[tagID];
+
+		// check local storage (long term)
+		} else {
+			cachedItems = getStoredItemsByTag(tagID);
+		}
+
+		return cachedItems;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cacheItemsByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cacheItemsByTag = function(items, itemDataDirectory) {
+
+		// iterate items
+		_.each(items, function(item, id) {
+
+			// check if itemID is in data directory
+			if (typeof itemDataDirectory[item.itemID] !== 'undefined') {
+
+				// get item in itemDataDirectory and iterate tags
+				_.each(itemDataDirectory[item.itemID].tags, function(id, tagID) {
+
+					// cache item by tag
+					cacheItemByTag(tagID, item);
+
+					// add item to view all cache
+					cacheItemByTag(VIEW_ALL_TAG_ID, item);
+				});
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cacheItemByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cacheItemByTag = function(tagID, item) {
+
+		// cache item by tag
+		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
+			itemsCacheByTag[tagID][item.itemID] = item;
+
+		} else {
+			itemsCacheByTag[tagID] = {};
+			itemsCacheByTag[tagID][item.itemID] = item;
+		}
+
+		// add to local storage
+		storeItemByTag(tagID, item);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* updateCacheItemByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var updateCacheItemByTag = function(tagID, item) {
+
+		// update cache
+		itemsCacheByTag[tagID][item.itemID] = item;
+
+		// update local storage
+		storeItemByTag(tagID, item, true);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getStoredItemDirectory -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getStoredItemDirectory = function() {
+
+		return Storage.get('itemDataDirectory');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* storeItemDirectory -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var storeItemDirectory = function(data) {
+
+		Storage.set('itemDataDirectory', data);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* storeItemByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var storeItemByTag = function(tagID, item, updateStorage) {
+
+		// skip storage if itemID was retrieved from local storage
+		if (typeof storedItems[tagID + '_' + item.itemID] === 'undefined' || updateStorage) {
+
+			// get stored items by tag
+			var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
+
+			// key exists
+			if (storedItemsCacheByTag) {
+
+				// tag exists
+				if (typeof storedItemsCacheByTag[tagID] !== 'undefined') {
+
+					// add item to retrieved storage object
+					storedItemsCacheByTag[tagID][item.itemID] = item;
+
+				// create tag object
+				} else {
+
+					storedItemsCacheByTag[tagID] = {};
+					storedItemsCacheByTag[tagID][item.itemID] = item;
+				}
+
+			// new storage key: storedItemsCacheByTag
+			} else {
+
+				// create fresh object
+				storedItemsCacheByTag = {};
+				storedItemsCacheByTag[tagID] = {};
+				storedItemsCacheByTag[tagID][item.itemID] = item;
+			}
+
+			// store user object as string back into userID key
+			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteCachedItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteCachedItem = function(itemID, tagID) {
+
+		if (itemsCacheByTag[tagID]) {
+			delete itemsCacheByTag[tagID][itemID];
+		}
+
+		deleteStoredItem(itemID, tagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteCachedTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteCachedTag = function(tagID) {
+
+		if (itemsCacheByTag[tagID]) {
+			delete itemsCacheByTag[tagID];
+		}
+
+		deleteStoredTag(tagID);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteStoredTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteStoredTag = function(tagID) {
+
+		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
+
+		// found stored item: delete tagID in item cache
+		if (storedItemsCacheByTag) {
+			delete storedItemsCacheByTag[tagID];
+			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* deleteStoredItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var deleteStoredItem = function(itemID, tagID) {
+
+		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
+
+		// found stored item: delete tagID, itemID in item cache
+		if (storedItemsCacheByTag) {
+			delete storedItemsCacheByTag[tagID][itemID];
+			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getStoredItemsByTag -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getStoredItemsByTag = function(tagID) {
+
+		// get local storage object
+		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
+		var storedTag = null;
+
+		if (storedItemsCacheByTag) {
+
+			// if tag found in user object
+			if (typeof storedItemsCacheByTag[tagID] !== 'undefined') {
+
+				storedTag = storedItemsCacheByTag[tagID];
+
+				// save item id as being retrieved from local storage
+				_.each(storedTag, function(item, key) {
+					storedItems[tagID + '_' + key] = true;
+				});
+			}
+		}
+
+		return storedTag;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearItemCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearItemCache = function(item) {
+
+		itemsCacheByTag = {};
+		storedItems = {};
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* clearStoredData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var clearStoredData = function(item) {
+
+		Storage.remove('itemsCacheByTag');
+		Storage.remove('itemDataDirectory');
+		Storage.remove('tag');
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* PUBLIC METHODS -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var publicMethods = {
+		'getCachedItemsByTag': getCachedItemsByTag,
+		'cacheItemsByTag': cacheItemsByTag,
+		'cacheItemByTag': cacheItemByTag,
+		'updateCacheItemByTag': updateCacheItemByTag,
+		'getStoredItemDirectory': getStoredItemDirectory,
+		'storeItemDirectory': storeItemDirectory,
+		'deleteCachedItem': deleteCachedItem,
+		'deleteCachedTag': deleteCachedTag,
+		'clearItemCache': clearItemCache,
+		'clearStoredData': clearStoredData
+	};
+
+	$.extend(ItemCache, publicMethods);
+
+})(gamedex.module('itemCache'), gamedex, $, _);
+
+
+// Amazon
+(function(Amazon, gamedex, $, _, moment) {
+	"use strict";
+
+    // module references
+    var Utilities = gamedex.module('utilities'),
+
+		// constants
+		FILTERED_NAMES = [
+			'accessory',
+			'case',
+			'codes',
+			'combo',
+			'console',
+			'controller',
+			'covers',
+			'face plate',
+			'faceplate',
+			'head set',
+			'headset',
+			'import',
+			'japan',
+			'kit',
+			'map',
+			'membership',
+			'new',
+			'pack',
+			'poster',
+			'pre-paid',
+			'set',
+			'shell',
+			'skin',
+			'software',
+			'stylus',
+			'wireless'
+		],
 
 		// REST URLS
-		ITEM_DIRECTORY_URL = tmz.api + 'item/directory/',
-		ITEM_URL = tmz.api + 'item/',
-		ITEM_ADD_URL = tmz.api + 'item/add/',
-		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch/',
-		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
-		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
-		ITEM_SHARED_PRICE_UPDATE = tmz.api + 'item/shared/price/update/',
-		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/',
-		IMPORT_GAMES_URL = tmz.api + 'import/',
+		AMAZON_SEARCH_URL = gamedex.api + 'amazon/search/',
+		AMAZON_DETAIL_URL = gamedex.api + 'amazon/detail/',
+
+		// constants
+		RETRY_AMAZON_MIN = 500,
+		RETRY_AMAZON_MAX = 3000,
+
+		// data
+		amazonOffersCache = {},
+		amazonItemCache = {},
+
+		// request queues
+		getAmazonItemOffersQueue = {},
+		getAmazonItemDetailQueue = {},
+
+		// failed requests
+		failedAmazonSearchRequests = [],
+
+		// ajax requests
+		searchRequest = null,
+		searchAmazonID = 0;
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchAmazon - search amazon, prevent all but latest from completing and returning onSuccess method
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError, preventMultipleRequests) {
+
+		preventMultipleRequests = typeof preventMultipleRequests !== 'undefined' ? preventMultipleRequests : false;
+
+		var searchTerms = encodeURIComponent(keywords);
+
+		// browse node, search terms and response group in url
+		var requestData = {
+			'keywords': keywords,
+			'browse_node': browseNode,
+			'search_index': 'VideoGames',
+			'response_group': 'ItemAttributes,Images',
+			'page': 1
+		};
+
+		// abort previous request
+		if (searchRequest && preventMultipleRequests) {
+			searchRequest.abort();
+		}
+
+		// increment searchAmazonID and assign to local id
+		var id = ++searchAmazonID;
+
+		searchRequest = $.ajax({
+			url: AMAZON_SEARCH_URL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'xml',
+			cache: true,
+			success: function(data) {
+
+				// only allow latest request from returning onSuccess
+				if (id === searchAmazonID || !preventMultipleRequests) {
+					searchRequest = null;
+					onSuccess(data);
+				}
+			},
+			error: function() {
+
+				// random delay
+				var delayMS = Math.floor(Math.random() * (RETRY_AMAZON_MAX - RETRY_AMAZON_MIN + 1)) + RETRY_AMAZON_MIN;
+
+				// retry request after random delay
+				(function() {
+					Amazon.searchAmazon(keywords, browseNode, onSuccess, onError, preventMultipleRequests);
+
+				}).delay(delayMS);
+
+				// return error with serviceUnavailable status as True
+				onError(true);
+			}
+		});
+
+		return searchRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAmazonResultItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.parseAmazonResultItem = function($resultItem) {
+
+		var isFiltered = false;
+		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
+		var	re = new RegExp(filter, 'i');
+
+		// get attributes from xml for filter check
+		var itemData = {
+			name: $resultItem.find('Title').text(),
+			platform: $resultItem.find('Platform').text()
+		};
+
+		// result has been filtered
+		if (re.test(itemData.name) || itemData.platform === '') {
+
+			itemData.isFiltered = true;
+
+		// not filtered > add more properties to itemData
+		} else {
+
+			itemData.id = $resultItem.find('ASIN').text();
+			itemData.asin = $resultItem.find('ASIN').text();
+			itemData.gbombID = 0;
+			itemData.smallImage = $resultItem.find('ThumbnailImage > URL:first').text() || '';
+			itemData.thumbnailImage = $resultItem.find('MediumImage > URL:first').text() || '';
+			itemData.largeImage = $resultItem.find('LargeImage > URL:first').text() || '';
+			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
+			itemData.releaseDate = $resultItem.find('ReleaseDate').text() || '1900-01-01';
+
+			// add custom formatted properties
+			// standard platform name
+			itemData.platform = Utilities.matchPlatformToIndex(itemData.platform).name;
+			// relative/calendar date
+			if (itemData.releaseDate !== '1900-01-01') {
+				itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
+			} else {
+				itemData.calendarDate = 'Unknown';
+			}
+		}
+
+		return itemData;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.getAmazonItemDetail = function(asin, onSuccess, onError) {
+
+		// find in giant bomb data cache first
+		var cachedItem = getCachedItem(asin);
+
+		// load cached gb data
+		if (cachedItem) {
+
+			// return updated source item
+			onSuccess(cachedItem);
+
+		// download amazon item
+		} else {
+
+			// add to queue
+			if (!_.has(getAmazonItemDetailQueue, asin)) {
+				getAmazonItemDetailQueue[asin] = [];
+			}
+			getAmazonItemDetailQueue[asin].push(onSuccess);
+
+			// run for first call only
+			if (getAmazonItemDetailQueue[asin].length === 1) {
+
+				// browse node, search terms and response group in url
+				var requestData = {
+					'asin': asin,
+					'response_group': 'Medium'
+				};
+
+				$.ajax({
+					url: AMAZON_DETAIL_URL,
+					type: 'GET',
+					data: requestData,
+					dataType: 'xml',
+					cache: true,
+					success: function(data) {
+
+						// iterate queued return methods
+						_.each(getAmazonItemDetailQueue[asin], function(successMethod) {
+
+							// cache result
+							amazonItemCache[asin] = data;
+
+							// return data
+							successMethod(data);
+						});
+
+						// empty queue
+						getAmazonItemDetailQueue[asin] = [];
+					},
+					error: onError
+				});
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemOffers
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
+
+		// find in amazon offer cache first
+		var cachedOffer = getCachedOffer(asin);
+		// load cached amazon offer
+		if (cachedOffer) {
+			// add score data to source item
+			sourceItem.offers = cachedOffer;
+
+			// return updated source item
+			onSuccess(cachedOffer);
+
+		// get new offer data
+		} else {
+
+			// add to queue
+			if (!_.has(getAmazonItemOffersQueue, asin)) {
+				getAmazonItemOffersQueue[asin] = [];
+			}
+			getAmazonItemOffersQueue[asin].push(onSuccess);
+
+			// run for first call only
+			if (getAmazonItemOffersQueue[asin].length === 1) {
+
+				// OfferSummary, OfferListings, Offers, OfferFull
+				var requestData = {
+					'asin': asin,
+					'response_group': 'OfferFull'
+				};
+
+				$.ajax({
+					url: AMAZON_DETAIL_URL,
+					type: 'GET',
+					data: requestData,
+					dataType: 'xml',
+					cache: true,
+					success: function(data) {
+
+						// iterate queued return methods
+						_.each(getAmazonItemOffersQueue[asin], function(successMethod) {
+
+							// parse
+							var offerItem = parseAmazonOffers(data, sourceItem);
+
+							// cache result
+							amazonOffersCache[asin] = offerItem;
+
+							// return data
+							successMethod(offerItem);
+						});
+
+						// empty queue
+						getAmazonItemOffersQueue[asin] = [];
+					},
+					error: onError
+				});
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* formatOfferData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var formatOfferData = function(offerItem) {
+
+		var buyNowPrice = null;
+		var buyNowRawPrice = null;
+
+		// iterate offers
+		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
+			if (offerItem.offers[i].availability === 'now') {
+				buyNowPrice = offerItem.offers[i].price;
+				buyNowRawPrice = offerItem.offers[i].rawPrice;
+			}
+		}
+
+		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
+
+		// check for 'too low to display'
+		if (buyNowPrice === 'Too low to display') {
+			buyNowPrice = 'n/a';
+			buyNowRawPrice = 0;
+		}
+		if (offerItem.lowestNewPrice === 'Too low to display') {
+			offerItem.lowestNewPrice = 'n/a';
+		}
+
+		offerItem.buyNowPrice = buyNowPrice;
+		offerItem.buyNowRawPrice = buyNowRawPrice;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedOffer -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedOffer = function(asin) {
+
+		var amazonOfferItem = null;
+
+		if (typeof amazonOffersCache[asin] !== 'undefined') {
+			amazonOfferItem = amazonOffersCache[asin];
+		}
+
+		return amazonOfferItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedItem = function(id) {
+
+		var amazonItem = null;
+
+		if (typeof amazonItemCache[id] !== 'undefined') {
+			amazonItem = amazonItemCache[id];
+		}
+
+		return amazonItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAmazonOffers -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseAmazonOffers = function(data, sourceItem) {
+
+		var offerItem = {};
+
+		// iterate xml results, construct offers
+		$('Item', data).each(function() {
+
+			// parse amazon result item, add data to offerItem
+			offerItem = parseAmazonOfferItem($(this));
+		});
+
+		// add offerItem to item model
+		sourceItem.offers = offerItem;
+
+		return offerItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAmazonOfferItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseAmazonOfferItem = function($resultItem) {
+
+		var offerItem = {};
+		var offer = {};
+
+		// remove $ sign
+		var re = /\$/;
+
+		// get attributes from xml
+		var totalNew = parseInt($resultItem.find('TotalNew').text(), 10);
+		var totalUsed = parseInt($resultItem.find('TotalUsed').text(), 10);
+
+		// offers found
+		if (totalNew !== 0 || totalUsed !== 0) {
+
+			offerItem.totalNew = totalNew;
+			offerItem.totalUsed = totalUsed;
+			offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text().replace(re, '');
+			offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text().replace(re, '');
+			offerItem.totalOffers = $resultItem.find('TotalOffers').text();
+			offerItem.offersURL = $resultItem.find('MoreOffersUrl').text();
+			offerItem.offersURLNew = $resultItem.find('MoreOffersUrl').text() + '&condition=new';
+			offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
+
+			// convert offer url to a product url
+			var offerRE = /offer-listing/gi;
+			offerItem.productURL = offerItem.offersURL.replace(offerRE, 'product');
+			offerItem.offers = [];
+
+			// iterate offers
+			$('Offer', $resultItem).each(function() {
+
+				offer = {};
+
+				offer.price = $(this).find('Price FormattedPrice').text().replace(re, '');
+				offer.rawPrice = $(this).find('Price Amount').text();
+				offer.availability = $(this).find('AvailabilityType').text();
+				offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
+
+				offerItem.offers.push(offer);
+			});
+
+			// format offer data
+			formatOfferData(offerItem);
+		}
+
+		return offerItem;
+	};
+
+})(gamedex.module('amazon'), gamedex, jQuery, _, moment);
+
+
+// GiantBomb
+(function(GiantBomb, gamedex, $, _, moment) {
+	"use strict";
+
+    // module references
+	var Amazon = gamedex.module('amazon'),
+
+		// REST URLS
+		GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
+		GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
+
+		// data
+		giantBombDataCache = {},
+		giantBombItemCache = {},
+
+		// request queue
+		getGiantBombItemDataQueue = {},
+		getGiantBombItemDetailQueue = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchGiantBomb -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.searchGiantBomb = function(keywords, onSuccess, onError) {
+
+		var searchTerms = encodeURIComponent(keywords);
+
+		// list of fields to get as query parameter
+		var fieldList = ['id', 'name', 'original_release_date', 'image'];
+
+		var requestData = {
+			'field_list': fieldList.join(','),
+			'keywords': keywords,
+			'page': 0
+		};
+
+		var searchRequest = $.ajax({
+			url: GIANTBOMB_SEARCH_URL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: onSuccess,
+			error: onError
+		});
+
+		return searchRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseGiantBombResultItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.parseGiantBombResultItem = function(resultItem) {
+		var itemData = {
+			id: resultItem.id,
+			asin: 0,
+			gbombID: resultItem.id,
+			name: resultItem.name,
+			platform: 'n/a'
+		};
+
+		// format date
+		if (resultItem.original_release_date && resultItem.original_release_date !== '') {
+			itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
+		} else {
+			itemData.releaseDate = '1900-01-01';
+		}
+
+		// calendar date
+		if (itemData.releaseDate !== '1900-01-01') {
+			itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
+		} else {
+			itemData.calendarDate = 'Unknown';
+		}
+
+		// set small url
+		if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
+			itemData.smallImage = resultItem.image.small_url;
+		} else {
+			itemData.smallImage = 'no image.png';
+		}
+
+		// set thumb url
+		if (resultItem.image && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
+			itemData.thumbnailImage = resultItem.image.thumb_url;
+		} else {
+			itemData.thumbnailImage = 'no image.png';
+		}
+
+		// set large url
+		if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
+			itemData.largeImage = resultItem.image.super_url;
+		} else {
+			itemData.largeImage = 'no image.png';
+		}
+
+		// set description
+		if (resultItem.description && resultItem.description  !== '') {
+			itemData.description = resultItem.description;
+		} else {
+			itemData.description = 'No Description';
+		}
+
+		return itemData;
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemPlatform -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
+
+		// list of fields to get as query parameter
+		var fieldList = ['platforms'];
+
+		var giantbombRequest = getGiantBombItem(gbombID, fieldList, function(data) {
+			onSuccess(data, gbombID);
+		}, onError);
+
+		return giantbombRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.getGiantBombItemData = function(gbombID, onSuccess, onError) {
+
+		// find in giant bomb data cache first
+		var cachedData = getCachedData(gbombID);
+
+		// load cached gb data
+		if (cachedData) {
+
+			// return updated source item
+			onSuccess(cachedData);
+
+		// download gb data
+		} else {
+
+			// add to queue
+			if (!_.has(getGiantBombItemDataQueue, gbombID)) {
+				getGiantBombItemDataQueue[gbombID] = [];
+			}
+			getGiantBombItemDataQueue[gbombID].push(onSuccess);
+
+			// run for first call only
+			if (getGiantBombItemDataQueue[gbombID].length === 1) {
+
+				// download data
+				var fieldList = ['description', 'site_detail_url', 'videos'];
+
+				// giantbomb item request
+				getGiantBombItem(gbombID, fieldList, function(data) {
+
+					// iterate queued return methods
+					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
+
+						// cache result
+						giantBombDataCache[gbombID] = data.results;
+
+						// return data
+						successMethod(data.results);
+					});
+
+					// empty queue
+					getGiantBombItemDataQueue[gbombID] = [];
+
+				}, onError);
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemDetail -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.getGiantBombItemDetail = function(gbombID, onSuccess, onError) {
+
+		// find in giant bomb data cache first
+		var cachedItem = getCachedItem(gbombID);
+
+		// load cached gb data1
+		if (cachedItem) {
+
+			// return updated source item
+			onSuccess(cachedItem);
+
+		// download gb item
+		} else {
+
+			// add to queue
+			if (!_.has(getGiantBombItemDetailQueue, gbombID)) {
+				getGiantBombItemDetailQueue[gbombID] = [];
+			}
+			getGiantBombItemDetailQueue[gbombID].push(onSuccess);
+
+			// run for first call only
+			if (getGiantBombItemDetailQueue[gbombID].length === 1) {
+
+				// download data
+				var fieldList = ['id', 'name', 'original_release_date', 'image'];
+
+				// giantbomb item request
+				getGiantBombItem(gbombID, fieldList, function(data) {
+
+					// iterate queued return methods
+					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
+
+						// cache result
+						giantBombItemCache[gbombID] = data.results;
+
+						// return data
+						successMethod(data.results);
+					});
+
+					// empty queue
+					getGiantBombItemDetailQueue[gbombID] = [];
+
+				}, onError);
+			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
+
+		var requestData = {
+			'field_list': fieldList.join(','),
+			'id': gbombID
+		};
+
+		var giantbombRequest = $.ajax({
+			url: GIANTBOMB_DETAIL_URL,
+			type: 'GET',
+			data: requestData,
+			dataType: 'json',
+			cache: true,
+			success: onSuccess,
+			error: onError
+		});
+
+		return giantbombRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedData = function(id) {
+
+		var giantBombData = null;
+
+		if (typeof giantBombDataCache[id] !== 'undefined') {
+			giantBombData = giantBombDataCache[id];
+		}
+
+		return giantBombData;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedItem = function(id) {
+
+		var giantBombItem = null;
+
+		if (typeof giantBombItemCache[id] !== 'undefined') {
+			giantBombItem = giantBombItemCache[id];
+		}
+
+		return giantBombItem;
+	};
+
+
+})(gamedex.module('giantbomb'), gamedex, jQuery, _, moment);
+
+
+// ItemLinker
+(function(ItemLinker, gamedex, $, _) {
+	"use strict";
+
+	// Dependencies
+	var Amazon = gamedex.module('amazon'),
+		GiantBomb = gamedex.module('giantbomb'),
+		Utilities = gamedex.module('utilities');
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* standardizeTitle -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.standardizeTitle = function(title) {
+
+		var sanitizedName = title;
+		var re = null;
+		var reRoman = null;
+
+		var match = null;
+		var match2 = null;
+		var roman = '';
+		var dec = 0;
+		var num = 0;
+		var arr = null;
+
+		// remove brackets and parenthesis and content inside
+		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
+
+		// remove the word: trophies
+		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
+		// remove word that appears before 'edition'
+		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
+		// remove words appearing after 'with'
+		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
+
+		// remove 'the ' if at the start of title
+		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
+
+		// remove words appearing after '-' unless it is less than 4 chars
+		// BUG: removes spider-man: shatttered dimensions
+
+		//re = new RegExp('\\s*-.*', 'gi');
+		//match = re.exec(sanitizedName);
+
+		if (match && match[0].length > 3) {
+			sanitizedName = sanitizedName.replace(re, '');
+		}
+
+		return sanitizedName.toLowerCase();
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getSimilarityScore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
+
+		// matching properties
+		var score = 0;
+
+		// use standard name for search result
+		var standardResultName = ItemLinker.standardizeTitle(searchItem.name);
+
+		// exact name check
+		if (sourceItem.standardName === searchItem.name.toLowerCase()) {
+
+			score += 50;
+
+		// fuzzy name check
+		} else {
+			// check if searchItem title exists within original title and vice versa
+			var reSource = new RegExp(sourceItem.standardName, 'gi');
+			var reSearch = new RegExp(standardResultName, 'gi');
+			var sourceInTarget = reSource.exec(standardResultName);
+			var targetInSource = reSearch.exec(sourceItem.standardName);
+
+			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
+
+				score += 5;
+			}
+		}
+
+		// exact release date check
+		if (typeof searchItem.releaseDate !== 'undefined') {
+
+			if (sourceItem.releaseDate === searchItem.releaseDate) {
+				score += 10;
+
+			// fuzzy release date check
+			} else {
+				var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+
+				// don't subtract score if search result date is unknown/unreleased
+				if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
+					score -= Math.abs(diff / 365);
+				}
+			}
+		}
+
+		// platform match
+		if (typeof searchItem.platform !== 'undefined') {
+			// get standard platform name from platform
+			var standardPlatform = Utilities.matchPlatformToIndex(searchItem.platform).name;
+
+			if (sourceItem.platform === standardPlatform) {
+				score += 20;
+			}
+		}
+
+		return score;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* convertRomanNumerals -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.convertRomanNumerals = function(name) {
+
+		var reRoman = new RegExp('\\s[XVI]+', 'gi');
+		var match = reRoman.exec(name);
+
+		// roman numeral found
+		if (match && match[0].length > 0) {
+
+			var roman = match[0];
+			// remove III first and set dec to start at 3
+			// the simplified converter below does add 'III' of anything correctly
+			var re = new RegExp('III', 'gi');
+			var match2 = re.exec(roman);
+			var dec = '';
+
+			if (match2 && match2[0].length > 0) {
+				dec = 3;
+				roman = roman.replace(re, '');
+			}
+
+			var arr = roman.split('');
+			var num = null;
+
+			// iterate each roman character except last blank character
+			for (var i = arr.length - 1; i >= 1; i--) {
+				switch(arr[i]) {
+					case 'I':
+					num = 1;
+				break;
+					case 'V':
+					num = 5;
+				break;
+					case 'X':
+					num = 10;
+				break;
+			}
+
+			if (num < dec) {
+				dec = dec - num;
+			} else {
+				dec = dec + num;
+			}
+
+			}
+
+			// replace roman with decimal
+			name = name.replace(reRoman, ' ' + dec);
+		}
+
+		return name;
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findItemOnAlternateProvider
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess, onError) {
+
+		var searchRequest = null;
+		onError = typeof onError !== 'undefined' ? onError : null;
+
+		switch (provider) {
+			case Utilities.SEARCH_PROVIDERS.Amazon:
+
+				var searchName = item.standardName;
+
+				// run search for giantbomb
+				searchRequest = GiantBomb.searchGiantBomb(searchName, function(data) {
+					findGiantbombMatch(data, item, onSuccess, onError);
+				});
+				break;
+
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
+
+				var browseNode = 0;
+
+				// run same platform search
+				if (item.platform !== 'n/a') {
+					browseNode = Utilities.getStandardPlatform(item.platform).amazon;
+				}
+
+				// run search for amazon
+				searchRequest = Amazon.searchAmazon(item.name, browseNode, function(data) {
+					findAmazonMatch(data, item, onSuccess, onError, false);
+				}, onError, preventMultipleRequests);
+				break;
+		}
+
+		return searchRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getLinkedItemData
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.getLinkedItemData = function(item, provider, onSuccess) {
+
+		switch (provider) {
+
+			// amazon is provider > fetch from giantbomb
+			case Utilities.SEARCH_PROVIDERS.Amazon:
+
+				// get item from giantbomb
+				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
+					getGiantBombItemDetail_result(data, onSuccess);
+				});
+				break;
+
+			// giantbomb is provider > fetch from amazon
+			case Utilities.SEARCH_PROVIDERS.GiantBomb:
+
+				// get item from amazon
+				Amazon.getAmazonItemDetail(item.asin, function(data) {
+					getAmazonItemDetail_result(data, onSuccess);
+				});
+				break;
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findWikipediaMatch -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ItemLinker.findWikipediaMatch = function(data, sourceItem, onSuccess) {
+
+		var results = data;
+		var searchItem = {};
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate search results
+		for (var i = 0, len = results.length; i < len; i++) {
+
+			// create searchItem object
+			searchItem = {
+				'name': results[i]
+			};
+
+			// init best match with first item
+			if (i === 0) {
+				bestMatch = searchItem;
+			}
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchItem;
+				bestScore = score;
+			}
+		}
+
+		// return best match to onSuccess method
+		if (results.length !== 0) {
+			// return best match
+			onSuccess(bestMatch);
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getAmazonItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getAmazonItemDetail_result = function(data, onSuccess) {
+
+		var detailItem = {};
+		// iterate results
+		$('Item', data).each(function() {
+
+			// parse item and set detailItem
+			detailItem = Amazon.parseAmazonResultItem($(this));
+		});
+
+		// display second item
+		onSuccess(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombItemDetail_result
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getGiantBombItemDetail_result = function(data, onSuccess) {
+
+		// parse result item and set detailItem
+		var detailItem = GiantBomb.parseGiantBombResultItem(data);
+
+		// display second item
+		onSuccess(detailItem);
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findAmazonMatch
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findAmazonMatch = function(data, sourceItem, onSuccess, onError, lastSearch) {
+
+		var resultLength = ($('Item', data).length);
+		var searchItem = {};
+		var count = 0;
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate results
+		$('Item', data).each(function() {
+
+			// parse item and return searchItem
+			searchItem = Amazon.parseAmazonResultItem($(this));
+
+			// searchItem not filtered
+			if (typeof searchItem.isFiltered === 'undefined') {
+
+
+				// save first non-filtered result
+				if (count === 0) {
+					bestMatch = searchItem;
+				}
+
+				count++;
+				// get similarity score
+				score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+				// check if score is new best
+				if (score > bestScore) {
+					bestMatch = searchItem;
+					bestScore = score;
+
+				}
+			}
+		});
+
+		// return best match to onSuccess method
+		if (bestMatch) {
+			// return best match
+			onSuccess(bestMatch);
+
+		// re-run search without platform filter - only if this hasn't been run before
+		} else if (!lastSearch) {
+			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
+				findAmazonMatch(data, sourceItem, onSuccess, onError, true);
+			}, onError);
+		} else {
+			onError();
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* findGiantbombMatch -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var findGiantbombMatch = function(data, sourceItem, onSuccess, onError) {
+
+		var results = data.results;
+		var searchItem = {};
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate search results
+		for (var i = 0, len = results.length; i < len; i++) {
+
+			// parse result into searchItem object
+			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+
+			// init best match with first item
+			if (i === 0) {
+				bestMatch = searchItem;
+			}
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchItem;
+				bestScore = score;
+			}
+		}
+
+		// return best match to onSuccess method
+		if (results.length !== 0) {
+
+			// return best match
+			onSuccess(bestMatch);
+
+		// no match found
+		} else {
+			onError();
+		}
+
+	};
+
+})(gamedex.module('itemLinker'), gamedex, jQuery, _);
+
+// ItemData
+(function(ItemData, gamedex, $, _, moment, alertify) {
+	"use strict";
+
+	// Dependencies
+	var User = gamedex.module('user'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemCache = gamedex.module('itemCache'),
+		TagView = gamedex.module('tagView'),
+		Utilities = gamedex.module('utilities'),
+
+		// REST URLS
+		ITEM_DIRECTORY_URL = gamedex.api + 'item/directory/',
+		ITEM_URL = gamedex.api + 'item/',
+		ITEM_ADD_URL = gamedex.api + 'item/add/',
+		ITEM_BATCH_DELETE_URL = gamedex.api + 'item/delete/batch/',
+		ITEM_SINGLE_DELETE_URL = gamedex.api + 'item/delete/',
+		ITEM_USER_UPDATE = gamedex.api + 'item/user/update/',
+		ITEM_SHARED_PRICE_UPDATE = gamedex.api + 'item/shared/price/update/',
+		UPDATE_METACRITIC_URL = gamedex.api + 'item/metacritic/update/',
+		IMPORT_GAMES_URL = gamedex.api + 'import/',
 
 		// constants
 		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
@@ -1969,25 +3344,25 @@ tmz.initializeModules = function() {
 
 	$.extend(ItemData, publicMethods);
 
-})(tmz.module('itemData'), tmz, $, _, moment, alertify);
+})(gamedex.module('itemData'), gamedex, $, _, moment, alertify);
 
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG DATA - methods for interacting with server side tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-(function(TagData, tmz, $, _) {
+(function(TagData, gamedex, $, _) {
 	"use strict";
 
 	// constants
-	var TAG_GET_URL = tmz.api + 'tag/',
-		TAG_ADD_URL = tmz.api + 'tag/add/',
-		TAG_UPDATE_URL = tmz.api + 'tag/update/',
-		TAG_DELETE_URL = tmz.api + 'tag/delete/',
+	var TAG_GET_URL = gamedex.api + 'tag/',
+		TAG_ADD_URL = gamedex.api + 'tag/add/',
+		TAG_UPDATE_URL = gamedex.api + 'tag/update/',
+		TAG_DELETE_URL = gamedex.api + 'tag/delete/',
 
 		// Dependencies
-		User = tmz.module('user'),
-		Storage = tmz.module('storage'),
-		ItemData = tmz.module('itemData'),
+		User = gamedex.module('user'),
+		Storage = gamedex.module('storage'),
+		ItemData = gamedex.module('itemData'),
 
 		// local represenation of localStorage data model
 		storedTags = {};
@@ -2142,289 +3517,1203 @@ tmz.initializeModules = function() {
 	};
 
 
-})(tmz.module('tagData'), tmz, jQuery, _);
+})(gamedex.module('tagData'), gamedex, jQuery, _);
 
 
-// ItemCache
-(function(ItemCache, tmz, $, _) {
+// Metacritic
+(function(Metacritic, gamedex, $, _) {
 	"use strict";
 
-	// Dependencies
-	var User = tmz.module('user'),
-		Storage = tmz.module('storage'),
-		Utilities = tmz.module('utilities'),
+    // module references
+	var Amazon = gamedex.module('amazon'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemData = gamedex.module('itemData'),
 
-		// constants
-		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
+		// REST URL
+		METACRITIC_SEARCH_URL = gamedex.api + 'metacritic/search/',
+		METACRITIC_CACHE_URL = gamedex.api + 'metacritic/cache/',
+
+		// properties
+		metacriticDomain = 'metacritic.com',
 
 		// data
+		metascoreCache = {},
 
-		// items cached by tagID
-		itemsCacheByTag = {},
-
-		// tagIDs which have been retrieved from local storage
-		storedItems = {};
+		// request queues
+		getMetascoreQueue = {};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedItemsByTag -
+	* getMetascore -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItemsByTag = function(tagID) {
+	Metacritic.getMetascore = function(searchTerms, sourceItem, fromSearch, onSuccess) {
 
-		var cachedItems = null;
+		var metascoreRequest = null;
 
-		// check memory (session)
-		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
-			cachedItems = itemsCacheByTag[tagID];
+		// find in cache first
+		var cachedScore = getCachedMetascore(sourceItem.asin, sourceItem.gbombID, sourceItem.platform);
 
-		// check local storage (long term)
+		if (cachedScore) {
+
+			metascoreRequest = cachedScore;
+
+			// add score data to source item
+			sourceItem.metascore = cachedScore.metascore;
+			sourceItem.metascorePage = cachedScore.metascorePage;
+
+			// return updated source item
+			onSuccess(sourceItem);
+
+		// fetch score data
 		} else {
-			cachedItems = getStoredItemsByTag(tagID);
+
+			// add to queue
+			var queueKey = searchTerms + '_' + sourceItem.platform;
+
+			if (!_.has(getMetascoreQueue, queueKey)) {
+				getMetascoreQueue[queueKey] = [];
+			}
+			getMetascoreQueue[queueKey].push(onSuccess);
+
+			// run for first call only
+			if (getMetascoreQueue[queueKey].length === 1) {
+
+				var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
+
+				var requestData = {
+					'keywords': encodeURI(cleanedSearchTerms),
+					'platform': encodeURI(sourceItem.platform)
+				};
+
+				metascoreRequest = $.ajax({
+						url: METACRITIC_SEARCH_URL,
+						type: 'GET',
+						data: requestData,
+						cache: true,
+						success: function(data) {
+
+							// save values before updated with current info
+							var previousMetascore = sourceItem.metascore;
+
+							// parse result > modify sourceItem
+							var result = parseMetascoreResults(cleanedSearchTerms, data, sourceItem);
+
+							// add results to sourceItem
+							addMetascoreDatatoItem(result, sourceItem);
+
+							// check if source item score or page differs from return score/page
+							if (!fromSearch && sourceItem.metascore != previousMetascore) {
+								// update metacritic data for source item record
+								ItemData.updateMetacritic(sourceItem);
+							}
+
+							// iterate queued return methods
+							_.each(getMetascoreQueue[queueKey], function(successMethod) {
+								// add to local cache
+								addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, sourceItem.platform, sourceItem);
+								// return data
+								successMethod(sourceItem);
+							});
+
+							// empty queue
+							getMetascoreQueue[queueKey] = [];
+						}
+					});
+			}
 		}
 
-		return cachedItems;
+		return metascoreRequest;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cacheItemsByTag -
+	* displayMetascoreData -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cacheItemsByTag = function(items, itemDataDirectory) {
+	Metacritic.displayMetascoreData = function(page, score, metascoreSelector) {
 
-		// iterate items
-		_.each(items, function(item, id) {
+		var $metascoreContainer = $(metascoreSelector);
+		var textScore = score;
 
-			// check if itemID is in data directory
-			if (typeof itemDataDirectory[item.itemID] !== 'undefined') {
+		// determine score color
+		var colorClass = 'favorable';
+		if (score < 0) {
+			textScore = 'n/a';
+			colorClass = 'unavailable';
+		} else if (score < 50) {
+			colorClass = 'unfavorable';
+		} else if (score < 75) {
+			colorClass = 'neutral';
+		}
 
-				// get item in itemDataDirectory and iterate tags
-				_.each(itemDataDirectory[item.itemID].tags, function(id, tagID) {
+		$metascoreContainer
+			.html(textScore)
+			.removeClass('unavailable')
+			.removeClass('unfavorable')
+			.removeClass('neutral')
+			.removeClass('favorable')
+			.addClass(colorClass)
+			.attr('href', 'http://www.' + metacriticDomain + page)
+			.attr('data-score', score)
+			.attr('data-original-title', metacriticDomain + ' ' + page)
+			.show();
 
-					// cache item by tag
-					cacheItemByTag(tagID, item);
+		// activate tooltip
+		$metascoreContainer.tooltip({placement: 'left'});
+	};
 
-					// add item to view all cache
-					cacheItemByTag(VIEW_ALL_TAG_ID, item);
-				});
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cleanupMetacriticSearchTerms -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cleanupMetacriticSearchTerms = function(searchTerms) {
+
+		// remove ':', '&'
+		re = /\s*[:&]\s*/g;
+		var cleanedSearchTerms = searchTerms.replace(re, ' ');
+
+		// convert spaces to '+'
+		var re = /\s/g;
+		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
+
+		return cleanedSearchTerms;
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedMetascore -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedMetascore = function(asin, gbombID, platform) {
+
+		var metascoreItem = null;
+
+		// amazon id
+		if (typeof metascoreCache[asin + '_' + platform] !== 'undefined') {
+			metascoreItem = metascoreCache[asin + '_' + platform];
+
+		// giant bomb id
+		} else if (typeof metascoreCache[gbombID + '_' + platform] !== 'undefined') {
+			metascoreItem = metascoreCache[gbombID + '_' + platform];
+		}
+
+		return metascoreItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToMetascoreCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToMetascoreCache = function(asin, gbombID, platform, sourceItem) {
+
+		// add to metascoreCache linked by asin
+		if (asin != '0') {
+			metascoreCache[asin + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
+		}
+		// add to metascoreCache linked by gbombID
+		if (gbombID != '0') {
+			metascoreCache[gbombID + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseMetascoreResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseMetascoreResults = function(keywords, data, sourceItem) {
+
+		var result = null;
+
+		// parse raw result
+		if (typeof data.metascore === 'undefined') {
+
+			// get result that matches sourceItem
+			result = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (result) {
+				addToServerCache(keywords, sourceItem.platform, result.metascore, result.metascorePage);
+			}
+
+		// parse cached result
+		} else {
+
+			result = data;
+		}
+
+		return result;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addMetascoreDatatoItem -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addMetascoreDatatoItem = function(result, sourceItem) {
+
+		// add/update metascore data to sourceItem
+		if (result && result.metascore !== '') {
+			sourceItem.metascore = result.metascore;
+			sourceItem.displayMetascore = result.metascore;
+			sourceItem.metascorePage = result.metascorePage;
+		} else if (result) {
+			sourceItem.metascore = -1;
+			sourceItem.displayMetascore = 'n/a';
+			sourceItem.metascorePage = result.metascorePage;
+		} else {
+			sourceItem.metascore = -1;
+			sourceItem.displayMetascore = 'n/a';
+			sourceItem.metascorePage = '';
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToServerCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToServerCache = function(keywords, platform, metascore, metascorePage) {
+
+		var requestData = {
+			'keywords': encodeURI(keywords),
+			'platform': encodeURI(platform),
+			'metascore': encodeURI(metascore),
+			'metascorePage': encodeURI(metascorePage)
+		};
+
+		$.ajax({
+			url: METACRITIC_CACHE_URL,
+			type: 'GET',
+			data: requestData,
+			cache: true,
+			success: function(data) {
+
+
 			}
 		});
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cacheItemByTag -
+	* getMatchedSearchResult -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cacheItemByTag = function(tagID, item) {
+	var getMatchedSearchResult = function(data, sourceItem) {
 
-		// cache item by tag
-		if (typeof itemsCacheByTag[tagID] !== 'undefined') {
-			itemsCacheByTag[tagID][item.itemID] = item;
+		var results = $('#main', data).find('.result');
+		var searchItem = {};
 
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate results
+		$(results).each(function() {
+
+			// convert to date object
+			var releaseDateObject = new Date($(this).find('.release_date .data').text());
+			// format month
+			var month = releaseDateObject.getMonth() + 1;
+			month = month < 10 ? '0' + month : month;
+			// format date
+			var date = releaseDateObject.getDate();
+			date = date < 10 ? '0' + date : date;
+
+			// create standard item
+			searchItem = {
+				name: $(this).find('.product_title a').text(),
+				releaseDate: releaseDateObject.getFullYear() + '-' + month + '-' + date,
+				platform: $(this).find('.platform').text(),
+				metascore: $(this).find('.metascore').text(),
+				metascorePage: $(this).find('.product_title a').attr('href')
+			};
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchItem;
+				bestScore = score;
+			}
+		});
+
+		return bestMatch;
+	};
+
+})(gamedex.module('metacritic'), gamedex, jQuery, _);
+
+
+// Wikipedia
+(function(Wikipedia) {
+
+	// Dependencies
+	var User = gamedex.module('user'),
+		Utilities = gamedex.module('utilities'),
+		ItemLinker = gamedex.module('itemLinker'),
+
+		// wikipedia cache
+		wikipediaPageCache = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getWikipediaPage -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Wikipedia.getWikipediaPage = function(title, sourceItem, onSuccess) {
+
+		// find in attributes cache first
+		var itemAttributes = wikipediaPageCache[sourceItem.id];
+
+		if (itemAttributes && typeof itemAttributes.wikipediaPage !== 'undefined') {
+
+			// display attribute
+			onSuccess(itemAttributes.wikipediaPage);
+
+		// search wikipedia
 		} else {
-			itemsCacheByTag[tagID] = {};
-			itemsCacheByTag[tagID][item.itemID] = item;
-		}
 
-		// add to local storage
-		storeItemByTag(tagID, item);
-	};
+			searchWikipedia(title, function(data) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* updateCacheItemByTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var updateCacheItemByTag = function(tagID, item) {
+				// get page array
+				pageArray = data[1];
 
-		// update cache
-		itemsCacheByTag[tagID][item.itemID] = item;
+				// match page to sourceItem
+				ItemLinker.findWikipediaMatch(pageArray, sourceItem, function(item) {
 
-		// update local storage
-		storeItemByTag(tagID, item, true);
-	};
+					// get wikipedia page details
+					getWikipediaPageDetails(item.name, function(data) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getStoredItemDirectory -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getStoredItemDirectory = function() {
+						// get wikipedia page url
+						_.each(data.query.pages, function(pageItem, key){
 
-		return Storage.get('itemDataDirectory');
-	};
+							// add to cache
+							if (itemAttributes) {
+								itemAttributes.wikipediaPage = pageItem.fullurl;
+							} else {
+								wikipediaPageCache[sourceItem.id] = {wikipediaPage: pageItem.fullurl};
+							}
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* storeItemDirectory -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var storeItemDirectory = function(data) {
-
-		Storage.set('itemDataDirectory', data);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* storeItemByTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var storeItemByTag = function(tagID, item, updateStorage) {
-
-		// skip storage if itemID was retrieved from local storage
-		if (typeof storedItems[tagID + '_' + item.itemID] === 'undefined' || updateStorage) {
-
-			// get stored items by tag
-			var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-
-			// key exists
-			if (storedItemsCacheByTag) {
-
-				// tag exists
-				if (typeof storedItemsCacheByTag[tagID] !== 'undefined') {
-
-					// add item to retrieved storage object
-					storedItemsCacheByTag[tagID][item.itemID] = item;
-
-				// create tag object
-				} else {
-
-					storedItemsCacheByTag[tagID] = {};
-					storedItemsCacheByTag[tagID][item.itemID] = item;
-				}
-
-			// new storage key: storedItemsCacheByTag
-			} else {
-
-				// create fresh object
-				storedItemsCacheByTag = {};
-				storedItemsCacheByTag[tagID] = {};
-				storedItemsCacheByTag[tagID][item.itemID] = item;
-			}
-
-			// store user object as string back into userID key
-			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteCachedItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteCachedItem = function(itemID, tagID) {
-
-		if (itemsCacheByTag[tagID]) {
-			delete itemsCacheByTag[tagID][itemID];
-		}
-
-		deleteStoredItem(itemID, tagID);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteCachedTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteCachedTag = function(tagID) {
-
-		if (itemsCacheByTag[tagID]) {
-			delete itemsCacheByTag[tagID];
-		}
-
-		deleteStoredTag(tagID);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteStoredTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteStoredTag = function(tagID) {
-
-		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-
-		// found stored item: delete tagID in item cache
-		if (storedItemsCacheByTag) {
-			delete storedItemsCacheByTag[tagID];
-			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* deleteStoredItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var deleteStoredItem = function(itemID, tagID) {
-
-		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-
-		// found stored item: delete tagID, itemID in item cache
-		if (storedItemsCacheByTag) {
-			delete storedItemsCacheByTag[tagID][itemID];
-			Storage.set('itemsCacheByTag', storedItemsCacheByTag);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getStoredItemsByTag -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getStoredItemsByTag = function(tagID) {
-
-		// get local storage object
-		var storedItemsCacheByTag = Storage.get('itemsCacheByTag');
-		var storedTag = null;
-
-		if (storedItemsCacheByTag) {
-
-			// if tag found in user object
-			if (typeof storedItemsCacheByTag[tagID] !== 'undefined') {
-
-				storedTag = storedItemsCacheByTag[tagID];
-
-				// save item id as being retrieved from local storage
-				_.each(storedTag, function(item, key) {
-					storedItems[tagID + '_' + key] = true;
+							// display attribute
+							onSuccess(pageItem.fullurl);
+						});
+					});
 				});
+			});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* searchWikipedia
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var searchWikipedia = function(keywords, onSuccess, onError) {
+
+		var url = 'http://en.wikipedia.org/w/api.php?action=opensearch&format=json&callback=?';
+
+		var requestData = {
+			'search': keywords,
+			'prop': 'revisions',
+			'rvprop': 'content'
+		};
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: requestData,
+            dataType: 'jsonp',
+            cache: false,
+            crossDomain: true,
+            success: onSuccess,
+            error: onError
+        });
+
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getWikipediaPageDetails
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getWikipediaPageDetails = function(pageTitle, onSuccess, onError) {
+
+		var url = 'http://en.wikipedia.org/w/api.php?action=query&format=json&callback=?';
+
+		var requestData = {
+			'titles': pageTitle,
+			'prop': 'info',
+			'inprop': 'url'
+		};
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: requestData,
+            dataType: 'jsonp',
+            cache: false,
+            crossDomain: true,
+            success: onSuccess,
+            error: onError
+        });
+
+	};
+
+
+})(gamedex.module('wikipedia'));
+
+
+// GameTrailers
+(function(GameTrailers, gamedex, $, _) {
+	"use strict";
+
+    // module references
+	var Amazon = gamedex.module('amazon'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemData = gamedex.module('itemData'),
+
+		// REST URL
+		GAMETRAILERS_SEARCH_URL = gamedex.api + 'gametrailers/search/',
+		GAMETRAILERS_CACHE_URL = gamedex.api + 'gametrailers/cache/',
+
+		// properties
+		GAMETRAILERS_BASE_URL = 'gametrailers.com',
+
+		// data
+		gametrailersPageCache = {},
+
+		// request queues
+		getGametrailersQueue = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGametrailersPage -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GameTrailers.getGametrailersPage = function(searchTerms, sourceItem, onSuccess) {
+
+		var ajax = null;
+
+		// find in cache first
+		var gameTrailersItem = getCachedGametrailersPage(searchTerms);
+
+		if (gameTrailersItem) {
+
+			// add gametrailersPage to source item
+			sourceItem.gametrailersPage = gameTrailersItem.gametrailersPage;
+
+			// return updated source item
+			onSuccess(sourceItem.gametrailersPage);
+
+		// fetch gametrailersPage
+		} else {
+
+			// add to queue
+			var queueKey = searchTerms + '_';
+
+			if (!_.has(getGametrailersQueue, queueKey)) {
+				getGametrailersQueue[queueKey] = [];
+			}
+			getGametrailersQueue[queueKey].push(onSuccess);
+
+			// run for first call only
+			if (getGametrailersQueue[queueKey].length === 1) {
+
+				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
+
+				var requestData = {
+					'keywords': encodeURI(cleanedSearchTerms)
+				};
+
+				ajax = $.ajax({
+						url: GAMETRAILERS_SEARCH_URL,
+						type: 'GET',
+						data: requestData,
+						cache: true,
+						success: function(data) {
+
+							// parse result
+							var gametrailersPage = parseGametrailersResults(cleanedSearchTerms, data, sourceItem);
+
+							// iterate queued return methods
+							_.each(getGametrailersQueue[queueKey], function(successMethod) {
+
+								// add gametrailersPage to source item
+								sourceItem.gametrailersPage = gametrailersPage;
+								// add to local cache
+								addToGametrailersCache(searchTerms, gametrailersPage);
+								// return data
+								successMethod(gametrailersPage);
+							});
+
+							// empty queue
+							getGametrailersQueue[queueKey] = [];
+						}
+					});
 			}
 		}
 
-		return storedTag;
+		return ajax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* clearItemCache -
+	* cleanupSearchTerms -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var clearItemCache = function(item) {
+	var cleanupSearchTerms = function(searchTerms) {
 
-		itemsCacheByTag = {};
-		storedItems = {};
+		// remove ':', '&'
+		re = /\s*[:&]\s*/g;
+		var cleanedSearchTerms = searchTerms.replace(re, ' ');
+
+		// convert spaces to '+'
+		var re = /\s/g;
+		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
+
+		return cleanedSearchTerms;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* clearStoredData -
+	* getCachedGametrailersPage -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var clearStoredData = function(item) {
+	var getCachedGametrailersPage = function(searchTerms) {
 
-		Storage.remove('itemsCacheByTag');
-		Storage.remove('itemDataDirectory');
-		Storage.remove('tag');
+		var gametrailersPage = null;
+
+		if (typeof gametrailersPageCache[searchTerms] !== 'undefined') {
+			gametrailersPage = gametrailersPageCache[searchTerms];
+		}
+
+		return gametrailersPage;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* PUBLIC METHODS -
+	* addToGametrailersCache -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var publicMethods = {
-		'getCachedItemsByTag': getCachedItemsByTag,
-		'cacheItemsByTag': cacheItemsByTag,
-		'cacheItemByTag': cacheItemByTag,
-		'updateCacheItemByTag': updateCacheItemByTag,
-		'getStoredItemDirectory': getStoredItemDirectory,
-		'storeItemDirectory': storeItemDirectory,
-		'deleteCachedItem': deleteCachedItem,
-		'deleteCachedTag': deleteCachedTag,
-		'clearItemCache': clearItemCache,
-		'clearStoredData': clearStoredData
+	var addToGametrailersCache = function(searchTerms, gametrailersPage) {
+
+		gametrailersPageCache[searchTerms] = {gametrailersPage: gametrailersPage};
 	};
 
-	$.extend(ItemCache, publicMethods);
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseGametrailersResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseGametrailersResults = function(keywords, data, sourceItem) {
 
-})(tmz.module('itemCache'), tmz, $, _);
+		var gametrailersPage = null;
+
+		// parse raw result
+		if (typeof data.gametrailersPage === 'undefined') {
+
+			// get result that matches sourceItem
+			gametrailersPage = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (gametrailersPage) {
+				addToServerCache(keywords, gametrailersPage);
+			}
+
+		// parse cached result
+		} else {
+			gametrailersPage = data.gametrailersPage;
+		}
+
+		return gametrailersPage;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToServerCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToServerCache = function(searchTerms, gametrailersPage) {
+
+		var requestData = {
+			'keywords': encodeURI(searchTerms),
+			'gametrailersPage': encodeURI(gametrailersPage)
+		};
+
+		$.ajax({
+			url: GAMETRAILERS_CACHE_URL,
+			type: 'GET',
+			data: requestData,
+			cache: true,
+			success: function(data) {
+
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getMatchedSearchResult -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getMatchedSearchResult = function(data, sourceItem) {
+
+		var results = $('#games', data).find('.video_game_information_child');
+		var searchItem = {};
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate search results
+		$(results).each(function() {
+
+			// create standard item
+			searchItem = {
+				name: $(this).find('.content h3 a').text(),
+				releaseDate: $(this).find('.content dl dd:eq(1) a').text(),
+				gametrailersPage: $(this).find('.content h3 a').attr('href')
+			};
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
+
+
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = searchItem;
+				bestScore = score;
+			}
+		});
+
+		return bestMatch.gametrailersPage + '/videos-trailers';
+	};
+
+})(gamedex.module('gameTrailers'), gamedex, jQuery, _);
+
+
+// Steam
+(function(Steam, gamedex, $, _) {
+	"use strict";
+
+    // module references
+	var ItemLinker = gamedex.module('itemLinker'),
+
+		// REST URL
+		STEAM_SEARCH_URL = gamedex.api + 'steam/search/',
+		STEAM_CACHE_URL = gamedex.api + 'steam/cache/',
+
+		// properties
+		STEAM_BASE_URL = 'http://store.steampowered.com/',
+
+		// data
+		steamItemCache = {},
+
+		// request queues
+		getSteamQueue = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getSteamGame -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	Steam.getSteamGame = function(searchTerms, sourceItem, onSuccess, onError) {
+
+		var ajax = null;
+
+		// find in cache first
+		var steamItem = getCachedSteamGame(searchTerms);
+
+		if (steamItem) {
+
+			// add steam data to source item
+			sourceItem.steamPage = steamItem.steamPage;
+			sourceItem.steamPrice = steamItem.steamPrice;
+
+			// return steam item
+			onSuccess(steamItem);
+
+		// fetch steam item
+		} else {
+
+			// add to queue
+			var queueKey = searchTerms + '_';
+
+			if (!_.has(getSteamQueue, queueKey)) {
+				getSteamQueue[queueKey] = [];
+			}
+			getSteamQueue[queueKey].push(onSuccess);
+
+			// run for first call only
+			if (getSteamQueue[queueKey].length === 1) {
+
+				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
+
+				var requestData = {
+					'keywords': encodeURI(cleanedSearchTerms)
+				};
+
+				ajax = $.ajax({
+						url: STEAM_SEARCH_URL,
+						type: 'GET',
+						data: requestData,
+						cache: true,
+						success: function(data) {
+
+							// parse result
+							var steamItem = parseSteamResults(cleanedSearchTerms, data, sourceItem);
+
+							if (steamItem) {
+
+								// iterate queued return methods
+								_.each(getSteamQueue[queueKey], function(successMethod) {
+
+									// add steamItem to source item
+									sourceItem.steamPage = steamItem.steamPage;
+									sourceItem.steamPrice = steamItem.steamPrice;
+
+									// add to local cache
+									addToSteamCache(searchTerms, steamItem.steamPage, steamItem.steamPrice);
+
+									// return data
+									successMethod(steamItem);
+								});
+
+							// no result
+							} else {
+								if (!_.isUndefined(onError)) {
+									onError();
+								}
+							}
+
+							// empty queue
+							getSteamQueue[queueKey] = [];
+						}
+					});
+			}
+		}
+
+		return ajax;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* cleanupSearchTerms -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var cleanupSearchTerms = function(searchTerms) {
+
+		// remove ':', '&'
+		re = /\s*[:&]\s*/g;
+		var cleanedSearchTerms = searchTerms.replace(re, ' ');
+
+		// remove spaces
+		var re = /\s/g;
+		cleanedSearchTerms = cleanedSearchTerms.replace(re, '');
+
+		return cleanedSearchTerms;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedSteamGame -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedSteamGame = function(searchTerms) {
+
+		var steamItem = null;
+
+		if (typeof steamItemCache[searchTerms] !== 'undefined') {
+			steamItem = steamItemCache[searchTerms];
+		}
+
+		return steamItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToSteamCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToSteamCache = function(searchTerms, steamPage, steamPrice) {
+
+		steamItemCache[searchTerms] = {'steamPage': steamPage, 'steamPrice': steamPrice};
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseSteamResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseSteamResults = function(keywords, data, sourceItem) {
+
+		var steamItem = {};
+
+		// cache new result which requires matching and caching
+		if (typeof data.url === 'undefined') {
+
+			// get result that matches sourceItem
+			steamItem = getMatchedSearchResult(data, sourceItem);
+
+			// send matched result to be cached on server
+			if (steamItem) {
+				addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
+			}
+
+		// parse cached result
+		} else {
+			steamItem = {'steamPage': data.url, 'steamPrice': data.price};
+		}
+
+		return steamItem;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* addToServerCache -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var addToServerCache = function(searchTerms, steamPage, steamPrice) {
+
+		var requestData = {
+			'keywords': encodeURI(searchTerms),
+			'url': encodeURI(steamPage),
+			'price': encodeURI(steamPrice)
+		};
+
+		$.ajax({
+			url: STEAM_CACHE_URL,
+			type: 'GET',
+			data: requestData,
+			cache: true,
+			success: function(data) {
+
+			}
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getMatchedSearchResult -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getMatchedSearchResult = function(steamList, sourceItem) {
+
+		// matching properties
+		var bestMatch = null;
+		var bestScore = -99999;
+		var score = 0;
+
+		// iterate search results
+		_.each(steamList, function(steamItem) {
+
+			// get similarity score
+			score = ItemLinker.getSimilarityScore(sourceItem, steamItem);
+
+			// check if score is new best
+			if (score > bestScore) {
+				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price.replace('$', '')};
+				bestScore = score;
+			}
+		});
+
+		return bestMatch;
+	};
+
+})(gamedex.module('steam'), gamedex, jQuery, _);
+
+
+// IGN
+(function(IGN, gamedex, $, _) {
+
+	// REST URL
+	var UPCOMING_POPULAR_LIST_URL = gamedex.api + 'list/ign/upcoming/popular/',
+		UPCOMING_LIST_URL = gamedex.api + 'list/ign/upcoming/',
+		REVIEWED_LIST_URL = gamedex.api + 'list/ign/reviewed/',
+
+		// data
+		IGNUpcomingPopularListCache = {};
+		IGNUpcomingListCache = {};
+		IGNReviewedListCache = {};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getPopularGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	IGN.getPopularGames = function(platform, page, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(IGNUpcomingPopularListCache, platform, page);
+
+		if (cachedList) {
+
+			// return list
+			onSuccess(cachedList);
+
+		// fetch list data
+		} else {
+			var requestData = {
+				'platform': platform,
+				'page': page
+			};
+
+			$.ajax({
+				url: UPCOMING_POPULAR_LIST_URL,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+
+					// cache result
+					IGNUpcomingPopularListCache[platform + '_' + page] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
+				}
+			});
+		}
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getUpcomingGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	IGN.getUpcomingGames = function(platform, page, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(IGNUpcomingListCache, platform, page);
+
+		if (cachedList) {
+
+			// return list
+			onSuccess(cachedList);
+
+		// fetch list data
+		} else {
+			var requestData = {
+				'platform': platform,
+				'page': page
+			};
+
+			$.ajax({
+				url: UPCOMING_LIST_URL,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+
+					// cache result
+					IGNUpcomingListCache[platform + '_' + page] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
+				}
+			});
+		}
+	};
+
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getReviewedGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	IGN.getReviewedGames = function(platform, page, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(IGNReviewedListCache, platform, page);
+
+		if (cachedList) {
+
+			// return list
+			onSuccess(cachedList);
+
+		// fetch list data
+		} else {
+			var requestData = {
+				'platform': platform,
+				'page': page
+			};
+
+			$.ajax({
+				url: REVIEWED_LIST_URL,
+				type: 'GET',
+				data: requestData,
+				cache: true,
+				success: function(data) {
+
+					// cache result
+					IGNReviewedListCache[platform + '_' + page] = data;
+
+					// return items to onSuccess function
+					onSuccess(data);
+				}
+			});
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedData = function(cache, platform, page) {
+
+		var IGNUpcomingList = null;
+
+		if (typeof cache[platform + '_' + page] !== 'undefined') {
+			IGNUpcomingList = cache[platform + '_' + page];
+		}
+
+		return IGNUpcomingList;
+	};
+
+
+})(gamedex.module('ign'), gamedex, jQuery, _);
+
+
+// ReleasedList
+(function(ReleasedList, gamedex, $, _) {
+	"use strict";
+
+    // module references
+	var Utilities = gamedex.module('utilities');
+
+	// properties
+
+	// REST URL
+	var RELEASED_LIST_URL = gamedex.api + 'list/gt/released/',
+
+		// data
+		releasedListCache = {},
+
+		// list of platforms found in released list
+		platformsFound = {},
+
+		pendingRequests = {};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getReleasedGames -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	ReleasedList.getReleasedGames = function(platform, year, month, day, onSuccess) {
+
+		// find in cache first
+		var cachedList = getCachedData(year, month, day);
+		var releasedGamesRequest = null;
+
+		if (cachedList) {
+
+			// filter results based on platform
+			var filteredResults = parseAndFilterListResults(cachedList, platform);
+
+			// return list
+			onSuccess(filteredResults, platformsFound);
+
+		// fetch list data
+		} else {
+
+			var key = year + '_' + month + '_' + day;
+
+			// if request is already pending, skip
+			if (!_.has(pendingRequests, key)) {
+
+				// add to pendingRequests
+				var pendingRequest = {'platform':platform};
+				pendingRequests[key] = pendingRequest;
+
+				var requestData = {
+					'year': year,
+					'month': month,
+					'day': day
+				};
+
+				releasedGamesRequest = $.ajax({
+					url: RELEASED_LIST_URL,
+					type: 'GET',
+					data: requestData,
+					cache: true,
+					success: function(data) {
+
+						// parse platforms and add into proper platform list
+						parsePlatforms(data);
+
+						// get platforms found in list
+						getPlatformsFound(data);
+
+						// filter results based on platform
+						var filteredResults = parseAndFilterListResults(data, pendingRequests[key].platform);
+
+						// cache unfiltered result
+						releasedListCache[year + '_' + month + '_' + day] = data;
+
+						// return items to onSuccess function
+						onSuccess(filteredResults, platformsFound);
+
+						// remove pending request
+						delete pendingRequests[key];
+					}
+				});
+
+			// update platform for request
+			} else {
+				pendingRequests[key].platform = platform;
+			}
+		}
+
+		return releasedGamesRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parsePlatforms -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parsePlatforms = function(listResults) {
+
+		// iterate list results
+		_.each(listResults, function(listItem) {
+
+			var platformList = listItem.platforms.split(',');
+
+			// created linkedPlatform property
+			listItem['linkedPlatforms'] = {'all': undefined};
+
+			// iterate list item platforms
+			_.each(platformList, function(platform) {
+
+				var cleanedPlatform = _.str.trim(platform);
+				var linkedPlatform = Utilities.getStandardPlatform(cleanedPlatform);
+
+				// add to linkedPlatforms
+				listItem.linkedPlatforms[linkedPlatform.id] = linkedPlatform.name;
+			});
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getPlatformsFound -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getPlatformsFound = function(listResults) {
+
+		// iterate list results
+		_.each(listResults, function(listItem) {
+
+			// iterate list item platforms
+			_.each(listItem.linkedPlatforms, function(value, id) {
+
+				// add playform to platformsFound object
+				if (!_.has(platformsFound, id)) {
+					platformsFound[id] = 1;
+				} else {
+					platformsFound[id] = platformsFound[id] + 1;
+				}
+			});
+		});
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* parseAndFilterListResults -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var parseAndFilterListResults = function(listResults, platform) {
+
+		var filteredResults = [];
+
+		// iterate list results
+		_.each(listResults, function(listItem) {
+
+			// clean up name
+			// remove words appearing after 'box'
+			listItem.name = listItem.name.replace(/\sbox\s*.*/gi, '');
+
+			// result contains platform add to filteredResults
+			if (_.has(listItem.linkedPlatforms, platform)) {
+				filteredResults.push(listItem);
+			}
+		});
+
+		return filteredResults;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedData -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedData = function(year, month, day) {
+
+		var releasedList = null;
+
+		if (typeof releasedListCache[year + '_' + month + '_' + day] !== 'undefined') {
+			releasedList = releasedListCache[year + '_' + month + '_' + day];
+		}
+
+		return releasedList;
+	};
+
+
+})(gamedex.module('releasedList'), gamedex, jQuery, _);
 
 
 // SITEVIEW
-(function(SiteView, tmz, $, _, alertify) {
+(function(SiteView, gamedex, $, _, alertify) {
     "use strict";
 
     // module references
-    var User = tmz.module('user'),
-        ItemData = tmz.module('itemData'),
-        TagView = tmz.module('tagView'),
-        ItemView = tmz.module('itemView'),
-        SearchView = tmz.module('searchView'),
-        Storage = tmz.module('storage'),
-        GridView = tmz.module('gridView'),
+    var User = gamedex.module('user'),
+        ItemData = gamedex.module('itemData'),
+        TagView = gamedex.module('tagView'),
+        ItemView = gamedex.module('itemView'),
+        SearchView = gamedex.module('searchView'),
+        Storage = gamedex.module('storage'),
+        GridView = gamedex.module('gridView'),
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
@@ -3797,22 +6086,21 @@ tmz.initializeModules = function() {
 
     $.extend(SiteView, publicMethods);
 
-})(tmz.module('siteView'), tmz, jQuery, _, alertify);
+})(gamedex.module('siteView'), gamedex, jQuery, _, alertify);
 
 
 // SEARCH VIEW
-(function(SearchView, tmz, $, _, moment, ListJS) {
+(function(SearchView, gamedex, $, _, moment, ListJS) {
 	"use strict";
 
 	// module references
-	var DetailView = tmz.module('detailView'),
-		Amazon = tmz.module('amazon'),
-		GiantBomb = tmz.module('giantbomb'),
-		Utilities = tmz.module('utilities'),
-		GameStats = tmz.module('gameStats'),
-		IGN = tmz.module('ign'),
-		ReleasedList = tmz.module('releasedList'),
-		ItemLinker = tmz.module('itemLinker'),
+	var DetailView = gamedex.module('detailView'),
+		Amazon = gamedex.module('amazon'),
+		GiantBomb = gamedex.module('giantbomb'),
+		Utilities = gamedex.module('utilities'),
+		IGN = gamedex.module('ign'),
+		ReleasedList = gamedex.module('releasedList'),
+		ItemLinker = gamedex.module('itemLinker'),
 
 		// constants
 		LIST_TYPE = {'POPULAR': 0, 'UPCOMING': 1, 'RELEASED': 2, 'REVIEWED': 3},
@@ -3839,10 +6127,15 @@ tmz.initializeModules = function() {
 		currentTab = TAB_IDS['#searchTab'],
 
 		infiniteScrollDisabled = false,
+
 		ignUpcomingListPagesLoaded = -1,
 		ignReleasedListPagesLoaded = -1,
+		ignPopularListPagesLoaded = -1,
+
 		ignUpcomingListPagesEnded = false,
 		ignReviewedListPagesEnded = false,
+		ignPopularListPagesEnded = false,
+
 
 		listType = null,
 		listTabScrollPosition = 0,
@@ -4052,7 +6345,7 @@ tmz.initializeModules = function() {
 			e.preventDefault();
 
 			// only allow changes for provider which has multiple views (upcoming/released games)
-			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED) {
+			if (listType == LIST_TYPE.UPCOMING || listType == LIST_TYPE.RELEASED || listType == LIST_TYPE.REVIEWED || listType == LIST_TYPE.POPULAR) {
 				changeDisplayType($(this).attr('data-content'), false, $(this));
 			}
 		});
@@ -4117,8 +6410,6 @@ tmz.initializeModules = function() {
 		// get model data
 		var templateData = {'listResults': items};
 
-		console.info('render list', items, order);
-
 		// output data to template
 		$listTable.append(listResultsTemplate(templateData));
 
@@ -4171,10 +6462,9 @@ tmz.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.loadNextListPages = function() {
 
-		console.info('load next', listType);
-
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
+				SearchView.getIGNPopularList(listPlatform, ignPopularListPagesLoaded + 1);
 				break;
 
 			case LIST_TYPE.UPCOMING:
@@ -4191,15 +6481,28 @@ tmz.initializeModules = function() {
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGamestatsPopularityListByPlatform -
+	* getIGNPopularList -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.getGamestatsPopularityListByPlatform = function(platform) {
+	SearchView.getIGNPopularList = function(platform, page) {
 
-		// get popular games
-		GameStats.getPopularGamesListByPlatform(platform.gamestats, listResult);
+		if (ignPopularListPagesEnded) {
+			return;
+		}
+
+		// get upcoming games
+		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
+			IGN.getPopularGames(platform.ign, page + i, listResult);
+		}
 
 		function listResult(data) {
-			getList_result(data, 'desc', LIST_TYPE.POPULAR);
+
+			if (data.length === 0) {
+				ignPopularListPagesEnded = true;
+			}
+
+			infiniteScrollDisabled = false;
+			getList_result(data, 'asc', LIST_TYPE.POPULAR);
+			ignPopularListPagesLoaded++;
 		}
 	};
 
@@ -4215,13 +6518,11 @@ tmz.initializeModules = function() {
 		// get upcoming games (page 1..2)
 		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
 			IGN.getUpcomingGames(platform.ign, page + i, listResult);
-			console.info('load page: ', page + i);
 		}
 
 		function listResult(data) {
 
 			if (data.length === 0) {
-				console.info('end')
 				ignUpcomingListPagesEnded = true;
 			}
 
@@ -4243,13 +6544,11 @@ tmz.initializeModules = function() {
 		// get reviewed games (page 1)
 		for (var i = 0; i < NUMBER_OF_LIST_PAGES_TO_LOAD; i++) {
 			IGN.getReviewedGames(platform.ign, page + i, listResult);
-			console.info('load page: ', page + i);
 		}
 
 		function listResult(data) {
 
 			if (data.length === 0) {
-				console.info('end')
 				ignReviewedListPagesEnded = true;
 			}
 
@@ -4599,12 +6898,11 @@ tmz.initializeModules = function() {
 
 				// popular games
 				case 0:
-					// disable display options and set to list
 
-					// EXCEPTION:
-					// do not update listDisplayType as popular list cannot have any other view
-					changeDisplayType(0, true);
-					$listDisplayOptions.fadeTo(100, 0.35);
+					// set toggle button and enable display options
+					changeDisplayType(listDisplayType);
+					$listDisplayOptions.find('button:eq(' + listDisplayType + ')').button('toggle');
+					$listDisplayOptions.fadeTo(100, 1);
 
 					// set title
 					$listTypeName.text('Popular');
@@ -4714,10 +7012,14 @@ tmz.initializeModules = function() {
 	var getList = function(listType) {
 
 		infiniteScrollDisabled = false;
+
 		ignReviewedListPagesEnded = false;
 		ignUpcomingListPagesEnded = false;
+		ignPopularListPagesEnded = false;
+
 		ignUpcomingListPagesLoaded = -1;
 		ignReleasedListPagesLoaded = -1;
+		ignPopularListPagesLoaded = -1;
 
 		// reset platform menu
 		renderListPlatformMenu();
@@ -4728,7 +7030,7 @@ tmz.initializeModules = function() {
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
 				resetListName();
-				SearchView.getGamestatsPopularityListByPlatform(listPlatform);
+				SearchView.getIGNPopularList(listPlatform, 0);
 				break;
 
 			case LIST_TYPE.UPCOMING:
@@ -4954,26 +7256,26 @@ tmz.initializeModules = function() {
 		return date2 - date1;
 	};
 
-})(tmz.module('searchView'), tmz, jQuery, _, moment, List);
+})(gamedex.module('searchView'), gamedex, jQuery, _, moment, List);
 
 // DETAIL VIEW
-(function(DetailView, tmz, $, _, moment) {
+(function(DetailView, gamedex, $, _, moment) {
 
     // module references
-    var User = tmz.module('user'),
-        TagView = tmz.module('tagView'),
-        Utilities = tmz.module('utilities'),
-        SearchView = tmz.module('searchView'),
-        ItemView = tmz.module('itemView'),
-        ItemData = tmz.module('itemData'),
-        Amazon = tmz.module('amazon'),
-        ItemLinker = tmz.module('itemLinker'),
-        Metacritic = tmz.module('metacritic'),
-        GiantBomb = tmz.module('giantbomb'),
-        Wikipedia = tmz.module('wikipedia'),
-        GameTrailers = tmz.module('gameTrailers'),
-        Steam = tmz.module('steam'),
-        VideoPanel = tmz.module('videoPanel'),
+    var User = gamedex.module('user'),
+        TagView = gamedex.module('tagView'),
+        Utilities = gamedex.module('utilities'),
+        SearchView = gamedex.module('searchView'),
+        ItemView = gamedex.module('itemView'),
+        ItemData = gamedex.module('itemData'),
+        Amazon = gamedex.module('amazon'),
+        ItemLinker = gamedex.module('itemLinker'),
+        Metacritic = gamedex.module('metacritic'),
+        GiantBomb = gamedex.module('giantbomb'),
+        Wikipedia = gamedex.module('wikipedia'),
+        GameTrailers = gamedex.module('gameTrailers'),
+        Steam = gamedex.module('steam'),
+        VideoPanel = gamedex.module('videoPanel'),
 
         // constants
         TAB_IDS = ['#amazonTab', '#giantBombTab'],
@@ -6011,29 +8313,29 @@ tmz.initializeModules = function() {
         }
     };
 
-})(tmz.module('detailView'), tmz, jQuery, _, moment);
+})(gamedex.module('detailView'), gamedex, jQuery, _, moment);
 
 // ITEM VIEW
-(function(ItemView, tmz, $, _, ListJS) {
+(function(ItemView, gamedex, $, _, ListJS) {
     "use strict";
 
     // modules references
-    var User = tmz.module('user'),
-        SiteView = tmz.module('siteView'),
-        TagView = tmz.module('tagView'),
-        Utilities = tmz.module('utilities'),
-        DetailView = tmz.module('detailView'),
-        ImportView = tmz.module('importView'),
-        GridView = tmz.module('gridView'),
-        ItemData = tmz.module('itemData'),
-        ItemCache = tmz.module('itemCache'),
-        TagData = tmz.module('tagData'),
-        Amazon = tmz.module('amazon'),
-        Metacritic = tmz.module('metacritic'),
-        ItemLinker = tmz.module('itemLinker'),
-        FilterPanel = tmz.module('filterPanel'),
-        GiantBomb = tmz.module('giantbomb'),
-        Steam = tmz.module('steam'),
+    var User = gamedex.module('user'),
+        SiteView = gamedex.module('siteView'),
+        TagView = gamedex.module('tagView'),
+        Utilities = gamedex.module('utilities'),
+        DetailView = gamedex.module('detailView'),
+        ImportView = gamedex.module('importView'),
+        GridView = gamedex.module('gridView'),
+        ItemData = gamedex.module('itemData'),
+        ItemCache = gamedex.module('itemCache'),
+        TagData = gamedex.module('tagData'),
+        Amazon = gamedex.module('amazon'),
+        Metacritic = gamedex.module('metacritic'),
+        ItemLinker = gamedex.module('itemLinker'),
+        FilterPanel = gamedex.module('filterPanel'),
+        GiantBomb = gamedex.module('giantbomb'),
+        Steam = gamedex.module('steam'),
 
         // constants
         DISPLAY_TYPE = {'List': 0, 'Icons': 1},
@@ -7418,20 +9720,20 @@ tmz.initializeModules = function() {
 
     $.extend(ItemView, publicMethods);
 
-})(tmz.module('itemView'), tmz, jQuery, _, List);
+})(gamedex.module('itemView'), gamedex, jQuery, _, List);
 
 // GiantBomb
-(function(GridView, tmz, $, _, alertify) {
+(function(GridView, gamedex, $, _, alertify) {
 	"use strict";
 
     // module references
-    var DetailView = tmz.module('detailView'),
-		ItemData = tmz.module('itemData'),
-		ItemView = tmz.module('itemView'),
-		TagView = tmz.module('tagView'),
-		Amazon = tmz.module('amazon'),
-		Utilities = tmz.module('utilities'),
-		FilterPanel = tmz.module('filterPanel'),
+    var DetailView = gamedex.module('detailView'),
+		ItemData = gamedex.module('itemData'),
+		ItemView = gamedex.module('itemView'),
+		TagView = gamedex.module('tagView'),
+		Amazon = gamedex.module('amazon'),
+		Utilities = gamedex.module('utilities'),
+		FilterPanel = gamedex.module('filterPanel'),
 
 		// constants
 		DEFAULT_DISPLAY_TYPE = 1,
@@ -8073,19 +10375,19 @@ tmz.initializeModules = function() {
 	};
 
 
-})(tmz.module('gridView'), tmz, jQuery, _, alertify);
+})(gamedex.module('gridView'), gamedex, jQuery, _, alertify);
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-(function(TagView, tmz, $, _) {
+(function(TagView, gamedex, $, _) {
     "use strict";
 
     // dependecies
-    var User = tmz.module('user'),
-        TagData = tmz.module('tagData'),
-        ItemData = tmz.module('itemData'),
-        ItemCache = tmz.module('itemCache'),
+    var User = gamedex.module('user'),
+        TagData = gamedex.module('tagData'),
+        ItemData = gamedex.module('itemData'),
+        ItemCache = gamedex.module('itemCache'),
 
         // node cache
         $addListContainer = $('#addListContainer'),
@@ -8697,14 +10999,14 @@ tmz.initializeModules = function() {
     $.extend(TagView, publicMethods);
 
 
-})(tmz.module('tagView'), tmz, jQuery, _);
+})(gamedex.module('tagView'), gamedex, jQuery, _);
 
 // FILTER PANEL
-(function(FilterPanel, tmz, $, _, moment) {
+(function(FilterPanel, gamedex, $, _, moment) {
 	"use strict";
 
 	// dependecies
-	var Utilities = tmz.module('utilities'),
+	var Utilities = gamedex.module('utilities'),
 
 		// node cache
 		$filtersModal = $('#filters-modal'),
@@ -9129,10 +11431,10 @@ tmz.initializeModules = function() {
 		return false;
 	};
 
-})(tmz.module('filterPanel'), tmz, $, _, moment);
+})(gamedex.module('filterPanel'), gamedex, $, _, moment);
 
 // VideoPanel
-(function(VideoPanel, _V_, tmz, $, _, moment) {
+(function(VideoPanel, _V_, gamedex, $, _, moment) {
 	"use strict";
 
 	// constants
@@ -9446,2352 +11748,23 @@ tmz.initializeModules = function() {
 	};
 
 
-})(tmz.module('videoPanel'), _V_, tmz, jQuery, _, moment);
+})(gamedex.module('videoPanel'), _V_, gamedex, jQuery, _, moment);
 
-
-// Amazon
-(function(Amazon, tmz, $, _, moment) {
-	"use strict";
-
-    // module references
-    var Utilities = tmz.module('utilities'),
-
-		// constants
-		FILTERED_NAMES = [
-			'accessory',
-			'case',
-			'codes',
-			'combo',
-			'console',
-			'controller',
-			'covers',
-			'face plate',
-			'faceplate',
-			'head set',
-			'headset',
-			'import',
-			'japan',
-			'kit',
-			'map',
-			'membership',
-			'new',
-			'pack',
-			'poster',
-			'pre-paid',
-			'set',
-			'shell',
-			'skin',
-			'software',
-			'stylus',
-			'wireless'
-		],
-
-		// REST URLS
-		AMAZON_SEARCH_URL = tmz.api + 'amazon/search/',
-		AMAZON_DETAIL_URL = tmz.api + 'amazon/detail/',
-
-		// constants
-		RETRY_AMAZON_MIN = 500,
-		RETRY_AMAZON_MAX = 3000,
-
-		// data
-		amazonOffersCache = {},
-		amazonItemCache = {},
-
-		// request queues
-		getAmazonItemOffersQueue = {},
-		getAmazonItemDetailQueue = {},
-
-		// failed requests
-		failedAmazonSearchRequests = [],
-
-		// ajax requests
-		searchRequest = null,
-		searchAmazonID = 0;
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchAmazon - search amazon, prevent all but latest from completing and returning onSuccess method
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError, preventMultipleRequests) {
-
-		preventMultipleRequests = typeof preventMultipleRequests !== 'undefined' ? preventMultipleRequests : false;
-
-		var searchTerms = encodeURIComponent(keywords);
-
-		// browse node, search terms and response group in url
-		var requestData = {
-			'keywords': keywords,
-			'browse_node': browseNode,
-			'search_index': 'VideoGames',
-			'response_group': 'ItemAttributes,Images',
-			'page': 1
-		};
-
-		// abort previous request
-		if (searchRequest && preventMultipleRequests) {
-			searchRequest.abort();
-		}
-
-		// increment searchAmazonID and assign to local id
-		var id = ++searchAmazonID;
-
-		searchRequest = $.ajax({
-			url: AMAZON_SEARCH_URL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'xml',
-			cache: true,
-			success: function(data) {
-
-				// only allow latest request from returning onSuccess
-				if (id === searchAmazonID || !preventMultipleRequests) {
-					searchRequest = null;
-					onSuccess(data);
-				}
-			},
-			error: function() {
-
-				// random delay
-				var delayMS = Math.floor(Math.random() * (RETRY_AMAZON_MAX - RETRY_AMAZON_MIN + 1)) + RETRY_AMAZON_MIN;
-
-				// retry request after random delay
-				(function() {
-					Amazon.searchAmazon(keywords, browseNode, onSuccess, onError, preventMultipleRequests);
-
-				}).delay(delayMS);
-
-				// return error with serviceUnavailable status as True
-				onError(true);
-			}
-		});
-
-		return searchRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonResultItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.parseAmazonResultItem = function($resultItem) {
-
-		var isFiltered = false;
-		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
-		var	re = new RegExp(filter, 'i');
-
-		// get attributes from xml for filter check
-		var itemData = {
-			name: $resultItem.find('Title').text(),
-			platform: $resultItem.find('Platform').text()
-		};
-
-		// result has been filtered
-		if (re.test(itemData.name) || itemData.platform === '') {
-
-			itemData.isFiltered = true;
-
-		// not filtered > add more properties to itemData
-		} else {
-
-			itemData.id = $resultItem.find('ASIN').text();
-			itemData.asin = $resultItem.find('ASIN').text();
-			itemData.gbombID = 0;
-			itemData.smallImage = $resultItem.find('ThumbnailImage > URL:first').text() || '';
-			itemData.thumbnailImage = $resultItem.find('MediumImage > URL:first').text() || '';
-			itemData.largeImage = $resultItem.find('LargeImage > URL:first').text() || '';
-			itemData.description = $resultItem.find('EditorialReview > Content:first').text() || '';
-			itemData.releaseDate = $resultItem.find('ReleaseDate').text() || '1900-01-01';
-
-			// add custom formatted properties
-			// standard platform name
-			itemData.platform = Utilities.matchPlatformToIndex(itemData.platform).name;
-			// relative/calendar date
-			if (itemData.releaseDate !== '1900-01-01') {
-				itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
-			} else {
-				itemData.calendarDate = 'Unknown';
-			}
-		}
-
-		return itemData;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.getAmazonItemDetail = function(asin, onSuccess, onError) {
-
-		// find in giant bomb data cache first
-		var cachedItem = getCachedItem(asin);
-
-		// load cached gb data
-		if (cachedItem) {
-
-			// return updated source item
-			onSuccess(cachedItem);
-
-		// download amazon item
-		} else {
-
-			// add to queue
-			if (!_.has(getAmazonItemDetailQueue, asin)) {
-				getAmazonItemDetailQueue[asin] = [];
-			}
-			getAmazonItemDetailQueue[asin].push(onSuccess);
-
-			// run for first call only
-			if (getAmazonItemDetailQueue[asin].length === 1) {
-
-				// browse node, search terms and response group in url
-				var requestData = {
-					'asin': asin,
-					'response_group': 'Medium'
-				};
-
-				$.ajax({
-					url: AMAZON_DETAIL_URL,
-					type: 'GET',
-					data: requestData,
-					dataType: 'xml',
-					cache: true,
-					success: function(data) {
-
-						// iterate queued return methods
-						_.each(getAmazonItemDetailQueue[asin], function(successMethod) {
-
-							// cache result
-							amazonItemCache[asin] = data;
-
-							// return data
-							successMethod(data);
-						});
-
-						// empty queue
-						getAmazonItemDetailQueue[asin] = [];
-					},
-					error: onError
-				});
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemOffers
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
-
-		// find in amazon offer cache first
-		var cachedOffer = getCachedOffer(asin);
-		// load cached amazon offer
-		if (cachedOffer) {
-			// add score data to source item
-			sourceItem.offers = cachedOffer;
-
-			// return updated source item
-			onSuccess(cachedOffer);
-
-		// get new offer data
-		} else {
-
-			// add to queue
-			if (!_.has(getAmazonItemOffersQueue, asin)) {
-				getAmazonItemOffersQueue[asin] = [];
-			}
-			getAmazonItemOffersQueue[asin].push(onSuccess);
-
-			// run for first call only
-			if (getAmazonItemOffersQueue[asin].length === 1) {
-
-				// OfferSummary, OfferListings, Offers, OfferFull
-				var requestData = {
-					'asin': asin,
-					'response_group': 'OfferFull'
-				};
-
-				$.ajax({
-					url: AMAZON_DETAIL_URL,
-					type: 'GET',
-					data: requestData,
-					dataType: 'xml',
-					cache: true,
-					success: function(data) {
-
-						// iterate queued return methods
-						_.each(getAmazonItemOffersQueue[asin], function(successMethod) {
-
-							// parse
-							var offerItem = parseAmazonOffers(data, sourceItem);
-
-							// cache result
-							amazonOffersCache[asin] = offerItem;
-
-							// return data
-							successMethod(offerItem);
-						});
-
-						// empty queue
-						getAmazonItemOffersQueue[asin] = [];
-					},
-					error: onError
-				});
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* formatOfferData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var formatOfferData = function(offerItem) {
-
-		var buyNowPrice = null;
-		var buyNowRawPrice = null;
-
-		// iterate offers
-		for (var i = 0, len = offerItem.offers.length; i < len; i++) {
-			if (offerItem.offers[i].availability === 'now') {
-				buyNowPrice = offerItem.offers[i].price;
-				buyNowRawPrice = offerItem.offers[i].rawPrice;
-			}
-		}
-
-		buyNowPrice = buyNowPrice || offerItem.lowestNewPrice;
-
-		// check for 'too low to display'
-		if (buyNowPrice === 'Too low to display') {
-			buyNowPrice = 'n/a';
-			buyNowRawPrice = 0;
-		}
-		if (offerItem.lowestNewPrice === 'Too low to display') {
-			offerItem.lowestNewPrice = 'n/a';
-		}
-
-		offerItem.buyNowPrice = buyNowPrice;
-		offerItem.buyNowRawPrice = buyNowRawPrice;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedOffer -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedOffer = function(asin) {
-
-		var amazonOfferItem = null;
-
-		if (typeof amazonOffersCache[asin] !== 'undefined') {
-			amazonOfferItem = amazonOffersCache[asin];
-		}
-
-		return amazonOfferItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItem = function(id) {
-
-		var amazonItem = null;
-
-		if (typeof amazonItemCache[id] !== 'undefined') {
-			amazonItem = amazonItemCache[id];
-		}
-
-		return amazonItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonOffers -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonOffers = function(data, sourceItem) {
-
-		var offerItem = {};
-
-		// iterate xml results, construct offers
-		$('Item', data).each(function() {
-
-			// parse amazon result item, add data to offerItem
-			offerItem = parseAmazonOfferItem($(this));
-		});
-
-		// add offerItem to item model
-		sourceItem.offers = offerItem;
-
-		return offerItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAmazonOfferItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAmazonOfferItem = function($resultItem) {
-
-		var offerItem = {};
-		var offer = {};
-
-		// remove $ sign
-		var re = /\$/;
-
-		// get attributes from xml
-		var totalNew = parseInt($resultItem.find('TotalNew').text(), 10);
-		var totalUsed = parseInt($resultItem.find('TotalUsed').text(), 10);
-
-		// offers found
-		if (totalNew !== 0 || totalUsed !== 0) {
-
-			offerItem.totalNew = totalNew;
-			offerItem.totalUsed = totalUsed;
-			offerItem.lowestNewPrice = $resultItem.find('LowestNewPrice FormattedPrice').text().replace(re, '');
-			offerItem.lowestUsedPrice = $resultItem.find('LowestUsedPrice FormattedPrice').text().replace(re, '');
-			offerItem.totalOffers = $resultItem.find('TotalOffers').text();
-			offerItem.offersURL = $resultItem.find('MoreOffersUrl').text();
-			offerItem.offersURLNew = $resultItem.find('MoreOffersUrl').text() + '&condition=new';
-			offerItem.offersURLUsed = $resultItem.find('MoreOffersUrl').text() + '&condition=used';
-
-			// convert offer url to a product url
-			var offerRE = /offer-listing/gi;
-			offerItem.productURL = offerItem.offersURL.replace(offerRE, 'product');
-			offerItem.offers = [];
-
-			// iterate offers
-			$('Offer', $resultItem).each(function() {
-
-				offer = {};
-
-				offer.price = $(this).find('Price FormattedPrice').text().replace(re, '');
-				offer.rawPrice = $(this).find('Price Amount').text();
-				offer.availability = $(this).find('AvailabilityType').text();
-				offer.freeShipping = $(this).find('IsEligibleForSuperSaverShipping').text();
-
-				offerItem.offers.push(offer);
-			});
-
-			// format offer data
-			formatOfferData(offerItem);
-		}
-
-		return offerItem;
-	};
-
-})(tmz.module('amazon'), tmz, jQuery, _, moment);
-
-
-// GiantBomb
-(function(GiantBomb, tmz, $, _, moment) {
-	"use strict";
-
-    // module references
-	var Amazon = tmz.module('amazon'),
-
-		// REST URLS
-		GIANTBOMB_SEARCH_URL = tmz.api + 'giantbomb/search/',
-		GIANTBOMB_DETAIL_URL = tmz.api + 'giantbomb/detail/',
-
-		// data
-		giantBombDataCache = {},
-		giantBombItemCache = {},
-
-		// request queue
-		getGiantBombItemDataQueue = {},
-		getGiantBombItemDetailQueue = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchGiantBomb -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.searchGiantBomb = function(keywords, onSuccess, onError) {
-
-		var searchTerms = encodeURIComponent(keywords);
-
-		// list of fields to get as query parameter
-		var fieldList = ['id', 'name', 'original_release_date', 'image'];
-
-		var requestData = {
-			'field_list': fieldList.join(','),
-			'keywords': keywords,
-			'page': 0
-		};
-
-		var searchRequest = $.ajax({
-			url: GIANTBOMB_SEARCH_URL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
-
-		return searchRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGiantBombResultItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.parseGiantBombResultItem = function(resultItem) {
-		var itemData = {
-			id: resultItem.id,
-			asin: 0,
-			gbombID: resultItem.id,
-			name: resultItem.name,
-			platform: 'n/a'
-		};
-
-		// format date
-		if (resultItem.original_release_date && resultItem.original_release_date !== '') {
-			itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
-		} else {
-			itemData.releaseDate = '1900-01-01';
-		}
-
-		// calendar date
-		if (itemData.releaseDate !== '1900-01-01') {
-			itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
-		} else {
-			itemData.calendarDate = 'Unknown';
-		}
-
-		// set small url
-		if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
-			itemData.smallImage = resultItem.image.small_url;
-		} else {
-			itemData.smallImage = 'no image.png';
-		}
-
-		// set thumb url
-		if (resultItem.image && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
-			itemData.thumbnailImage = resultItem.image.thumb_url;
-		} else {
-			itemData.thumbnailImage = 'no image.png';
-		}
-
-		// set large url
-		if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
-			itemData.largeImage = resultItem.image.super_url;
-		} else {
-			itemData.largeImage = 'no image.png';
-		}
-
-		// set description
-		if (resultItem.description && resultItem.description  !== '') {
-			itemData.description = resultItem.description;
-		} else {
-			itemData.description = 'No Description';
-		}
-
-		return itemData;
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemPlatform -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
-
-		// list of fields to get as query parameter
-		var fieldList = ['platforms'];
-
-		var giantbombRequest = getGiantBombItem(gbombID, fieldList, function(data) {
-			onSuccess(data, gbombID);
-		}, onError);
-
-		return giantbombRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemData = function(gbombID, onSuccess, onError) {
-
-		// find in giant bomb data cache first
-		var cachedData = getCachedData(gbombID);
-
-		// load cached gb data
-		if (cachedData) {
-
-			// return updated source item
-			onSuccess(cachedData);
-
-		// download gb data
-		} else {
-
-			// add to queue
-			if (!_.has(getGiantBombItemDataQueue, gbombID)) {
-				getGiantBombItemDataQueue[gbombID] = [];
-			}
-			getGiantBombItemDataQueue[gbombID].push(onSuccess);
-
-			// run for first call only
-			if (getGiantBombItemDataQueue[gbombID].length === 1) {
-
-				// download data
-				var fieldList = ['description', 'site_detail_url', 'videos'];
-
-				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
-
-					// iterate queued return methods
-					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
-
-						// cache result
-						giantBombDataCache[gbombID] = data.results;
-
-						// return data
-						successMethod(data.results);
-					});
-
-					// empty queue
-					getGiantBombItemDataQueue[gbombID] = [];
-
-				}, onError);
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDetail -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemDetail = function(gbombID, onSuccess, onError) {
-
-		// find in giant bomb data cache first
-		var cachedItem = getCachedItem(gbombID);
-
-		// load cached gb data1
-		if (cachedItem) {
-
-			// return updated source item
-			onSuccess(cachedItem);
-
-		// download gb item
-		} else {
-
-			// add to queue
-			if (!_.has(getGiantBombItemDetailQueue, gbombID)) {
-				getGiantBombItemDetailQueue[gbombID] = [];
-			}
-			getGiantBombItemDetailQueue[gbombID].push(onSuccess);
-
-			// run for first call only
-			if (getGiantBombItemDetailQueue[gbombID].length === 1) {
-
-				// download data
-				var fieldList = ['id', 'name', 'original_release_date', 'image'];
-
-				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
-
-					// iterate queued return methods
-					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
-
-						// cache result
-						giantBombItemCache[gbombID] = data.results;
-
-						// return data
-						successMethod(data.results);
-					});
-
-					// empty queue
-					getGiantBombItemDetailQueue[gbombID] = [];
-
-				}, onError);
-			}
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
-
-		var requestData = {
-			'field_list': fieldList.join(','),
-			'id': gbombID
-		};
-
-		var giantbombRequest = $.ajax({
-			url: GIANTBOMB_DETAIL_URL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
-
-		return giantbombRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(id) {
-
-		var giantBombData = null;
-
-		if (typeof giantBombDataCache[id] !== 'undefined') {
-			giantBombData = giantBombDataCache[id];
-		}
-
-		return giantBombData;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItem = function(id) {
-
-		var giantBombItem = null;
-
-		if (typeof giantBombItemCache[id] !== 'undefined') {
-			giantBombItem = giantBombItemCache[id];
-		}
-
-		return giantBombItem;
-	};
-
-
-})(tmz.module('giantbomb'), tmz, jQuery, _, moment);
-
-
-// Metacritic
-(function(Metacritic, tmz, $, _) {
-	"use strict";
-
-    // module references
-	var Amazon = tmz.module('amazon'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemData = tmz.module('itemData'),
-
-		// REST URL
-		METACRITIC_SEARCH_URL = tmz.api + 'metacritic/search/',
-		METACRITIC_CACHE_URL = tmz.api + 'metacritic/cache/',
-
-		// properties
-		metacriticDomain = 'metacritic.com',
-
-		// data
-		metascoreCache = {},
-
-		// request queues
-		getMetascoreQueue = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMetascore -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Metacritic.getMetascore = function(searchTerms, sourceItem, fromSearch, onSuccess) {
-
-		var metascoreRequest = null;
-
-		// find in cache first
-		var cachedScore = getCachedMetascore(sourceItem.asin, sourceItem.gbombID, sourceItem.platform);
-
-		if (cachedScore) {
-
-			metascoreRequest = cachedScore;
-
-			// add score data to source item
-			sourceItem.metascore = cachedScore.metascore;
-			sourceItem.metascorePage = cachedScore.metascorePage;
-
-			// return updated source item
-			onSuccess(sourceItem);
-
-		// fetch score data
-		} else {
-
-			// add to queue
-			var queueKey = searchTerms + '_' + sourceItem.platform;
-
-			if (!_.has(getMetascoreQueue, queueKey)) {
-				getMetascoreQueue[queueKey] = [];
-			}
-			getMetascoreQueue[queueKey].push(onSuccess);
-
-			// run for first call only
-			if (getMetascoreQueue[queueKey].length === 1) {
-
-				var cleanedSearchTerms = cleanupMetacriticSearchTerms(searchTerms);
-
-				var requestData = {
-					'keywords': encodeURI(cleanedSearchTerms),
-					'platform': encodeURI(sourceItem.platform)
-				};
-
-				metascoreRequest = $.ajax({
-						url: METACRITIC_SEARCH_URL,
-						type: 'GET',
-						data: requestData,
-						cache: true,
-						success: function(data) {
-
-							// save values before updated with current info
-							var previousMetascore = sourceItem.metascore;
-
-							// parse result > modify sourceItem
-							var result = parseMetascoreResults(cleanedSearchTerms, data, sourceItem);
-
-							// add results to sourceItem
-							addMetascoreDatatoItem(result, sourceItem);
-
-							// check if source item score or page differs from return score/page
-							if (!fromSearch && sourceItem.metascore != previousMetascore) {
-								// update metacritic data for source item record
-								ItemData.updateMetacritic(sourceItem);
-							}
-
-							// iterate queued return methods
-							_.each(getMetascoreQueue[queueKey], function(successMethod) {
-								// add to local cache
-								addToMetascoreCache(sourceItem.asin, sourceItem.gbombID, sourceItem.platform, sourceItem);
-								// return data
-								successMethod(sourceItem);
-							});
-
-							// empty queue
-							getMetascoreQueue[queueKey] = [];
-						}
-					});
-			}
-		}
-
-		return metascoreRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* displayMetascoreData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Metacritic.displayMetascoreData = function(page, score, metascoreSelector) {
-
-		var $metascoreContainer = $(metascoreSelector);
-		var textScore = score;
-
-		// determine score color
-		var colorClass = 'favorable';
-		if (score < 0) {
-			textScore = 'n/a';
-			colorClass = 'unavailable';
-		} else if (score < 50) {
-			colorClass = 'unfavorable';
-		} else if (score < 75) {
-			colorClass = 'neutral';
-		}
-
-		$metascoreContainer
-			.html(textScore)
-			.removeClass('unavailable')
-			.removeClass('unfavorable')
-			.removeClass('neutral')
-			.removeClass('favorable')
-			.addClass(colorClass)
-			.attr('href', 'http://www.' + metacriticDomain + page)
-			.attr('data-score', score)
-			.attr('data-original-title', metacriticDomain + ' ' + page)
-			.show();
-
-		// activate tooltip
-		$metascoreContainer.tooltip({placement: 'left'});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cleanupMetacriticSearchTerms -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cleanupMetacriticSearchTerms = function(searchTerms) {
-
-		// remove ':', '&'
-		re = /\s*[:&]\s*/g;
-		var cleanedSearchTerms = searchTerms.replace(re, ' ');
-
-		// convert spaces to '+'
-		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
-
-		return cleanedSearchTerms;
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedMetascore -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedMetascore = function(asin, gbombID, platform) {
-
-		var metascoreItem = null;
-
-		// amazon id
-		if (typeof metascoreCache[asin + '_' + platform] !== 'undefined') {
-			metascoreItem = metascoreCache[asin + '_' + platform];
-
-		// giant bomb id
-		} else if (typeof metascoreCache[gbombID + '_' + platform] !== 'undefined') {
-			metascoreItem = metascoreCache[gbombID + '_' + platform];
-		}
-
-		return metascoreItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToMetascoreCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToMetascoreCache = function(asin, gbombID, platform, sourceItem) {
-
-		// add to metascoreCache linked by asin
-		if (asin != '0') {
-			metascoreCache[asin + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
-		}
-		// add to metascoreCache linked by gbombID
-		if (gbombID != '0') {
-			metascoreCache[gbombID + '_' + platform] = {metascorePage: sourceItem.metascorePage, metascore: sourceItem.metascore};
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseMetascoreResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseMetascoreResults = function(keywords, data, sourceItem) {
-
-		var result = null;
-
-		// parse raw result
-		if (typeof data.metascore === 'undefined') {
-
-			// get result that matches sourceItem
-			result = getMatchedSearchResult(data, sourceItem);
-
-			// send matched result to be cached on server
-			if (result) {
-				addToServerCache(keywords, sourceItem.platform, result.metascore, result.metascorePage);
-			}
-
-		// parse cached result
-		} else {
-
-			result = data;
-		}
-
-		return result;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addMetascoreDatatoItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addMetascoreDatatoItem = function(result, sourceItem) {
-
-		// add/update metascore data to sourceItem
-		if (result && result.metascore !== '') {
-			sourceItem.metascore = result.metascore;
-			sourceItem.displayMetascore = result.metascore;
-			sourceItem.metascorePage = result.metascorePage;
-		} else if (result) {
-			sourceItem.metascore = -1;
-			sourceItem.displayMetascore = 'n/a';
-			sourceItem.metascorePage = result.metascorePage;
-		} else {
-			sourceItem.metascore = -1;
-			sourceItem.displayMetascore = 'n/a';
-			sourceItem.metascorePage = '';
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToServerCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToServerCache = function(keywords, platform, metascore, metascorePage) {
-
-		var requestData = {
-			'keywords': encodeURI(keywords),
-			'platform': encodeURI(platform),
-			'metascore': encodeURI(metascore),
-			'metascorePage': encodeURI(metascorePage)
-		};
-
-		$.ajax({
-			url: METACRITIC_CACHE_URL,
-			type: 'GET',
-			data: requestData,
-			cache: true,
-			success: function(data) {
-
-
-			}
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMatchedSearchResult -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMatchedSearchResult = function(data, sourceItem) {
-
-		var results = $('#main', data).find('.result');
-		var searchItem = {};
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate results
-		$(results).each(function() {
-
-			// convert to date object
-			var releaseDateObject = new Date($(this).find('.release_date .data').text());
-			// format month
-			var month = releaseDateObject.getMonth() + 1;
-			month = month < 10 ? '0' + month : month;
-			// format date
-			var date = releaseDateObject.getDate();
-			date = date < 10 ? '0' + date : date;
-
-			// create standard item
-			searchItem = {
-				name: $(this).find('.product_title a').text(),
-				releaseDate: releaseDateObject.getFullYear() + '-' + month + '-' + date,
-				platform: $(this).find('.platform').text(),
-				metascore: $(this).find('.metascore').text(),
-				metascorePage: $(this).find('.product_title a').attr('href')
-			};
-
-			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-			// check if score is new best
-			if (score > bestScore) {
-				bestMatch = searchItem;
-				bestScore = score;
-			}
-		});
-
-		return bestMatch;
-	};
-
-})(tmz.module('metacritic'), tmz, jQuery, _);
-
-
-// Wikipedia
-(function(Wikipedia) {
-
-	// Dependencies
-	var User = tmz.module('user'),
-		Utilities = tmz.module('utilities'),
-		ItemLinker = tmz.module('itemLinker'),
-
-		// wikipedia cache
-		wikipediaPageCache = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getWikipediaPage -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Wikipedia.getWikipediaPage = function(title, sourceItem, onSuccess) {
-
-		// find in attributes cache first
-		var itemAttributes = wikipediaPageCache[sourceItem.id];
-
-		if (itemAttributes && typeof itemAttributes.wikipediaPage !== 'undefined') {
-
-			// display attribute
-			onSuccess(itemAttributes.wikipediaPage);
-
-		// search wikipedia
-		} else {
-
-			searchWikipedia(title, function(data) {
-
-				// get page array
-				pageArray = data[1];
-
-				// match page to sourceItem
-				ItemLinker.findWikipediaMatch(pageArray, sourceItem, function(item) {
-
-					// get wikipedia page details
-					getWikipediaPageDetails(item.name, function(data) {
-
-						// get wikipedia page url
-						_.each(data.query.pages, function(pageItem, key){
-
-							// add to cache
-							if (itemAttributes) {
-								itemAttributes.wikipediaPage = pageItem.fullurl;
-							} else {
-								wikipediaPageCache[sourceItem.id] = {wikipediaPage: pageItem.fullurl};
-							}
-
-							// display attribute
-							onSuccess(pageItem.fullurl);
-						});
-					});
-				});
-			});
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchWikipedia
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var searchWikipedia = function(keywords, onSuccess, onError) {
-
-		var url = 'http://en.wikipedia.org/w/api.php?action=opensearch&format=json&callback=?';
-
-		var requestData = {
-			'search': keywords,
-			'prop': 'revisions',
-			'rvprop': 'content'
-		};
-
-        $.ajax({
-            url: url,
-            type: 'GET',
-            data: requestData,
-            dataType: 'jsonp',
-            cache: false,
-            crossDomain: true,
-            success: onSuccess,
-            error: onError
-        });
-
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getWikipediaPageDetails
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getWikipediaPageDetails = function(pageTitle, onSuccess, onError) {
-
-		var url = 'http://en.wikipedia.org/w/api.php?action=query&format=json&callback=?';
-
-		var requestData = {
-			'titles': pageTitle,
-			'prop': 'info',
-			'inprop': 'url'
-		};
-
-        $.ajax({
-            url: url,
-            type: 'GET',
-            data: requestData,
-            dataType: 'jsonp',
-            cache: false,
-            crossDomain: true,
-            success: onSuccess,
-            error: onError
-        });
-
-	};
-
-
-})(tmz.module('wikipedia'));
-
-
-// GameTrailers
-(function(GameTrailers, tmz, $, _) {
-	"use strict";
-
-    // module references
-	var Amazon = tmz.module('amazon'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemData = tmz.module('itemData'),
-
-		// REST URL
-		GAMETRAILERS_SEARCH_URL = tmz.api + 'gametrailers/search/',
-		GAMETRAILERS_CACHE_URL = tmz.api + 'gametrailers/cache/',
-
-		// properties
-		GAMETRAILERS_BASE_URL = 'gametrailers.com',
-
-		// data
-		gametrailersPageCache = {},
-
-		// request queues
-		getGametrailersQueue = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGametrailersPage -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GameTrailers.getGametrailersPage = function(searchTerms, sourceItem, onSuccess) {
-
-		var ajax = null;
-
-		// find in cache first
-		var gameTrailersItem = getCachedGametrailersPage(searchTerms);
-
-		if (gameTrailersItem) {
-
-			// add gametrailersPage to source item
-			sourceItem.gametrailersPage = gameTrailersItem.gametrailersPage;
-
-			// return updated source item
-			onSuccess(sourceItem.gametrailersPage);
-
-		// fetch gametrailersPage
-		} else {
-
-			// add to queue
-			var queueKey = searchTerms + '_';
-
-			if (!_.has(getGametrailersQueue, queueKey)) {
-				getGametrailersQueue[queueKey] = [];
-			}
-			getGametrailersQueue[queueKey].push(onSuccess);
-
-			// run for first call only
-			if (getGametrailersQueue[queueKey].length === 1) {
-
-				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
-
-				var requestData = {
-					'keywords': encodeURI(cleanedSearchTerms)
-				};
-
-				ajax = $.ajax({
-						url: GAMETRAILERS_SEARCH_URL,
-						type: 'GET',
-						data: requestData,
-						cache: true,
-						success: function(data) {
-
-							// parse result
-							var gametrailersPage = parseGametrailersResults(cleanedSearchTerms, data, sourceItem);
-
-							// iterate queued return methods
-							_.each(getGametrailersQueue[queueKey], function(successMethod) {
-
-								// add gametrailersPage to source item
-								sourceItem.gametrailersPage = gametrailersPage;
-								// add to local cache
-								addToGametrailersCache(searchTerms, gametrailersPage);
-								// return data
-								successMethod(gametrailersPage);
-							});
-
-							// empty queue
-							getGametrailersQueue[queueKey] = [];
-						}
-					});
-			}
-		}
-
-		return ajax;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cleanupSearchTerms -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cleanupSearchTerms = function(searchTerms) {
-
-		// remove ':', '&'
-		re = /\s*[:&]\s*/g;
-		var cleanedSearchTerms = searchTerms.replace(re, ' ');
-
-		// convert spaces to '+'
-		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '+');
-
-		return cleanedSearchTerms;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedGametrailersPage -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedGametrailersPage = function(searchTerms) {
-
-		var gametrailersPage = null;
-
-		if (typeof gametrailersPageCache[searchTerms] !== 'undefined') {
-			gametrailersPage = gametrailersPageCache[searchTerms];
-		}
-
-		return gametrailersPage;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToGametrailersCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToGametrailersCache = function(searchTerms, gametrailersPage) {
-
-		gametrailersPageCache[searchTerms] = {gametrailersPage: gametrailersPage};
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGametrailersResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseGametrailersResults = function(keywords, data, sourceItem) {
-
-		var gametrailersPage = null;
-
-		// parse raw result
-		if (typeof data.gametrailersPage === 'undefined') {
-
-			// get result that matches sourceItem
-			gametrailersPage = getMatchedSearchResult(data, sourceItem);
-
-			// send matched result to be cached on server
-			if (gametrailersPage) {
-				addToServerCache(keywords, gametrailersPage);
-			}
-
-		// parse cached result
-		} else {
-			gametrailersPage = data.gametrailersPage;
-		}
-
-		return gametrailersPage;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToServerCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToServerCache = function(searchTerms, gametrailersPage) {
-
-		var requestData = {
-			'keywords': encodeURI(searchTerms),
-			'gametrailersPage': encodeURI(gametrailersPage)
-		};
-
-		$.ajax({
-			url: GAMETRAILERS_CACHE_URL,
-			type: 'GET',
-			data: requestData,
-			cache: true,
-			success: function(data) {
-
-			}
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMatchedSearchResult -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMatchedSearchResult = function(data, sourceItem) {
-
-		var results = $('#games', data).find('.video_game_information_child');
-		var searchItem = {};
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate search results
-		$(results).each(function() {
-
-			// create standard item
-			searchItem = {
-				name: $(this).find('.content h3 a').text(),
-				releaseDate: $(this).find('.content dl dd:eq(1) a').text(),
-				gametrailersPage: $(this).find('.content h3 a').attr('href')
-			};
-
-			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-
-
-			// check if score is new best
-			if (score > bestScore) {
-				bestMatch = searchItem;
-				bestScore = score;
-			}
-		});
-
-		return bestMatch.gametrailersPage + '/videos-trailers';
-	};
-
-})(tmz.module('gameTrailers'), tmz, jQuery, _);
-
-
-// Steam
-(function(Steam, tmz, $, _) {
-	"use strict";
-
-    // module references
-	var ItemLinker = tmz.module('itemLinker'),
-
-		// REST URL
-		STEAM_SEARCH_URL = tmz.api + 'steam/search/',
-		STEAM_CACHE_URL = tmz.api + 'steam/cache/',
-
-		// properties
-		STEAM_BASE_URL = 'http://store.steampowered.com/',
-
-		// data
-		steamItemCache = {},
-
-		// request queues
-		getSteamQueue = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getSteamGame -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Steam.getSteamGame = function(searchTerms, sourceItem, onSuccess, onError) {
-
-		var ajax = null;
-
-		// find in cache first
-		var steamItem = getCachedSteamGame(searchTerms);
-
-		if (steamItem) {
-
-			// add steam data to source item
-			sourceItem.steamPage = steamItem.steamPage;
-			sourceItem.steamPrice = steamItem.steamPrice;
-
-			// return steam item
-			onSuccess(steamItem);
-
-		// fetch steam item
-		} else {
-
-			// add to queue
-			var queueKey = searchTerms + '_';
-
-			if (!_.has(getSteamQueue, queueKey)) {
-				getSteamQueue[queueKey] = [];
-			}
-			getSteamQueue[queueKey].push(onSuccess);
-
-			// run for first call only
-			if (getSteamQueue[queueKey].length === 1) {
-
-				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
-
-				var requestData = {
-					'keywords': encodeURI(cleanedSearchTerms)
-				};
-
-				ajax = $.ajax({
-						url: STEAM_SEARCH_URL,
-						type: 'GET',
-						data: requestData,
-						cache: true,
-						success: function(data) {
-
-							// parse result
-							var steamItem = parseSteamResults(cleanedSearchTerms, data, sourceItem);
-
-							if (steamItem) {
-
-								// iterate queued return methods
-								_.each(getSteamQueue[queueKey], function(successMethod) {
-
-									// add steamItem to source item
-									sourceItem.steamPage = steamItem.steamPage;
-									sourceItem.steamPrice = steamItem.steamPrice;
-
-									// add to local cache
-									addToSteamCache(searchTerms, steamItem.steamPage, steamItem.steamPrice);
-
-									// return data
-									successMethod(steamItem);
-								});
-
-							// no result
-							} else {
-								if (!_.isUndefined(onError)) {
-									onError();
-								}
-							}
-
-							// empty queue
-							getSteamQueue[queueKey] = [];
-						}
-					});
-			}
-		}
-
-		return ajax;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* cleanupSearchTerms -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var cleanupSearchTerms = function(searchTerms) {
-
-		// remove ':', '&'
-		re = /\s*[:&]\s*/g;
-		var cleanedSearchTerms = searchTerms.replace(re, ' ');
-
-		// remove spaces
-		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '');
-
-		return cleanedSearchTerms;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedSteamGame -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedSteamGame = function(searchTerms) {
-
-		var steamItem = null;
-
-		if (typeof steamItemCache[searchTerms] !== 'undefined') {
-			steamItem = steamItemCache[searchTerms];
-		}
-
-		return steamItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToSteamCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToSteamCache = function(searchTerms, steamPage, steamPrice) {
-
-		steamItemCache[searchTerms] = {'steamPage': steamPage, 'steamPrice': steamPrice};
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseSteamResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseSteamResults = function(keywords, data, sourceItem) {
-
-		var steamItem = {};
-
-		// cache new result which requires matching and caching
-		if (typeof data.url === 'undefined') {
-
-			// get result that matches sourceItem
-			steamItem = getMatchedSearchResult(data, sourceItem);
-
-			// send matched result to be cached on server
-			if (steamItem) {
-				addToServerCache(keywords, steamItem.steamPage, steamItem.steamPrice);
-			}
-
-		// parse cached result
-		} else {
-			steamItem = {'steamPage': data.url, 'steamPrice': data.price};
-		}
-
-		return steamItem;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToServerCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToServerCache = function(searchTerms, steamPage, steamPrice) {
-
-		var requestData = {
-			'keywords': encodeURI(searchTerms),
-			'url': encodeURI(steamPage),
-			'price': encodeURI(steamPrice)
-		};
-
-		$.ajax({
-			url: STEAM_CACHE_URL,
-			type: 'GET',
-			data: requestData,
-			cache: true,
-			success: function(data) {
-
-			}
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMatchedSearchResult -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMatchedSearchResult = function(steamList, sourceItem) {
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate search results
-		_.each(steamList, function(steamItem) {
-
-			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, steamItem);
-
-			// check if score is new best
-			if (score > bestScore) {
-				bestMatch = {'steamPage': steamItem.page, 'steamPrice': steamItem.price.replace('$', '')};
-				bestScore = score;
-			}
-		});
-
-		return bestMatch;
-	};
-
-})(tmz.module('steam'), tmz, jQuery, _);
-
-
-// GameStats
-(function(GameStats, tmz, $, _) {
-	"use strict";
-
-    // module references
-
-	// properties
-
-	// REST URL
-	var POPULAR_LIST_URL = tmz.api + 'list/popular/',
-
-		// data
-		gameStatsListCache = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getPopularGamesListByPlatform -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GameStats.getPopularGamesListByPlatform = function(platform, onSuccess) {
-
-		// find in cache first
-		var cachedList = getCachedData(platform);
-
-		if (cachedList) {
-			// return list
-			onSuccess(cachedList);
-
-		// fetch list data
-		} else {
-			var requestData = {
-				'platform': platform
-			};
-
-			$.ajax({
-				url: POPULAR_LIST_URL,
-				type: 'GET',
-				data: requestData,
-				cache: true,
-				success: function(data) {
-
-					// cache result
-					gameStatsListCache[platform] = data;
-
-					// return items to onSuccess function
-					onSuccess(data);
-				}
-			});
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(platform) {
-
-		var gameStatsList = null;
-
-		if (typeof gameStatsListCache[platform] !== 'undefined') {
-			gameStatsList = gameStatsListCache[platform];
-		}
-
-		return gameStatsList;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* addToGamestatsCache -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var addToGamestatsCache = function() {
-
-
-	};
-
-
-
-
-})(tmz.module('gameStats'), tmz, jQuery, _);
-
-
-// IGN
-(function(IGN, tmz, $, _) {
-
-    // module referenceswadwadwa
-
-	// properties
-
-	// REST URL
-	var UPCOMING_LIST_URL = tmz.api + 'list/ign/upcoming/',
-		REVIEWED_LIST_URL = tmz.api + 'list/ign/reviewed/',
-
-		// data
-		IGNUpcomingListCache = {};
-		IGNReviewedListCache = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getUpcomingGames -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	IGN.getUpcomingGames = function(platform, page, onSuccess) {
-
-		// find in cache first
-		var cachedList = getCachedData(IGNUpcomingListCache, platform, page);
-
-		if (cachedList) {
-
-			// return list
-			onSuccess(cachedList);
-
-		// fetch list data
-		} else {
-			var requestData = {
-				'platform': platform,
-				'page': page
-			};
-
-			$.ajax({
-				url: UPCOMING_LIST_URL,
-				type: 'GET',
-				data: requestData,
-				cache: true,
-				success: function(data) {
-
-					// cache result
-					IGNUpcomingListCache[platform + '_' + page] = data;
-
-					// return items to onSuccess function
-					onSuccess(data);
-				}
-			});
-		}
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getReviewedGames -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	IGN.getReviewedGames = function(platform, page, onSuccess) {
-
-		// find in cache first
-		var cachedList = getCachedData(IGNReviewedListCache, platform, page);
-
-		if (cachedList) {
-
-			// return list
-			onSuccess(cachedList);
-
-		// fetch list data
-		} else {
-			var requestData = {
-				'platform': platform,
-				'page': page
-			};
-
-			$.ajax({
-				url: REVIEWED_LIST_URL,
-				type: 'GET',
-				data: requestData,
-				cache: true,
-				success: function(data) {
-
-					// cache result
-					IGNReviewedListCache[platform + '_' + page] = data;
-
-					// return items to onSuccess function
-					onSuccess(data);
-				}
-			});
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(cache, platform, page) {
-
-		var IGNUpcomingList = null;
-
-		if (typeof cache[platform + '_' + page] !== 'undefined') {
-			IGNUpcomingList = cache[platform + '_' + page];
-		}
-
-		return IGNUpcomingList;
-	};
-
-
-})(tmz.module('ign'), tmz, jQuery, _);
-
-
-// ReleasedList
-(function(ReleasedList, tmz, $, _) {
-	"use strict";
-
-    // module references
-	var Utilities = tmz.module('utilities');
-
-	// properties
-
-	// REST URL
-	var RELEASED_LIST_URL = tmz.api + 'list/gt/released/',
-
-		// data
-		releasedListCache = {},
-
-		// list of platforms found in released list
-		platformsFound = {},
-
-		pendingRequests = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getReleasedGames -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ReleasedList.getReleasedGames = function(platform, year, month, day, onSuccess) {
-
-		// find in cache first
-		var cachedList = getCachedData(year, month, day);
-		var releasedGamesRequest = null;
-
-		if (cachedList) {
-
-			// filter results based on platform
-			var filteredResults = parseAndFilterListResults(cachedList, platform);
-
-			// return list
-			onSuccess(filteredResults, platformsFound);
-
-		// fetch list data
-		} else {
-
-			var key = year + '_' + month + '_' + day;
-
-			// if request is already pending, skip
-			if (!_.has(pendingRequests, key)) {
-
-				// add to pendingRequests
-				var pendingRequest = {'platform':platform};
-				pendingRequests[key] = pendingRequest;
-
-				var requestData = {
-					'year': year,
-					'month': month,
-					'day': day
-				};
-
-				releasedGamesRequest = $.ajax({
-					url: RELEASED_LIST_URL,
-					type: 'GET',
-					data: requestData,
-					cache: true,
-					success: function(data) {
-
-						// parse platforms and add into proper platform list
-						parsePlatforms(data);
-
-						// get platforms found in list
-						getPlatformsFound(data);
-
-						// filter results based on platform
-						var filteredResults = parseAndFilterListResults(data, pendingRequests[key].platform);
-
-						// cache unfiltered result
-						releasedListCache[year + '_' + month + '_' + day] = data;
-
-						// return items to onSuccess function
-						onSuccess(filteredResults, platformsFound);
-
-						// remove pending request
-						delete pendingRequests[key];
-					}
-				});
-
-			// update platform for request
-			} else {
-				pendingRequests[key].platform = platform;
-			}
-		}
-
-		return releasedGamesRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parsePlatforms -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parsePlatforms = function(listResults) {
-
-		// iterate list results
-		_.each(listResults, function(listItem) {
-
-			var platformList = listItem.platforms.split(',');
-
-			// created linkedPlatform property
-			listItem['linkedPlatforms'] = {'all': undefined};
-
-			// iterate list item platforms
-			_.each(platformList, function(platform) {
-
-				var cleanedPlatform = _.str.trim(platform);
-				var linkedPlatform = Utilities.getStandardPlatform(cleanedPlatform);
-
-				// add to linkedPlatforms
-				listItem.linkedPlatforms[linkedPlatform.id] = linkedPlatform.name;
-			});
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getPlatformsFound -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getPlatformsFound = function(listResults) {
-
-		// iterate list results
-		_.each(listResults, function(listItem) {
-
-			// iterate list item platforms
-			_.each(listItem.linkedPlatforms, function(value, id) {
-
-				// add playform to platformsFound object
-				if (!_.has(platformsFound, id)) {
-					platformsFound[id] = 1;
-				} else {
-					platformsFound[id] = platformsFound[id] + 1;
-				}
-			});
-		});
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseAndFilterListResults -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var parseAndFilterListResults = function(listResults, platform) {
-
-		var filteredResults = [];
-
-		// iterate list results
-		_.each(listResults, function(listItem) {
-
-			// clean up name
-			// remove words appearing after 'box'
-			listItem.name = listItem.name.replace(/\sbox\s*.*/gi, '');
-
-			// result contains platform add to filteredResults
-			if (_.has(listItem.linkedPlatforms, platform)) {
-				filteredResults.push(listItem);
-			}
-		});
-
-		return filteredResults;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(year, month, day) {
-
-		var releasedList = null;
-
-		if (typeof releasedListCache[year + '_' + month + '_' + day] !== 'undefined') {
-			releasedList = releasedListCache[year + '_' + month + '_' + day];
-		}
-
-		return releasedList;
-	};
-
-
-})(tmz.module('releasedList'), tmz, jQuery, _);
-
-
-// ItemLinker
-(function(ItemLinker, tmz, $, _) {
-	"use strict";
-
-	// Dependencies
-	var Amazon = tmz.module('amazon'),
-		GiantBomb = tmz.module('giantbomb'),
-		Utilities = tmz.module('utilities');
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* standardizeTitle -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.standardizeTitle = function(title) {
-
-		var sanitizedName = title;
-		var re = null;
-		var reRoman = null;
-
-		var match = null;
-		var match2 = null;
-		var roman = '';
-		var dec = 0;
-		var num = 0;
-		var arr = null;
-
-		// remove brackets and parenthesis and content inside
-		sanitizedName = sanitizedName.replace(/\s*[\[\(].*[\)\]]/gi, '');
-
-		// remove the word: trophies
-		sanitizedName = sanitizedName.replace(/\s*trophies/gi, '');
-		// remove word that appears before 'edition'
-		sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
-		// remove words appearing after 'with'
-		sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
-
-		// remove 'the ' if at the start of title
-		sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
-
-		// remove words appearing after '-' unless it is less than 4 chars
-		// BUG: removes spider-man: shatttered dimensions
-
-		//re = new RegExp('\\s*-.*', 'gi');
-		//match = re.exec(sanitizedName);
-
-		if (match && match[0].length > 3) {
-			sanitizedName = sanitizedName.replace(re, '');
-		}
-
-		return sanitizedName.toLowerCase();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getSimilarityScore -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
-
-		// matching properties
-		var score = 0;
-
-		// use standard name for search result
-		var standardResultName = ItemLinker.standardizeTitle(searchItem.name);
-
-		// exact name check
-		if (sourceItem.standardName === searchItem.name.toLowerCase()) {
-
-			score += 50;
-
-		// fuzzy name check
-		} else {
-			// check if searchItem title exists within original title and vice versa
-			var reSource = new RegExp(sourceItem.standardName, 'gi');
-			var reSearch = new RegExp(standardResultName, 'gi');
-			var sourceInTarget = reSource.exec(standardResultName);
-			var targetInSource = reSearch.exec(sourceItem.standardName);
-
-			if ((sourceInTarget && sourceInTarget[0].length > 0) || (targetInSource && targetInSource[0].length > 0)) {
-
-				score += 5;
-			}
-		}
-
-		// exact release date check
-		if (typeof searchItem.releaseDate !== 'undefined') {
-
-			if (sourceItem.releaseDate === searchItem.releaseDate) {
-				score += 10;
-
-			// fuzzy release date check
-			} else {
-				var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
-
-				// don't subtract score if search result date is unknown/unreleased
-				if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
-					score -= Math.abs(diff / 365);
-				}
-			}
-		}
-
-		// platform match
-		if (typeof searchItem.platform !== 'undefined') {
-			// get standard platform name from platform
-			var standardPlatform = Utilities.matchPlatformToIndex(searchItem.platform).name;
-
-			if (sourceItem.platform === standardPlatform) {
-				score += 20;
-			}
-		}
-
-		return score;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* convertRomanNumerals -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.convertRomanNumerals = function(name) {
-
-		var reRoman = new RegExp('\\s[XVI]+', 'gi');
-		var match = reRoman.exec(name);
-
-		// roman numeral found
-		if (match && match[0].length > 0) {
-
-			var roman = match[0];
-			// remove III first and set dec to start at 3
-			// the simplified converter below does add 'III' of anything correctly
-			var re = new RegExp('III', 'gi');
-			var match2 = re.exec(roman);
-			var dec = '';
-
-			if (match2 && match2[0].length > 0) {
-				dec = 3;
-				roman = roman.replace(re, '');
-			}
-
-			var arr = roman.split('');
-			var num = null;
-
-			// iterate each roman character except last blank character
-			for (var i = arr.length - 1; i >= 1; i--) {
-				switch(arr[i]) {
-					case 'I':
-					num = 1;
-				break;
-					case 'V':
-					num = 5;
-				break;
-					case 'X':
-					num = 10;
-				break;
-			}
-
-			if (num < dec) {
-				dec = dec - num;
-			} else {
-				dec = dec + num;
-			}
-
-			}
-
-			// replace roman with decimal
-			name = name.replace(reRoman, ' ' + dec);
-		}
-
-		return name;
-	};
-
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* findItemOnAlternateProvider
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.findItemOnAlternateProvider = function(item, provider, preventMultipleRequests, onSuccess, onError) {
-
-		var searchRequest = null;
-		onError = typeof onError !== 'undefined' ? onError : null;
-
-		switch (provider) {
-			case Utilities.SEARCH_PROVIDERS.Amazon:
-
-				var searchName = item.standardName;
-
-				// run search for giantbomb
-				searchRequest = GiantBomb.searchGiantBomb(searchName, function(data) {
-					findGiantbombMatch(data, item, onSuccess, onError);
-				});
-				break;
-
-			case Utilities.SEARCH_PROVIDERS.GiantBomb:
-
-				var browseNode = 0;
-
-				// run same platform search
-				if (item.platform !== 'n/a') {
-					browseNode = Utilities.getStandardPlatform(item.platform).amazon;
-				}
-
-				// run search for amazon
-				searchRequest = Amazon.searchAmazon(item.name, browseNode, function(data) {
-					findAmazonMatch(data, item, onSuccess, onError, false);
-				}, onError, preventMultipleRequests);
-				break;
-		}
-
-		return searchRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getLinkedItemData
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.getLinkedItemData = function(item, provider, onSuccess) {
-
-		switch (provider) {
-
-			// amazon is provider > fetch from giantbomb
-			case Utilities.SEARCH_PROVIDERS.Amazon:
-
-				// get item from giantbomb
-				GiantBomb.getGiantBombItemDetail(item.gbombID, function(data) {
-					getGiantBombItemDetail_result(data, onSuccess);
-				});
-				break;
-
-			// giantbomb is provider > fetch from amazon
-			case Utilities.SEARCH_PROVIDERS.GiantBomb:
-
-				// get item from amazon
-				Amazon.getAmazonItemDetail(item.asin, function(data) {
-					getAmazonItemDetail_result(data, onSuccess);
-				});
-				break;
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* findWikipediaMatch -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	ItemLinker.findWikipediaMatch = function(data, sourceItem, onSuccess) {
-
-		var results = data;
-		var searchItem = {};
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate search results
-		for (var i = 0, len = results.length; i < len; i++) {
-
-			// create searchItem object
-			searchItem = {
-				'name': results[i]
-			};
-
-			// init best match with first item
-			if (i === 0) {
-				bestMatch = searchItem;
-			}
-
-			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-			// check if score is new best
-			if (score > bestScore) {
-				bestMatch = searchItem;
-				bestScore = score;
-			}
-		}
-
-		// return best match to onSuccess method
-		if (results.length !== 0) {
-			// return best match
-			onSuccess(bestMatch);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getAmazonItemDetail_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getAmazonItemDetail_result = function(data, onSuccess) {
-
-		var detailItem = {};
-		// iterate results
-		$('Item', data).each(function() {
-
-			// parse item and set detailItem
-			detailItem = Amazon.parseAmazonResultItem($(this));
-		});
-
-		// display second item
-		onSuccess(detailItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDetail_result
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItemDetail_result = function(data, onSuccess) {
-
-		// parse result item and set detailItem
-		var detailItem = GiantBomb.parseGiantBombResultItem(data);
-
-		// display second item
-		onSuccess(detailItem);
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* findAmazonMatch
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findAmazonMatch = function(data, sourceItem, onSuccess, onError, lastSearch) {
-
-		var resultLength = ($('Item', data).length);
-		var searchItem = {};
-		var count = 0;
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate results
-		$('Item', data).each(function() {
-
-			// parse item and return searchItem
-			searchItem = Amazon.parseAmazonResultItem($(this));
-
-			// searchItem not filtered
-			if (typeof searchItem.isFiltered === 'undefined') {
-
-
-				// save first non-filtered result
-				if (count === 0) {
-					bestMatch = searchItem;
-				}
-
-				count++;
-				// get similarity score
-				score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-				// check if score is new best
-				if (score > bestScore) {
-					bestMatch = searchItem;
-					bestScore = score;
-
-				}
-			}
-		});
-
-		// return best match to onSuccess method
-		if (bestMatch) {
-			// return best match
-			onSuccess(bestMatch);
-
-		// re-run search without platform filter - only if this hasn't been run before
-		} else if (!lastSearch) {
-			Amazon.searchAmazon(sourceItem.name, 0, function(data) {
-				findAmazonMatch(data, sourceItem, onSuccess, onError, true);
-			}, onError);
-		} else {
-			onError();
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* findGiantbombMatch -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var findGiantbombMatch = function(data, sourceItem, onSuccess, onError) {
-
-		var results = data.results;
-		var searchItem = {};
-
-		// matching properties
-		var bestMatch = null;
-		var bestScore = -99999;
-		var score = 0;
-
-		// iterate search results
-		for (var i = 0, len = results.length; i < len; i++) {
-
-			// parse result into searchItem object
-			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
-
-			// init best match with first item
-			if (i === 0) {
-				bestMatch = searchItem;
-			}
-
-			// get similarity score
-			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
-
-			// check if score is new best
-			if (score > bestScore) {
-				bestMatch = searchItem;
-				bestScore = score;
-			}
-		}
-
-		// return best match to onSuccess method
-		if (results.length !== 0) {
-
-			// return best match
-			onSuccess(bestMatch);
-
-		// no match found
-		} else {
-			onError();
-		}
-
-	};
-
-})(tmz.module('itemLinker'), tmz, jQuery, _);
 
 // ITEM VIEW
-(function(ImportView, tmz, $, _, alertify) {
+(function(ImportView, gamedex, $, _, alertify) {
 	"use strict";
 
     // modules references
-    var User = tmz.module('user'),
-		Utilities = tmz.module('utilities'),
-		ItemData = tmz.module('itemData'),
-		TagView = tmz.module('tagView'),
-		ItemView = tmz.module('itemView'),
-		Amazon = tmz.module('amazon'),
-		Metacritic = tmz.module('metacritic'),
-		ItemLinker = tmz.module('itemLinker'),
-		GiantBomb = tmz.module('giantbomb'),
+    var User = gamedex.module('user'),
+		Utilities = gamedex.module('utilities'),
+		ItemData = gamedex.module('itemData'),
+		TagView = gamedex.module('tagView'),
+		ItemView = gamedex.module('itemView'),
+		Amazon = gamedex.module('amazon'),
+		Metacritic = gamedex.module('metacritic'),
+		ItemLinker = gamedex.module('itemLinker'),
+		GiantBomb = gamedex.module('giantbomb'),
 
 		// constants
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
@@ -12420,7 +12393,7 @@ tmz.initializeModules = function() {
 	$.extend(ImportView, publicMethods);
 
 
-})(tmz.module('importView'), tmz, jQuery, _, alertify);
+})(gamedex.module('importView'), gamedex, jQuery, _, alertify);
 
 	// intialize app
-	tmz.initialize();
+	gamedex.initialize();

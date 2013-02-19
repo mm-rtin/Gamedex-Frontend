@@ -1,17 +1,17 @@
 // ITEM VIEW
-(function(ImportView, tmz, $, _, alertify) {
+(function(ImportView, gamedex, $, _, alertify) {
 	"use strict";
 
     // modules references
-    var User = tmz.module('user'),
-		Utilities = tmz.module('utilities'),
-		ItemData = tmz.module('itemData'),
-		TagView = tmz.module('tagView'),
-		ItemView = tmz.module('itemView'),
-		Amazon = tmz.module('amazon'),
-		Metacritic = tmz.module('metacritic'),
-		ItemLinker = tmz.module('itemLinker'),
-		GiantBomb = tmz.module('giantbomb'),
+    var User = gamedex.module('user'),
+		Utilities = gamedex.module('utilities'),
+		ItemData = gamedex.module('itemData'),
+		TagView = gamedex.module('tagView'),
+		ItemView = gamedex.module('itemView'),
+		Amazon = gamedex.module('amazon'),
+		Metacritic = gamedex.module('metacritic'),
+		ItemLinker = gamedex.module('itemLinker'),
+		GiantBomb = gamedex.module('giantbomb'),
 
 		// constants
 		INPUT_SOURCES = ['Steam', 'PSN', 'XBL'],
@@ -640,4 +640,4 @@
 	$.extend(ImportView, publicMethods);
 
 
-})(tmz.module('importView'), tmz, jQuery, _, alertify);
+})(gamedex.module('importView'), gamedex, jQuery, _, alertify);

@@ -1,15 +1,15 @@
 // SITEVIEW
-(function(SiteView, tmz, $, _, alertify) {
+(function(SiteView, gamedex, $, _, alertify) {
     "use strict";
 
     // module references
-    var User = tmz.module('user'),
-        ItemData = tmz.module('itemData'),
-        TagView = tmz.module('tagView'),
-        ItemView = tmz.module('itemView'),
-        SearchView = tmz.module('searchView'),
-        Storage = tmz.module('storage'),
-        GridView = tmz.module('gridView'),
+    var User = gamedex.module('user'),
+        ItemData = gamedex.module('itemData'),
+        TagView = gamedex.module('tagView'),
+        ItemView = gamedex.module('itemView'),
+        SearchView = gamedex.module('searchView'),
+        Storage = gamedex.module('storage'),
+        GridView = gamedex.module('gridView'),
 
         // constants
         FORM_TYPES = {'login': 0, 'signup': 1},
@@ -1382,5 +1382,5 @@
 
     $.extend(SiteView, publicMethods);
 
-})(tmz.module('siteView'), tmz, jQuery, _, alertify);
+})(gamedex.module('siteView'), gamedex, jQuery, _, alertify);
 

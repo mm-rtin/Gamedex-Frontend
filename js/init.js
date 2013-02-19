@@ -1,2 +1,2 @@
 	// intialize app
-	tmz.initialize();
+	gamedex.initialize();

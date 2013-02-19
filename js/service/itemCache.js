@@ -1,11 +1,11 @@
 // ItemCache
-(function(ItemCache, tmz, $, _) {
+(function(ItemCache, gamedex, $, _) {
 	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user'),
-		Storage = tmz.module('storage'),
-		Utilities = tmz.module('utilities'),
+	var User = gamedex.module('user'),
+		Storage = gamedex.module('storage'),
+		Utilities = gamedex.module('utilities'),
 
 		// constants
 		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
@@ -263,5 +263,5 @@
 
 	$.extend(ItemCache, publicMethods);
 
-})(tmz.module('itemCache'), tmz, $, _);
+})(gamedex.module('itemCache'), gamedex, $, _);
 

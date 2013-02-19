@@ -1,15 +1,15 @@
 // GiantBomb
-(function(GridView, tmz, $, _, alertify) {
+(function(GridView, gamedex, $, _, alertify) {
 	"use strict";
 
     // module references
-    var DetailView = tmz.module('detailView'),
-		ItemData = tmz.module('itemData'),
-		ItemView = tmz.module('itemView'),
-		TagView = tmz.module('tagView'),
-		Amazon = tmz.module('amazon'),
-		Utilities = tmz.module('utilities'),
-		FilterPanel = tmz.module('filterPanel'),
+    var DetailView = gamedex.module('detailView'),
+		ItemData = gamedex.module('itemData'),
+		ItemView = gamedex.module('itemView'),
+		TagView = gamedex.module('tagView'),
+		Amazon = gamedex.module('amazon'),
+		Utilities = gamedex.module('utilities'),
+		FilterPanel = gamedex.module('filterPanel'),
 
 		// constants
 		DEFAULT_DISPLAY_TYPE = 1,
@@ -651,4 +651,4 @@
 	};
 
 
-})(tmz.module('gridView'), tmz, jQuery, _, alertify);
+})(gamedex.module('gridView'), gamedex, jQuery, _, alertify);

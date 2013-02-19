@@ -1,5 +1,5 @@
 // VideoPanel
-(function(VideoPanel, _V_, tmz, $, _, moment) {
+(function(VideoPanel, _V_, gamedex, $, _, moment) {
 	"use strict";
 
 	// constants
@@ -313,5 +313,5 @@
 	};
 
 
-})(tmz.module('videoPanel'), _V_, tmz, jQuery, _, moment);
+})(gamedex.module('videoPanel'), _V_, gamedex, jQuery, _, moment);
 

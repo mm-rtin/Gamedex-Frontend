@@ -1,14 +1,14 @@
 // ReleasedList
-(function(ReleasedList, tmz, $, _) {
+(function(ReleasedList, gamedex, $, _) {
 	"use strict";
 
     // module references
-	var Utilities = tmz.module('utilities');
+	var Utilities = gamedex.module('utilities');
 
 	// properties
 
 	// REST URL
-	var RELEASED_LIST_URL = tmz.api + 'list/gt/released/',
+	var RELEASED_LIST_URL = gamedex.api + 'list/gt/released/',
 
 		// data
 		releasedListCache = {},
@@ -173,5 +173,5 @@
 	};
 
 
-})(tmz.module('releasedList'), tmz, jQuery, _);
+})(gamedex.module('releasedList'), gamedex, jQuery, _);
 

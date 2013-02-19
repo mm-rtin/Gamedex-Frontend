@@ -1,13 +1,13 @@
 // Steam
-(function(Steam, tmz, $, _) {
+(function(Steam, gamedex, $, _) {
 	"use strict";
 
     // module references
-	var ItemLinker = tmz.module('itemLinker'),
+	var ItemLinker = gamedex.module('itemLinker'),
 
 		// REST URL
-		STEAM_SEARCH_URL = tmz.api + 'steam/search/',
-		STEAM_CACHE_URL = tmz.api + 'steam/cache/',
+		STEAM_SEARCH_URL = gamedex.api + 'steam/search/',
+		STEAM_CACHE_URL = gamedex.api + 'steam/cache/',
 
 		// properties
 		STEAM_BASE_URL = 'http://store.steampowered.com/',
@@ -212,5 +212,5 @@
 		return bestMatch;
 	};
 
-})(tmz.module('steam'), tmz, jQuery, _);
+})(gamedex.module('steam'), gamedex, jQuery, _);
 

@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     // Project configuration
     grunt.initConfig({
         meta: {
-            version: '0.1.0',
+            version: '1.0.0',
             banner: '/*! GAMEDEX - v<%= meta.version %> - ' +
                 '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
                 '* http://www.gamedex.net/\n' +
@@ -36,35 +36,38 @@ module.exports = function(grunt) {
                 'lib/alertify.js'
             ],
 
-            // gamedex source (order matters)
+            // gamedex source
             gamedex: [
                 'js/jquery.bootstrap-dropdown-sub-menu.js',
-                'js/tmz.js',
-                'js/tmz_util.js',
-                'js/tmz_user.js',
-                'js/tmz_storage.js',
-                'js/tmz_itemData.js',
-                'js/tmz_tagData.js',
-                'js/tmz_itemCache.js',
-                'js/tmz_siteView.js',
-                'js/tmz_searchView.js',
-                'js/tmz_detailView.js',
-                'js/tmz_itemView.js',
-                'js/tmz_gridView.js',
-                'js/tmz_tagView.js',
-                'js/tmz_filterPanel.js',
-                'js/tmz_videoPanel.js',
-                'js/tmz_amazon.js',
-                'js/tmz_giantbomb.js',
-                'js/tmz_metacritic.js',
-                'js/tmz_wikipedia.js',
-                'js/tmz_gametrailers.js',
-                'js/tmz_steam.js',
-                'js/tmz_gamestats.js',
-                'js/tmz_ign.js',
-                'js/tmz_releasedList.js',
-                'js/tmz_itemLinker.js',
-                'js/tmz_importView.js',
+                'js/gamedex.js',
+
+                'js/service/utilities.js',
+                'js/service/user.js',
+                'js/service/storage.js',
+                'js/service/itemCache.js',
+                'js/service/amazon.js',
+                'js/service/giantbomb.js',
+                'js/service/itemLinker.js',
+
+                'js/data/itemData.js',
+                'js/data/tagData.js',
+                'js/data/metacritic.js',
+                'js/data/wikipedia.js',
+                'js/data/gametrailers.js',
+                'js/data/steam.js',
+                'js/data/ign.js',
+                'js/data/releasedList.js',
+
+                'js/view/siteView.js',
+                'js/view/searchView.js',
+                'js/view/detailView.js',
+                'js/view/itemView.js',
+                'js/view/gridView.js',
+                'js/view/tagView.js',
+                'js/view/filterPanel.js',
+                'js/view/videoPanel.js',
+                'js/view/importView.js',
+
                 'js/init.js'
             ],
 

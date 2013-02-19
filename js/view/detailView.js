@@ -1,21 +1,21 @@
 // DETAIL VIEW
-(function(DetailView, tmz, $, _, moment) {
+(function(DetailView, gamedex, $, _, moment) {
 
     // module references
-    var User = tmz.module('user'),
-        TagView = tmz.module('tagView'),
-        Utilities = tmz.module('utilities'),
-        SearchView = tmz.module('searchView'),
-        ItemView = tmz.module('itemView'),
-        ItemData = tmz.module('itemData'),
-        Amazon = tmz.module('amazon'),
-        ItemLinker = tmz.module('itemLinker'),
-        Metacritic = tmz.module('metacritic'),
-        GiantBomb = tmz.module('giantbomb'),
-        Wikipedia = tmz.module('wikipedia'),
-        GameTrailers = tmz.module('gameTrailers'),
-        Steam = tmz.module('steam'),
-        VideoPanel = tmz.module('videoPanel'),
+    var User = gamedex.module('user'),
+        TagView = gamedex.module('tagView'),
+        Utilities = gamedex.module('utilities'),
+        SearchView = gamedex.module('searchView'),
+        ItemView = gamedex.module('itemView'),
+        ItemData = gamedex.module('itemData'),
+        Amazon = gamedex.module('amazon'),
+        ItemLinker = gamedex.module('itemLinker'),
+        Metacritic = gamedex.module('metacritic'),
+        GiantBomb = gamedex.module('giantbomb'),
+        Wikipedia = gamedex.module('wikipedia'),
+        GameTrailers = gamedex.module('gameTrailers'),
+        Steam = gamedex.module('steam'),
+        VideoPanel = gamedex.module('videoPanel'),
 
         // constants
         TAB_IDS = ['#amazonTab', '#giantBombTab'],
@@ -1053,4 +1053,4 @@
         }
     };
 
-})(tmz.module('detailView'), tmz, jQuery, _, moment);
+})(gamedex.module('detailView'), gamedex, jQuery, _, moment);

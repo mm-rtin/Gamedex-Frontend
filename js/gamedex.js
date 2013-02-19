@@ -1,6 +1,6 @@
 
-// TMZ namespace
-var tmz = {
+// gamedex namespace
+var gamedex = {
  // Create this closure to contain the cached modules
  module: function() {
     // Internal module cache.
@@ -21,25 +21,25 @@ var tmz = {
 };
 
 // set application properties
-tmz.api = '/';
+gamedex.api = '/';
 
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initialize
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initialize = function() {
+gamedex.initialize = function() {
 
 	// 3rd party libaries
-	tmz.initializeLibraries();
+	gamedex.initializeLibraries();
 
 	// event handling
-	tmz.initializeModules();
+	gamedex.initializeModules();
 };
 
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initializeLibraries
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initializeLibraries = function() {
+gamedex.initializeLibraries = function() {
 
 	// moment.js calendar config
 	moment.calendar = {
@@ -63,19 +63,19 @@ tmz.initializeLibraries = function() {
 /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * initializeModules
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-tmz.initializeModules = function() {
+gamedex.initializeModules = function() {
 
 	// module references
-    var itemData = tmz.module('itemData'),
-        searchView = tmz.module('searchView'),
-		detailView = tmz.module('detailView'),
-		itemView = tmz.module('itemView'),
-		tagView = tmz.module('tagView'),
-		gridView = tmz.module('gridView'),
-		filterPanel = tmz.module('filterPanel'),
-        videoPanel = tmz.module('videoPanel'),
-		importView = tmz.module('importView'),
-		siteView = tmz.module('siteView');
+    var itemData = gamedex.module('itemData'),
+        searchView = gamedex.module('searchView'),
+		detailView = gamedex.module('detailView'),
+		itemView = gamedex.module('itemView'),
+		tagView = gamedex.module('tagView'),
+		gridView = gamedex.module('gridView'),
+		filterPanel = gamedex.module('filterPanel'),
+        videoPanel = gamedex.module('videoPanel'),
+		importView = gamedex.module('importView'),
+		siteView = gamedex.module('siteView');
 
 	// initialize modules
     itemData.init();

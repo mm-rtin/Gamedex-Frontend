@@ -1,13 +1,13 @@
 // GiantBomb
-(function(GiantBomb, tmz, $, _, moment) {
+(function(GiantBomb, gamedex, $, _, moment) {
 	"use strict";
 
     // module references
-	var Amazon = tmz.module('amazon'),
+	var Amazon = gamedex.module('amazon'),
 
 		// REST URLS
-		GIANTBOMB_SEARCH_URL = tmz.api + 'giantbomb/search/',
-		GIANTBOMB_DETAIL_URL = tmz.api + 'giantbomb/detail/',
+		GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
+		GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
 
 		// data
 		giantBombDataCache = {},
@@ -271,5 +271,5 @@
 	};
 
 
-})(tmz.module('giantbomb'), tmz, jQuery, _, moment);
+})(gamedex.module('giantbomb'), gamedex, jQuery, _, moment);
 

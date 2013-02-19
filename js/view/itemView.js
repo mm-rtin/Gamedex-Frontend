@@ -1,24 +1,24 @@
 // ITEM VIEW
-(function(ItemView, tmz, $, _, ListJS) {
+(function(ItemView, gamedex, $, _, ListJS) {
     "use strict";
 
     // modules references
-    var User = tmz.module('user'),
-        SiteView = tmz.module('siteView'),
-        TagView = tmz.module('tagView'),
-        Utilities = tmz.module('utilities'),
-        DetailView = tmz.module('detailView'),
-        ImportView = tmz.module('importView'),
-        GridView = tmz.module('gridView'),
-        ItemData = tmz.module('itemData'),
-        ItemCache = tmz.module('itemCache'),
-        TagData = tmz.module('tagData'),
-        Amazon = tmz.module('amazon'),
-        Metacritic = tmz.module('metacritic'),
-        ItemLinker = tmz.module('itemLinker'),
-        FilterPanel = tmz.module('filterPanel'),
-        GiantBomb = tmz.module('giantbomb'),
-        Steam = tmz.module('steam'),
+    var User = gamedex.module('user'),
+        SiteView = gamedex.module('siteView'),
+        TagView = gamedex.module('tagView'),
+        Utilities = gamedex.module('utilities'),
+        DetailView = gamedex.module('detailView'),
+        ImportView = gamedex.module('importView'),
+        GridView = gamedex.module('gridView'),
+        ItemData = gamedex.module('itemData'),
+        ItemCache = gamedex.module('itemCache'),
+        TagData = gamedex.module('tagData'),
+        Amazon = gamedex.module('amazon'),
+        Metacritic = gamedex.module('metacritic'),
+        ItemLinker = gamedex.module('itemLinker'),
+        FilterPanel = gamedex.module('filterPanel'),
+        GiantBomb = gamedex.module('giantbomb'),
+        Steam = gamedex.module('steam'),
 
         // constants
         DISPLAY_TYPE = {'List': 0, 'Icons': 1},
@@ -1403,4 +1403,4 @@
 
     $.extend(ItemView, publicMethods);
 
-})(tmz.module('itemView'), tmz, jQuery, _, List);
+})(gamedex.module('itemView'), gamedex, jQuery, _, List);

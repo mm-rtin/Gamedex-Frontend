@@ -1,15 +1,15 @@
 // GameTrailers
-(function(GameTrailers, tmz, $, _) {
+(function(GameTrailers, gamedex, $, _) {
 	"use strict";
 
     // module references
-	var Amazon = tmz.module('amazon'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemData = tmz.module('itemData'),
+	var Amazon = gamedex.module('amazon'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemData = gamedex.module('itemData'),
 
 		// REST URL
-		GAMETRAILERS_SEARCH_URL = tmz.api + 'gametrailers/search/',
-		GAMETRAILERS_CACHE_URL = tmz.api + 'gametrailers/cache/',
+		GAMETRAILERS_SEARCH_URL = gamedex.api + 'gametrailers/search/',
+		GAMETRAILERS_CACHE_URL = gamedex.api + 'gametrailers/cache/',
 
 		// properties
 		GAMETRAILERS_BASE_URL = 'gametrailers.com',
@@ -212,5 +212,5 @@
 		return bestMatch.gametrailersPage + '/videos-trailers';
 	};
 
-})(tmz.module('gameTrailers'), tmz, jQuery, _);
+})(gamedex.module('gameTrailers'), gamedex, jQuery, _);
 

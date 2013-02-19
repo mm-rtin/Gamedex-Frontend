@@ -1,24 +1,24 @@
 // ItemData
-(function(ItemData, tmz, $, _, moment, alertify) {
+(function(ItemData, gamedex, $, _, moment, alertify) {
 	"use strict";
 
 	// Dependencies
-	var User = tmz.module('user'),
-		ItemLinker = tmz.module('itemLinker'),
-		ItemCache = tmz.module('itemCache'),
-		TagView = tmz.module('tagView'),
-		Utilities = tmz.module('utilities'),
+	var User = gamedex.module('user'),
+		ItemLinker = gamedex.module('itemLinker'),
+		ItemCache = gamedex.module('itemCache'),
+		TagView = gamedex.module('tagView'),
+		Utilities = gamedex.module('utilities'),
 
 		// REST URLS
-		ITEM_DIRECTORY_URL = tmz.api + 'item/directory/',
-		ITEM_URL = tmz.api + 'item/',
-		ITEM_ADD_URL = tmz.api + 'item/add/',
-		ITEM_BATCH_DELETE_URL = tmz.api + 'item/delete/batch/',
-		ITEM_SINGLE_DELETE_URL = tmz.api + 'item/delete/',
-		ITEM_USER_UPDATE = tmz.api + 'item/user/update/',
-		ITEM_SHARED_PRICE_UPDATE = tmz.api + 'item/shared/price/update/',
-		UPDATE_METACRITIC_URL = tmz.api + 'item/metacritic/update/',
-		IMPORT_GAMES_URL = tmz.api + 'import/',
+		ITEM_DIRECTORY_URL = gamedex.api + 'item/directory/',
+		ITEM_URL = gamedex.api + 'item/',
+		ITEM_ADD_URL = gamedex.api + 'item/add/',
+		ITEM_BATCH_DELETE_URL = gamedex.api + 'item/delete/batch/',
+		ITEM_SINGLE_DELETE_URL = gamedex.api + 'item/delete/',
+		ITEM_USER_UPDATE = gamedex.api + 'item/user/update/',
+		ITEM_SHARED_PRICE_UPDATE = gamedex.api + 'item/shared/price/update/',
+		UPDATE_METACRITIC_URL = gamedex.api + 'item/metacritic/update/',
+		IMPORT_GAMES_URL = gamedex.api + 'import/',
 
 		// constants
 		VIEW_ALL_TAG_ID = Utilities.VIEW_ALL_TAG_ID,
@@ -1081,5 +1081,5 @@
 
 	$.extend(ItemData, publicMethods);
 
-})(tmz.module('itemData'), tmz, $, _, moment, alertify);
+})(gamedex.module('itemData'), gamedex, $, _, moment, alertify);
 
