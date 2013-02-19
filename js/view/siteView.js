@@ -599,7 +599,7 @@
     var startApp = function() {
 
         // show loading status
-        $loadingStatus.stop().fadeIn();
+        $loadingStatus.addClass('show');
 
         // clear view and item data
         ItemView.clearItemView();
@@ -645,7 +645,7 @@
                     ItemView.initializeUserItems_result(itemsReturnedData);
 
                     // hide loading status
-                    $loadingStatus.stop(). hide();
+                    $loadingStatus.removeClass('show');
 
                     // site finished loading
                     siteLoaded = true;

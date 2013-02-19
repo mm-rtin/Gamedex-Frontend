@@ -20,7 +20,7 @@
 		PANEL_HEIGHT_OFFSET_INFO = 503,
 		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
-		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1000,
+		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1500,
 		NUMBER_OF_LIST_PAGES_TO_LOAD = 1,
 
 		// timeout
@@ -288,7 +288,7 @@
 		sortedSearchResults = [];
 
 		// hide loading status
-		$searchLoadingStatus.stop().hide();
+		$searchLoadingStatus.removeClass('show');
 
 		// generate sorted items array
 		_.each(items, function(item, key) {
@@ -314,7 +314,7 @@
 	SearchView.renderListResults = function(items, order) {
 
 		// hide loading status
-		$listLoadingStatus.stop().hide();
+		$listLoadingStatus.removeClass('show');
 
 		// get model data
 		var templateData = {'listResults': items};
@@ -352,7 +352,7 @@
 
 			// show loading status
 			$searchResultsContainer.find('.noResults').hide();
-			$searchLoadingStatus.fadeIn();
+			$searchLoadingStatus.addClass('show');
 
 			previousSearchTerms = keywords;
 
@@ -370,6 +370,8 @@
 	* loadNextListPages -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.loadNextListPages = function() {
+
+		$listLoadingStatus.addClass('show');
 
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
@@ -395,6 +397,8 @@
 	SearchView.getIGNPopularList = function(platform, page) {
 
 		if (ignPopularListPagesEnded) {
+
+			$listLoadingStatus.removeClass('show');
 			return;
 		}
 
@@ -421,6 +425,8 @@
 	SearchView.getIGNUpcomingList = function(platform, page) {
 
 		if (ignUpcomingListPagesEnded) {
+
+			$listLoadingStatus.addClass('show');
 			return;
 		}
 
@@ -447,6 +453,8 @@
 	SearchView.getIGNReviewedList = function(platform, page) {
 
 		if (ignReviewedListPagesEnded) {
+
+			$listLoadingStatus.remove('show');
 			return;
 		}
 
@@ -560,7 +568,7 @@
 		// clear results output
 		$searchResults.empty();
 
-		$searchLoadingStatus.fadeIn();
+		$searchLoadingStatus.addClass('show');
 
 		// clear searchResults data
 		searchResults = {};
@@ -933,7 +941,7 @@
 		// reset platform menu
 		renderListPlatformMenu();
 
-		$listLoadingStatus.fadeIn();
+		$listLoadingStatus.addClass('show');
 		$listTable.empty();
 
 		switch (listType) {

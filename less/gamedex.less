@@ -1004,21 +1004,21 @@ img {
 	}
 
 	#step1 {
-		background-image: url('http://static.gamedex.net/images/step1.png');
+		background-image: url('http://d2sifwlm28j6up.cloudfront.net/step1.png');
 		width: 714px;
 		height: 156px;
-		top: -97px;
+		top: -116px;
 		left: 14%;
 	}
 	#step2 {
-		background-image:  url('http://static.gamedex.net/images/step2.png');
-		width: 623px;
+		background-image:  url('http://d2sifwlm28j6up.cloudfront.net/step2.png');
+		width: 696px;
 		height: 61px;
 		top: 151px;
-		left: 31%;
+		left: 29%;
 	}
 	#step3 {
-		background-image:  url('http://static.gamedex.net/images/step3.png');
+		background-image:  url('http://d2sifwlm28j6up.cloudfront.net/step3.png');
 		width: 431px;
 		height: 71px;
 		top: 201px;
@@ -1026,15 +1026,15 @@ img {
 	}
 
 	#step4 {
-		background-image:  url('http://static.gamedex.net/images/step4.png');
+		background-image:  url('http://d2sifwlm28j6up.cloudfront.net/step4.png');
 		width: 458px;
 		height: 91px;
-		top: -76px;
+		top: -98px;
 		left: 34%;
 	}
 
 	#step5 {
-		background-image:  url('http://static.gamedex.net/images/step5.png');
+		background-image:  url('http://d2sifwlm28j6up.cloudfront.net/step5.png');
 		width: 665px;
 		height: 98px;
 		top: -118px;
@@ -1084,7 +1084,7 @@ img {
 			display: block;
 		}
 		#siteGuideNavigation {
-			top: -33px;
+			top: -50px;
 			left: 14%;
 			margin-left: 521px;
 
@@ -1134,7 +1134,7 @@ img {
 			display: block;
 		}
 		#siteGuideNavigation {
-			top: -9px;
+			top: -35px;
 			left: 34%;
 			margin-left: 268px;
 		}
@@ -1738,11 +1738,18 @@ img {
 }
 
 .loadingStatus {
+	.transition(.4s);
+	.opacity(0);
 	display: none;
 	background-image:  url('http://d2sifwlm28j6up.cloudfront.net/loading_bar.gif');
 	margin: 5px auto;
 	width: 48px;
 	height: 48px;
+
+	&.show {
+		display: block;
+		.opacity(1);
+	}
 }
 
 .no-results {
@@ -2510,6 +2517,8 @@ img {
 }
 
 #listResults {
+
+	margin-bottom: 0;
 
 	tr {
 		cursor: pointer;

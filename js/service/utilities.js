@@ -17,7 +17,7 @@
             {id: 'ds',        gt: 'ds',         ign: 'ds',        amazon: 11075831,     name: 'DS',             alias: 'ds,nintendo ds'                                                                    },
             {id: '3ds',       gt: '3ds',        ign: 'ds',        amazon: 2622269011,   name: '3DS',            alias: '3ds,nintendo 3ds'                                                                  },
             {id: 'wii',       gt: 'wii',        ign: 'wii',       amazon: 14218901,     name: 'Wii',            alias: 'wii,nintendo wii'                                                                  },
-            {id: 'wiiu',      gt: 'wii u',      ign: 'wii u',     amazon: 3075112011,   name: 'Wii U',          alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu'                                     },
+            {id: 'wiiu',      gt: 'wii u',      ign: 'wii-u',     amazon: 3075112011,   name: 'Wii U',          alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu'                                     },
             {id: 'ps',        gt: '',           ign: 'ps',        amazon: 229773,       name: 'PS1',            alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation' },
             {id: 'ps2',       gt: '',           ign: 'ps2',       amazon: 301712,       name: 'PS2',            alias: 'ps2,playstation 2,playstation2,sony playstation 2'                                 },
             {id: 'ps3',       gt: 'ps3',        ign: 'ps3',       amazon: 14210751,     name: 'PS3',            alias: 'ps3,playstation 3,playstation3,sony playstation 3'                                 },

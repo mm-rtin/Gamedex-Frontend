@@ -12770,10 +12770,9 @@ window.ListJsHelpers = h;
 (function (global, undefined) {
     "use strict";
 
-    var document = global.document,
-        Alertify;
+    var document = global.document;
 
-    Alertify = function () {
+    var Alertify = function () {
 
         var _alertify = {},
             dialogs   = {},
@@ -13289,13 +13288,6 @@ window.ListJsHelpers = h;
         };
     };
 
-    // AMD and window support
-    if (typeof define === "function") {
-        define([], function () { return new Alertify(); });
-    } else {
-        if (typeof global.alertify === "undefined") {
-            global.alertify = new Alertify();
-        }
-    }
+    global.alertify = new Alertify();
 
 }(this));

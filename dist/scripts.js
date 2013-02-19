@@ -234,7 +234,7 @@ gamedex.initializeModules = function() {
             {id: 'ds',        gt: 'ds',         ign: 'ds',        amazon: 11075831,     name: 'DS',             alias: 'ds,nintendo ds'                                                                    },
             {id: '3ds',       gt: '3ds',        ign: 'ds',        amazon: 2622269011,   name: '3DS',            alias: '3ds,nintendo 3ds'                                                                  },
             {id: 'wii',       gt: 'wii',        ign: 'wii',       amazon: 14218901,     name: 'Wii',            alias: 'wii,nintendo wii'                                                                  },
-            {id: 'wiiu',      gt: 'wii u',      ign: 'wii u',     amazon: 3075112011,   name: 'Wii U',          alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu'                                     },
+            {id: 'wiiu',      gt: 'wii u',      ign: 'wii-u',     amazon: 3075112011,   name: 'Wii U',          alias: 'wiiu,wii u,wii-u,nintendo wii u,nintendo wiiu'                                     },
             {id: 'ps',        gt: '',           ign: 'ps',        amazon: 229773,       name: 'PS1',            alias: 'ps,ps1,playstation,playstation1,playstation 1,sony playstation 1,sony playstation' },
             {id: 'ps2',       gt: '',           ign: 'ps2',       amazon: 301712,       name: 'PS2',            alias: 'ps2,playstation 2,playstation2,sony playstation 2'                                 },
             {id: 'ps3',       gt: 'ps3',        ign: 'ps3',       amazon: 14210751,     name: 'PS3',            alias: 'ps3,playstation 3,playstation3,sony playstation 3'                                 },
@@ -5303,7 +5303,7 @@ gamedex.initializeModules = function() {
     var startApp = function() {
 
         // show loading status
-        $loadingStatus.stop().fadeIn();
+        $loadingStatus.addClass('show');
 
         // clear view and item data
         ItemView.clearItemView();
@@ -5349,7 +5349,7 @@ gamedex.initializeModules = function() {
                     ItemView.initializeUserItems_result(itemsReturnedData);
 
                     // hide loading status
-                    $loadingStatus.stop(). hide();
+                    $loadingStatus.removeClass('show');
 
                     // site finished loading
                     siteLoaded = true;
@@ -6111,7 +6111,7 @@ gamedex.initializeModules = function() {
 		PANEL_HEIGHT_OFFSET_INFO = 503,
 		PANEL_HEIGHT_PADDING_MAX = 5,
 		PANEL_HEIGHT_PADDING_SCROLL = 13,
-		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1000,
+		DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER = 1500,
 		NUMBER_OF_LIST_PAGES_TO_LOAD = 1,
 
 		// timeout
@@ -6379,7 +6379,7 @@ gamedex.initializeModules = function() {
 		sortedSearchResults = [];
 
 		// hide loading status
-		$searchLoadingStatus.stop().hide();
+		$searchLoadingStatus.removeClass('show');
 
 		// generate sorted items array
 		_.each(items, function(item, key) {
@@ -6405,7 +6405,7 @@ gamedex.initializeModules = function() {
 	SearchView.renderListResults = function(items, order) {
 
 		// hide loading status
-		$listLoadingStatus.stop().hide();
+		$listLoadingStatus.removeClass('show');
 
 		// get model data
 		var templateData = {'listResults': items};
@@ -6443,7 +6443,7 @@ gamedex.initializeModules = function() {
 
 			// show loading status
 			$searchResultsContainer.find('.noResults').hide();
-			$searchLoadingStatus.fadeIn();
+			$searchLoadingStatus.addClass('show');
 
 			previousSearchTerms = keywords;
 
@@ -6461,6 +6461,8 @@ gamedex.initializeModules = function() {
 	* loadNextListPages -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	SearchView.loadNextListPages = function() {
+
+		$listLoadingStatus.addClass('show');
 
 		switch (listType) {
 			case LIST_TYPE.POPULAR:
@@ -6486,6 +6488,8 @@ gamedex.initializeModules = function() {
 	SearchView.getIGNPopularList = function(platform, page) {
 
 		if (ignPopularListPagesEnded) {
+
+			$listLoadingStatus.removeClass('show');
 			return;
 		}
 
@@ -6512,6 +6516,8 @@ gamedex.initializeModules = function() {
 	SearchView.getIGNUpcomingList = function(platform, page) {
 
 		if (ignUpcomingListPagesEnded) {
+
+			$listLoadingStatus.addClass('show');
 			return;
 		}
 
@@ -6538,6 +6544,8 @@ gamedex.initializeModules = function() {
 	SearchView.getIGNReviewedList = function(platform, page) {
 
 		if (ignReviewedListPagesEnded) {
+
+			$listLoadingStatus.remove('show');
 			return;
 		}
 
@@ -6651,7 +6659,7 @@ gamedex.initializeModules = function() {
 		// clear results output
 		$searchResults.empty();
 
-		$searchLoadingStatus.fadeIn();
+		$searchLoadingStatus.addClass('show');
 
 		// clear searchResults data
 		searchResults = {};
@@ -7024,7 +7032,7 @@ gamedex.initializeModules = function() {
 		// reset platform menu
 		renderListPlatformMenu();
 
-		$listLoadingStatus.fadeIn();
+		$listLoadingStatus.addClass('show');
 		$listTable.empty();
 
 		switch (listType) {
@@ -9956,7 +9964,7 @@ gamedex.initializeModules = function() {
 
 		alertify.success('Loading Grid View images');
 
-		$gridViewLoadingStatus.fadeIn();
+		$gridViewLoadingStatus.addClass('show');
 
 		// switch content display to gridView
 		// modify styles
@@ -10064,7 +10072,7 @@ gamedex.initializeModules = function() {
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
 
-			$gridViewLoadingStatus.stop().hide();
+			$gridViewLoadingStatus.removeClass('show');
 
 			// show gridViewContainer
 			$gridViewContainer.show();

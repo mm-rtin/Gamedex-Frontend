@@ -232,7 +232,7 @@
 
 		alertify.success('Loading Grid View images');
 
-		$gridViewLoadingStatus.fadeIn();
+		$gridViewLoadingStatus.addClass('show');
 
 		// switch content display to gridView
 		// modify styles
@@ -340,7 +340,7 @@
 		// initialize isotope after images have loaded
 		$gridViewContainer.imagesLoaded( function(){
 
-			$gridViewLoadingStatus.stop().hide();
+			$gridViewLoadingStatus.removeClass('show');
 
 			// show gridViewContainer
 			$gridViewContainer.show();
