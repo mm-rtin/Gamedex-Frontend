@@ -8,10 +8,12 @@
 		// REST URLS
 		GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
 		GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
+		GIANTBOMB_VIDEO_URL = gamedex.api + 'giantbomb/video/',
 
 		// data
 		giantBombDataCache = {},
 		giantBombItemCache = {},
+		giantBombVideoCache = {},
 
 		// request queue
 		getGiantBombItemDataQueue = {},
@@ -112,7 +114,7 @@
 		// list of fields to get as query parameter
 		var fieldList = ['platforms'];
 
-		var giantbombRequest = getGiantBombItem(gbombID, fieldList, function(data) {
+		var giantbombRequest = getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 			onSuccess(data, gbombID);
 		}, onError);
 
@@ -149,7 +151,7 @@
 				var fieldList = ['description', 'site_detail_url', 'videos'];
 
 				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
+				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
 					// iterate queued return methods
 					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
@@ -166,6 +168,36 @@
 
 				}, onError);
 			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.getGiantBombVideo = function(videoID, onSuccess, onError) {
+
+		// find in giant bomb data cache first
+		var cachedData = getCachedVideo(videoID);
+
+		// load cached gb data
+		if (cachedData) {
+
+			// return updated source item
+			onSuccess(cachedData);
+
+		// download gb data
+		} else {
+
+				// download data
+				var fieldList = [];
+
+				// giantbomb item request
+				getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
+
+					// return data
+					onSuccess(data.results);
+
+				}, onError);
 		}
 	};
 
@@ -199,7 +231,7 @@
 				var fieldList = ['id', 'name', 'original_release_date', 'image'];
 
 				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
+				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
 					// iterate queued return methods
 					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
@@ -222,7 +254,7 @@
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getGiantBombItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
+	var getGiantBombItem = function(url, gbombID, fieldList, onSuccess, onError) {
 
 		var requestData = {
 			'field_list': fieldList.join(','),
@@ -230,7 +262,7 @@
 		};
 
 		var giantbombRequest = $.ajax({
-			url: GIANTBOMB_DETAIL_URL,
+			url: url,
 			type: 'GET',
 			data: requestData,
 			dataType: 'json',
@@ -240,6 +272,20 @@
 		});
 
 		return giantbombRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedVideo = function(id) {
+
+		var giantBombVideo = null;
+
+		if (typeof giantBombVideoCache[id] !== 'undefined') {
+			giantBombVideo = giantBombVideoCache[id];
+		}
+
+		return giantBombVideo;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

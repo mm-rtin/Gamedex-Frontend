@@ -321,8 +321,6 @@
 		thumbnailImage = s2.slice(lastCommonIndex).join('');
 		largeImage = s3.slice(lastCommonIndex).join('');
 
-		console.info(item);
-
 		// request data
 		var requestData = {
 			'lids': tagIDs,
@@ -587,17 +585,6 @@
 
 		// Amazon Price
 		if (priceProvider == Utilities.PRICE_PROVIDERS.Amazon) {
-			console.info('update amazon price')
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info(item);
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
 
 			// amazon price data found
 			if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {

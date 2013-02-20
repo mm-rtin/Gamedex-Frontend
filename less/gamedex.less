@@ -1107,7 +1107,7 @@ img {
 		#siteGuideNavigation {
 			top: 222px;
 			left: 31%;
-			margin-left: 432px;
+			margin-left: 475px;
 		}
 		#panel1 {
 			position: relative;
@@ -2005,6 +2005,8 @@ img {
 	left: -21px;
 
 	.videoItem {
+		.transition(1s);
+		.opacity(0);
 		background-color: #000;
 		border-radius: 2px;
 		box-shadow: 0 0 0 2px #000;
@@ -2012,6 +2014,10 @@ img {
 		height: 79px;
 		margin: 7px 15px 3px 0px;
 		width: 140px;
+
+		&.showFade {
+			.opacity(1);
+		}
 
 		&:hover {
 			box-shadow: 0 0 0 2px #fff;
@@ -2053,11 +2059,17 @@ img {
 }
 
 #videoListNavigation {
+	.transition(1s);
+	.opacity(0);
 	position: absolute;
 	width: 63px;
 	height: 52px;
 	left: 792px;
 	top: 21px;
+
+	&.show {
+		.opacity(1);
+	}
 
 	.navigateLeft {
 		.opacity(.5);

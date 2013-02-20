@@ -530,7 +530,7 @@
             });
 
         // demo app
-        } else {
+        } else if (!siteLoaded) {
             startDemo();
         }
     };

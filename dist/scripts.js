@@ -1585,10 +1585,12 @@ gamedex.initializeModules = function() {
 		// REST URLS
 		GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
 		GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
+		GIANTBOMB_VIDEO_URL = gamedex.api + 'giantbomb/video/',
 
 		// data
 		giantBombDataCache = {},
 		giantBombItemCache = {},
+		giantBombVideoCache = {},
 
 		// request queue
 		getGiantBombItemDataQueue = {},
@@ -1689,7 +1691,7 @@ gamedex.initializeModules = function() {
 		// list of fields to get as query parameter
 		var fieldList = ['platforms'];
 
-		var giantbombRequest = getGiantBombItem(gbombID, fieldList, function(data) {
+		var giantbombRequest = getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 			onSuccess(data, gbombID);
 		}, onError);
 
@@ -1726,7 +1728,7 @@ gamedex.initializeModules = function() {
 				var fieldList = ['description', 'site_detail_url', 'videos'];
 
 				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
+				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
 					// iterate queued return methods
 					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
@@ -1743,6 +1745,36 @@ gamedex.initializeModules = function() {
 
 				}, onError);
 			}
+		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getGiantBombVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	GiantBomb.getGiantBombVideo = function(videoID, onSuccess, onError) {
+
+		// find in giant bomb data cache first
+		var cachedData = getCachedVideo(videoID);
+
+		// load cached gb data
+		if (cachedData) {
+
+			// return updated source item
+			onSuccess(cachedData);
+
+		// download gb data
+		} else {
+
+				// download data
+				var fieldList = [];
+
+				// giantbomb item request
+				getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
+
+					// return data
+					onSuccess(data.results);
+
+				}, onError);
 		}
 	};
 
@@ -1776,7 +1808,7 @@ gamedex.initializeModules = function() {
 				var fieldList = ['id', 'name', 'original_release_date', 'image'];
 
 				// giantbomb item request
-				getGiantBombItem(gbombID, fieldList, function(data) {
+				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
 					// iterate queued return methods
 					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
@@ -1799,7 +1831,7 @@ gamedex.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* getGiantBombItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItem = function(gbombID, fieldList, onSuccess, onError) {
+	var getGiantBombItem = function(url, gbombID, fieldList, onSuccess, onError) {
 
 		var requestData = {
 			'field_list': fieldList.join(','),
@@ -1807,7 +1839,7 @@ gamedex.initializeModules = function() {
 		};
 
 		var giantbombRequest = $.ajax({
-			url: GIANTBOMB_DETAIL_URL,
+			url: url,
 			type: 'GET',
 			data: requestData,
 			dataType: 'json',
@@ -1817,6 +1849,20 @@ gamedex.initializeModules = function() {
 		});
 
 		return giantbombRequest;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* getCachedVideo -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var getCachedVideo = function(id) {
+
+		var giantBombVideo = null;
+
+		if (typeof giantBombVideoCache[id] !== 'undefined') {
+			giantBombVideo = giantBombVideoCache[id];
+		}
+
+		return giantBombVideo;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2584,8 +2630,6 @@ gamedex.initializeModules = function() {
 		thumbnailImage = s2.slice(lastCommonIndex).join('');
 		largeImage = s3.slice(lastCommonIndex).join('');
 
-		console.info(item);
-
 		// request data
 		var requestData = {
 			'lids': tagIDs,
@@ -2850,17 +2894,6 @@ gamedex.initializeModules = function() {
 
 		// Amazon Price
 		if (priceProvider == Utilities.PRICE_PROVIDERS.Amazon) {
-			console.info('update amazon price')
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info(item);
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
-			console.info('--------------------');
 
 			// amazon price data found
 			if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
@@ -5234,7 +5267,7 @@ gamedex.initializeModules = function() {
             });
 
         // demo app
-        } else {
+        } else if (!siteLoaded) {
             startDemo();
         }
     };
@@ -7955,8 +7988,9 @@ gamedex.initializeModules = function() {
 
         // has giantbombVideos
         if (giantbombVideos.length !== 0) {
-            // render video results
-            VideoPanel.renderVideoModal(giantbombVideos, itemName);
+
+            // load video details
+            VideoPanel.initializeVideoPanel(giantbombVideos, itemName);
 
             currentItemHasVideo = true;
             $showVideoButton.removeClass('noVideos');
@@ -8164,8 +8198,6 @@ gamedex.initializeModules = function() {
                     item.thumbnailImage = secondItem.thumbnailImage;
                 }
             }
-
-            console.info(item);
 
             addItemToTagRequest = ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
         }
@@ -11442,89 +11474,99 @@ gamedex.initializeModules = function() {
 })(gamedex.module('filterPanel'), gamedex, $, _, moment);
 
 // VideoPanel
-(function(VideoPanel, _V_, gamedex, $, _, moment) {
-	"use strict";
+(function(VideoPanel, _V_, gamedex, $, _, moment, ListJS) {
+    "use strict";
 
-	// constants
-	var GIANT_BOMB_VIDEO_PATH = 'http://media.giantbomb.com/video/',
-		VIDEO_PLAYER_ID = 'videoPlayer',
-		VIDEO_SET_HEIGHT = 89,
-		VIDEOS_PER_SET = 5,
+    // module references
+    var GiantBomb = gamedex.module('giantbomb');
 
-		// properties
-		initialLoad = false,
-		currentVideoSet = 0,
-		currentMaxVideoSet = null,
-		currentVideoCount = 0,
-		currentVideoIndex = 0,
-		previousVideoIndex = 0,
+    // constants
+    var GIANT_BOMB_VIDEO_PATH = 'http://media.giantbomb.com/video/',
+        VIDEO_PLAYER_ID = 'videoPlayer',
+        VIDEO_SET_HEIGHT = 89,
+        VIDEOS_PER_SET = 5,
 
-		// data
-		currentVideos = [],		// current item videos
+        // properties
+        initialLoad = false,
+        currentVideoSet = 0,
+        currentMaxVideoSet = null,
+        totalVideoCount = 0,
+        loadedVideoDetailCount = 0,
+        currentVideoIndex = 0,
+        previousVideoIndex = 0,
 
-		// objects
-		videoJSPLayer = null,
+        // list
+        videoList = null,
+        listOptions = {
+            valueNames: ['publishDate']
+        },
 
-		// jquery cache
-		$videoModal = $('#video-modal'),
-		$videoListContainer = $('#videoListContainer'),
-		$videoList = $('#videoList'),
-		$videoPlayer = $('#videoPlayer'),
-		$videoModalTitle = $('#videoModalTitle'),
-		$videoListNavigation = $('#videoListNavigation'),
-		$navigateLeft = $videoListNavigation.find('.navigateLeft'),
-		$navigateRight = $videoListNavigation.find('.navigateRight'),
-		$pageNumberText = $videoListNavigation.find('.pageNumber'),
+        // data
+        currentVideos = [],     // current item videos to load
 
-		// templates
-		videoResultsTemplate = _.template($('#video-results-template').html());
+        // objects
+        videoJSPLayer = null,
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* init
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	VideoPanel.init = function() {
+        // jquery cache
+        $videoModal = $('#video-modal'),
+        $videoListContainer = $('#videoListContainer'),
+        $videoList = $('#videoList'),
+        $videoPlayer = $('#videoPlayer'),
+        $videoModalTitle = $('#videoModalTitle'),
+        $videoListNavigation = $('#videoListNavigation'),
+        $navigateLeft = $videoListNavigation.find('.navigateLeft'),
+        $navigateRight = $videoListNavigation.find('.navigateRight'),
+        $pageNumberText = $videoListNavigation.find('.pageNumber'),
 
-		// init video js
-		videoJSPLayer = _V_(VIDEO_PLAYER_ID);
+        // templates
+        videoResultsTemplate = _.template($('#video-results-template').html());
 
-		// create event handlers
-		VideoPanel.createEventHandlers();
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * init
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    VideoPanel.init = function() {
 
-		// show video modal
-		$videoModal.modal({backdrop: true, show: false});
-	};
+        // init video js
+        videoJSPLayer = _V_(VIDEO_PLAYER_ID);
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* createEventHandlers
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        // create event handlers
+        VideoPanel.createEventHandlers();
+
+        // show video modal
+        $videoModal.modal({backdrop: true, show: false});
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * createEventHandlers
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.createEventHandlers = function() {
 
-		// videoList li: click
-		$videoList.on('click', 'li', function(e) {
-			e.preventDefault();
+        // videoList li: click
+        $videoList.on('click', 'li', function(e) {
+            e.preventDefault();
 
-			var id = $(this).attr('data-id');
-			changeVideoSource(Number(id));
+            var id = $(this).attr('data-id');
+            changeVideoSource(Number(id));
 
-			playCurrentVideo();
-		});
+            playCurrentVideo();
+        });
 
-		// navigateLeft: click
-		$navigateLeft.click(function(e) {
-			previousVideoSet();
-		});
-		// navigateRight: click
-		$navigateRight.click(function(e) {
-			nextVideoSet();
-		});
+        // navigateLeft: click
+        $navigateLeft.click(function(e) {
+            previousVideoSet();
+        });
+        // navigateRight: click
+        $navigateRight.click(function(e) {
+            nextVideoSet();
+        });
 
-		// videoModal: hidden
-		$videoModal.on('hidden', function () {
-			pauseCurrentVideo();
-		});
+        // videoModal: hidden
+        $videoModal.on('hidden', function () {
+            pauseCurrentVideo();
+        });
 
-		// video js: video ended
-		videoJSPLayer.addEvent("ended", playNextVideo);
+        // video js: video ended
+        videoJSPLayer.addEvent("ended", playNextVideo);
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11532,231 +11574,295 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.showVideoPanel = function() {
 
-		if (initialLoad) {
-			initialLoad = false;
+        // load first video detail
+        loadVideoDetail(currentVideos[0], function(videoObj) {
 
-			// update video source
-			changeVideoSource(0);
-		}
+            if (initialLoad) {
+                initialLoad = false;
 
-		// show video modal
-		$videoModal.modal('show');
+                // add video to set
+                videoDetailLoaded(videoObj);
 
-		playCurrentVideo();
+                // update video source
+                changeVideoSource(0);
+
+                // load remaining video detail
+                loadVideoDetails();
+            }
+
+            playCurrentVideo();
+        });
+
+        // show video modal
+        $videoModal.modal('show');
     };
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* renderVideoModal -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	VideoPanel.renderVideoModal = function(videoResults, itemName) {
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * initializeVideoPanel -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    VideoPanel.initializeVideoPanel = function(giantbombVideos, itemName) {
 
-		initialLoad = true;
+        // reset max, videoIndex and initialLoad
+        initialLoad = true;
+        currentMaxVideoSet = 1;
+        currentVideoIndex = 0;
+        currentVideoSet = 0;
+        loadedVideoDetailCount = 0;
+        totalVideoCount = giantbombVideos.length;
 
-		currentVideos = $.extend(true, [], videoResults);
+        // set video game name
+        $videoModalTitle.text(itemName);
 
-		if (currentVideos.length !== 0) {
+        // copy video data
+        currentVideos = $.extend(true, [], giantbombVideos);
 
-			// get video count
-			currentVideoCount = currentVideos.length;
+        // clear videoList
+        $videoList.empty();
 
-			// reset max, videoIndex
-			currentMaxVideoSet = null;
-			currentVideoIndex = 0;
+        // reset video set
+        changeVideoSet(0);
+        hideVideoListNavigation();
 
-			// format data
-			formatVideoData(currentVideos);
+        // add index property to currentVideos
+        _.each(currentVideos, function(video, index) {
+            video.index = index;
+        });
+    };
 
-			// get model data
-			var templateData = {'videoResults': currentVideos};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * loadVideoDetails -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var loadVideoDetails = function() {
 
-			// render video list
-			$videoList.html(videoResultsTemplate(templateData));
+        // for each video get video detail
+        _.each(currentVideos, function(video) {
 
-			// set video game name
-			$videoModalTitle.text(itemName);
+            loadVideoDetail(video, videoDetailLoaded);
+        });
+    };
 
-			// change videoSet to default
-			currentVideoSet = 0;
-			changeVideoSet(0);
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * loadVideoDetail -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var loadVideoDetail = function(video, onSuccess) {
 
-			// init popover
-			$videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+        // get video detail
+        GiantBomb.getGiantBombVideo(video.id, function(data) {
 
-			showVideoListNavigation();
-		}
+            // update video object with new detail information
+            $.extend(true, video, data);
 
-		if (currentVideos.length <= VIDEOS_PER_SET) {
-			hideVideoListNavigation();
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* formatVideoData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var formatVideoData = function(videoArray) {
-
-		// iterate videoArray and add new attributes
-		for (var i = 0, len = videoArray.length; i < len; i++) {
-
-			// format publish date
-			videoArray[i].publishDate = moment(videoArray[i].publish_date, "YYYY-MM-DD").calendar();
-			delete videoArray[i].publish_date;
-
-			// format video length
-			var minutes = Math.floor(videoArray[i].length_seconds / 60);
-			var seconds = (videoArray[i].length_seconds % 60).toString();
-			if (seconds.length === 1) {
-				seconds = '0' + seconds;
-			}
-			delete videoArray[i].length_seconds;
+            onSuccess(video);
+        });
+    };
 
 
-			videoArray[i].runningTime = minutes + ':' + seconds;
-		}
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * videoDetailLoaded -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var videoDetailLoaded = function(video) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* playNextVideo -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var playNextVideo = function() {
+        if (!_.has(video, 'attached')) {
 
-		if (currentVideoIndex === currentVideoCount - 1) {
-			currentVideoIndex = 0;
-		} else {
-			currentVideoIndex++;
-		}
+            // increment loaded video count
+            loadedVideoDetailCount++;
 
-		// play next
-		changeVideoSource(currentVideoIndex);
+            // format data
+            formatVideoData(video);
 
-		// change video set
-		if (currentVideoIndex % VIDEOS_PER_SET === 0) {
+            // render video item
+            var templateData = {'video': video};
+            $videoList.append(videoResultsTemplate(templateData));
 
-			var set = Math.floor(currentVideoIndex / VIDEOS_PER_SET);
-			changeVideoSet(set);
-		}
+            // add attached property
+            video.attached = true;
 
-		playCurrentVideo();
-	};
+            var $videoItem = $videoList.find('#video_' + video.id);
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeVideoSource -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeVideoSource = function(index) {
+            // fade in videoItem
+            _.delay(function() {
+                $videoItem.addClass('showFade');
 
-		currentVideoIndex = index;
-
-		// get video url
-		var url = currentVideos[index].url;
-
-		// add 'playing' class to videoList item
-		var $currentVideoItem = $videoList.find('li[data-id="' + index + '"]');
-		var $previousVideoItem = $videoList.find('li[data-id="' + previousVideoIndex + '"]');
-		$previousVideoItem.removeClass('playing');
-		$currentVideoItem.addClass('playing');
-
-		// update videoPlayer source
-		var videoURLParts = url.split('.');
-		var videoURL = GIANT_BOMB_VIDEO_PATH + videoURLParts[0] + '_3500.' + videoURLParts[1];
-		videoJSPLayer.src(videoURL);
-
-		previousVideoIndex = index;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* playCurrentVideo -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var playCurrentVideo = function() {
-
-		videoJSPLayer.play();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* pauseCurrentVideo -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var pauseCurrentVideo = function() {
-
-		videoJSPLayer.pause();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* hideVideoListNavigation -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var hideVideoListNavigation = function() {
-		$videoListNavigation.hide();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* showVideoListNavigation -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var showVideoListNavigation = function() {
-		$videoListNavigation.show();
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* previousVideoSet -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var previousVideoSet = function() {
-
-		// get set height
-		var maxVideoSet = getMaxVideoSet();
-
-		if (currentVideoSet > 0) {
-			changeVideoSet(--currentVideoSet);
-		// reached min > loop to max
-		} else {
-			changeVideoSet(maxVideoSet);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* nextVideoSet -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var nextVideoSet = function() {
-
-		// get set height
-		var maxVideoSet = getMaxVideoSet();
-
-		if (currentVideoSet < maxVideoSet) {
-			changeVideoSet(++currentVideoSet);
-
-		// reached max > loop to 0
-		} else {
-			changeVideoSet(0);
-		}
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getMaxVideoSet -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getMaxVideoSet = function() {
-
-		if (!currentMaxVideoSet) {
-			currentMaxVideoSet = Math.ceil(currentVideoCount / VIDEOS_PER_SET) - 1;
-		}
-
-		return currentMaxVideoSet;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* changeVideoSet -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var changeVideoSet = function(set) {
-
-		var position = -(set * VIDEO_SET_HEIGHT);
-		currentVideoSet = set;
-
-		// animate position
-		$videoList.stop().animate({top: position}, 250, function() {
-
-		});
-
-		// set page number
-		$pageNumberText.text(Number(set + 1) + ' / ' + Number(getMaxVideoSet() + 1));
-	};
+                // sort
+                videoList = new ListJS('videoListContainer', listOptions);
+                videoList.sort('publishDate', { asc: true });
+            }, 200);
 
 
-})(gamedex.module('videoPanel'), _V_, gamedex, jQuery, _, moment);
+            // init popover
+            $videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+
+            // update video set
+            changeVideoSet(currentVideoSet);
+
+            if (loadedVideoDetailCount > VIDEOS_PER_SET) {
+                showVideoListNavigation();
+            }
+
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * formatVideoData -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var formatVideoData = function(video) {
+
+        // format publish date
+        video.publishDate = moment(video.publish_date, "YYYY-MM-DD").calendar();
+        delete video.publish_date;
+
+        // format video length
+        var minutes = Math.floor(video.length_seconds / 60);
+        var seconds = (video.length_seconds % 60).toString();
+        if (seconds.length === 1) {
+            seconds = '0' + seconds;
+        }
+        delete video.length_seconds;
+
+
+        video.runningTime = minutes + ':' + seconds;
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * playNextVideo -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var playNextVideo = function() {
+
+        if (currentVideoIndex === loadedVideoDetailCount - 1) {
+            currentVideoIndex = 0;
+        } else {
+            currentVideoIndex++;
+        }
+
+        // play next
+        changeVideoSource(currentVideoIndex);
+
+        // change video set
+        if (currentVideoIndex % VIDEOS_PER_SET === 0) {
+
+            var set = Math.floor(currentVideoIndex / VIDEOS_PER_SET);
+            changeVideoSet(set);
+        }
+
+        playCurrentVideo();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * changeVideoSource -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var changeVideoSource = function(index) {
+
+        currentVideoIndex = index;
+
+        // get video url
+        var url = currentVideos[index].url;
+
+        // add 'playing' class to videoList item
+        var $currentVideoItem = $videoList.find('li[data-id="' + index + '"]');
+        var $previousVideoItem = $videoList.find('li[data-id="' + previousVideoIndex + '"]');
+        $previousVideoItem.removeClass('playing');
+        $currentVideoItem.addClass('playing');
+
+        // update videoPlayer source
+        var videoURLParts = url.split('.');
+        var videoURL = GIANT_BOMB_VIDEO_PATH + videoURLParts[0] + '_3500.' + videoURLParts[1];
+        videoJSPLayer.src(videoURL);
+
+        previousVideoIndex = index;
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * playCurrentVideo -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var playCurrentVideo = function() {
+
+        videoJSPLayer.play();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * pauseCurrentVideo -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var pauseCurrentVideo = function() {
+
+        videoJSPLayer.pause();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * hideVideoListNavigation -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var hideVideoListNavigation = function() {
+        $videoListNavigation.removeClass('show');
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * showVideoListNavigation -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var showVideoListNavigation = function() {
+        $videoListNavigation.addClass('show');
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * previousVideoSet -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var previousVideoSet = function() {
+
+        // get set height
+        var maxVideoSet = getMaxVideoSet();
+
+        if (currentVideoSet > 0) {
+            changeVideoSet(--currentVideoSet);
+        // reached min > loop to max
+        } else {
+            changeVideoSet(maxVideoSet);
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * nextVideoSet -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var nextVideoSet = function() {
+
+        // get set height
+        var maxVideoSet = getMaxVideoSet();
+
+        if (currentVideoSet < maxVideoSet) {
+            changeVideoSet(++currentVideoSet);
+
+        // reached max > loop to 0
+        } else {
+            changeVideoSet(0);
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getMaxVideoSet -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getMaxVideoSet = function() {
+
+        currentMaxVideoSet = Math.ceil(loadedVideoDetailCount / VIDEOS_PER_SET) - 1;
+        return currentMaxVideoSet;
+    };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * changeVideoSet -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var changeVideoSet = function(set) {
+
+        var position = -(set * VIDEO_SET_HEIGHT);
+        currentVideoSet = set;
+
+        // animate position
+        $videoList.stop().animate({top: position}, 250, function() {
+
+        });
+
+        // set page number
+        $pageNumberText.text(Number(set + 1) + ' / ' + Number(getMaxVideoSet() + 1));
+    };
+
+
+})(gamedex.module('videoPanel'), _V_, gamedex, jQuery, _, moment, List);
 
 
 // ITEM VIEW

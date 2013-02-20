@@ -687,8 +687,9 @@
 
         // has giantbombVideos
         if (giantbombVideos.length !== 0) {
-            // render video results
-            VideoPanel.renderVideoModal(giantbombVideos, itemName);
+
+            // load video details
+            VideoPanel.initializeVideoPanel(giantbombVideos, itemName);
 
             currentItemHasVideo = true;
             $showVideoButton.removeClass('noVideos');
@@ -896,8 +897,6 @@
                     item.thumbnailImage = secondItem.thumbnailImage;
                 }
             }
-
-            console.info(item);
 
             addItemToTagRequest = ItemData.addItemToTags(tagsToAdd, item, addItemToTags_result);
         }
