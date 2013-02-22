@@ -100,7 +100,7 @@
     VideoPanel.showVideoPanel = function() {
 
         // load first video detail
-        loadVideoDetail(currentVideos[0], function(videoObj) {
+        loadVideoDetail(currentVideos[totalVideoCount - 1], function(videoObj) {
 
             if (initialLoad) {
                 initialLoad = false;
@@ -109,7 +109,7 @@
                 videoDetailLoaded(videoObj);
 
                 // update video source
-                changeVideoSource(0);
+                changeVideoSource(totalVideoCount - 1);
 
                 // load remaining video detail
                 loadVideoDetails();
@@ -210,7 +210,7 @@
 
                 // sort
                 videoList = new ListJS('videoListContainer', listOptions);
-                videoList.sort('publishDate', { asc: true });
+                videoList.sort('publishDate', { asc: false });
             }, 200);
 
 
@@ -233,8 +233,7 @@
     var formatVideoData = function(video) {
 
         // format publish date
-        video.publishDate = moment(video.publish_date, "YYYY-MM-DD").calendar();
-        delete video.publish_date;
+        video.calendarDate = moment(video.publish_date, "YYYY-MM-DD").calendar();
 
         // format video length
         var minutes = Math.floor(video.length_seconds / 60);
@@ -290,7 +289,8 @@
 
         // update videoPlayer source
         var videoURLParts = url.split('.');
-        var videoURL = GIANT_BOMB_VIDEO_PATH + videoURLParts[0] + '_3500.' + videoURLParts[1];
+        // var videoURL = GIANT_BOMB_VIDEO_PATH + videoURLParts[0] + '_3500.' + videoURLParts[1];
+        var videoURL = currentVideos[index].high_url;
         videoJSPLayer.src(videoURL);
 
         previousVideoIndex = index;

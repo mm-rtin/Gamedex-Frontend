@@ -2005,7 +2005,7 @@ img {
 	left: -21px;
 
 	.videoItem {
-		.transition(1s);
+		.transition(1s, opacity);
 		.opacity(0);
 		background-color: #000;
 		border-radius: 2px;
@@ -2028,6 +2028,10 @@ img {
 
 		&.playing {
 			box-shadow: 0 0 0 2px #fff;
+		}
+
+		.publishDate {
+			display: none;
 		}
 
 		a {
