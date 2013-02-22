@@ -28,6 +28,15 @@
 
         // data
         currentVideos = [],     // current item videos to load
+        videoOrderIndex = [],   // current video order by date as index for currentVideos array
+
+        firstVideoDetailRequest = null,
+
+        $currentVideoItem = null,
+        $previousVideoItem = null,
+
+        // debounced function
+        sortVideoListDebounced = null,
 
         // objects
         videoJSPLayer = null,
@@ -56,6 +65,9 @@
 
         // create event handlers
         VideoPanel.createEventHandlers();
+
+        // create debounced function
+        sortVideoListDebounced =  _.debounce(sortVideoList, 1000);
 
         // show video modal
         $videoModal.modal({backdrop: true, show: false});
@@ -99,24 +111,33 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     VideoPanel.showVideoPanel = function() {
 
-        // load first video detail
-        loadVideoDetail(currentVideos[totalVideoCount - 1], function(videoObj) {
+        // deferreds: wait for firstVideoDetailRequest
+        $.when(firstVideoDetailRequest).then(
 
-            if (initialLoad) {
-                initialLoad = false;
+            // all ajax requests returned
+            function() {
 
-                // add video to set
-                videoDetailLoaded(videoObj);
+                if (initialLoad) {
+                    initialLoad = false;
 
-                // update video source
-                changeVideoSource(totalVideoCount - 1);
+                    // add video to set
+                    var detailLoaded = videoDetailLoaded(currentVideos[totalVideoCount - 1]);
 
-                // load remaining video detail
-                loadVideoDetails();
+                    if (detailLoaded) {
+                        // update video source
+                        changeVideoSource(totalVideoCount - 1);
+                    }
+
+                    // load remaining video detail
+                    loadVideoDetails();
+                }
+
+                playCurrentVideo();
+            },
+            function() {
+
             }
-
-            playCurrentVideo();
-        });
+        );
 
         // show video modal
         $videoModal.modal('show');
@@ -130,10 +151,12 @@
         // reset max, videoIndex and initialLoad
         initialLoad = true;
         currentMaxVideoSet = 1;
-        currentVideoIndex = 0;
+        currentVideoIndex = -1;
         currentVideoSet = 0;
         loadedVideoDetailCount = 0;
         totalVideoCount = giantbombVideos.length;
+        $currentVideoItem = null;
+        $previousVideoItem = null;
 
         // set video game name
         $videoModalTitle.text(itemName);
@@ -152,6 +175,11 @@
         _.each(currentVideos, function(video, index) {
             video.index = index;
         });
+
+        // load first video detail info
+        firstVideoDetailRequest = loadVideoDetail(currentVideos[totalVideoCount - 1], function(videoObj) {
+
+        });
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,7 +190,14 @@
         // for each video get video detail
         _.each(currentVideos, function(video) {
 
-            loadVideoDetail(video, videoDetailLoaded);
+            loadVideoDetail(video, function(video, detailLoaded) {
+
+                // if video hasn't loaded from first video detail attempt to play this video is details loaded
+                if (currentVideoIndex === -1 && detailLoaded) {
+                    changeVideoSource(video.index);
+                    playCurrentVideo();
+                }
+            });
         });
     };
 
@@ -172,13 +207,18 @@
     var loadVideoDetail = function(video, onSuccess) {
 
         // get video detail
-        GiantBomb.getGiantBombVideo(video.id, function(data) {
+        var giantBombVideoAjax = GiantBomb.getGiantBombVideo(video.id, function(data) {
 
             // update video object with new detail information
             $.extend(true, video, data);
 
-            onSuccess(video);
+            // parse video detail data
+            var detailLoaded = videoDetailLoaded(video);
+
+            onSuccess(video, detailLoaded);
         });
+
+        return giantBombVideoAjax;
     };
 
 
@@ -187,7 +227,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var videoDetailLoaded = function(video) {
 
-        if (!_.has(video, 'attached')) {
+        // if not attached to video list and detail data contains image object
+        if (!_.has(video, 'attached') && _.has(video, 'image')) {
 
             // increment loaded video count
             loadedVideoDetailCount++;
@@ -206,13 +247,13 @@
 
             // fade in videoItem
             _.delay(function() {
+
                 $videoItem.addClass('showFade');
 
-                // sort
-                videoList = new ListJS('videoListContainer', listOptions);
-                videoList.sort('publishDate', { asc: false });
-            }, 200);
+                // sort video list
+                sortVideoListDebounced();
 
+            }, 200);
 
             // init popover
             $videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
@@ -223,8 +264,35 @@
             if (loadedVideoDetailCount > VIDEOS_PER_SET) {
                 showVideoListNavigation();
             }
-
         }
+
+        // if video detail loaded
+        if (_.has(video, 'image')) {
+            return true;
+
+        } else {
+            return false;
+        }
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * sortVideoList -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var sortVideoList = function() {
+
+        videoOrderIndex = [];
+
+        // sort
+        videoList = new ListJS('videoListContainer', listOptions);
+        videoList.sort('publishDate', { asc: false });
+
+        // create new video order index
+        _.each(videoList.items, function(videoItem) {
+            videoOrderIndex.push(parseInt($(videoItem.elm).attr('data-id'), 10));
+        });
+
+        // change video set
+        viewSetForCurrentlyPlaying();
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,21 +320,20 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var playNextVideo = function() {
 
-        if (currentVideoIndex === loadedVideoDetailCount - 1) {
-            currentVideoIndex = 0;
+        // get index of currently playing video in sorted array
+        var sortedIndex = _.indexOf(videoOrderIndex, currentVideoIndex);
+
+        // go back to first video in sorted list
+        if (sortedIndex + 1 === videoOrderIndex.length) {
+            currentVideoIndex = videoOrderIndex[0];
+
+        // next video in sorted list
         } else {
-            currentVideoIndex++;
+            currentVideoIndex = videoOrderIndex[sortedIndex + 1];
         }
 
         // play next
         changeVideoSource(currentVideoIndex);
-
-        // change video set
-        if (currentVideoIndex % VIDEOS_PER_SET === 0) {
-
-            var set = Math.floor(currentVideoIndex / VIDEOS_PER_SET);
-            changeVideoSet(set);
-        }
 
         playCurrentVideo();
     };
@@ -282,8 +349,8 @@
         var url = currentVideos[index].url;
 
         // add 'playing' class to videoList item
-        var $currentVideoItem = $videoList.find('li[data-id="' + index + '"]');
-        var $previousVideoItem = $videoList.find('li[data-id="' + previousVideoIndex + '"]');
+        $currentVideoItem = $videoList.find('li[data-id="' + index + '"]');
+        $previousVideoItem = $videoList.find('li[data-id="' + previousVideoIndex + '"]');
         $previousVideoItem.removeClass('playing');
         $currentVideoItem.addClass('playing');
 
@@ -294,6 +361,25 @@
         videoJSPLayer.src(videoURL);
 
         previousVideoIndex = index;
+
+        // change video set
+        viewSetForCurrentlyPlaying();
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * viewSetForCurrentlyPlaying -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var viewSetForCurrentlyPlaying = function() {
+
+        // get index of currently playing video in sorted array
+        var sortedIndex = _.indexOf(videoOrderIndex, currentVideoIndex);
+
+        // change video set
+        if (sortedIndex !== -1) {
+
+            var set = Math.floor(sortedIndex / VIDEOS_PER_SET);
+            changeVideoSet(set);
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -178,6 +178,7 @@
 
 		// find in giant bomb data cache first
 		var cachedData = getCachedVideo(videoID);
+		var giantBombVideoAjax = null;
 
 		// load cached gb data
 		if (cachedData) {
@@ -188,17 +189,22 @@
 		// download gb data
 		} else {
 
-				// download data
-				var fieldList = [];
+			// download data
+			var fieldList = [];
 
-				// giantbomb item request
-				getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
+			// giantbomb item request
+			giantBombVideoAjax = getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
 
-					// return data
-					onSuccess(data.results);
+				// cache result
+				giantBombVideoCache[videoID] = data.results;
 
-				}, onError);
+				// return data
+				onSuccess(data.results);
+
+			}, onError);
 		}
+
+		return giantBombVideoAjax;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -282,6 +288,7 @@
 		var giantBombVideo = null;
 
 		if (typeof giantBombVideoCache[id] !== 'undefined') {
+			console.info('get video: ', id, ' from cache');
 			giantBombVideo = giantBombVideoCache[id];
 		}
 
