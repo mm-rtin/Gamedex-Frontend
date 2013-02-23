@@ -28,6 +28,7 @@ module.exports = function(grunt) {
                 'lib/jquery.ba-resize.js',
                 'lib/jquery.nanoscroller.js',
                 'lib/jquery.isotope.js',
+                'lib/jquery.opentip.js',
                 'lib/bootstrap.js',
                 'lib/video.js',
                 'lib/moment.js',

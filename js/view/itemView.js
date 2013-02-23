@@ -76,7 +76,6 @@
         $filterOptions = $viewItemsContainer.find('.filterOptions'),
         $platformFilterSubNav = $('#platformFilterSubNav'),
         $clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
-        $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
         $filterTypeField = $filterOptions.find('.filterType'),
         $applyFiltersButton = $('#applyFilters_btn'),
 
@@ -114,12 +113,6 @@
     var init = function() {
 
         createEventHandlers();
-
-        // init tooltips
-        $filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
-        $displayOptions.find('button').each(function(key, button) {
-            $(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-        });
 
         // initialize nanoscroll
         var nanoScrollOptions = {
@@ -440,7 +433,7 @@
 
             // activate tooltips for quickAttributes bar
             $itemResults.find('.quickAttributes a').each(function(key, button) {
-                $(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
+                $(button).opentip();
             });
 
             // load preliminary data (for filtering, sorting)

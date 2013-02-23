@@ -45,7 +45,6 @@
 		$filterOptions = $gridViewMenu.find('.filterOptions'),
 		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
 		$filterTypeField = $filterOptions.find('.filterType'),
-		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
 		$listFiltersButton = $filterOptions.find('.listFilters_btn'),
 		$applyFiltersButton = $('#applyFilters_btn'),
 		$filtersModal = $('#filters-modal'),
@@ -69,9 +68,8 @@
 		createEventHandlers();
 
 		// init tooltips
-		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		$displayOptions.find('div').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
+			$(button).opentip();
 		});
 
 		// set initial filtered status

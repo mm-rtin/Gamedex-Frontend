@@ -3696,7 +3696,14 @@ gamedex.initializeModules = function() {
 			.show();
 
 		// activate tooltip
-		$metascoreContainer.tooltip({placement: 'left'});
+		var opentips = $metascoreContainer.data("opentips");
+
+		console.info(opentips);
+		if (opentips && opentips.length > 0) {
+			opentips[0].setContent($metascoreContainer.attr('data-original-title'));
+		} else {
+			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'));
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4743,7 +4750,7 @@ gamedex.initializeModules = function() {
 
 
 // SITEVIEW
-(function(SiteView, gamedex, $, _, alertify) {
+(function(SiteView, gamedex, $, _, alertify, Opentip) {
     "use strict";
 
     // module references
@@ -4891,6 +4898,8 @@ gamedex.initializeModules = function() {
             }
         );
 
+        initializeOpentip();
+
         createEventHandlers();
 
         // init login form
@@ -4900,6 +4909,65 @@ gamedex.initializeModules = function() {
         $resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
         setupUser();
+    };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * createEventHandlers -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var initializeOpentip = function() {
+
+        Opentip.lastZIndex = 100000;
+
+        Opentip.styles.info = {
+            "extends": 'standard',
+            title: void 0,
+            escapeTitle: true,
+            escapeContent: false,
+            className: "info",
+            stem: true,
+            delay: null,
+            hideDelay: 0.1,
+            fixed: false,
+            showOn: "mouseover",
+            hideTrigger: "trigger",
+            hideTriggers: [],
+            hideOn: null,
+            offset: [2, 2],
+            containInViewport: true,
+            autoOffset: true,
+            showEffect: "appear",
+            hideEffect: "fade",
+            showEffectDuration: 0.3,
+            hideEffectDuration: 0.2,
+            stemLength: 8,
+            stemBase: 8,
+            tipJoint: "top left",
+            target: null,
+            targetJoint: null,
+            ajax: false,
+            ajaxMethod: "GET",
+            ajaxCache: true,
+            group: null,
+            style: null,
+            background: "rgba(255, 204, 0, .85)",
+            backgroundGradientHorizontal: false,
+            closeButtonOffset: [5, 5],
+            closeButtonRadius: 7,
+            closeButtonCrossSize: 4,
+            closeButtonCrossColor: "#d2c35b",
+            closeButtonCrossLineWidth: 1.5,
+            closeButtonLinkOverscan: 6,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: "#C89F00",
+            shadow: true,
+            shadowBlur: 10,
+            shadowOffset: [3, 3],
+            shadowColor: "rgba(0, 0, 0, 0.2)"
+        };
+
+        Opentip.defaultStyle = "info";
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -5030,7 +5098,7 @@ gamedex.initializeModules = function() {
 
         // guideHitArea
         $guideHitArea.click(function(e) {
-            showSiteGuide();
+            showSiteGuide(1);
         });
         $guideHitArea.mouseover(function(e) {
             $guideButton.addClass('hover');
@@ -5181,7 +5249,7 @@ gamedex.initializeModules = function() {
             // reset step
             siteGuideCurrentStep = 1;
 
-            showSiteGuide(siteGuideCurrentStep);
+            showSiteGuide(0);
 
             hideSiteGuide();
         });
@@ -5512,6 +5580,7 @@ gamedex.initializeModules = function() {
 
         if ($siteGuide.is(':visible')) {
             $siteGuide.hide();
+            $content.removeClass();
         }
     };
 
@@ -6126,7 +6195,7 @@ gamedex.initializeModules = function() {
 
     $.extend(SiteView, publicMethods);
 
-})(gamedex.module('siteView'), gamedex, jQuery, _, alertify);
+})(gamedex.module('siteView'), gamedex, jQuery, _, alertify, Opentip);
 
 
 // SEARCH VIEW
@@ -6261,14 +6330,6 @@ gamedex.initializeModules = function() {
 		listPlatform = Utilities.getStandardPlatform('');
 
 		toggleClearSearchButton(false);
-
-		// init tooltips
-		$listDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-		});
-		$searchDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-		});
 
 		// initialize nanoscroll
 		var nanoScrollOptions = {
@@ -7254,11 +7315,9 @@ gamedex.initializeModules = function() {
 	var toggleClearSearchButton = function(toggle) {
 
 		if (toggle) {
-			$clearSearchIcon.show();
-			$clearSearchButton.addClass('hover');
+			$search.addClass('showAddOn');
 		} else {
-			$clearSearchIcon.hide();
-			$clearSearchButton.removeClass('hover');
+			$search.removeClass('showAddOn');
 		}
 	};
 
@@ -8440,7 +8499,6 @@ gamedex.initializeModules = function() {
         $filterOptions = $viewItemsContainer.find('.filterOptions'),
         $platformFilterSubNav = $('#platformFilterSubNav'),
         $clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
-        $filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
         $filterTypeField = $filterOptions.find('.filterType'),
         $applyFiltersButton = $('#applyFilters_btn'),
 
@@ -8478,12 +8536,6 @@ gamedex.initializeModules = function() {
     var init = function() {
 
         createEventHandlers();
-
-        // init tooltips
-        $filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}});
-        $displayOptions.find('button').each(function(key, button) {
-            $(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-        });
 
         // initialize nanoscroll
         var nanoScrollOptions = {
@@ -8804,7 +8856,7 @@ gamedex.initializeModules = function() {
 
             // activate tooltips for quickAttributes bar
             $itemResults.find('.quickAttributes a').each(function(key, button) {
-                $(button).tooltip({delay: {show: 750, hide: 1}, placement: 'bottom'});
+                $(button).opentip();
             });
 
             // load preliminary data (for filtering, sorting)
@@ -9816,7 +9868,6 @@ gamedex.initializeModules = function() {
 		$filterOptions = $gridViewMenu.find('.filterOptions'),
 		$clearFiltersBtn = $filterOptions.find('.clearFilters_btn'),
 		$filterTypeField = $filterOptions.find('.filterType'),
-		$filterDropDownBtn = $filterOptions.find('.filterDropDown_btn'),
 		$listFiltersButton = $filterOptions.find('.listFilters_btn'),
 		$applyFiltersButton = $('#applyFilters_btn'),
 		$filtersModal = $('#filters-modal'),
@@ -9840,9 +9891,8 @@ gamedex.initializeModules = function() {
 		createEventHandlers();
 
 		// init tooltips
-		$filterDropDownBtn.tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
 		$displayOptions.find('div').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
+			$(button).opentip();
 		});
 
 		// set initial filtered status
@@ -11501,6 +11551,7 @@ gamedex.initializeModules = function() {
         loadedVideoDetailCount = 0,
         currentVideoIndex = 0,
         previousVideoIndex = 0,
+        autoNavigateToVideoItemSet = true,
 
         // list
         videoList = null,
@@ -11636,7 +11687,9 @@ gamedex.initializeModules = function() {
         currentVideoIndex = -1;
         currentVideoSet = 0;
         loadedVideoDetailCount = 0;
+        autoNavigateToVideoItemSet = true;
         totalVideoCount = giantbombVideos.length;
+
         $currentVideoItem = null;
         $previousVideoItem = null;
 
@@ -11737,8 +11790,8 @@ gamedex.initializeModules = function() {
 
             }, 200);
 
-            // init popover
-            $videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+            // init opentip
+            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'));
 
             // update video set
             changeVideoSet(currentVideoSet);
@@ -11773,8 +11826,11 @@ gamedex.initializeModules = function() {
             videoOrderIndex.push(parseInt($(videoItem.elm).attr('data-id'), 10));
         });
 
-        // change video set
-        viewSetForCurrentlyPlaying();
+        // change video set - only if user hasn't change video set manually
+        if (autoNavigateToVideoItemSet) {
+            console.info(autoNavigateToVideoItemSet);
+            viewSetForCurrentlyPlaying();
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11899,6 +11955,8 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var previousVideoSet = function() {
 
+        autoNavigateToVideoItemSet = false;
+
         // get set height
         var maxVideoSet = getMaxVideoSet();
 
@@ -11914,6 +11972,8 @@ gamedex.initializeModules = function() {
     * nextVideoSet -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var nextVideoSet = function() {
+
+        autoNavigateToVideoItemSet = false;
 
         // get set height
         var maxVideoSet = getMaxVideoSet();

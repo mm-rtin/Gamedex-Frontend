@@ -134,7 +134,14 @@
 			.show();
 
 		// activate tooltip
-		$metascoreContainer.tooltip({placement: 'left'});
+		var opentips = $metascoreContainer.data("opentips");
+
+		console.info(opentips);
+		if (opentips && opentips.length > 0) {
+			opentips[0].setContent($metascoreContainer.attr('data-original-title'));
+		} else {
+			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'));
+		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

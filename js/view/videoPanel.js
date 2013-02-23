@@ -19,6 +19,7 @@
         loadedVideoDetailCount = 0,
         currentVideoIndex = 0,
         previousVideoIndex = 0,
+        autoNavigateToVideoItemSet = true,
 
         // list
         videoList = null,
@@ -154,7 +155,9 @@
         currentVideoIndex = -1;
         currentVideoSet = 0;
         loadedVideoDetailCount = 0;
+        autoNavigateToVideoItemSet = true;
         totalVideoCount = giantbombVideos.length;
+
         $currentVideoItem = null;
         $previousVideoItem = null;
 
@@ -255,8 +258,8 @@
 
             }, 200);
 
-            // init popover
-            $videoList.find('a').popover({'trigger': 'hover', 'placement': 'top', 'animation': true});
+            // init opentip
+            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'));
 
             // update video set
             changeVideoSet(currentVideoSet);
@@ -291,8 +294,11 @@
             videoOrderIndex.push(parseInt($(videoItem.elm).attr('data-id'), 10));
         });
 
-        // change video set
-        viewSetForCurrentlyPlaying();
+        // change video set - only if user hasn't change video set manually
+        if (autoNavigateToVideoItemSet) {
+            console.info(autoNavigateToVideoItemSet);
+            viewSetForCurrentlyPlaying();
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -417,6 +423,8 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var previousVideoSet = function() {
 
+        autoNavigateToVideoItemSet = false;
+
         // get set height
         var maxVideoSet = getMaxVideoSet();
 
@@ -432,6 +440,8 @@
     * nextVideoSet -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var nextVideoSet = function() {
+
+        autoNavigateToVideoItemSet = false;
 
         // get set height
         var maxVideoSet = getMaxVideoSet();

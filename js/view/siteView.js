@@ -1,5 +1,5 @@
 // SITEVIEW
-(function(SiteView, gamedex, $, _, alertify) {
+(function(SiteView, gamedex, $, _, alertify, Opentip) {
     "use strict";
 
     // module references
@@ -147,6 +147,8 @@
             }
         );
 
+        initializeOpentip();
+
         createEventHandlers();
 
         // init login form
@@ -156,6 +158,65 @@
         $resetpasswordModal.modal({backdrop: true, keyboard: true, show: false});
 
         setupUser();
+    };
+
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * createEventHandlers -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var initializeOpentip = function() {
+
+        Opentip.lastZIndex = 100000;
+
+        Opentip.styles.info = {
+            "extends": 'standard',
+            title: void 0,
+            escapeTitle: true,
+            escapeContent: false,
+            className: "info",
+            stem: true,
+            delay: null,
+            hideDelay: 0.1,
+            fixed: false,
+            showOn: "mouseover",
+            hideTrigger: "trigger",
+            hideTriggers: [],
+            hideOn: null,
+            offset: [2, 2],
+            containInViewport: true,
+            autoOffset: true,
+            showEffect: "appear",
+            hideEffect: "fade",
+            showEffectDuration: 0.3,
+            hideEffectDuration: 0.2,
+            stemLength: 8,
+            stemBase: 8,
+            tipJoint: "top left",
+            target: null,
+            targetJoint: null,
+            ajax: false,
+            ajaxMethod: "GET",
+            ajaxCache: true,
+            group: null,
+            style: null,
+            background: "rgba(255, 204, 0, .85)",
+            backgroundGradientHorizontal: false,
+            closeButtonOffset: [5, 5],
+            closeButtonRadius: 7,
+            closeButtonCrossSize: 4,
+            closeButtonCrossColor: "#d2c35b",
+            closeButtonCrossLineWidth: 1.5,
+            closeButtonLinkOverscan: 6,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: "#C89F00",
+            shadow: true,
+            shadowBlur: 10,
+            shadowOffset: [3, 3],
+            shadowColor: "rgba(0, 0, 0, 0.2)"
+        };
+
+        Opentip.defaultStyle = "info";
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -286,7 +347,7 @@
 
         // guideHitArea
         $guideHitArea.click(function(e) {
-            showSiteGuide();
+            showSiteGuide(1);
         });
         $guideHitArea.mouseover(function(e) {
             $guideButton.addClass('hover');
@@ -437,7 +498,7 @@
             // reset step
             siteGuideCurrentStep = 1;
 
-            showSiteGuide(siteGuideCurrentStep);
+            showSiteGuide(0);
 
             hideSiteGuide();
         });
@@ -768,6 +829,7 @@
 
         if ($siteGuide.is(':visible')) {
             $siteGuide.hide();
+            $content.removeClass();
         }
     };
 
@@ -1382,5 +1444,5 @@
 
     $.extend(SiteView, publicMethods);
 
-})(gamedex.module('siteView'), gamedex, jQuery, _, alertify);
+})(gamedex.module('siteView'), gamedex, jQuery, _, alertify, Opentip);
 

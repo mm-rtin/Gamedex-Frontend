@@ -131,14 +131,6 @@
 
 		toggleClearSearchButton(false);
 
-		// init tooltips
-		$listDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-		});
-		$searchDisplayOptions.find('button').each(function(key, button) {
-			$(button).tooltip({delay: {show: 500, hide: 50}, placement: 'bottom'});
-		});
-
 		// initialize nanoscroll
 		var nanoScrollOptions = {
 			sliderMinHeight: 20,
@@ -1123,11 +1115,9 @@
 	var toggleClearSearchButton = function(toggle) {
 
 		if (toggle) {
-			$clearSearchIcon.show();
-			$clearSearchButton.addClass('hover');
+			$search.addClass('showAddOn');
 		} else {
-			$clearSearchIcon.hide();
-			$clearSearchButton.removeClass('hover');
+			$search.removeClass('showAddOn');
 		}
 	};
 

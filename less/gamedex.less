@@ -150,6 +150,24 @@ html {
 		font-size: 17px !important;
 	}
 
+	/* OPEN TIP OVERRIDES
+	----------------------------------------------------------*/
+	.opentip-container {
+		.opentip {
+
+			color: #282000;
+			font-weight: 600;
+
+			h1 {
+				font-size: 16px;
+				line-height: 20px;
+				margin-top: 0px;
+				color: #282000;
+			}
+		}
+	}
+
+
 	/* SELECT2 OVERRIDES
 	----------------------------------------------------------*/
 	.select2-container {
@@ -162,11 +180,13 @@ html {
 
 	.select2-container-multi .select2-choices {
 		.borderRadius(3px);
+		border: 1px solid #CACACA;
+		min-height: 29px;
 	}
 
 	.select2-container-multi.select2-container-active .select2-choices {
 		.borderRadius(3px);
-		border: 1px solid #999;
+		border: 1px solid #CACACA;
 		-webkit-box-shadow: none;
 		-moz-box-shadow: none;
 		-o-box-shadow: none;
@@ -189,10 +209,12 @@ html {
 	}
 	.select2-drop {
 		margin-top: -2px;
+		border-color: #cacaca;
 	}
 
 	.select2-container-multi .select2-choices .select2-search-field input {
 		font-family: 'Open Sans', sans-serif;
+		font-size: 15px;
 	}
 
 
@@ -420,6 +442,7 @@ html {
 	}
 
 	.nav-tabs > li > a {
+		.transition(.2s);
 		height: 12px;
 		background-color: #F0F0F0;
 		border: 1px solid #DBDBDB;
@@ -440,7 +463,8 @@ html {
 		cursor: default;
 		position: relative;
 		top: 0px;
-		line-height: 16px;
+		padding-top: 10px;
+		padding-bottom: 6px;
 	}
 
 	.nav-tabs > li > a:hover {
@@ -1711,20 +1735,11 @@ img {
 	margin: 0 auto;
 }
 
-.header {
-	color: #ffffff;
-	height: 17px;
-	position: relative;
-	z-index: 999;
-	border-top: 1px solid #626d6b;
-}
-
 .panel {
 	.borderRadius(2px);
 	background-color: #F5F5F5;
 	padding: 11px 10px 10px 10px;
 	position: relative;
-	top: -17px;
 }
 
 
@@ -2240,36 +2255,70 @@ img {
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
 #searchField {
-	float: left;
-	margin-bottom: 20px;
-	margin-right: 2px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+
+	border-right: 160px solid transparent;
+	width: 100%;
+	position: absolute;
 
 	input {
-		font-size: 13px;
-		height: 19px;
-		width: 124px;
-		background-color: #E8E8E8;
-		border: 1px solid #999999;
+		height: 21px;
+		width: 100%;
+		background-color: #fff;
+		border: 1px solid #CACACA;
 		border-right: none;
-		text-shadow: 0 1px 0 #FFFFFF;
+		font-size: 15px;
 
 		&:focus {
-			-webkit-box-shadow: none;
-			-moz-box-shadow: none;
-			box-shadow: none;
-			outline: none;
 		}
 	}
+
 	.add-on {
-		height: 19px;
-		border: 1px solid #999999;
-		background-color: #E8E8E8;
+		position: absolute;
+		right: -14px;
+		-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+		-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+		box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+		background-color: #fff;
+		z-index: 2;
+		border-left: none;
+		height: 21px;
 
 		i {
-			.opacity(.6);
+			display: none;
+		}
+	}
+
+	&.showAddOn {
+
+		.add-on {
+			cursor: pointer;
+			-webkit-box-shadow: -1px 0px 3px 0px rgba(0, 0, 0, .15);
+			-moz-box-shadow: -1px 0px 3px 0px rgba(0, 0, 0, .15);
+			box-shadow: -1px 0px 3px 0px rgba(0, 0, 0, .15);
+			background-color: #f5f5f5;
+			border: 1px solid #cecece;
+
+			i {
+				display: block;
+			}
+
+			&:hover {
+				background-color: #fff;
+
+				i {
+					color: #949494;
+				}
+			}
+			&:active {
+				background-color: #D7D7D7;
+			}
 		}
 
 	}
+
 }
 
 #searchFieldContainer {
@@ -2278,10 +2327,11 @@ img {
 }
 
 #search_btn {
-	float: left;
 	.search_button();
+	float: right;
 	width: 93px;
 	height: 37px;
+	margin-right: 25px;
 
 	&:hover {
 		.search_button_active();
@@ -2294,15 +2344,9 @@ img {
 #clearSearch_btn {
 
 	i {
-		background-position: -312px 2px;
-	}
-
-	&.hover {
-		cursor: pointer;
-
-		&:hover {
-			background-color: #cccccc;
-		}
+		position: relative;
+		top: 2px;
+		color: #B4B4B4;
 	}
 }
 
@@ -2364,6 +2408,7 @@ img {
 	z-index: 1;
 	margin-bottom: 8px;
 	margin-left: 100px;
+	height: 35px;
 }
 
 #searchResultsContainer {
@@ -2381,6 +2426,10 @@ img {
 
 	.display-0 {
 
+		.itemName {
+			font-size: 14px;
+			font-weight: 600;
+		}
 		.smallImage, .mediumImage {
 			display: none;
 		}
@@ -2428,7 +2477,7 @@ img {
 	.display-2 {
 
 		.itemName {
-			font-size: 14px;
+			font-size: 16px;
 			font-weight: 600;
 		}
 		.smallImage {
@@ -2467,6 +2516,10 @@ img {
 		}
 		.title {
 
+		}
+		.itemName {
+			font-size: 14px;
+			font-weight: 600;
 		}
 		.calendarDate {
 			display: none;
@@ -2556,6 +2609,7 @@ img {
 	#detailTab {
 		margin-top: 20px;
 		margin-bottom: 5px;
+		height: 35px;
 	}
 
 	#detailContainer {
@@ -3137,7 +3191,8 @@ img {
 			display: none;
 		}
 		.itemName {
-
+			font-size: 14px;
+			font-weight: 600;
 		}
 		.calendarDate {
 			display: none;
@@ -3202,7 +3257,7 @@ img {
 		}
 		.itemName {
 			font-weight: 600;
-			font-size: 1.25em;
+			font-size: 16px;
 			padding-bottom: 10px;
 		}
 		.calendarDate {
@@ -3374,3 +3429,4 @@ img {
 @import	'isotope';
 @import	'videojs';
 @import 'alertify';
+@import 'opentip';
