@@ -4963,7 +4963,7 @@ gamedex.initializeModules = function() {
             shadow: true,
             shadowBlur: 10,
             shadowOffset: [3, 3],
-            shadowColor: 'rgba(0, 0, 0, 0.2)'
+            shadowColor: 'rgba(0, 0, 0, 0.4)'
         };
 
         Opentip.defaultStyle = 'info';
@@ -11786,7 +11786,7 @@ gamedex.initializeModules = function() {
             }, 200);
 
             // init opentip
-            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'), {tipJoint: 'bottom'});
+            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'), {tipJoint: 'bottom', group: 'video'});
 
             // update video set
             changeVideoSet(currentVideoSet);

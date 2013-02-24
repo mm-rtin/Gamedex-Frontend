@@ -213,7 +213,7 @@
             shadow: true,
             shadowBlur: 10,
             shadowOffset: [3, 3],
-            shadowColor: 'rgba(0, 0, 0, 0.2)'
+            shadowColor: 'rgba(0, 0, 0, 0.4)'
         };
 
         Opentip.defaultStyle = 'info';
