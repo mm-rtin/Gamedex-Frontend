@@ -3698,11 +3698,10 @@ gamedex.initializeModules = function() {
 		// activate tooltip
 		var opentips = $metascoreContainer.data("opentips");
 
-		console.info(opentips);
 		if (opentips && opentips.length > 0) {
 			opentips[0].setContent($metascoreContainer.attr('data-original-title'));
 		} else {
-			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'));
+			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'), {tipJoint: 'bottom'});
 		}
 	};
 
@@ -4920,54 +4919,54 @@ gamedex.initializeModules = function() {
         Opentip.lastZIndex = 100000;
 
         Opentip.styles.info = {
-            "extends": 'standard',
+            'extends': 'standard',
             title: void 0,
             escapeTitle: true,
             escapeContent: false,
-            className: "info",
+            className: 'info',
             stem: true,
             delay: null,
-            hideDelay: 0.1,
-            fixed: false,
-            showOn: "mouseover",
-            hideTrigger: "trigger",
+            hideDelay: 0.0,
+            fixed: true,
+            showOn: 'mouseover',
+            hideTrigger: 'trigger',
             hideTriggers: [],
             hideOn: null,
-            offset: [2, 2],
+            offset: [0, 0],
             containInViewport: true,
             autoOffset: true,
-            showEffect: "appear",
-            hideEffect: "fade",
+            showEffect: 'appear',
+            hideEffect: 'fade',
             showEffectDuration: 0.3,
             hideEffectDuration: 0.2,
             stemLength: 8,
             stemBase: 8,
-            tipJoint: "top left",
-            target: null,
+            tipJoint: 'top',
+            target: true,
             targetJoint: null,
             ajax: false,
-            ajaxMethod: "GET",
+            ajaxMethod: 'GET',
             ajaxCache: true,
             group: null,
             style: null,
-            background: "rgba(255, 204, 0, .85)",
+            background: 'rgba(50, 63, 66, .9);',
             backgroundGradientHorizontal: false,
             closeButtonOffset: [5, 5],
             closeButtonRadius: 7,
             closeButtonCrossSize: 4,
-            closeButtonCrossColor: "#d2c35b",
+            closeButtonCrossColor: '#d2c35b',
             closeButtonCrossLineWidth: 1.5,
             closeButtonLinkOverscan: 6,
-            borderRadius: 5,
+            borderRadius: 3,
             borderWidth: 1,
-            borderColor: "#C89F00",
+            borderColor: 'rgba(255, 255, 255, .5)',
             shadow: true,
             shadowBlur: 10,
             shadowOffset: [3, 3],
-            shadowColor: "rgba(0, 0, 0, 0.2)"
+            shadowColor: 'rgba(0, 0, 0, 0.2)'
         };
 
-        Opentip.defaultStyle = "info";
+        Opentip.defaultStyle = 'info';
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8856,7 +8855,8 @@ gamedex.initializeModules = function() {
 
             // activate tooltips for quickAttributes bar
             $itemResults.find('.quickAttributes a').each(function(key, button) {
-                $(button).opentip();
+                var $button = $(button);
+                $button.opentip($button.attr('data-ot'), {tipJoint: 'bottom'});
             });
 
             // load preliminary data (for filtering, sorting)
@@ -9889,11 +9889,6 @@ gamedex.initializeModules = function() {
 
 		// create event handlers
 		createEventHandlers();
-
-		// init tooltips
-		$displayOptions.find('div').each(function(key, button) {
-			$(button).opentip();
-		});
 
 		// set initial filtered status
 		setClearFiltersButton(false);
@@ -11791,7 +11786,7 @@ gamedex.initializeModules = function() {
             }, 200);
 
             // init opentip
-            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'));
+            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'), {tipJoint: 'bottom'});
 
             // update video set
             changeVideoSet(currentVideoSet);

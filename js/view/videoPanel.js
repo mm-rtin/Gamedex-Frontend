@@ -259,7 +259,7 @@
             }, 200);
 
             // init opentip
-            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'));
+            $videoItem.opentip($videoItem.attr('data-ot'), $videoItem.attr('data-ot-title'), {tipJoint: 'bottom'});
 
             // update video set
             changeVideoSet(currentVideoSet);

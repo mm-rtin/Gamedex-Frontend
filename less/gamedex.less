@@ -25,6 +25,11 @@ Specify the number of columns and set column and gutter widths
 	-moz-box-shadow:    5px 5px 20px 2px rgba(0, 0, 0,@opacity);
 	box-shadow:         5px 5px 20px 2px rgba(0, 0, 0,@opacity);
 }
+.borderBox() {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
 .borderRadius(@radius) {
 	-moz-border-radius: @radius;
 	-webkit-border-radius: @radius;
@@ -153,16 +158,17 @@ html {
 	/* OPEN TIP OVERRIDES
 	----------------------------------------------------------*/
 	.opentip-container {
-		.opentip {
 
-			color: #282000;
+		.opentip {
+			color: #c4c4c4;
 			font-weight: 600;
+			text-shadow: none;
 
 			h1 {
 				font-size: 16px;
 				line-height: 20px;
 				margin-top: 0px;
-				color: #282000;
+				color: #D9D9D9;
 			}
 		}
 	}
@@ -424,6 +430,9 @@ html {
 
 	/* TABLE
 	-----------------------------------------------------------*/
+	table {
+		border-collapse: separate;
+	}
 	.table-striped tbody tr:nth-child(odd) td {
 		background-color: #f3f3f3;
 	}
@@ -482,6 +491,10 @@ html {
 			margin-top: 2px;
 			margin-right: 2px;
 		}
+
+		li {
+			line-height: 12px;
+		}
 	}
 	.navbar .nav > li > a {
 		.transition(.4s);
@@ -534,32 +547,12 @@ html {
 	/* NAVBAR
 	-----------------------------------------------------------*/
 	.navbar-static {
-		margin-bottom: 8px;
+		margin-bottom: 15px;
 
-		.leftCap {
-			float: left;
-			position: relative;
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_dark_left.png');
-			top: -3px;
-			width: 11px;
-			height: 40px;
-		}
 		.navigationBar {
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_dark_center.png');
-			background-repeat: repeat-x;
-			position: relative;
-			float: left;
 			padding-top: 3px;
-			top: -3px;
-			height: 36px;
-		}
-		.rightCap {
-			float: left;
-			position: relative;
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_dark_right.png');
-			top: -3px;
-			width: 12px;
-			height: 40px;
+			background-color: #323f42;
+			border-radius: 3px;
 		}
 	}
 
@@ -679,6 +672,7 @@ html {
 
 		}
 		.dropdown-toggle, li > a {
+			padding: 5px 6px 8px 16px;
 			text-shadow: none;
 			position: relative;
 			top: -1px;
@@ -2255,9 +2249,7 @@ img {
 /* SEARCH VIEW PANEL
 -----------------------------------------------------------*/
 #searchField {
-	box-sizing: border-box;
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
+	.borderBox();
 
 	border-right: 160px solid transparent;
 	width: 100%;
@@ -2323,7 +2315,7 @@ img {
 
 #searchFieldContainer {
 	min-width: 267px;
-	margin-bottom: 10px;
+	margin-bottom: 18px;
 }
 
 #search_btn {
@@ -2353,10 +2345,9 @@ img {
 #searchViewMenu {
 	position: relative;
 	min-width: 268px;
-	left: -4px;
 
 	.navigationBar {
-		width: 90%;
+		width: 100%;
 	}
 	.nav {
 		width: 100%;
@@ -2507,7 +2498,6 @@ img {
 }
 
 #listResultsContainer {
-	.transition(.4s);
 
 	.display-0 {
 
@@ -2625,66 +2615,48 @@ img {
 	}
 
 	.detailTitleBar {
+		position: relative;
 		margin-top: 14px;
 		display: none;
 	}
 
 	.itemDetailTitle {
 
-		width: 78%;
-		float: left;
+		.borderBox();
+		width: 100%;
+		border-right: 50px solid transparent;
 
 		h3 {
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_center.png');
-			background-repeat: repeat-x;
+			.borderBox();
+			background-color: #323f42;
+			border-radius: 3px;
 			color: #D5D5D5;
 			float: left;
-			font-family: 'Open Sans',sans-serif;
+			font-family: 'Open Sans', sans-serif;
 			font-size: 16px;
-			line-height: 1;
+			line-height: 1em;
 			margin: 0;
 			overflow: hidden;
-			padding: 11px 0px 0px 2px;
+			padding: 8px 10px;
 			position: relative;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			top: -3px;
-			width: 85%;
-			height: 36px;
-		}
-
-		.leftCap {
-			float: left;
-			position: relative;
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_left.png');
-			top: -3px;
-			width: 10px;
-			height: 42px;
-		}
-
-		.rightCap {
-			float: left;
-			position: relative;
-			background-image: url('http://d2sifwlm28j6up.cloudfront.net/title_bar_right.png');
-			top: -3px;
-			width: 9px;
-			height: 42px;
+			width: 100%;
 		}
 	}
 
 	.itemDetailMetascore {
-		float: right;
-		position: relative;
-		text-align: right;
-		vertical-align: top;
-		top: -3px;
+		position: absolute;
+		top: -5px;
+		right: 0;
 	}
 
 	.itemDetailReleaseDate {
 	}
 
 	.itemDetailThumbnail {
-		margin: 5px 2px 10px 2px;
+		margin: 12px 2px 10px 2px;
 		min-height: 345px;
 		position: relative;
 
@@ -2763,6 +2735,7 @@ img {
 #dataTab {
 	display: none;
 	margin-bottom: 10px;
+	height: 35px;
 }
 
 #itemAttributes {
@@ -2919,7 +2892,7 @@ img {
 
 #itemViewMenu {
 	.navigationBar {
-		width: 94%;
+		width: 100%;
 	}
 
 	.nav {
@@ -2949,7 +2922,6 @@ img {
 }
 
 #itemResultsContainer {
-	.transition(.4s);
 	height: 88px;
 }
 
@@ -3020,9 +2992,6 @@ img {
 		cursor: pointer;
 
 		&:hover {
-			.quickAttributes {
-				display: block;
-			}
 			.deleteItem_btn {
 				visibility: visible;
 			}
@@ -3108,7 +3077,6 @@ img {
 		}
 	}
 	.quickAttributes {
-		display: none;
 		margin-top: 2px;
 		width: 160px;
 
@@ -3203,6 +3171,9 @@ img {
 		.extraData {
 			min-width: 150px;
 		}
+		.priceDetails {
+			display: none;
+		}
 	}
 
 	/* ICON VIEW */
@@ -3236,7 +3207,6 @@ img {
 			min-width: 150px;
 		}
 		.quickAttributes {
-			display: block;
 		}
 	}
 

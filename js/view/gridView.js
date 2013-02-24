@@ -67,11 +67,6 @@
 		// create event handlers
 		createEventHandlers();
 
-		// init tooltips
-		$displayOptions.find('div').each(function(key, button) {
-			$(button).opentip();
-		});
-
 		// set initial filtered status
 		setClearFiltersButton(false);
 	};

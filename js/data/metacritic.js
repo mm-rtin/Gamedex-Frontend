@@ -136,11 +136,10 @@
 		// activate tooltip
 		var opentips = $metascoreContainer.data("opentips");
 
-		console.info(opentips);
 		if (opentips && opentips.length > 0) {
 			opentips[0].setContent($metascoreContainer.attr('data-original-title'));
 		} else {
-			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'));
+			$metascoreContainer.opentip($metascoreContainer.attr('data-original-title'), {tipJoint: 'bottom'});
 		}
 	};
 

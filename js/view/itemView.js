@@ -433,7 +433,8 @@
 
             // activate tooltips for quickAttributes bar
             $itemResults.find('.quickAttributes a').each(function(key, button) {
-                $(button).opentip();
+                var $button = $(button);
+                $button.opentip($button.attr('data-ot'), {tipJoint: 'bottom'});
             });
 
             // load preliminary data (for filtering, sorting)
