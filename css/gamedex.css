@@ -829,7 +829,6 @@ html .open>.dropdown-menu{opacity:0.01;filter:alpha(opacity=1);zoom:1;filter:alp
 html .navbar .nav .dropdown-toggle,html .navbar .nav li>a{padding:5px 6px 5px 16px;text-shadow:none;position:relative;top:-1px;}
 html .navbar .nav li.dropdown.open>.dropdown-toggle,html .navbar .nav li.dropdown.active>.dropdown-toggle,html .navbar .nav li.dropdown.open.active>.dropdown-toggle{background-color:transparent;color:#fff;}html .navbar .nav li.dropdown.open>.dropdown-toggle .caret,html .navbar .nav li.dropdown.active>.dropdown-toggle .caret,html .navbar .nav li.dropdown.open.active>.dropdown-toggle .caret{border-top-color:white;border-bottom-color:white;}
 html .platformDropdown .nav{margin-bottom:0px;}
-html .platformDropdown .dropdown.open .dropdown-menu{position:relative;}
 html .platformDropdown .dropdown-toggle{border-radius:4px;padding:4px 12px 4px 12px;}
 html .navbar .nav .active>a,html .navbar .nav .active>a:hover{background-color:#8B9B9C;color:#000000;}html .navbar .nav .active>a i,html .navbar .nav .active>a:hover i{color:#4B5758;}
 html .navbar .nav>li>.dropdown-menu::before{display:none;}
@@ -1134,7 +1133,7 @@ img{border-radius:6px;}
 #itemResults .userRating{display:none;}
 #itemResults .options{padding:10px 2px 0px 0px;text-align:right;}
 #itemResults .extraData{position:relative;}
-#itemResults .priceDetails{width:160px;}#itemResults .priceDetails .priceMenu{position:relative;margin-bottom:0px;margin-top:0px;}#itemResults .priceDetails .priceMenu.open .dropdown-menu{position:relative;margin-bottom:10px;}
+#itemResults .priceDetails{width:160px;}#itemResults .priceDetails .priceMenu{position:relative;margin-bottom:0px;margin-top:0px;}#itemResults .priceDetails .priceMenu.open .dropdown-menu{margin-bottom:10px;}
 #itemResults .priceDetails .priceMenu .priceButton{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-339px -275px;position:relative;display:inline-block;padding:4px 0 0 11px;text-decoration:none;height:26px;width:98px;left:-1px;}#itemResults .priceDetails .priceMenu .priceButton:hover{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-338px -309px;}
 #itemResults .priceDetails .priceMenu .priceToggle{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-452px -275px;position:absolute;display:inline-block;height:30px;width:25px;top:0px;left:107px;}#itemResults .priceDetails .priceMenu .priceToggle:hover{background:url(http://d2sifwlm28j6up.cloudfront.net/sprites.png) no-repeat;background-position:-452px -309px;}
 #itemResults .priceDetails .priceMenu .priceSource{font-size:11px;color:#808080;}
