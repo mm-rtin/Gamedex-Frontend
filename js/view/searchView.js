@@ -696,6 +696,10 @@
 			// add sort date
 			searchItem.sortDate = searchItem.releaseDate;
 
+			if (searchItem.releaseDate == '1900-01-01') {
+				searchItem.sortDate = '2100-01-01';
+			}
+
 			// get platform information for each item by gbombID
 			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
 
@@ -722,24 +726,27 @@
 		var platformList = [];
 		var standardPlatform = '';
 
-		for (var i = 0, len = platforms.length; i < len; i++) {
+		if (platforms) {
 
-			// standardize platform names
-			standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
+			for (var i = 0, len = platforms.length; i < len; i++) {
 
-			platformList.push(standardPlatform);
-		}
+				// standardize platform names
+				standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
 
-		// add platform drop down to item results
-		addPlatformDropDown(gbombID, platformList);
+				platformList.push(standardPlatform);
+			}
 
-		// get searchItem from model and save platform list to searchItem
-		var searchItem = SearchView.getSearchResult(gbombID);
+			// add platform drop down to item results
+			addPlatformDropDown(gbombID, platformList);
 
-		if (searchItem) {
-			searchItem['platformList'] = platformList;
-			// set default platform
-			searchItem.platform = platformList[0];
+			// get searchItem from model and save platform list to searchItem
+			var searchItem = SearchView.getSearchResult(gbombID);
+
+			if (searchItem) {
+				searchItem['platformList'] = platformList;
+				// set default platform
+				searchItem.platform = platformList[0];
+			}
 		}
 	};
 

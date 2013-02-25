@@ -604,7 +604,7 @@ html {
 		border: 1px solid #1e2828;
 		border: 1px solid rgba(30, 40, 40, 0.95);
 		list-style: none;
-		margin: 0px 0 6px 0;
+		margin: 6px 0 6px 0;
 		padding: 4px 0;
 
 		display: block;
@@ -700,6 +700,7 @@ html {
 			margin-bottom: 0px;
 		}
 		.dropdown-menu {
+			margin-top: 0px;
 		}
 
 		.dropdown.open .dropdown-menu {
@@ -1395,11 +1396,14 @@ img {
 	}
 
 	.userEmail {
+		position: relative;
 		display: inline-block;
 		max-width: 150px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		line-height: 20px;
+		top: 2px;
 	}
 }
 
@@ -3033,10 +3037,10 @@ img {
 		.priceMenu {
 			position: relative;
 			margin-bottom: 0px;
-			margin-top: 0px;
 
 			&.open .dropdown-menu {
 				margin-bottom: 10px;
+				margin-top: 0px;
 			}
 
 			.priceButton {
