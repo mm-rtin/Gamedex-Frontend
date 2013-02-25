@@ -367,7 +367,7 @@ gamedex.initializeModules = function() {
 		demoUser = {'user_id': 'ag1zfnQtbWludXN6ZXJvcgwLEgVVc2Vycxj6VQw', 'secret_key': '1'};
 
 		if (document.location.hostname === 'localhost') {
-			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGBIM', 'secret_key': '1'};
+			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGAQM', 'secret_key': '1'};
 		}
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1219,6 +1219,7 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError, preventMultipleRequests) {
 
+		onError = typeof onError !== 'undefined' ? onError : null;
 		preventMultipleRequests = typeof preventMultipleRequests !== 'undefined' ? preventMultipleRequests : false;
 
 		var searchTerms = encodeURIComponent(keywords);
@@ -1266,7 +1267,9 @@ gamedex.initializeModules = function() {
 				}).delay(delayMS);
 
 				// return error with serviceUnavailable status as True
-				onError(true);
+				if (onError) {
+					onError(true);
+				}
 			}
 		});
 
@@ -4193,8 +4196,6 @@ gamedex.initializeModules = function() {
 			// get similarity score
 			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
 
-
-
 			// check if score is new best
 			if (score > bestScore) {
 				bestMatch = searchItem;
@@ -4202,7 +4203,11 @@ gamedex.initializeModules = function() {
 			}
 		});
 
-		return bestMatch.gametrailersPage + '/videos-trailers';
+		if (bestMatch) {
+			return bestMatch.gametrailersPage + '/videos-trailers';
+		}
+
+		return null;
 	};
 
 })(gamedex.module('gameTrailers'), gamedex, jQuery, _);
@@ -6856,6 +6861,11 @@ gamedex.initializeModules = function() {
 			// add temp results object
 			if (typeof searchItem.isFiltered === 'undefined') {
 
+				// subtract 100 years to release date force amazon items to bottom
+				var releaseDateComponents = searchItem.releaseDate.split('-');
+				var releaseYear = parseInt(releaseDateComponents[0], 10) - 100;
+				searchItem.sortDate = releaseYear + '-' + releaseDateComponents[1] + '-' + releaseDateComponents[2];
+
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
 			}
@@ -6886,6 +6896,9 @@ gamedex.initializeModules = function() {
 
 			// parse result item and set searchItem
 			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+
+			// add sort date
+			searchItem.sortDate = searchItem.releaseDate;
 
 			// get platform information for each item by gbombID
 			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
@@ -6950,8 +6963,8 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortItemsByDate = function(a, b) {
 
-		var date1 = Date.parse(a.releaseDate);
-		var date2 = Date.parse(b.releaseDate);
+		var date1 = Date.parse(a.sortDate);
+		var date2 = Date.parse(b.sortDate);
 
 		return date2 - date1;
 	};
@@ -7945,9 +7958,12 @@ gamedex.initializeModules = function() {
                     // add metascore info to item detail
                     Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 
-                    // show page in detail attributes
-                    $metacriticPage.show();
-                    $metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+                    if (item.metascorePage !== '') {
+
+                        // show page in detail attributes
+                        $metacriticPage.show();
+                        $metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+                    }
                 }
             }
         }
@@ -7958,8 +7974,12 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayWikipediaPage = function(wikipediaURL) {
 
-        $wikipediaPage.show();
-        $wikipediaPage.find('a').attr('href', wikipediaURL);
+        console.info(wikipediaURL);
+
+        if (wikipediaURL) {
+            $wikipediaPage.show();
+            $wikipediaPage.find('a').attr('href', wikipediaURL);
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -7967,8 +7987,11 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayGametrailersPage = function(gametrailersURL) {
 
-        $gametrailersPage.show();
-        $gametrailersPage.find('a').attr('href', gametrailersURL);
+        if (gametrailersURL) {
+            $gametrailersPage.show();
+            $gametrailersPage.find('a').attr('href', gametrailersURL);
+        }
+
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8104,6 +8127,7 @@ gamedex.initializeModules = function() {
 
         $wikipediaPage.hide();
         $giantBombPage.hide();
+        $gametrailersPage.hide();
         $metacriticPage.hide();
 
         $priceHeader.hide();

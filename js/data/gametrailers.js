@@ -200,8 +200,6 @@
 			// get similarity score
 			score = ItemLinker.getSimilarityScore(sourceItem, searchItem);
 
-
-
 			// check if score is new best
 			if (score > bestScore) {
 				bestMatch = searchItem;
@@ -209,7 +207,11 @@
 			}
 		});
 
-		return bestMatch.gametrailersPage + '/videos-trailers';
+		if (bestMatch) {
+			return bestMatch.gametrailersPage + '/videos-trailers';
+		}
+
+		return null;
 	};
 
 })(gamedex.module('gameTrailers'), gamedex, jQuery, _);

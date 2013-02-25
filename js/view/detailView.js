@@ -579,9 +579,12 @@
                     // add metascore info to item detail
                     Metacritic.displayMetascoreData(item.metascorePage, item.metascore, metascoreSelector);
 
-                    // show page in detail attributes
-                    $metacriticPage.show();
-                    $metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+                    if (item.metascorePage !== '') {
+
+                        // show page in detail attributes
+                        $metacriticPage.show();
+                        $metacriticPage.find('a').attr('href', 'http://www.metacritic.com' + item.metascorePage);
+                    }
                 }
             }
         }
@@ -592,8 +595,12 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayWikipediaPage = function(wikipediaURL) {
 
-        $wikipediaPage.show();
-        $wikipediaPage.find('a').attr('href', wikipediaURL);
+        console.info(wikipediaURL);
+
+        if (wikipediaURL) {
+            $wikipediaPage.show();
+            $wikipediaPage.find('a').attr('href', wikipediaURL);
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -601,8 +608,11 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayGametrailersPage = function(gametrailersURL) {
 
-        $gametrailersPage.show();
-        $gametrailersPage.find('a').attr('href', gametrailersURL);
+        if (gametrailersURL) {
+            $gametrailersPage.show();
+            $gametrailersPage.find('a').attr('href', gametrailersURL);
+        }
+
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -738,6 +748,7 @@
 
         $wikipediaPage.hide();
         $giantBombPage.hide();
+        $gametrailersPage.hide();
         $metacriticPage.hide();
 
         $priceHeader.hide();

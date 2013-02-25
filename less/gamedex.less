@@ -588,6 +588,9 @@ html {
 	/* DROPDOWNS
 	-----------------------------------------------------------*/
 	.btn-group .dropdown-menu, .nav .dropdown-menu {
+		.transition(0.3s);
+		.opacity(0);
+
 		-moz-border-radius: 2px;
 		-webkit-border-radius: 2px;
 		border-radius: 2px;
@@ -601,11 +604,9 @@ html {
 		border: 1px solid #1e2828;
 		border: 1px solid rgba(30, 40, 40, 0.95);
 		list-style: none;
-		margin: 6px 0 0;
+		margin: 0px 0 6px 0;
 		padding: 4px 0;
 
-		.transition(0.3s);
-		.opacity(0);
 		display: block;
 		min-width: 120px;
 		visibility: hidden;
@@ -657,9 +658,8 @@ html {
 	}
 
 	.open > .dropdown-menu {
-		z-index: 10;
-		.transition(.3s);
 		.opacity(1);
+		z-index: 10;
 		min-width: 160px;
 		visibility: visible;
 
@@ -3033,6 +3033,7 @@ img {
 		.priceMenu {
 			position: relative;
 			margin-bottom: 0px;
+			margin-top: 0px;
 
 			&.open .dropdown-menu {
 				position: relative;
@@ -3343,7 +3344,7 @@ img {
 }
 
 #gridViewMenu {
-	top: 3px;
+	top: 6px;
 	margin-left: 157px;
 
 	.navbar-inner {

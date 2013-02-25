@@ -657,6 +657,11 @@
 			// add temp results object
 			if (typeof searchItem.isFiltered === 'undefined') {
 
+				// subtract 100 years to release date force amazon items to bottom
+				var releaseDateComponents = searchItem.releaseDate.split('-');
+				var releaseYear = parseInt(releaseDateComponents[0], 10) - 100;
+				searchItem.sortDate = releaseYear + '-' + releaseDateComponents[1] + '-' + releaseDateComponents[2];
+
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
 			}
@@ -687,6 +692,9 @@
 
 			// parse result item and set searchItem
 			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+
+			// add sort date
+			searchItem.sortDate = searchItem.releaseDate;
 
 			// get platform information for each item by gbombID
 			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
@@ -751,8 +759,8 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var sortItemsByDate = function(a, b) {
 
-		var date1 = Date.parse(a.releaseDate);
-		var date2 = Date.parse(b.releaseDate);
+		var date1 = Date.parse(a.sortDate);
+		var date2 = Date.parse(b.sortDate);
 
 		return date2 - date1;
 	};

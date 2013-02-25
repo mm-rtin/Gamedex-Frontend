@@ -63,6 +63,7 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.searchAmazon = function(keywords, browseNode, onSuccess, onError, preventMultipleRequests) {
 
+		onError = typeof onError !== 'undefined' ? onError : null;
 		preventMultipleRequests = typeof preventMultipleRequests !== 'undefined' ? preventMultipleRequests : false;
 
 		var searchTerms = encodeURIComponent(keywords);
@@ -110,7 +111,9 @@
 				}).delay(delayMS);
 
 				// return error with serviceUnavailable status as True
-				onError(true);
+				if (onError) {
+					onError(true);
+				}
 			}
 		});
 
