@@ -54,7 +54,7 @@
 				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
 
 				var requestData = {
-					'keywords': encodeURI(cleanedSearchTerms)
+					'keywords': cleanedSearchTerms
 				};
 
 				ajax = $.ajax({
@@ -106,12 +106,8 @@
 	var cleanupSearchTerms = function(searchTerms) {
 
 		// remove ':', '&'
-		re = /\s*[:&]\s*/g;
+		var re = /\s*[:&]\s*/g;
 		var cleanedSearchTerms = searchTerms.replace(re, ' ');
-
-		// remove spaces
-		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '');
 
 		return cleanedSearchTerms;
 	};

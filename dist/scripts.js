@@ -4340,7 +4340,7 @@ gamedex.initializeModules = function() {
 				var cleanedSearchTerms = cleanupSearchTerms(searchTerms);
 
 				var requestData = {
-					'keywords': encodeURI(cleanedSearchTerms)
+					'keywords': cleanedSearchTerms
 				};
 
 				ajax = $.ajax({
@@ -4392,12 +4392,8 @@ gamedex.initializeModules = function() {
 	var cleanupSearchTerms = function(searchTerms) {
 
 		// remove ':', '&'
-		re = /\s*[:&]\s*/g;
+		var re = /\s*[:&]\s*/g;
 		var cleanedSearchTerms = searchTerms.replace(re, ' ');
-
-		// remove spaces
-		var re = /\s/g;
-		cleanedSearchTerms = cleanedSearchTerms.replace(re, '');
 
 		return cleanedSearchTerms;
 	};
@@ -6984,7 +6980,7 @@ gamedex.initializeModules = function() {
 
 		// skip render if current search terms do not match search terms for this query
 		if (searchTerms === keywords) {
-			// renderSearchResults results
+			// renderSearchResults
 			SearchView.renderSearchResults(searchResults);
 
 			// render platforms for each search item
@@ -6992,7 +6988,7 @@ gamedex.initializeModules = function() {
 
 				_.delay(function() {
 					displayPlatformDropdown(searchItem.platforms, searchItem.id);
-				}, 1000);
+				}, 500);
 			});
 		}
 	};

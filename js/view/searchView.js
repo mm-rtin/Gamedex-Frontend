@@ -709,7 +709,7 @@
 
 		// skip render if current search terms do not match search terms for this query
 		if (searchTerms === keywords) {
-			// renderSearchResults results
+			// renderSearchResults
 			SearchView.renderSearchResults(searchResults);
 
 			// render platforms for each search item
@@ -717,7 +717,7 @@
 
 				_.delay(function() {
 					displayPlatformDropdown(searchItem.platforms, searchItem.id);
-				}, 1000);
+				}, 500);
 			});
 		}
 	};
