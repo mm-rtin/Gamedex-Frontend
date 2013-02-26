@@ -32,7 +32,6 @@
         sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
         // remove words appearing after 'with'
         sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
-
         // remove 'the ' if at the start of title
         sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
@@ -59,25 +58,22 @@
 
         var levenshteinValue = levenshtein(sourceItem.name, searchItem.name);
 
-        console.info(searchItem.name, levenshteinValue);
-
         // subtract levenshteinValue from score
         score = score - levenshteinValue;
 
         // exact release date check
         if (typeof searchItem.releaseDate !== 'undefined') {
 
-            if (sourceItem.releaseDate === searchItem.releaseDate) {
-                score += 10;
+            // get difference in days
+            var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
 
-            // fuzzy release date check
-            } else {
-                var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+            if (diff === 0) {
+                score = score + 100;
+            }
 
-                // don't subtract score if search result date is unknown/unreleased
-                if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
-                    score -= Math.abs(diff / 365);
-                }
+            // don't subtract score if search result date is unknown/unreleased
+            if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
+                score -= Math.abs(diff / 365);
             }
         }
 

@@ -688,10 +688,10 @@
 		var searchItem = {};
 
 		// iterate results array
-		for (var i = 0, len = results.length; i < len; i++) {
+		_.each(results, function(resultItem) {
 
 			// parse result item and set searchItem
-			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+			searchItem = GiantBomb.parseGiantBombResultItem(resultItem);
 
 			// add sort date
 			searchItem.sortDate = searchItem.releaseDate;
@@ -700,12 +700,9 @@
 				searchItem.sortDate = '2100-01-01';
 			}
 
-			// get platform information for each item by gbombID
-			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
-
 			// save item in search results cache under ASIN key
 			tempSearchResults[searchItem.id] = searchItem;
-		}
+		});
 
 		// extend searchResults data with tempSearchResults
 		$.extend(true, searchResults, tempSearchResults);
@@ -714,27 +711,37 @@
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
+
+			// render platforms for each search item
+			_.each(results, function(searchItem) {
+
+				_.delay(function() {
+					displayPlatformDropdown(searchItem.platforms, searchItem.id);
+				}, 1000);
+			});
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemPlatform_result -
+	* displayPlatformDropdown -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItemPlatform_result = function(data, gbombID) {
+	var displayPlatformDropdown = function(platforms, gbombID) {
 
-		var platforms = data.results.platforms;
 		var platformList = [];
 		var standardPlatform = '';
 
 		if (platforms) {
 
-			for (var i = 0, len = platforms.length; i < len; i++) {
+			_.each(platforms, function(platform) {
 
 				// standardize platform names
-				standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
+				standardPlatform = Utilities.matchPlatformToIndex(platform.platform.name).name || platform.platform.name;
 
-				platformList.push(standardPlatform);
-			}
+				// ignore Mac
+				if (standardPlatform !== "Mac") {
+					platformList.push(standardPlatform);
+				}
+			});
 
 			// add platform drop down to item results
 			addPlatformDropDown(gbombID, platformList);

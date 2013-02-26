@@ -1580,328 +1580,356 @@ gamedex.initializeModules = function() {
 
 // GiantBomb
 (function(GiantBomb, gamedex, $, _, moment) {
-	"use strict";
+    "use strict";
 
     // module references
-	var Amazon = gamedex.module('amazon'),
-
-		// REST URLS
-		GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
-		GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
-		GIANTBOMB_VIDEO_URL = gamedex.api + 'giantbomb/video/',
-
-		// data
-		giantBombDataCache = {},
-		giantBombItemCache = {},
-		giantBombVideoCache = {},
-
-		// request queue
-		getGiantBombItemDataQueue = {},
-		getGiantBombItemDetailQueue = {};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* searchGiantBomb -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.searchGiantBomb = function(keywords, onSuccess, onError) {
-
-		var searchTerms = encodeURIComponent(keywords);
-
-		// list of fields to get as query parameter
-		var fieldList = ['id', 'name', 'original_release_date', 'image'];
-
-		var requestData = {
-			'field_list': fieldList.join(','),
-			'keywords': keywords,
-			'page': 0
-		};
-
-		var searchRequest = $.ajax({
-			url: GIANTBOMB_SEARCH_URL,
-			type: 'GET',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
-
-		return searchRequest;
-	};
-
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* parseGiantBombResultItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.parseGiantBombResultItem = function(resultItem) {
-		var itemData = {
-			id: resultItem.id,
-			asin: 0,
-			gbombID: resultItem.id,
-			name: resultItem.name,
-			platform: 'n/a'
-		};
-
-		// format date
-		if (resultItem.original_release_date && resultItem.original_release_date !== '') {
-			itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
-		} else {
-			itemData.releaseDate = '1900-01-01';
-		}
-
-		// calendar date
-		if (itemData.releaseDate !== '1900-01-01') {
-			itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
-		} else {
-			itemData.calendarDate = 'Unknown';
-		}
-
-		// set small url
-		if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
-			itemData.smallImage = resultItem.image.small_url;
-		} else {
-			itemData.smallImage = 'no image.png';
-		}
-
-		// set thumb url
-		if (resultItem.image && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
-			itemData.thumbnailImage = resultItem.image.thumb_url;
-		} else {
-			itemData.thumbnailImage = 'no image.png';
-		}
-
-		// set large url
-		if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
-			itemData.largeImage = resultItem.image.super_url;
-		} else {
-			itemData.largeImage = 'no image.png';
-		}
-
-		// set description
-		if (resultItem.description && resultItem.description  !== '') {
-			itemData.description = resultItem.description;
-		} else {
-			itemData.description = 'No Description';
-		}
-
-		return itemData;
-	};
+    var Amazon = gamedex.module('amazon'),
+
+        // REST URLS
+        GIANTBOMB_SEARCH_URL = gamedex.api + 'giantbomb/search/',
+        GIANTBOMB_DETAIL_URL = gamedex.api + 'giantbomb/detail/',
+        GIANTBOMB_VIDEO_URL = gamedex.api + 'giantbomb/video/',
+
+        // data
+        giantBombDataCache = {},
+        giantBombItemCache = {},
+        giantBombVideoCache = {},
+
+        // request queue
+        getGiantBombItemDataQueue = {},
+        getGiantBombItemDetailQueue = {};
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * searchGiantBomb -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.searchGiantBomb = function(keywords, onSuccess, onError) {
+
+        var searchTerms = encodeURIComponent(keywords);
+
+        // list of fields to get as query parameter
+        var fieldList = ['id', 'name', 'original_release_date', 'image', 'platforms', 'site_detail_url', 'expected_release_day', 'expected_release_month', 'expected_release_quarter', 'expected_release_year'];
+
+        var requestData = {
+            'field_list': fieldList.join(','),
+            'keywords': keywords,
+            'page': 0
+        };
+
+        var searchRequest = $.ajax({
+            url: GIANTBOMB_SEARCH_URL,
+            type: 'GET',
+            data: requestData,
+            dataType: 'json',
+            cache: true,
+            success: onSuccess,
+            error: onError
+        });
+
+        return searchRequest;
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * parseGiantBombResultItem -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.parseGiantBombResultItem = function(resultItem) {
+        var itemData = {
+            id: resultItem.id,
+            asin: 0,
+            gbombID: resultItem.id,
+            name: resultItem.name,
+            platform: 'n/a',
+            platforms: resultItem.platforms
+        };
+
+        // format date
+        if (resultItem.original_release_date && resultItem.original_release_date !== '') {
+            itemData.releaseDate = resultItem.original_release_date.split(' ')[0];
+
+        // expected release date
+        } else if (resultItem.expected_release_day && resultItem.expected_release_month && resultItem.expected_release_year) {
+            itemData.releaseDate = resultItem.expected_release_year + '-' + resultItem.expected_release_month + '-' + resultItem.expected_release_day;
+
+        // release quarter
+        } else if (resultItem.expected_release_quarter) {
+
+            // detect Q1
+            if ('Q1' == 'Q1') {
+                itemData.releaseDate = 'year-03-31';
+                itemData.calendarDate = 'Q1 YEAR';
+            }
+            // detect Q2
+            else if ('Q1' == 'Q2') {
+                itemData.releaseDate = 'year-06-31';
+                itemData.calendarDate = 'Q2 YEAR';
+            }
+            // detect Q3
+            else if ('Q1' == 'Q3') {
+                itemData.releaseDate = 'year-09-31';
+                itemData.calendarDate = 'Q3 YEAR';
+            }
+            // detect Q4
+            else if ('Q1' == 'Q4') {
+                itemData.releaseDate = 'year-12-31';
+                itemData.calendarDate = 'Q4 YEAR';
+            }
+        }
+
+        // calendar date
+        if (itemData.releaseDate !== '1900-01-01') {
+            itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
+
+        } else {
+            itemData.calendarDate = 'Unknown';
+        }
+
+        // set small url
+        if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
+            itemData.smallImage = resultItem.image.small_url;
+        } else {
+            itemData.smallImage = 'no image.png';
+        }
+
+        // set thumb url
+        if (resultItem.image && resultItem.image.thumb_url && resultItem.image.thumb_url !== '') {
+            itemData.thumbnailImage = resultItem.image.thumb_url;
+        } else {
+            itemData.thumbnailImage = 'no image.png';
+        }
 
+        // set large url
+        if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
+            itemData.largeImage = resultItem.image.super_url;
+        } else {
+            itemData.largeImage = 'no image.png';
+        }
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemPlatform -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
+        // set description
+        if (resultItem.description && resultItem.description  !== '') {
+            itemData.description = resultItem.description;
+        } else {
+            itemData.description = 'No Description';
+        }
 
-		// list of fields to get as query parameter
-		var fieldList = ['platforms'];
+        return itemData;
+    };
 
-		var giantbombRequest = getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
-			onSuccess(data, gbombID);
-		}, onError);
 
-		return giantbombRequest;
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getGiantBombItemPlatform -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.getGiantBombItemPlatform = function(gbombID, onSuccess, onError) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemData = function(gbombID, onSuccess, onError) {
+        // list of fields to get as query parameter
+        var fieldList = ['platforms'];
 
-		// find in giant bomb data cache first
-		var cachedData = getCachedData(gbombID);
+        var giantbombRequest = getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
+            onSuccess(data, gbombID);
+        }, onError);
 
-		// load cached gb data
-		if (cachedData) {
+        return giantbombRequest;
+    };
 
-			// return updated source item
-			onSuccess(cachedData);
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getGiantBombItemData -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.getGiantBombItemData = function(gbombID, onSuccess, onError) {
 
-		// download gb data
-		} else {
+        // find in giant bomb data cache first
+        var cachedData = getCachedData(gbombID);
 
-			// add to queue
-			if (!_.has(getGiantBombItemDataQueue, gbombID)) {
-				getGiantBombItemDataQueue[gbombID] = [];
-			}
-			getGiantBombItemDataQueue[gbombID].push(onSuccess);
+        // load cached gb data
+        if (cachedData) {
 
-			// run for first call only
-			if (getGiantBombItemDataQueue[gbombID].length === 1) {
+            // return updated source item
+            onSuccess(cachedData);
 
-				// download data
-				var fieldList = ['description', 'site_detail_url', 'videos'];
+        // download gb data
+        } else {
 
-				// giantbomb item request
-				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
+            // add to queue
+            if (!_.has(getGiantBombItemDataQueue, gbombID)) {
+                getGiantBombItemDataQueue[gbombID] = [];
+            }
+            getGiantBombItemDataQueue[gbombID].push(onSuccess);
 
-					// iterate queued return methods
-					_.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
+            // run for first call only
+            if (getGiantBombItemDataQueue[gbombID].length === 1) {
 
-						// cache result
-						giantBombDataCache[gbombID] = data.results;
+                // download data
+                var fieldList = ['description', 'site_detail_url', 'videos'];
 
-						// return data
-						successMethod(data.results);
-					});
+                // giantbomb item request
+                getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
-					// empty queue
-					getGiantBombItemDataQueue[gbombID] = [];
+                    // iterate queued return methods
+                    _.each(getGiantBombItemDataQueue[gbombID], function(successMethod) {
 
-				}, onError);
-			}
-		}
-	};
+                        // cache result
+                        giantBombDataCache[gbombID] = data.results;
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombVideo -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombVideo = function(videoID, onSuccess, onError) {
+                        // return data
+                        successMethod(data.results);
+                    });
 
-		// find in giant bomb data cache first
-		var cachedData = getCachedVideo(videoID);
-		var giantBombVideoAjax = null;
+                    // empty queue
+                    getGiantBombItemDataQueue[gbombID] = [];
 
-		// load cached gb data
-		if (cachedData) {
+                }, onError);
+            }
+        }
+    };
 
-			// return updated source item
-			onSuccess(cachedData);
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getGiantBombVideo -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.getGiantBombVideo = function(videoID, onSuccess, onError) {
 
-		// download gb data
-		} else {
+        // find in giant bomb data cache first
+        var cachedData = getCachedVideo(videoID);
+        var giantBombVideoAjax = null;
 
-			// download data
-			var fieldList = [];
+        // load cached gb data
+        if (cachedData) {
 
-			// giantbomb item request
-			giantBombVideoAjax = getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
+            // return updated source item
+            onSuccess(cachedData);
 
-				// cache result
-				giantBombVideoCache[videoID] = data.results;
+        // download gb data
+        } else {
 
-				// return data
-				onSuccess(data.results);
+            // download data
+            var fieldList = [];
 
-			}, onError);
-		}
+            // giantbomb item request
+            giantBombVideoAjax = getGiantBombItem(GIANTBOMB_VIDEO_URL, videoID, fieldList, function(data) {
 
-		return giantBombVideoAjax;
-	};
+                // cache result
+                giantBombVideoCache[videoID] = data.results;
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemDetail -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	GiantBomb.getGiantBombItemDetail = function(gbombID, onSuccess, onError) {
+                // return data
+                onSuccess(data.results);
 
-		// find in giant bomb data cache first
-		var cachedItem = getCachedItem(gbombID);
+            }, onError);
+        }
 
-		// load cached gb data1
-		if (cachedItem) {
+        return giantBombVideoAjax;
+    };
 
-			// return updated source item
-			onSuccess(cachedItem);
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getGiantBombItemDetail -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    GiantBomb.getGiantBombItemDetail = function(gbombID, onSuccess, onError) {
 
-		// download gb item
-		} else {
+        // find in giant bomb data cache first
+        var cachedItem = getCachedItem(gbombID);
 
-			// add to queue
-			if (!_.has(getGiantBombItemDetailQueue, gbombID)) {
-				getGiantBombItemDetailQueue[gbombID] = [];
-			}
-			getGiantBombItemDetailQueue[gbombID].push(onSuccess);
+        // load cached gb data1
+        if (cachedItem) {
 
-			// run for first call only
-			if (getGiantBombItemDetailQueue[gbombID].length === 1) {
+            // return updated source item
+            onSuccess(cachedItem);
 
-				// download data
-				var fieldList = ['id', 'name', 'original_release_date', 'image'];
+        // download gb item
+        } else {
 
-				// giantbomb item request
-				getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
+            // add to queue
+            if (!_.has(getGiantBombItemDetailQueue, gbombID)) {
+                getGiantBombItemDetailQueue[gbombID] = [];
+            }
+            getGiantBombItemDetailQueue[gbombID].push(onSuccess);
 
-					// iterate queued return methods
-					_.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
+            // run for first call only
+            if (getGiantBombItemDetailQueue[gbombID].length === 1) {
 
-						// cache result
-						giantBombItemCache[gbombID] = data.results;
+                // download data
+                var fieldList = ['id', 'name', 'original_release_date', 'image'];
 
-						// return data
-						successMethod(data.results);
-					});
+                // giantbomb item request
+                getGiantBombItem(GIANTBOMB_DETAIL_URL, gbombID, fieldList, function(data) {
 
-					// empty queue
-					getGiantBombItemDetailQueue[gbombID] = [];
+                    // iterate queued return methods
+                    _.each(getGiantBombItemDetailQueue[gbombID], function(successMethod) {
 
-				}, onError);
-			}
-		}
-	};
+                        // cache result
+                        giantBombItemCache[gbombID] = data.results;
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItem = function(url, gbombID, fieldList, onSuccess, onError) {
+                        // return data
+                        successMethod(data.results);
+                    });
 
-		var requestData = {
-			'field_list': fieldList.join(','),
-			'id': gbombID
-		};
+                    // empty queue
+                    getGiantBombItemDetailQueue[gbombID] = [];
 
-		var giantbombRequest = $.ajax({
-			url: url,
-			type: 'GET',
-			data: requestData,
-			dataType: 'json',
-			cache: true,
-			success: onSuccess,
-			error: onError
-		});
+                }, onError);
+            }
+        }
+    };
 
-		return giantbombRequest;
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getGiantBombItem -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getGiantBombItem = function(url, gbombID, fieldList, onSuccess, onError) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedVideo -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedVideo = function(id) {
+        var requestData = {
+            'field_list': fieldList.join(','),
+            'id': gbombID
+        };
 
-		var giantBombVideo = null;
+        var giantbombRequest = $.ajax({
+            url: url,
+            type: 'GET',
+            data: requestData,
+            dataType: 'json',
+            cache: true,
+            success: onSuccess,
+            error: onError
+        });
 
-		if (typeof giantBombVideoCache[id] !== 'undefined') {
-			console.info('get video: ', id, ' from cache');
-			giantBombVideo = giantBombVideoCache[id];
-		}
+        return giantbombRequest;
+    };
 
-		return giantBombVideo;
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getCachedVideo -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getCachedVideo = function(id) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedData -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedData = function(id) {
+        var giantBombVideo = null;
 
-		var giantBombData = null;
+        if (typeof giantBombVideoCache[id] !== 'undefined') {
+            console.info('get video: ', id, ' from cache');
+            giantBombVideo = giantBombVideoCache[id];
+        }
 
-		if (typeof giantBombDataCache[id] !== 'undefined') {
-			giantBombData = giantBombDataCache[id];
-		}
+        return giantBombVideo;
+    };
 
-		return giantBombData;
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getCachedData -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getCachedData = function(id) {
 
-	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getCachedItem -
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getCachedItem = function(id) {
+        var giantBombData = null;
 
-		var giantBombItem = null;
+        if (typeof giantBombDataCache[id] !== 'undefined') {
+            giantBombData = giantBombDataCache[id];
+        }
 
-		if (typeof giantBombItemCache[id] !== 'undefined') {
-			giantBombItem = giantBombItemCache[id];
-		}
+        return giantBombData;
+    };
 
-		return giantBombItem;
-	};
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * getCachedItem -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var getCachedItem = function(id) {
+
+        var giantBombItem = null;
+
+        if (typeof giantBombItemCache[id] !== 'undefined') {
+            giantBombItem = giantBombItemCache[id];
+        }
+
+        return giantBombItem;
+    };
 
 
 })(gamedex.module('giantbomb'), gamedex, jQuery, _, moment);
@@ -1941,7 +1969,6 @@ gamedex.initializeModules = function() {
         sanitizedName = sanitizedName.replace(/\S+ edition$/gi, '');
         // remove words appearing after 'with'
         sanitizedName = sanitizedName.replace(/\swith\s.*/gi, '');
-
         // remove 'the ' if at the start of title
         sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
@@ -1968,25 +1995,22 @@ gamedex.initializeModules = function() {
 
         var levenshteinValue = levenshtein(sourceItem.name, searchItem.name);
 
-        console.info(searchItem.name, levenshteinValue);
-
         // subtract levenshteinValue from score
         score = score - levenshteinValue;
 
         // exact release date check
         if (typeof searchItem.releaseDate !== 'undefined') {
 
-            if (sourceItem.releaseDate === searchItem.releaseDate) {
-                score += 10;
+            // get difference in days
+            var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
 
-            // fuzzy release date check
-            } else {
-                var diff = Math.floor((Date.parse(sourceItem.releaseDate) - Date.parse(searchItem.releaseDate) ) / 86400000);
+            if (diff === 0) {
+                score = score + 100;
+            }
 
-                // don't subtract score if search result date is unknown/unreleased
-                if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
-                    score -= Math.abs(diff / 365);
-                }
+            // don't subtract score if search result date is unknown/unreleased
+            if (!isNaN(diff) && searchItem.releaseDate !== '1900-01-01')  {
+                score -= Math.abs(diff / 365);
             }
         }
 
@@ -6939,10 +6963,10 @@ gamedex.initializeModules = function() {
 		var searchItem = {};
 
 		// iterate results array
-		for (var i = 0, len = results.length; i < len; i++) {
+		_.each(results, function(resultItem) {
 
 			// parse result item and set searchItem
-			searchItem = GiantBomb.parseGiantBombResultItem(results[i]);
+			searchItem = GiantBomb.parseGiantBombResultItem(resultItem);
 
 			// add sort date
 			searchItem.sortDate = searchItem.releaseDate;
@@ -6951,12 +6975,9 @@ gamedex.initializeModules = function() {
 				searchItem.sortDate = '2100-01-01';
 			}
 
-			// get platform information for each item by gbombID
-			GiantBomb.getGiantBombItemPlatform(searchItem.gbombID, getGiantBombItemPlatform_result);
-
 			// save item in search results cache under ASIN key
 			tempSearchResults[searchItem.id] = searchItem;
-		}
+		});
 
 		// extend searchResults data with tempSearchResults
 		$.extend(true, searchResults, tempSearchResults);
@@ -6965,27 +6986,37 @@ gamedex.initializeModules = function() {
 		if (searchTerms === keywords) {
 			// renderSearchResults results
 			SearchView.renderSearchResults(searchResults);
+
+			// render platforms for each search item
+			_.each(results, function(searchItem) {
+
+				_.delay(function() {
+					displayPlatformDropdown(searchItem.platforms, searchItem.id);
+				}, 1000);
+			});
 		}
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* getGiantBombItemPlatform_result -
+	* displayPlatformDropdown -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	var getGiantBombItemPlatform_result = function(data, gbombID) {
+	var displayPlatformDropdown = function(platforms, gbombID) {
 
-		var platforms = data.results.platforms;
 		var platformList = [];
 		var standardPlatform = '';
 
 		if (platforms) {
 
-			for (var i = 0, len = platforms.length; i < len; i++) {
+			_.each(platforms, function(platform) {
 
 				// standardize platform names
-				standardPlatform = Utilities.matchPlatformToIndex(platforms[i].name).name || platforms[i].name;
+				standardPlatform = Utilities.matchPlatformToIndex(platform.platform.name).name || platform.platform.name;
 
-				platformList.push(standardPlatform);
-			}
+				// ignore Mac
+				if (standardPlatform !== "Mac") {
+					platformList.push(standardPlatform);
+				}
+			});
 
 			// add platform drop down to item results
 			addPlatformDropDown(gbombID, platformList);
