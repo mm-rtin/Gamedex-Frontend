@@ -1647,6 +1647,15 @@ gamedex.initializeModules = function() {
 
         // expected release date
         } else if (resultItem.expected_release_day && resultItem.expected_release_month && resultItem.expected_release_year) {
+
+            // add leading 0 if day or month is single digit
+            if (resultItem.expected_release_day.toString().length === 1) {
+                resultItem.expected_release_day = '0' + resultItem.expected_release_day.toString();
+            }
+            if (resultItem.expected_release_month.toString().length === 1) {
+                resultItem.expected_release_month = '0' + resultItem.expected_release_month.toString();
+            }
+
             itemData.releaseDate = resultItem.expected_release_year + '-' + resultItem.expected_release_month + '-' + resultItem.expected_release_day;
 
         // release quarter
@@ -6301,12 +6310,12 @@ gamedex.initializeModules = function() {
 		searchTerms = 'skyrim',
 		previousSearchTerms = '',
 		searchResults = {},
-		sortedSearchResults = [],
 
 		// properties
 		currentTab = TAB_IDS['#searchTab'],
 
-		infiniteScrollDisabled = false,
+		listInfiniteScrollDisabled = false,
+		searchInfiniteScrollDisabled = false,
 
 		ignUpcomingListPagesLoaded = -1,
 		ignReleasedListPagesLoaded = -1,
@@ -6333,8 +6342,12 @@ gamedex.initializeModules = function() {
 		// list
 		itemList = null,
 		listOptions = {
-			valueNames: ['itemName', 'releaseDate'],
-			item: 'list-item'
+			valueNames: ['itemName', 'releaseDate']
+		},
+
+		searchList = null,
+		searchListOptions = {
+			valueNames: ['itemName', 'sortDate']
 		},
 
 		// node cache
@@ -6367,6 +6380,7 @@ gamedex.initializeModules = function() {
 		$searchResultsContent = $searchResultsContainer.find('.content'),
 
 		$searchResults = $('#searchResults'),
+		$searchTable = $searchResults.find('.list'),
 		$inputField = $search.find('input'),
 
 		$listResultsContainer = $('#listResultsContainer'),
@@ -6389,7 +6403,7 @@ gamedex.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* init
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.init = function(keywords) {
+	SearchView.init = function() {
 
 		SearchView.createEventHandlers();
 
@@ -6420,7 +6434,7 @@ gamedex.initializeModules = function() {
 			$listResultsContainer.nanoScroller();
 		}, 1500);
 
-		// setup infinite scroll event
+		// setup list results infinite scroll event
 		$listResultsContent.on('scroll', function(e) {
 
 			var scrollPos = $listResultsContent.scrollTop(),
@@ -6431,9 +6445,31 @@ gamedex.initializeModules = function() {
 
 			if (posToEnd < DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER) {
 
-				if (!infiniteScrollDisabled) {
-					infiniteScrollDisabled = true;
+				if (!listInfiniteScrollDisabled) {
+					listInfiniteScrollDisabled = true;
 					SearchView.loadNextListPages();
+				}
+			}
+		});
+
+		// setup search results infinite scroll event
+		$searchResultsContent.on('scroll', function(e) {
+
+			var scrollPos = $searchResultsContent.scrollTop(),
+				contentHeight = $searchResults.height(),
+				containerHeight = $searchResultsContent.height(),
+
+				posToEnd = contentHeight - (scrollPos + containerHeight);
+
+			if (posToEnd < DISTANCE_TO_END_INFINITE_SCROLL_TRIGGER) {
+
+				if (!searchInfiniteScrollDisabled) {
+					searchInfiniteScrollDisabled = true;
+
+					// search amazon and giantbomb
+					Amazon.searchAmazon(previousSearchTerms, searchPlatform.amazon, function(data) {
+						searchAmazon_result(data, previousSearchTerms);
+					});
 				}
 			}
 		});
@@ -6545,30 +6581,21 @@ gamedex.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* renderSearchResults -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	SearchView.renderSearchResults = function(items) {
-
-		// reset sorted results
-		sortedSearchResults = [];
+	SearchView.renderSearchResults = function(items, order) {
 
 		// hide loading status
 		$searchLoadingStatus.removeClass('show');
 
-		// generate sorted items array
-		_.each(items, function(item, key) {
-			sortedSearchResults.push(item);
-		});
-
-		// sort results
-		sortedSearchResults.sort(sortItemsByDate);
-
 		// get model data
-		var templateData = {'sortedSearchResults': sortedSearchResults};
+		var templateData = {'searchResults': items};
 
-		// add searchDisplayType to templateData
-		templateData.displayType = searchDisplayType;
+		console.info(items);
+		console.info(Object.keys(items));
 
 		// output data to template
-		$searchResults.html(searchResultsTemplate(templateData));
+		$searchTable.append(searchResultsTemplate(templateData));
+
+		initSearchListJS(order);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6619,10 +6646,7 @@ gamedex.initializeModules = function() {
 
 			previousSearchTerms = keywords;
 
-			// search amazon and giantbomb
-			Amazon.searchAmazon(keywords, searchPlatform.amazon, function(data) {
-				searchAmazon_result(data, keywords);
-			});
+			// search giantbomb
 			GiantBomb.searchGiantBomb(keywords, function(data) {
 				searchGiantBomb_result(data, keywords);
 			});
@@ -6676,7 +6700,7 @@ gamedex.initializeModules = function() {
 				ignPopularListPagesEnded = true;
 			}
 
-			infiniteScrollDisabled = false;
+			listInfiniteScrollDisabled = false;
 			getList_result(data, 'asc', LIST_TYPE.POPULAR);
 			ignPopularListPagesLoaded++;
 		}
@@ -6704,7 +6728,7 @@ gamedex.initializeModules = function() {
 				ignUpcomingListPagesEnded = true;
 			}
 
-			infiniteScrollDisabled = false;
+			listInfiniteScrollDisabled = false;
 			getList_result(data, 'asc', LIST_TYPE.UPCOMING);
 			ignUpcomingListPagesLoaded++;
 		}
@@ -6732,7 +6756,7 @@ gamedex.initializeModules = function() {
 				ignReviewedListPagesEnded = true;
 			}
 
-			infiniteScrollDisabled = false;
+			listInfiniteScrollDisabled = false;
 			getList_result(data, 'desc', LIST_TYPE.REVIEWED);
 			ignReleasedListPagesLoaded++;
 		}
@@ -6828,23 +6852,28 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var clearSearch = function() {
 
+		searchInfiniteScrollDisabled = false;
+
 		// clear results output
-		$searchResults.empty();
+		$searchTable.empty();
 
 		$searchLoadingStatus.addClass('show');
 
 		// clear searchResults data
 		searchResults = {};
-		sortedSearchResults = [];
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	* initListJS -
+	* initListJS - sort list results
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var initListJS = function(order) {
 
 		// update list.js for item list
-		itemList = new ListJS('listResults', listOptions);
+		if (itemList === null) {
+			itemList = new ListJS('listResults', listOptions);
+		} else {
+			//itemList.update();
+		}
 
 		// sort using current sort method
 		if (order === 'asc') {
@@ -6852,6 +6881,26 @@ gamedex.initializeModules = function() {
 		} else {
 			itemList.sort('releaseDate', {sortFunction: releaseDateSortDesc});
 		}
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* initSearchListJS - sort search results
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var initSearchListJS = function(order) {
+
+		// update list.js for search list
+		if (searchList === null) {
+			searchList = new ListJS('searchResults', searchListOptions);
+		} else {
+			//searchList.update();
+			// // sort using current sort method
+			// if (order === 'asc') {
+			// 	searchList.sort('sortDate', {sortFunction: sortDateSortAsc});
+			// } else {
+			// 	searchList.sort('sortDate', {sortFunction: sortDateSortDesc});
+			// }
+		}
+
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6928,10 +6977,10 @@ gamedex.initializeModules = function() {
 			// add temp results object
 			if (typeof searchItem.isFiltered === 'undefined') {
 
-				// subtract 100 years to release date force amazon items to bottom
-				var releaseDateComponents = searchItem.releaseDate.split('-');
-				var releaseYear = parseInt(releaseDateComponents[0], 10) - 100;
-				searchItem.sortDate = releaseYear + '-' + releaseDateComponents[1] + '-' + releaseDateComponents[2];
+                // subtract 100 years to release date force amazon items to bottom
+                var releaseDateComponents = searchItem.releaseDate.split('-');
+                var releaseYear = parseInt(releaseDateComponents[0], 10) - 100;
+                searchItem.sortDate = releaseYear + '-' + releaseDateComponents[1] + '-' + releaseDateComponents[2];
 
 				// save item in search results cache under ASIN key
 				tempSearchResults[searchItem.id] = searchItem;
@@ -6944,7 +6993,7 @@ gamedex.initializeModules = function() {
 		// skip render if current search terms do not match search terms for this query
 		if (searchTerms === keywords) {
 			// renderSearchResults results
-			SearchView.renderSearchResults(searchResults);
+			SearchView.renderSearchResults(searchResults, 'desc');
 		}
 	};
 
@@ -6981,7 +7030,7 @@ gamedex.initializeModules = function() {
 		// skip render if current search terms do not match search terms for this query
 		if (searchTerms === keywords) {
 			// renderSearchResults
-			SearchView.renderSearchResults(searchResults);
+			SearchView.renderSearchResults(searchResults, 'desc');
 
 			// render platforms for each search item
 			_.each(results, function(searchItem) {
@@ -7046,6 +7095,11 @@ gamedex.initializeModules = function() {
 
 		var date1 = Date.parse(a.sortDate);
 		var date2 = Date.parse(b.sortDate);
+
+		console.info(a.sortDate, b.sortDate);
+		console.info(date1, date2);
+		console.info(date2 - date1);
+		console.info('-----------------');
 
 		return date2 - date1;
 	};
@@ -7213,7 +7267,7 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var getList = function(listType) {
 
-		infiniteScrollDisabled = false;
+		listInfiniteScrollDisabled = false;
 
 		ignReviewedListPagesEnded = false;
 		ignUpcomingListPagesEnded = false;
@@ -7301,10 +7355,10 @@ gamedex.initializeModules = function() {
 		// change #searchResults or #listResults tbody class based on current tab
 		if (currentTab === TAB_IDS['#searchTab']) {
 			searchDisplayType = displayType;
-			$searchResults.find('tbody').removeClass().addClass('display-' + displayType);
+			$searchTable.removeClass().addClass('display-' + displayType);
 
 		// check if the actual element has the displayType class
-		} else if ($listResults.find('tbody').hasClass('display-' + displayType) === false) {
+		} else if ($listTable.hasClass('display-' + displayType) === false) {
 
 			// this is so popular list does not define the view for upcoming list
 			if (!doNotUpdateCurrentDisplayType) {
@@ -7436,10 +7490,14 @@ gamedex.initializeModules = function() {
 		var $element1 = $(firstItem.elm).find('.releaseDate');
 		var $element2 = $(secondItem.elm).find('.releaseDate');
 
-		var date1 = Date.parse($element1.text());
-		var date2 = Date.parse($element2.text());
+		var date1 = moment($element1.text());
+		var date2 = moment($element2.text());
 
-		return date1 - date2;
+		if (date2 < date1) {
+			return 1;
+		}
+
+		return -1;
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -7450,10 +7508,50 @@ gamedex.initializeModules = function() {
 		var $element1 = $(firstItem.elm).find('.releaseDate');
 		var $element2 = $(secondItem.elm).find('.releaseDate');
 
-		var date1 = Date.parse($element1.text());
-		var date2 = Date.parse($element2.text());
+		var date1 = moment($element1.text());
+		var date2 = moment($element2.text());
 
-		return date2 - date1;
+		if (date2 > date1) {
+			return 1;
+		}
+
+		return -1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sortDateSortAsc -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sortDateSortAsc = function(firstItem, secondItem) {
+
+		var $element1 = $(firstItem.elm).find('.sortDate');
+		var $element2 = $(secondItem.elm).find('.sortDate');
+
+		var date1 = moment($element1.text());
+		var date2 = moment($element2.text());
+
+		if (date2 < date1) {
+			return 1;
+		}
+
+		return -1;
+	};
+
+	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	* sortDateSortDesc -
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	var sortDateSortDesc = function(firstItem, secondItem) {
+
+		var $element1 = $(firstItem.elm).find('.sortDate');
+		var $element2 = $(secondItem.elm).find('.sortDate');
+
+		var date1 = moment($element1.text());
+		var date2 = moment($element2.text());
+
+		if (date2 > date1) {
+			return 1;
+		}
+
+		return -1;
 	};
 
 })(gamedex.module('searchView'), gamedex, jQuery, _, moment, List);

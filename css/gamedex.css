@@ -1042,6 +1042,7 @@ img{border-radius:6px;}
 #finderTabLinks{position:relative;z-index:1;margin-bottom:8px;margin-left:100px;height:35px;}
 #searchResultsContainer{height:95px;-webkit-transition:0.4s;-moz-transition:0.4s;-ms-transition:0.4s;-o-transition:0.4s;transition:0.4s;-webkit-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-moz-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-ms-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-o-transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);transition:0.4s all cubic-bezier(0.25, 0.46, 0.45, 0.94);-webkit-transform:translate3d(0, 0, 0);-moz-transform:translate3d(0, 0, 0);}
 #searchResults{margin-bottom:0px;}#searchResults tr{cursor:pointer;}
+#searchResults .sortDate{display:none;}
 #searchResults .display-0 .itemName{font-size:14px;font-weight:600;}
 #searchResults .display-0 .smallImage,#searchResults .display-0 .mediumImage{display:none;}
 #searchResults .display-0 .calendarDate{display:none;}

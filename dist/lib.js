@@ -14395,10 +14395,22 @@ the specific language governing permissions and limitations under the Apache Lic
 }(jQuery));
 
 /*
-ListJS Beta 0.2.0
+ListJS with RequireJS support Beta 0.2.2
 By Jonny Strömberg (www.jonnystromberg.com, www.listjs.com)
 
-OBS. The API is not frozen. It MAY change!
+Contributors
+* lusentis (Simone Lusenti) - http://www.plasticpanda.com
+* dancrew32 (Dan Masquelier) - http://danmasq.com
+* himynameisjonas (Jonas Forsberg) - http://jonasforsberg.se
+* endorama (Edoardo Tenani)
+* sprynmr (Bob Spryn)
+* francescolaffi
+* ryantanner
+* idlefella
+* julienbechade (Julien Béchade) - http://julienbechade.com/
+* matthewheston
+* gvido (Gvido Glazers)
+* karlwestin (Karl Westin) - http://karlwestin.com
 
 License (MIT)
 
@@ -14436,10 +14448,17 @@ var List = function(id, options, values) {
         initialItems,
         Item,
         Templater,
-        sortButtons,
-        events = {
-            'updated': []
-        };
+        sortButtons;
+
+    this.events = {
+        'updated': [],
+        'searchStart': [],
+        'filterStart': [],
+        'sortStart': [],
+        'searchComplete': [],
+        'filterComplete': [],
+        'sortComplete': []
+    };
     this.listContainer = (typeof(id) == 'string') ? document.getElementById(id) : id;
     // Check if the container exists. If not return instead of breaking the javascript
     if (!this.listContainer)
@@ -14460,8 +14479,10 @@ var List = function(id, options, values) {
     init = {
         start: function(values, options) {
             options.plugins = options.plugins || {};
+            options.events = options.events || {};
             this.classes(options);
             templater = new Templater(self, options);
+            self.list = h.getByClass(options.listClass, self.listContainer, true);
             this.callbacks(options);
             this.items.start(values, options);
             self.update();
@@ -14473,10 +14494,12 @@ var List = function(id, options, values) {
             options.sortClass = options.sortClass || 'sort';
         },
         callbacks: function(options) {
-            self.list = h.getByClass(options.listClass, self.listContainer, true);
             h.addEvent(h.getByClass(options.searchClass, self.listContainer), 'keyup', self.search);
             sortButtons = h.getByClass(options.sortClass, self.listContainer);
             h.addEvent(sortButtons, 'click', self.sort);
+            for (var i in options.events) {
+                self.on(i, options.events[i]);
+            }
         },
         items: {
             start: function(values, options) {
@@ -14532,7 +14555,6 @@ var List = function(id, options, values) {
                 Item: Item,
                 Templater: Templater,
                 sortButtons: sortButtons,
-                events: events,
                 reset: reset
             };
             for (var i = 0; i < plugins.length; i++) {
@@ -14550,6 +14572,7 @@ var List = function(id, options, values) {
     this.add = function(values, callback) {
         if (callback) {
             addAsync(values, callback);
+            return;
         }
         var added = [],
             notCreate = false;
@@ -14639,6 +14662,7 @@ var List = function(id, options, values) {
     * @sortFunction (optional) Define if natural sorting does not fullfill your needs
     */
     this.sort = function(valueName, options) {
+        trigger('sortStart');
         var length = self.items.length,
             value = null,
             target = valueName.target || valueName.srcElement, /* IE have srcElement */
@@ -14675,11 +14699,12 @@ var List = function(id, options, values) {
             options.sortFunction = options.sortFunction;
         } else {
             options.sortFunction = function(a, b) {
-                return h.sorter.alphanum(a.values()[value].toLowerCase(), b.values()[value].toLowerCase(), isAsc);
+                return h.sorter.alphanum(a.values()[value], b.values()[value], isAsc);
             };
         }
         self.items.sort(options.sortFunction);
         self.update();
+        trigger('sortComplete');
     };
 
     /*
@@ -14688,6 +14713,7 @@ var List = function(id, options, values) {
     * defaults to undefined which means "all".
     */
     this.search = function(searchString, columns) {
+        trigger('searchStart');
         self.i = 1; // Reset paging
         var matching = [],
             found,
@@ -14734,6 +14760,7 @@ var List = function(id, options, values) {
             }
             self.update();
         }
+        trigger('searchComplete');
         return self.visibleItems;
     };
 
@@ -14742,6 +14769,7 @@ var List = function(id, options, values) {
     * if filterFunction == false are the filter removed
     */
     this.filter = function(filterFunction) {
+        trigger('filterStart');
         self.i = 1; // Reset paging
         reset.filter();
         if (filterFunction === undefined) {
@@ -14759,6 +14787,7 @@ var List = function(id, options, values) {
             }
         }
         self.update();
+        trigger('filterComplete');
         return self.visibleItems;
     };
 
@@ -14778,13 +14807,13 @@ var List = function(id, options, values) {
     };
 
     this.on = function(event, callback) {
-        events[event].push(callback);
+        self.events[event].push(callback);
     };
 
     var trigger = function(event) {
-        var i = events[event].length;
+        var i = self.events[event].length;
         while(i--) {
-            events[event][i]();
+            self.events[event][i](self);
         }
     };
 
@@ -14926,17 +14955,9 @@ List.prototype.templateEngines.standard = function(list, settings) {
         }
     }
 
-    var ensure = {
-        created: function(item) {
-            if (item.elm === undefined) {
-                templater.create(item);
-            }
-        }
-    };
-
     /* Get values from element */
     this.get = function(item, valueNames) {
-        ensure.created(item);
+        templater.create(item);
         var values = {};
         for(var i = 0, il = valueNames.length; i < il; i++) {
             var elm = h.getByClass(valueNames[i], item.elm, true);
@@ -14947,13 +14968,14 @@ List.prototype.templateEngines.standard = function(list, settings) {
 
     /* Sets values at element */
     this.set = function(item, values) {
-        ensure.created(item);
-        for(var v in values) {
-            if (values.hasOwnProperty(v)) {
-                // TODO speed up if possible
-                var elm = h.getByClass(v, item.elm, true);
-                if (elm) {
-                    elm.innerHTML = values[v];
+        if (!templater.create(item)) {
+            for(var v in values) {
+                if (values.hasOwnProperty(v)) {
+                    // TODO speed up if possible
+                    var elm = h.getByClass(v, item.elm, true);
+                    if (elm) {
+                        elm.innerHTML = values[v];
+                    }
                 }
             }
         }
@@ -14961,7 +14983,7 @@ List.prototype.templateEngines.standard = function(list, settings) {
 
     this.create = function(item) {
         if (item.elm !== undefined) {
-            return;
+            return false;
         }
         /* If item source does not exists, use the first item in list as
         source for new items */
@@ -14969,12 +14991,13 @@ List.prototype.templateEngines.standard = function(list, settings) {
         newItem.id = "";
         item.elm = newItem;
         templater.set(item, item.values());
+        return true;
     };
     this.remove = function(item) {
         listSource.removeChild(item.elm);
     };
     this.show = function(item) {
-        ensure.created(item);
+        templater.create(item);
         listSource.appendChild(item.elm);
     };
     this.hide = function(item) {
@@ -15118,12 +15141,12 @@ h = {
             if (b === undefined || b === null) {
                 b = "";
             }
-            a = a.toString().replace(/&(lt|gt);/g, function (strMatch, p1){
+            a = a.toString().toLowerCase().replace(/&(lt|gt);/g, function (strMatch, p1){
                 return (p1 == "lt")? "<" : ">";
             });
             a = a.replace(/<\/?[^>]+(>|$)/g, "");
 
-            b = b.toString().replace(/&(lt|gt);/g, function (strMatch, p1){
+            b = b.toString().toLowerCase().replace(/&(lt|gt);/g, function (strMatch, p1){
                 return (p1 == "lt")? "<" : ">";
             });
             b = b.replace(/<\/?[^>]+(>|$)/g, "");
@@ -15166,8 +15189,15 @@ h = {
     }
 };
 
-window.List = List;
-window.ListJsHelpers = h;
+if (typeof define == 'function' && typeof define.amd == 'object') {
+    define([], function() {
+        return List;
+    });
+} else {
+    window.List = List;
+    window.ListJsHelpers = h;
+}
+
 })(window);
 
 /*global define*/

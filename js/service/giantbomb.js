@@ -67,6 +67,15 @@
 
         // expected release date
         } else if (resultItem.expected_release_day && resultItem.expected_release_month && resultItem.expected_release_year) {
+
+            // add leading 0 if day or month is single digit
+            if (resultItem.expected_release_day.toString().length === 1) {
+                resultItem.expected_release_day = '0' + resultItem.expected_release_day.toString();
+            }
+            if (resultItem.expected_release_month.toString().length === 1) {
+                resultItem.expected_release_month = '0' + resultItem.expected_release_month.toString();
+            }
+
             itemData.releaseDate = resultItem.expected_release_year + '-' + resultItem.expected_release_month + '-' + resultItem.expected_release_day;
 
         // release quarter
