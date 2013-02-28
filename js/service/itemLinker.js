@@ -53,10 +53,16 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
 
+        console.info('---------------------------------');
+        console.info(sourceItem);
+        console.info(searchItem);
+        console.info('---------------------------------');
+
         // matching properties
         var score = 100;
 
-        var levenshteinValue = levenshtein(sourceItem.name, searchItem.name);
+        // get levenshten string distance value (greater value = more difference between strings)
+        var levenshteinValue = levenshtein(sourceItem.standardName, searchItem.name);
 
         // subtract levenshteinValue from score
         score = score - levenshteinValue;

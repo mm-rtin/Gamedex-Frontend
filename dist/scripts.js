@@ -1999,10 +1999,16 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
 
+        console.info('---------------------------------');
+        console.info(sourceItem);
+        console.info(searchItem);
+        console.info('---------------------------------');
+
         // matching properties
         var score = 100;
 
-        var levenshteinValue = levenshtein(sourceItem.name, searchItem.name);
+        // get levenshten string distance value (greater value = more difference between strings)
+        var levenshteinValue = levenshtein(sourceItem.standardName, searchItem.name);
 
         // subtract levenshteinValue from score
         score = score - levenshteinValue;
@@ -6876,6 +6882,9 @@ gamedex.initializeModules = function() {
 
         // if current listType does not match source - skip render
         if (sourceListType === listType) {
+
+            console.info(data);
+
             // render list
             SearchView.renderListResults(data, order);
         }
@@ -12211,6 +12220,17 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var init = function() {
 
+        // initialize nanoscroll
+        var nanoScrollOptions = {
+            sliderMinHeight: 20,
+            iOSNativeScrolling: true,
+            preventPageScrolling: true,
+            flash: true,
+            flashDelay: 1500,
+            alwaysVisible: true
+        };
+        $importContainer.nanoScroller(nanoScrollOptions);
+
 		createEventHandlers();
 	};
 
@@ -12285,6 +12305,10 @@ gamedex.initializeModules = function() {
 			// show source config
 			showImportConfigModal();
 		}
+
+		_.delay(function() {
+			$importContainer.nanoScroller();
+		}, 1000);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12582,6 +12606,9 @@ gamedex.initializeModules = function() {
 
 		// append model to importResults
 		$importResultsBody.append(importResultsTemplate(templateData));
+
+		// update nanoscroller
+		$importContainer.nanoScroller();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

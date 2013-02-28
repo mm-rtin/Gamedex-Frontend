@@ -78,6 +78,17 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	var init = function() {
 
+        // initialize nanoscroll
+        var nanoScrollOptions = {
+            sliderMinHeight: 20,
+            iOSNativeScrolling: true,
+            preventPageScrolling: true,
+            flash: true,
+            flashDelay: 1500,
+            alwaysVisible: true
+        };
+        $importContainer.nanoScroller(nanoScrollOptions);
+
 		createEventHandlers();
 	};
 
@@ -152,6 +163,10 @@
 			// show source config
 			showImportConfigModal();
 		}
+
+		_.delay(function() {
+			$importContainer.nanoScroller();
+		}, 1000);
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -449,6 +464,9 @@
 
 		// append model to importResults
 		$importResultsBody.append(importResultsTemplate(templateData));
+
+		// update nanoscroller
+		$importContainer.nanoScroller();
 	};
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

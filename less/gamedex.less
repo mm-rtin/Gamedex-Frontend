@@ -1890,6 +1890,7 @@ img {
 	&.loading {
 		.loadingStatus {
 			display: block;
+			.opacity(1);
 		}
 	}
 
@@ -1926,6 +1927,10 @@ img {
 	}
 }
 
+#importContainer {
+	height: 400px;
+}
+
 #importResults {
 	.mediumImage {
 		min-width: 100px;
@@ -1943,6 +1948,20 @@ img {
 		.itemName {
 			font-size: 14px;
 			font-weight: 600;
+		}
+	}
+
+	.imported {
+
+		.itemName {
+			font-weight: 600;
+			font-size: 15px;
+		}
+		.calendarDate {
+			font-size: 13px;
+		}
+		.platform {
+			font-size: 13px;
 		}
 	}
 }

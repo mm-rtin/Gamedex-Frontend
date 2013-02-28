@@ -596,6 +596,9 @@
 
         // if current listType does not match source - skip render
         if (sourceListType === listType) {
+
+            console.info(data);
+
             // render list
             SearchView.renderListResults(data, order);
         }
