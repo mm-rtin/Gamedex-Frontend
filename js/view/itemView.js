@@ -846,6 +846,9 @@
             if (lowestProvider == 'amazon') {
                 // attach to existing item result
                 $(priceSelector).html(priceMenuTemplate(offers));
+
+                // add tooltip
+                $(priceSelector).find('.priceButton').opentip($(priceSelector).find('.priceButton').attr('data-ot'), {tipJoint: 'bottom'});
             }
         }
     };
@@ -868,6 +871,9 @@
 
                 // attach to existing item result
                 $(priceSelector).html(steamPriceMenuTemplate(steamItem));
+
+                // add tooltip
+                $(priceSelector).find('.priceButton').opentip($(priceSelector).find('.priceButton').attr('data-ot'), {tipJoint: 'bottom'});
             }
         }
     };

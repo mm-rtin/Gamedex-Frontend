@@ -233,6 +233,11 @@
         // hideInfoHeaderButton: click
         $hideInfoHeaderButton.click(function(e) {
             e.preventDefault();
+
+            // hide tooltip
+            var opentip = $hideInfoHeaderButton.data("opentips");
+            opentip[0].hide();
+
             showDemoView();
         });
 

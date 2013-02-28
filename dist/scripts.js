@@ -5070,6 +5070,11 @@ gamedex.initializeModules = function() {
         // hideInfoHeaderButton: click
         $hideInfoHeaderButton.click(function(e) {
             e.preventDefault();
+
+            // hide tooltip
+            var opentip = $hideInfoHeaderButton.data("opentips");
+            opentip[0].hide();
+
             showDemoView();
         });
 
@@ -9395,6 +9400,9 @@ gamedex.initializeModules = function() {
             if (lowestProvider == 'amazon') {
                 // attach to existing item result
                 $(priceSelector).html(priceMenuTemplate(offers));
+
+                // add tooltip
+                $(priceSelector).find('.priceButton').opentip($(priceSelector).find('.priceButton').attr('data-ot'), {tipJoint: 'bottom'});
             }
         }
     };
@@ -9417,6 +9425,9 @@ gamedex.initializeModules = function() {
 
                 // attach to existing item result
                 $(priceSelector).html(steamPriceMenuTemplate(steamItem));
+
+                // add tooltip
+                $(priceSelector).find('.priceButton').opentip($(priceSelector).find('.priceButton').attr('data-ot'), {tipJoint: 'bottom'});
             }
         }
     };
