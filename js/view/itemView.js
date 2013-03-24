@@ -374,9 +374,6 @@
                 (function(length, itemChunk, currentViewTagID) {
                     // render
                     _.delay(function() {
-                        console.info('@@@@@@@@@@@@@@@@@@');
-                        console.info(length, itemChunk);
-
                         renderChunk(itemChunk, currentViewTagID);
                         itemChunk = [];
                     }, delayBetweenBlocks * blockCount);
@@ -392,9 +389,6 @@
 
         // finalize and load remaining items which do not fit inside of block size
         _.delay(function() {
-            console.info('************************');
-            console.info(length, itemChunk);
-
             renderChunk(itemChunk, currentViewTagID);
             itemChunk = [];
 
@@ -419,8 +413,6 @@
             $itemResults.append(itemResultsTemplate(templateData));
 
         } else {
-
-            console.info('################ TAG MISMATCH!!! ###############');
         }
     };
 
@@ -748,7 +740,6 @@
 
                     // update shared amazon price info
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Amazon, function(data) {
-                        console.info('############# update amazon price');
                     });
                 });
 
@@ -757,20 +748,17 @@
 
         // download amazon offer data
         if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
-            console.info('download amazon', item.name);
+
             loadThirdPartyData.getAmazonItemOffersLimited(item);
 
         // use data from item
         } else {
-            console.info('use existing offers', item.offers);
-
             amazonPrice_result(item.id, item, item.offers);
         }
 
 
         // get steam page and price
         if (_.isUndefined(item.steamPrice)) {
-            console.info('download steam', item.name)
 
             Steam.getSteamGame(item.standardName, item,
 
@@ -780,27 +768,22 @@
 
                     // update shared amazon price info
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
-                        console.info('############ update steam price');
                     });
                 },
                 // no result
                 function() {
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
-                        console.info('############ update steam price - no result');
                     });
                 }
             );
 
         // use data from item
         } else {
-            console.info('use existing steam', item.steamPrice, item.steamPage);
             steamPrice_result(item.id, item, item);
         }
 
         // get updated metascore - if metascore or metascore page not in item data
         if (item.metascore === null || item.metascorePage === null || item.metascorePage === '') {
-
-            console.info('^^^^^^^^^^^^^ GET META SCORE');
 
             // get updated score
             Metacritic.getMetascore(item.standardName, item, false, displayMetascore);

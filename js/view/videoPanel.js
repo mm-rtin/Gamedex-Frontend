@@ -296,7 +296,6 @@
 
         // change video set - only if user hasn't change video set manually
         if (autoNavigateToVideoItemSet) {
-            console.info(autoNavigateToVideoItemSet);
             viewSetForCurrentlyPlaying();
         }
     };

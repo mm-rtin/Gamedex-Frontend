@@ -26,7 +26,7 @@
 		demoUser = {'user_id': 'ag1zfnQtbWludXN6ZXJvcgwLEgVVc2Vycxj6VQw', 'secret_key': '1'};
 
 		if (document.location.hostname === 'localhost') {
-			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGAQM', 'secret_key': '1'};
+			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yEwsSBVVzZXJzGICAgICAgICARAw', 'secret_key': '1'};
 		}
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

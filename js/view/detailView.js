@@ -595,8 +595,6 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayWikipediaPage = function(wikipediaURL) {
 
-        console.info(wikipediaURL);
-
         if (wikipediaURL) {
             $wikipediaPage.show();
             $wikipediaPage.find('a').attr('href', wikipediaURL);

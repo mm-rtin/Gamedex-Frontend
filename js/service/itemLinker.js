@@ -35,12 +35,6 @@
         // remove 'the ' if at the start of title
         sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
-        // remove words appearing after '-' unless it is less than 4 chars
-        // BUG: removes spider-man: shatttered dimensions
-
-        //re = new RegExp('\\s*-.*', 'gi');
-        //match = re.exec(sanitizedName);
-
         if (match && match[0].length > 3) {
             sanitizedName = sanitizedName.replace(re, '');
         }
@@ -52,11 +46,6 @@
     * getSimilarityScore -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
-
-        console.info('---------------------------------');
-        console.info(sourceItem);
-        console.info(searchItem);
-        console.info('---------------------------------');
 
         // matching properties
         var score = 100;

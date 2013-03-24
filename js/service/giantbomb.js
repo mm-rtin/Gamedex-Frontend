@@ -325,7 +325,6 @@
         var giantBombVideo = null;
 
         if (typeof giantBombVideoCache[id] !== 'undefined') {
-            console.info('get video: ', id, ' from cache');
             giantBombVideo = giantBombVideoCache[id];
         }
 

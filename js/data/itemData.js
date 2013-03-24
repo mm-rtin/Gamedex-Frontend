@@ -631,7 +631,6 @@
 
 		// Steam Price
 		} else if (priceProvider == Utilities.PRICE_PROVIDERS.Steam) {
-			console.info('update steam price')
 
 			// steam price data not found > set to empty string
 			if (_.isUndefined(item.steamPrice)) {

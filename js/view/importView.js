@@ -392,8 +392,6 @@
 		// find alternate amazon item
 		var amazonRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
 
-			console.info('success: ', searchItem.name)
-
 			// add asin to search item
 			searchItem.asin = item.asin;
 			onSuccess();
@@ -402,10 +400,8 @@
 		}, function(serviceUnavailable) {
 
 			if (serviceUnavailable) {
-				console.info('service unavailable: ', searchItem.name)
 
 			} else {
-				console.info('no match found: ', searchItem.name)
 				onSuccess();
 			}
 		});

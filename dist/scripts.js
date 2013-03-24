@@ -122,8 +122,7 @@
     };
 
 })( jQuery);
-
-
+;
 // gamedex namespace
 var gamedex = {
  // Create this closure to contain the cached modules
@@ -214,8 +213,7 @@ gamedex.initializeModules = function() {
 	importView.init();
 	siteView.init();
 };
-
-
+;
 // UTILITIES
 (function(Utilities, gamedex, $, _) {
     "use strict";
@@ -338,8 +336,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('utilities'), gamedex, jQuery, _);
 
-
-// USER
+;// USER
 (function(User, gamedex, $, _, alertify) {
 	"use strict";
 
@@ -367,7 +364,7 @@ gamedex.initializeModules = function() {
 		demoUser = {'user_id': 'ag1zfnQtbWludXN6ZXJvcgwLEgVVc2Vycxj6VQw', 'secret_key': '1'};
 
 		if (document.location.hostname === 'localhost') {
-			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yCwsSBVVzZXJzGAQM', 'secret_key': '1'};
+			demoUser = {'user_id': 'ag9kZXZ-dC1taW51c3plcm9yEwsSBVVzZXJzGICAgICAgICARAw', 'secret_key': '1'};
 		}
 
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -772,8 +769,7 @@ gamedex.initializeModules = function() {
 	};
 
 })(gamedex.module('user'), gamedex, jQuery, _, alertify);
-
-// Storage
+;// Storage
 (function(Storage, gamedex, $, _) {
 	"use strict";
 
@@ -885,8 +881,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('storage'), gamedex, jQuery, _);
 
-
-// ItemCache
+;// ItemCache
 (function(ItemCache, gamedex, $, _) {
 	"use strict";
 
@@ -1153,8 +1148,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('itemCache'), gamedex, $, _);
 
-
-// Amazon
+;// Amazon
 (function(Amazon, gamedex, $, _, moment) {
 	"use strict";
 
@@ -1577,8 +1571,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('amazon'), gamedex, jQuery, _, moment);
 
-
-// GiantBomb
+;// GiantBomb
 (function(GiantBomb, gamedex, $, _, moment) {
     "use strict";
 
@@ -1905,7 +1898,6 @@ gamedex.initializeModules = function() {
         var giantBombVideo = null;
 
         if (typeof giantBombVideoCache[id] !== 'undefined') {
-            console.info('get video: ', id, ' from cache');
             giantBombVideo = giantBombVideoCache[id];
         }
 
@@ -1943,8 +1935,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('giantbomb'), gamedex, jQuery, _, moment);
 
-
-// ItemLinker
+;// ItemLinker
 (function(ItemLinker, gamedex, $, _) {
     "use strict";
 
@@ -1981,12 +1972,6 @@ gamedex.initializeModules = function() {
         // remove 'the ' if at the start of title
         sanitizedName = sanitizedName.replace(/^\s*the\s/gi, '');
 
-        // remove words appearing after '-' unless it is less than 4 chars
-        // BUG: removes spider-man: shatttered dimensions
-
-        //re = new RegExp('\\s*-.*', 'gi');
-        //match = re.exec(sanitizedName);
-
         if (match && match[0].length > 3) {
             sanitizedName = sanitizedName.replace(re, '');
         }
@@ -1998,11 +1983,6 @@ gamedex.initializeModules = function() {
     * getSimilarityScore -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     ItemLinker.getSimilarityScore = function(sourceItem, searchItem) {
-
-        console.info('---------------------------------');
-        console.info(sourceItem);
-        console.info(searchItem);
-        console.info('---------------------------------');
 
         // matching properties
         var score = 100;
@@ -2402,8 +2382,7 @@ gamedex.initializeModules = function() {
     };
 
 })(gamedex.module('itemLinker'), gamedex, jQuery, _);
-
-// ItemData
+;// ItemData
 (function(ItemData, gamedex, $, _, moment, alertify) {
 	"use strict";
 
@@ -3036,7 +3015,6 @@ gamedex.initializeModules = function() {
 
 		// Steam Price
 		} else if (priceProvider == Utilities.PRICE_PROVIDERS.Steam) {
-			console.info('update steam price')
 
 			// steam price data not found > set to empty string
 			if (_.isUndefined(item.steamPrice)) {
@@ -3475,8 +3453,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('itemData'), gamedex, $, _, moment, alertify);
 
-
-/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG DATA - methods for interacting with server side tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 (function(TagData, gamedex, $, _) {
@@ -3648,8 +3625,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('tagData'), gamedex, jQuery, _);
 
-
-// Metacritic
+;// Metacritic
 (function(Metacritic, gamedex, $, _) {
 	"use strict";
 
@@ -3966,8 +3942,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('metacritic'), gamedex, jQuery, _);
 
-
-// Wikipedia
+;// Wikipedia
 (function(Wikipedia) {
 
 	// Dependencies
@@ -4079,8 +4054,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('wikipedia'));
 
-
-// GameTrailers
+;// GameTrailers
 (function(GameTrailers, gamedex, $, _) {
 	"use strict";
 
@@ -4298,8 +4272,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('gameTrailers'), gamedex, jQuery, _);
 
-
-// Steam
+;// Steam
 (function(Steam, gamedex, $, _) {
 	"use strict";
 
@@ -4511,8 +4484,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('steam'), gamedex, jQuery, _);
 
-
-// IGN
+;// IGN
 (function(IGN, gamedex, $, _) {
 
 	// REST URL
@@ -4656,8 +4628,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('ign'), gamedex, jQuery, _);
 
-
-// ReleasedList
+;// ReleasedList
 (function(ReleasedList, gamedex, $, _) {
 	"use strict";
 
@@ -4834,8 +4805,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('releasedList'), gamedex, jQuery, _);
 
-
-// SITEVIEW
+;// SITEVIEW
 (function(SiteView, gamedex, $, _, alertify, Opentip) {
     "use strict";
 
@@ -6288,8 +6258,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('siteView'), gamedex, jQuery, _, alertify, Opentip);
 
-
-// SEARCH VIEW
+;// SEARCH VIEW
 (function(SearchView, gamedex, $, _, moment, ListJS) {
     "use strict";
 
@@ -6888,8 +6857,6 @@ gamedex.initializeModules = function() {
         // if current listType does not match source - skip render
         if (sourceListType === listType) {
 
-            console.info(data);
-
             // render list
             SearchView.renderListResults(data, order);
         }
@@ -7484,8 +7451,7 @@ gamedex.initializeModules = function() {
     };
 
 })(gamedex.module('searchView'), gamedex, jQuery, _, moment, List);
-
-// DETAIL VIEW
+;// DETAIL VIEW
 (function(DetailView, gamedex, $, _, moment) {
 
     // module references
@@ -8082,8 +8048,6 @@ gamedex.initializeModules = function() {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var displayWikipediaPage = function(wikipediaURL) {
 
-        console.info(wikipediaURL);
-
         if (wikipediaURL) {
             $wikipediaPage.show();
             $wikipediaPage.find('a').attr('href', wikipediaURL);
@@ -8551,8 +8515,7 @@ gamedex.initializeModules = function() {
     };
 
 })(gamedex.module('detailView'), gamedex, jQuery, _, moment);
-
-// ITEM VIEW
+;// ITEM VIEW
 (function(ItemView, gamedex, $, _, ListJS) {
     "use strict";
 
@@ -8928,9 +8891,6 @@ gamedex.initializeModules = function() {
                 (function(length, itemChunk, currentViewTagID) {
                     // render
                     _.delay(function() {
-                        console.info('@@@@@@@@@@@@@@@@@@');
-                        console.info(length, itemChunk);
-
                         renderChunk(itemChunk, currentViewTagID);
                         itemChunk = [];
                     }, delayBetweenBlocks * blockCount);
@@ -8946,9 +8906,6 @@ gamedex.initializeModules = function() {
 
         // finalize and load remaining items which do not fit inside of block size
         _.delay(function() {
-            console.info('************************');
-            console.info(length, itemChunk);
-
             renderChunk(itemChunk, currentViewTagID);
             itemChunk = [];
 
@@ -8973,8 +8930,6 @@ gamedex.initializeModules = function() {
             $itemResults.append(itemResultsTemplate(templateData));
 
         } else {
-
-            console.info('################ TAG MISMATCH!!! ###############');
         }
     };
 
@@ -9302,7 +9257,6 @@ gamedex.initializeModules = function() {
 
                     // update shared amazon price info
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Amazon, function(data) {
-                        console.info('############# update amazon price');
                     });
                 });
 
@@ -9311,20 +9265,17 @@ gamedex.initializeModules = function() {
 
         // download amazon offer data
         if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
-            console.info('download amazon', item.name);
+
             loadThirdPartyData.getAmazonItemOffersLimited(item);
 
         // use data from item
         } else {
-            console.info('use existing offers', item.offers);
-
             amazonPrice_result(item.id, item, item.offers);
         }
 
 
         // get steam page and price
         if (_.isUndefined(item.steamPrice)) {
-            console.info('download steam', item.name)
 
             Steam.getSteamGame(item.standardName, item,
 
@@ -9334,27 +9285,22 @@ gamedex.initializeModules = function() {
 
                     // update shared amazon price info
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
-                        console.info('############ update steam price');
                     });
                 },
                 // no result
                 function() {
                     ItemData.updateSharedItemPrice(item, Utilities.PRICE_PROVIDERS.Steam, function(data) {
-                        console.info('############ update steam price - no result');
                     });
                 }
             );
 
         // use data from item
         } else {
-            console.info('use existing steam', item.steamPrice, item.steamPage);
             steamPrice_result(item.id, item, item);
         }
 
         // get updated metascore - if metascore or metascore page not in item data
         if (item.metascore === null || item.metascorePage === null || item.metascorePage === '') {
-
-            console.info('^^^^^^^^^^^^^ GET META SCORE');
 
             // get updated score
             Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
@@ -9958,8 +9904,7 @@ gamedex.initializeModules = function() {
     $.extend(ItemView, publicMethods);
 
 })(gamedex.module('itemView'), gamedex, jQuery, _, List);
-
-// GiantBomb
+;// GiantBomb
 (function(GridView, gamedex, $, _, alertify) {
 	"use strict";
 
@@ -10606,8 +10551,7 @@ gamedex.initializeModules = function() {
 
 
 })(gamedex.module('gridView'), gamedex, jQuery, _, alertify);
-
-/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * TAG VIEW - controls tag presentation (View and Add tag lists) and manages tag data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 (function(TagView, gamedex, $, _) {
@@ -11230,8 +11174,7 @@ gamedex.initializeModules = function() {
 
 
 })(gamedex.module('tagView'), gamedex, jQuery, _);
-
-// FILTER PANEL
+;// FILTER PANEL
 (function(FilterPanel, gamedex, $, _, moment) {
 	"use strict";
 
@@ -11662,8 +11605,7 @@ gamedex.initializeModules = function() {
 	};
 
 })(gamedex.module('filterPanel'), gamedex, $, _, moment);
-
-// VideoPanel
+;// VideoPanel
 (function(VideoPanel, _V_, gamedex, $, _, moment, ListJS) {
     "use strict";
 
@@ -11961,7 +11903,6 @@ gamedex.initializeModules = function() {
 
         // change video set - only if user hasn't change video set manually
         if (autoNavigateToVideoItemSet) {
-            console.info(autoNavigateToVideoItemSet);
             viewSetForCurrentlyPlaying();
         }
     };
@@ -12150,8 +12091,7 @@ gamedex.initializeModules = function() {
 
 })(gamedex.module('videoPanel'), _V_, gamedex, jQuery, _, moment, List);
 
-
-// ITEM VIEW
+;// ITEM VIEW
 (function(ImportView, gamedex, $, _, alertify) {
 	"use strict";
 
@@ -12545,8 +12485,6 @@ gamedex.initializeModules = function() {
 		// find alternate amazon item
 		var amazonRequest = ItemLinker.findItemOnAlternateProvider(searchItem, Utilities.SEARCH_PROVIDERS.GiantBomb, false, function (item) {
 
-			console.info('success: ', searchItem.name)
-
 			// add asin to search item
 			searchItem.asin = item.asin;
 			onSuccess();
@@ -12555,10 +12493,8 @@ gamedex.initializeModules = function() {
 		}, function(serviceUnavailable) {
 
 			if (serviceUnavailable) {
-				console.info('service unavailable: ', searchItem.name)
 
 			} else {
-				console.info('no match found: ', searchItem.name)
 				onSuccess();
 			}
 		});
@@ -12812,6 +12748,5 @@ gamedex.initializeModules = function() {
 
 
 })(gamedex.module('importView'), gamedex, jQuery, _, alertify);
-
-	// intialize app
+;	// intialize app
 	gamedex.initialize();
