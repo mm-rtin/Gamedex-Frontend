@@ -460,7 +460,32 @@
 
         // render detail
         $tab.find('.itemDetailTitle h3').text(itemData.name);
-        $tab.find('img').attr('src', itemData.largeImage);
+
+        // load detail image
+        loadDetailImage($tab.find('img'), itemData.largeImage, $tab);
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * loadDetailImage -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var loadDetailImage = function(target, url, $tab) {
+
+        var detailImage = new Image();
+
+        // show loading div
+        $tab.find('.loadingDetailImage').addClass('show');
+
+        // load image
+        detailImage.src = url;
+
+        detailImage.onload = function() {
+
+            // switch image
+            target.attr('src', url);
+
+            // hide loading div
+            $tab.find('.loadingDetailImage').removeClass('show');
+        };
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

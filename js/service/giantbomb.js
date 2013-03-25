@@ -126,8 +126,8 @@
         }
 
         // set large url
-        if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
-            itemData.largeImage = resultItem.image.super_url;
+        if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
+            itemData.largeImage = resultItem.image.small_url;
         } else {
             itemData.largeImage = 'no image.png';
         }

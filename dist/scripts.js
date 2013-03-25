@@ -1699,8 +1699,8 @@ gamedex.initializeModules = function() {
         }
 
         // set large url
-        if (resultItem.image && resultItem.image.super_url && resultItem.image.super_url !== '') {
-            itemData.largeImage = resultItem.image.super_url;
+        if (resultItem.image && resultItem.image.small_url && resultItem.image.small_url !== '') {
+            itemData.largeImage = resultItem.image.small_url;
         } else {
             itemData.largeImage = 'no image.png';
         }
@@ -6574,8 +6574,11 @@ gamedex.initializeModules = function() {
         // output data to template
         $listTable.append(listResultsTemplate(templateData));
 
-        // init listJS
-        initListJS(order);
+
+        if (order !== 'none') {
+            // init listJS
+            initListJS(order);
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6666,7 +6669,7 @@ gamedex.initializeModules = function() {
             }
 
             infiniteScrollDisabled = false;
-            getList_result(data, 'asc', LIST_TYPE.POPULAR);
+            getList_result(data, 'none', LIST_TYPE.POPULAR);
             ignPopularListPagesLoaded++;
         }
     };
@@ -7913,7 +7916,32 @@ gamedex.initializeModules = function() {
 
         // render detail
         $tab.find('.itemDetailTitle h3').text(itemData.name);
-        $tab.find('img').attr('src', itemData.largeImage);
+
+        // load detail image
+        loadDetailImage($tab.find('img'), itemData.largeImage, $tab);
+    };
+
+    /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    * loadDetailImage -
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+    var loadDetailImage = function(target, url, $tab) {
+
+        var detailImage = new Image();
+
+        // show loading div
+        $tab.find('.loadingDetailImage').addClass('show');
+
+        // load image
+        detailImage.src = url;
+
+        detailImage.onload = function() {
+
+            // switch image
+            target.attr('src', url);
+
+            // hide loading div
+            $tab.find('.loadingDetailImage').removeClass('show');
+        };
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9264,7 +9292,7 @@ gamedex.initializeModules = function() {
         }
 
         // download amazon offer data
-        if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
+        if (!User.isViewUser() && (_.isUndefined(item.offers) || _.keys(item.offers).length === 0)) {
 
             loadThirdPartyData.getAmazonItemOffersLimited(item);
 
@@ -9275,7 +9303,7 @@ gamedex.initializeModules = function() {
 
 
         // get steam page and price
-        if (_.isUndefined(item.steamPrice)) {
+        if (!User.isViewUser() && _.isUndefined(item.steamPrice)) {
 
             Steam.getSteamGame(item.standardName, item,
 
@@ -9300,7 +9328,7 @@ gamedex.initializeModules = function() {
         }
 
         // get updated metascore - if metascore or metascore page not in item data
-        if (item.metascore === null || item.metascorePage === null || item.metascorePage === '') {
+        if (!User.isViewUser() && (item.metascore === null || item.metascorePage === null || item.metascorePage === '')) {
 
             // get updated score
             Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
@@ -9543,6 +9571,10 @@ gamedex.initializeModules = function() {
     * setQuickAttribute -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var setQuickAttribute = function($button, id, attributeID) {
+
+        if (User.isViewUser()) {
+            return;
+        }
 
         // get item by id
         var item = getItem(id);

@@ -314,8 +314,11 @@
         // output data to template
         $listTable.append(listResultsTemplate(templateData));
 
-        // init listJS
-        initListJS(order);
+
+        if (order !== 'none') {
+            // init listJS
+            initListJS(order);
+        }
     };
 
     /**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -406,7 +409,7 @@
             }
 
             infiniteScrollDisabled = false;
-            getList_result(data, 'asc', LIST_TYPE.POPULAR);
+            getList_result(data, 'none', LIST_TYPE.POPULAR);
             ignPopularListPagesLoaded++;
         }
     };

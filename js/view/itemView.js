@@ -747,7 +747,7 @@
         }
 
         // download amazon offer data
-        if (_.isUndefined(item.offers) || _.keys(item.offers).length === 0) {
+        if (!User.isViewUser() && (_.isUndefined(item.offers) || _.keys(item.offers).length === 0)) {
 
             loadThirdPartyData.getAmazonItemOffersLimited(item);
 
@@ -758,7 +758,7 @@
 
 
         // get steam page and price
-        if (_.isUndefined(item.steamPrice)) {
+        if (!User.isViewUser() && _.isUndefined(item.steamPrice)) {
 
             Steam.getSteamGame(item.standardName, item,
 
@@ -783,7 +783,7 @@
         }
 
         // get updated metascore - if metascore or metascore page not in item data
-        if (item.metascore === null || item.metascorePage === null || item.metascorePage === '') {
+        if (!User.isViewUser() && (item.metascore === null || item.metascorePage === null || item.metascorePage === '')) {
 
             // get updated score
             Metacritic.getMetascore(item.standardName, item, false, displayMetascore);
@@ -1026,6 +1026,10 @@
     * setQuickAttribute -
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
     var setQuickAttribute = function($button, id, attributeID) {
+
+        if (User.isViewUser()) {
+            return;
+        }
 
         // get item by id
         var item = getItem(id);
