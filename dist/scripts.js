@@ -1383,13 +1383,10 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
 
-		console.info('getAmazonOffers');
-
 		// find in amazon offer cache first
 		var cachedOffer = getCachedOffer(asin);
 		// load cached amazon offer
 		if (cachedOffer) {
-			console.info('get cached offer', cachedOffer);
 			// add score data to source item
 			sourceItem.offers = cachedOffer;
 
@@ -7807,8 +7804,6 @@ gamedex.initializeModules = function() {
         // clone object as secondItem
         secondItem = $.extend(true, {}, item);
         var provider = null;
-
-        console.info(firstItem, secondItem);
 
         // make sure that the second item matches the first
         // fast clicking of view items can cause a desync of item rendering

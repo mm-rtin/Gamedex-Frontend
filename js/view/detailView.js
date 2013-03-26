@@ -345,8 +345,6 @@
         secondItem = $.extend(true, {}, item);
         var provider = null;
 
-        console.info(firstItem, secondItem);
-
         // make sure that the second item matches the first
         // fast clicking of view items can cause a desync of item rendering
         if (firstItem.asin == secondItem.asin || firstItem.gbombID == secondItem.gbombID) {

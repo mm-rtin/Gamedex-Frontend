@@ -233,13 +233,10 @@
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
 
-		console.info('getAmazonOffers');
-
 		// find in amazon offer cache first
 		var cachedOffer = getCachedOffer(asin);
 		// load cached amazon offer
 		if (cachedOffer) {
-			console.info('get cached offer', cachedOffer);
 			// add score data to source item
 			sourceItem.offers = cachedOffer;
 
