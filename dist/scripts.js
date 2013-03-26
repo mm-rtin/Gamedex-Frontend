@@ -1273,7 +1273,9 @@ gamedex.initializeModules = function() {
 	/**~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	* parseAmazonResultItem -
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-	Amazon.parseAmazonResultItem = function($resultItem) {
+	Amazon.parseAmazonResultItem = function($resultItem, skipFilter) {
+
+		skipFilter = typeof skipFilter !== 'undefined' ? skipFilter : false;
 
 		var isFiltered = false;
 		var	filter = '(' + FILTERED_NAMES.join('|') + ')';
@@ -1286,7 +1288,7 @@ gamedex.initializeModules = function() {
 		};
 
 		// result has been filtered
-		if (re.test(itemData.name) || itemData.platform === '') {
+		if (!skipFilter && (re.test(itemData.name) || itemData.platform === '')) {
 
 			itemData.isFiltered = true;
 
@@ -1306,10 +1308,11 @@ gamedex.initializeModules = function() {
 			// standard platform name
 			itemData.platform = Utilities.matchPlatformToIndex(itemData.platform).name;
 			// relative/calendar date
-			if (itemData.releaseDate !== '1900-01-01') {
+			if (itemData.releaseDate && releaseDate !== '1900-01-01') {
 				itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
 			} else {
 				itemData.calendarDate = 'Unknown';
+				itemData.releaseDate = '1900-01-01';
 			}
 		}
 
@@ -1380,10 +1383,13 @@ gamedex.initializeModules = function() {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	Amazon.getAmazonItemOffers = function(asin, sourceItem, onSuccess, onError) {
 
+		console.info('getAmazonOffers');
+
 		// find in amazon offer cache first
 		var cachedOffer = getCachedOffer(asin);
 		// load cached amazon offer
 		if (cachedOffer) {
+			console.info('get cached offer', cachedOffer);
 			// add score data to source item
 			sourceItem.offers = cachedOffer;
 
@@ -1677,11 +1683,12 @@ gamedex.initializeModules = function() {
         }
 
         // calendar date
-        if (itemData.releaseDate !== '1900-01-01') {
+        if (itemData.releaseDate && itemData.releaseDate !== '1900-01-01') {
             itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
 
         } else {
             itemData.calendarDate = 'Unknown';
+            itemData.releaseDate = '1900-01-01';
         }
 
         // set small url
@@ -2196,7 +2203,7 @@ gamedex.initializeModules = function() {
         $('Item', data).each(function() {
 
             // parse item and set detailItem
-            detailItem = Amazon.parseAmazonResultItem($(this));
+            detailItem = Amazon.parseAmazonResultItem($(this), true);
         });
 
         // display second item
@@ -7800,6 +7807,8 @@ gamedex.initializeModules = function() {
         // clone object as secondItem
         secondItem = $.extend(true, {}, item);
         var provider = null;
+
+        console.info(firstItem, secondItem);
 
         // make sure that the second item matches the first
         // fast clicking of view items can cause a desync of item rendering

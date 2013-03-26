@@ -259,7 +259,7 @@
         $('Item', data).each(function() {
 
             // parse item and set detailItem
-            detailItem = Amazon.parseAmazonResultItem($(this));
+            detailItem = Amazon.parseAmazonResultItem($(this), true);
         });
 
         // display second item

@@ -104,11 +104,12 @@
         }
 
         // calendar date
-        if (itemData.releaseDate !== '1900-01-01') {
+        if (itemData.releaseDate && itemData.releaseDate !== '1900-01-01') {
             itemData.calendarDate = moment(itemData.releaseDate, "YYYY-MM-DD").calendar();
 
         } else {
             itemData.calendarDate = 'Unknown';
+            itemData.releaseDate = '1900-01-01';
         }
 
         // set small url

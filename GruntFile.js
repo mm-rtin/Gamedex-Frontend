@@ -132,6 +132,13 @@ module.exports = function(grunt) {
             options: {
               nospawn: true
             }
+          },
+          less: {
+            files: ['less/*.less'],
+            tasks: ['less:prod'],
+            options: {
+              nospawn: true
+            }
           }
         }
     });
