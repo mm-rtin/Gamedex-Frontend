@@ -1,1 +1,4 @@
+*.ftppass
+*.scssc
+*.sass-cache
 *.json

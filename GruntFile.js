@@ -56,7 +56,7 @@ module.exports = function(grunt) {
                     'lib/alertify.js'
                 ],
 
-                dest: 'dist/lib.js'
+                dest: 'dist/lib/lib.js'
             },
 
             // scripts
@@ -95,7 +95,7 @@ module.exports = function(grunt) {
                     'js/init.js'
                 ],
 
-                dest: 'dist/scripts.js'
+                dest: 'dist/scripts/scripts.js'
             }
         },
 
@@ -105,14 +105,51 @@ module.exports = function(grunt) {
         uglify: {
             lib: {
               files: {
-                'dist/lib.min.js': ['dist/lib.js']
+                'dist/lib/lib.min.js': ['dist/lib/lib.js']
               }
             },
             scripts: {
               files: {
-                'dist/scripts.min.js': ['dist/scripts.js']
+                'dist/scripts/scripts.min.js': ['dist/scripts/scripts.js']
               }
             }
+        },
+
+
+        /**~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        * ftp-deploy - upload static assets to ftp
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        'ftp-deploy': {
+          css: {
+            auth: {
+              host: 'codecollision.com',
+              port: 21,
+              authKey: 'key1'
+            },
+            src: 'css',
+            dest: '/home/hexvector/webapps/gamedex_static/css/',
+            exclusions: ['']
+          },
+          lib: {
+            auth: {
+              host: 'codecollision.com',
+              port: 21,
+              authKey: 'key1'
+            },
+            src: 'dist/lib',
+            dest: '/home/hexvector/webapps/gamedex_static/dist/',
+            exclusions: ['']
+          },
+          scripts: {
+            auth: {
+              host: 'codecollision.com',
+              port: 21,
+              authKey: 'key1'
+            },
+            src: 'dist/scripts',
+            dest: '/home/hexvector/webapps/gamedex_static/dist/',
+            exclusions: ['']
+          }
         },
 
         /**~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,21 +158,21 @@ module.exports = function(grunt) {
         watch: {
           lib: {
             files: ['lib/**/*.js'],
-            tasks: ['concat:lib', 'uglify:lib'],
+            tasks: ['concat:lib', 'ftp-deploy:lib'],
             options: {
               nospawn: true
             }
           },
           scripts: {
             files: ['js/**/*.js'],
-            tasks: ['concat:scripts', 'uglify:scripts'],
+            tasks: ['concat:scripts', 'ftp-deploy:scripts'],
             options: {
               nospawn: true
             }
           },
           less: {
             files: ['less/*.less'],
-            tasks: ['less:prod'],
+            tasks: ['less:prod', 'ftp-deploy:css'],
             options: {
               nospawn: true
             }
@@ -143,11 +180,15 @@ module.exports = function(grunt) {
         }
     });
 
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-remove-logging');
+    grunt.loadNpmTasks('grunt-ftp-deploy');
+    grunt.loadNpmTasks('grunt-include-replace');
 
     // Default task(s)
-    grunt.registerTask('default', ['concat', 'uglify', 'less:prod']);
+    grunt.registerTask('default', ['concat', 'uglify', 'less:prod', 'ftp-deploy']);
 };

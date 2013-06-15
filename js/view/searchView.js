@@ -739,7 +739,7 @@
             _.each(platforms, function(platform) {
 
                 // standardize platform names
-                standardPlatform = Utilities.matchPlatformToIndex(platform.platform.name).name || platform.platform.name;
+                standardPlatform = Utilities.matchPlatformToIndex(platform.name).name || platform.name;
 
                 // ignore Mac
                 if (standardPlatform !== "Mac") {
